@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vortex Interface · Human Nodes</title>
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/layout.css" />
+    <link rel="stylesheet" href="assets/css/human-nodes.css" />
+  </head>
+  <body data-page="human-nodes">
+    <a class="skip-link" href="#workspace">Skip to content</a>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar__brand">Vortex Interface</div>
+        <nav class="sidebar__nav" aria-label="Primary">
+          <a
+            class="sidebar__link sidebar__link--active"
+            href="human-nodes.html"
+            data-nav-link="human-nodes"
+            aria-current="page"
+            >Human nodes</a
+          >
+          <a class="sidebar__link" href="proposals.html" data-nav-link="proposals">Proposals</a>
+          <a class="sidebar__link" href="chambers.html" data-nav-link="chambers">Chambers</a>
+          <a class="sidebar__link" href="formation.html" data-nav-link="formation">Formation</a>
+          <a class="sidebar__link" href="invision.html" data-nav-link="invision">Invision</a>
+        </nav>
+      </aside>
+
+      <div class="workspace" id="workspace">
+        <header class="workspace__top">
+          <div>
+            <p class="eyebrow">Vortex suite</p>
+            <h1 data-page-title>Human nodes</h1>
+          </div>
+          <div class="mode-indicators">
+            <span class="mode-chip" data-mode-label>View-only</span>
+            <span class="status-chip status-chip--observer" data-mode-pill>Observer</span>
+          </div>
+        </header>
+        <div class="mode-banner mode-banner--observer" data-mode-banner role="status" hidden>
+          View-only mode — become an active Human node to participate.
+        </div>
+
+        <main class="app-page app-page--active">
+          <section class="search-panel" data-search-panel>
+            <button
+              type="button"
+              class="search-panel__summary"
+              data-search-toggle
+              aria-expanded="false"
+            >
+              <span>Search Human nodes</span>
+              <span class="search-panel__hint">Tap to expand filters</span>
+            </button>
+
+            <div class="search-panel__body" hidden>
+              <header class="search-panel__header">
+                <div>
+                  <p class="eyebrow">Network explorer</p>
+                  <h2>Search Human nodes</h2>
+                  <p>
+                    Filter by tier, chambers, and contribution metrics to scout cognitocrats or
+                    delegations.
+                  </p>
+                </div>
+                <button type="button" class="link-button" data-profile-reset hidden>
+                  Back to my profile
+                </button>
+              </header>
+
+              <div class="filter-row">
+                <label class="input-field input-field--grow">
+                  <span>Search</span>
+                  <input
+                    type="text"
+                    placeholder="Handle, address, or chamber"
+                    aria-label="Search by handle or address"
+                  />
+                </label>
+
+                <label class="input-field">
+                  <span>Tier</span>
+                  <select aria-label="Filter by tier">
+                    <option>Any</option>
+                    <option>Nominee</option>
+                    <option>Ecclesiast</option>
+                    <option>Legate</option>
+                    <option>Consul</option>
+                    <option>Citizen</option>
+                  </select>
+                </label>
+
+                <label class="input-field">
+                  <span>Chamber</span>
+                  <select aria-label="Filter by chamber">
+                    <option>All specializations</option>
+                    <option>Protocol Engineering</option>
+                    <option>Research</option>
+                    <option>Finance</option>
+                    <option>Social</option>
+                    <option>Formation Logistics</option>
+                  </select>
+                </label>
+
+                <label class="input-field">
+                  <span>Cognitocratic score ≥</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value="150"
+                    aria-label="Minimum cognitocratic score"
+                  />
+                </label>
+
+                <label class="input-field">
+                  <span>Meritocratic score ≥</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value="80"
+                    aria-label="Minimum meritocratic score"
+                  />
+                </label>
+              </div>
+
+              <div class="filter-chips">
+                <button type="button" class="chip">Tier ≥ Legate ✕</button>
+                <button type="button" class="chip">Protocol chambers ✕</button>
+                <button type="button" class="chip">ACM &gt; 200 ✕</button>
+                <button type="button" class="btn btn--ghost btn--small">Reset filters</button>
+              </div>
+
+              <div class="results-header">
+                <p>Found 8 cognitocrats</p>
+                <span>Sorted by Absolute Cognitocratic Measure</span>
+              </div>
+
+              <div class="search-results">
+                <button type="button" class="search-result" data-profile-target="mozgiii">
+                  <div>
+                    <strong>Mozgiii</strong>
+                    <span>Citizen · Protocol GC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 410</li>
+                    <li>Chambers: Protocol, Research</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="victor">
+                  <div>
+                    <strong>Victor</strong>
+                    <span>Consul · Finance SC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 365</li>
+                    <li>Delegators 132</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="dima">
+                  <div>
+                    <strong>Dima</strong>
+                    <span>Legate · Engineering SC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 248</li>
+                    <li>Merit 88</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="tony">
+                  <div>
+                    <strong>Tony</strong>
+                    <span>Ecclesiast · Social SC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 182</li>
+                    <li>Formation squads 3</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="sesh">
+                  <div>
+                    <strong>Sesh</strong>
+                    <span>Citizen · Research GC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 421</li>
+                    <li>LCM veto holder</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="peter">
+                  <div>
+                    <strong>Peter</strong>
+                    <span>Consul · Formation Logistics</span>
+                  </div>
+                  <ul>
+                    <li>ACM 309</li>
+                    <li>Projects 6</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="shannon">
+                  <div>
+                    <strong>Shannon</strong>
+                    <span>Legate · Compliance SC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 233</li>
+                    <li>Merit 90</li>
+                  </ul>
+                </button>
+
+                <button type="button" class="search-result" data-profile-target="sasha">
+                  <div>
+                    <strong>Sasha</strong>
+                    <span>Ecclesiast · Security SC</span>
+                  </div>
+                  <ul>
+                    <li>ACM 196</li>
+                    <li>Delegations 74</li>
+                  </ul>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div class="grid-two">
+            <article class="profile-card" data-profile-card>
+              <header>
+                <div class="profile-heading">
+                  <h2 data-profile-name>My Human node</h2>
+                  <div class="profile-badges">
+                    <span class="tier-pill" data-profile-tier>Legate</span>
+                    <span class="status-chip status-chip--observer" data-mode-pill>Observer</span>
+                  </div>
+                </div>
+              </header>
+
+              <ul class="profile-meta">
+                <li>
+                  <span>Public address</span>
+                  <code data-profile-hash>0x9f3a…1ea</code>
+                </li>
+                <li>
+                  <span>Faction(s)</span>
+                  <strong data-profile-factions>Protocol Keepers</strong>
+                </li>
+                <li>
+                  <span>Cognitocratic score</span>
+                  <strong data-profile-cog>312</strong>
+                </li>
+                <li>
+                  <span>Meritocratic score</span>
+                  <strong data-profile-merit>88</strong>
+                </li>
+              </ul>
+
+              <div class="profile-tabs">
+                <button type="button" class="profile-tab profile-tab--active" data-tab="pot">
+                  Proof-of-Time
+                </button>
+                <button type="button" class="profile-tab" data-tab="pod">Proof-of-Devotion</button>
+                <button type="button" class="profile-tab" data-tab="pog">Proof-of-Governance</button>
+              </div>
+
+              <div class="profile-tabpanel" data-tabpanel="pot">
+                <ul>
+                  <li>
+                    <span>Human node since</span>
+                    <strong data-pot-duration>34 epochs (~5.8 weeks)</strong>
+                  </li>
+                  <li>
+                    <span>Human node status</span>
+                    <strong data-pot-status>Active validator</strong>
+                  </li>
+                  <li>
+                    <span>Governor since</span>
+                    <strong data-pot-governor>22 epochs</strong>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="profile-tabpanel" data-tabpanel="pod" hidden>
+                <ul>
+                  <li>
+                    <span>Proposals accepted</span>
+                    <strong data-pod-proposals>2</strong>
+                  </li>
+                  <li>
+                    <span>Member chambers</span>
+                    <strong data-pod-chambers>Protocol · Social</strong>
+                  </li>
+                  <li>
+                    <span>Formation projects</span>
+                    <strong data-pod-projects>Monitoring Kit, Delegation UX</strong>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="profile-tabpanel" data-tabpanel="pog" hidden>
+                <ul>
+                  <li>
+                    <span>Active governor duration</span>
+                    <strong data-pog-duration>18 epochs</strong>
+                  </li>
+                  <li>
+                    <span>Active governor now?</span>
+                    <strong data-pog-status>Yes</strong>
+                  </li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="panel">
+              <header>
+                <h3>Governing highlights</h3>
+                <p>Recent activity from this Human node.</p>
+              </header>
+              <div class="panel-actions">
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--small"
+                  data-open-modal="history"
+                >
+                  Full history
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--small"
+                  data-open-modal="statistics"
+                >
+                  Statistics
+                </button>
+              </div>
+              <ul class="activity-list" data-profile-activity>
+                <li>Epoch 178 · Voted “Yes” on #883 fee split adjustment (GC)</li>
+                <li>Epoch 176 · Delegated to Sigrid during travel (Protocol SC)</li>
+                <li>Epoch 174 · Logged Formation milestone for node monitoring kit</li>
+                <li>Epoch 170 · Submitted mentorship playbook proposal #879</li>
+              </ul>
+            </article>
+          </div>
+        </main>
+
+        <footer class="footer">
+          <p>© Humanode · Vortex Interface mock</p>
+          <p>App layout for Human nodes, proposals, chambers, Formation, Invision.</p>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" data-modal="history" aria-hidden="true">
+      <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Full history">
+        <header>
+          <h2>Full governing history</h2>
+          <button type="button" class="link-button" data-close-modal>&times;</button>
+        </header>
+        <div class="modal__body">
+          <p>Complete log of this governor’s actions across proposals, delegations, and Formation.</p>
+          <ul class="modal__list">
+            <li>Epoch 192 · Proposed GC motion on fee telemetry</li>
+            <li>Epoch 188 · Delegated quorum drill (Protocol SSC)</li>
+            <li>Epoch 184 · Led Formation squad “Node Health Kit”</li>
+            <li>Epoch 181 · Presented fee split adjustment #883</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" data-modal="statistics" aria-hidden="true">
+      <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Statistics">
+        <header>
+          <h2>Governor statistics</h2>
+          <button type="button" class="link-button" data-close-modal>&times;</button>
+        </header>
+        <div class="modal__body modal__body--grid">
+          <article>
+            <p class="eyebrow">Invision score</p>
+            <strong>82/100</strong>
+            <p>Deterrence influence rating.</p>
+          </article>
+          <article>
+            <p class="eyebrow">Quorum participation</p>
+            <strong>91%</strong>
+            <p>Average over last 12 proposals.</p>
+          </article>
+          <article>
+            <p class="eyebrow">Delegation share</p>
+            <strong>3.4%</strong>
+            <p>Share of all delegated votes.</p>
+          </article>
+          <article>
+            <p class="eyebrow">Alert flag</p>
+            <strong>None</strong>
+            <p>No outstanding issues.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+    <script defer src="assets/js/bootstrap.js"></script>
+<script defer src="assets/js/human-nodes.js"></script>
+
+  </body>
+</html>

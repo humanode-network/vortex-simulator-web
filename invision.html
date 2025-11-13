@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vortex Interface · Invision</title>
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/layout.css" />
+    <link rel="stylesheet" href="assets/css/invision.css" />
+  </head>
+  <body class="mode-observer" data-page="invision">
+    <a class="skip-link" href="#workspace">Skip to content</a>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar__brand">Vortex Interface</div>
+        <nav class="sidebar__nav" aria-label="Primary">
+          <a class="sidebar__link" href="human-nodes.html" data-nav-link="human-nodes"
+            >Human nodes</a
+          >
+          <a class="sidebar__link" href="proposals.html" data-nav-link="proposals"
+            >Proposals</a
+          >
+          <a class="sidebar__link" href="chambers.html" data-nav-link="chambers"
+            >Chambers</a
+          >
+          <a class="sidebar__link" href="formation.html" data-nav-link="formation"
+            >Formation</a
+          >
+          <a
+            class="sidebar__link sidebar__link--active"
+            href="invision.html"
+            data-nav-link="invision"
+            aria-current="page"
+            >Invision</a
+          >
+        </nav>
+      </aside>
+
+      <div class="workspace" id="workspace">
+        <header class="workspace__top">
+          <div>
+            <p class="eyebrow">Vortex suite</p>
+            <h1 data-page-title>Invision</h1>
+          </div>
+          <div class="mode-indicators">
+            <span class="mode-chip" data-mode-label>View-only</span>
+            <span class="status-chip status-chip--observer" data-mode-pill>Observer</span>
+          </div>
+        </header>
+        <div class="mode-banner mode-banner--observer" data-mode-banner role="status" hidden>
+          View-only mode — become an active Human node to participate.
+        </div>
+
+        <main class="app-page app-page--active">
+          <header>
+            <p class="eyebrow">State intelligence</p>
+            <h2>Invision dashboard</h2>
+            <p>Monitor deterrence metrics, quorum health, and delegation flows.</p>
+          </header>
+
+          <div class="dashboard">
+            <article class="card">
+              <h3>Deterrence status</h3>
+              <p>Centralization threat level</p>
+              <div class="gauge">
+                <span>Moderate</span>
+                <div class="gauge__bar">
+                  <span style="width: 58%"></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>Quorum health</h3>
+              <p>Active governors per chamber (avg)</p>
+              <div class="stat-line">
+                <strong>41%</strong>
+                <small>Target ≥ 33%</small>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>Delegation spread</h3>
+              <p>Top 5 governors hold 24% of delegated votes.</p>
+              <div class="stat-line">
+                <strong>24%</strong>
+                <small>Last week 27%</small>
+              </div>
+            </article>
+
+            <article class="card card--outline">
+              <h3>Alerts</h3>
+              <ul class="alert-list">
+                <li>Programming sub-chamber nearing cognitocratic drain.</li>
+                <li>Finance chamber veto issued (1/2) on proposal #883.</li>
+                <li>Two Formation squads flagged for review.</li>
+              </ul>
+            </article>
+          </div>
+        </main>
+
+        <footer class="footer">
+          <p>© Humanode · Vortex Interface mock</p>
+          <p>App layout for Human nodes, proposals, chambers, Formation, Invision.</p>
+        </footer>
+      </div>
+    </div>
+
+    <script defer src="assets/js/bootstrap.js"></script>
+    <script defer src="assets/js/chambers.js"></script>
+
+
+  </body>
+</html>

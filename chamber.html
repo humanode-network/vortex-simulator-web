@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Vortex · Chamber Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/layout.css" />
+    <link rel="stylesheet" href="assets/css/chamber.css" />
+  </head>
+  <body data-page="chamber">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <div class="sidebar__brand">Vortex</div>
+          <p class="sidebar__hint">Cognitocratic control stack</p>
+        </div>
+        <nav class="sidebar__nav">
+          <a class="sidebar__link" data-nav-link="human-nodes" href="human-nodes.html">Human nodes</a>
+          <a class="sidebar__link" data-nav-link="proposals" href="proposals.html">Proposals</a>
+          <a class="sidebar__link" data-nav-link="chambers" href="chambers.html">Chambers</a>
+          <a class="sidebar__link" data-nav-link="formation" href="formation.html">Formation</a>
+          <a class="sidebar__link" data-nav-link="invision" href="invision.html">Invision</a>
+        </nav>
+        <footer class="footer">
+          <span>Era 412 · Epoch 61 / 168</span>
+        </footer>
+      </aside>
+
+      <main id="main" class="workspace">
+        <header class="workspace__top">
+          <div>
+            <p class="eyebrow" data-chamber-eyebrow>Chamber · Protocol Engineering</p>
+            <h1 data-chamber-title>Protocol Engineering</h1>
+            <p class="chamber-meta" data-chamber-meta>Multiplier ×1.5 · 64 governors · MCM 5,480 · LCM 6,850</p>
+          </div>
+          <div class="mode-indicators">
+            <div class="mode-chip" data-mode-chip>Active Human node</div>
+          </div>
+        </header>
+
+        <section class="chamber-detail-grid">
+          <article class="panel">
+            <header class="panel__header">
+              <div>
+                <p class="eyebrow">Chamber vote</p>
+                <h2>Proposal status</h2>
+              </div>
+              <div class="tab-switch" role="tablist">
+                <button class="chip chip--active" data-stage-filter="upcoming">Upcoming</button>
+                <button class="chip" data-stage-filter="live">Live</button>
+                <button class="chip" data-stage-filter="ended">Ended</button>
+              </div>
+            </header>
+            <div class="proposal-list" data-chamber-proposals>
+              <!-- JS injects cards -->
+            </div>
+          </article>
+
+          <aside class="panel governors-panel">
+            <header class="panel__header">
+              <div>
+                <p class="eyebrow">Governors</p>
+                <h2>Chamber roster</h2>
+              </div>
+              <span class="roster-count" data-governor-count>64</span>
+            </header>
+            <div class="governor-search">
+              <input type="search" placeholder="Search governors" data-governor-search />
+            </div>
+            <ul class="governor-list" data-governor-list>
+              <!-- JS injects list -->
+            </ul>
+          </aside>
+
+          <section class="panel forum-panel">
+            <header class="panel__header forum-header">
+              <div>
+                <p class="eyebrow">Chamber forum</p>
+                <h2>Threads &amp; chat</h2>
+              </div>
+              <button class="btn btn--small btn--ghost" data-start-thread>New thread</button>
+            </header>
+            <div class="forum-columns">
+              <div class="thread-list" data-thread-list>
+                <article class="thread-card">
+                  <h3>Sequencer redundancy rollout</h3>
+                  <p>Mozgiii · 4 replies · Updated 1h ago</p>
+                </article>
+                <article class="thread-card">
+                  <h3>VM verifier benchmarks</h3>
+                  <p>Victor · 11 replies · Updated 3h ago</p>
+                </article>
+                <article class="thread-card">
+                  <h3>Formation slot requests</h3>
+                  <p>Sesh · 6 replies · Updated 6h ago</p>
+                </article>
+              </div>
+              <div class="chat-panel">
+                <header>Chamber chat</header>
+                <div class="chat-log" data-chat-log>
+                  <p><strong>Mozgiii:</strong> Milestone 2 patch deployed, please verify.</p>
+                  <p><strong>Victor:</strong> Treasury hook live, watching KPIs.</p>
+                  <p><strong>Sesh:</strong> Need 2 reviewers for the new biometrics spec.</p>
+                </div>
+                <form class="chat-form">
+                  <input type="text" placeholder="Send a message" />
+                  <button type="submit" class="btn btn--primary btn--small">Send</button>
+                </form>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script defer src="assets/js/bootstrap.js"></script>
+    <script defer src="assets/js/chamber.js"></script>
+  </body>
+</html>

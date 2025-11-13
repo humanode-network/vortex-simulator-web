@@ -1,0 +1,4 @@
+/* Page-specific tweaks for Invision if needed */
+.dashboard .card p {
+  margin-bottom: 0.5rem;
+}

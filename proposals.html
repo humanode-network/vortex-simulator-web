@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Vortex · Proposals</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/layout.css" />
+    <link rel="stylesheet" href="assets/css/proposals.css" />
+  </head>
+  <body data-page="proposals">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <div class="sidebar__brand">Vortex</div>
+          <p class="sidebar__hint">Cognitocratic control stack</p>
+        </div>
+        <nav class="sidebar__nav">
+          <a class="sidebar__link" data-nav-link="human-nodes" href="human-nodes.html">Human nodes</a>
+          <a class="sidebar__link" data-nav-link="chambers" href="chambers.html">Chambers</a>
+          <a class="sidebar__link sidebar__link--active" data-nav-link="proposals" aria-current="page" href="proposals.html">
+            Proposals
+          </a>
+          <a class="sidebar__link" data-nav-link="formation" href="formation.html">Formation</a>
+          <a class="sidebar__link" data-nav-link="invision" href="invision.html">Invision</a>
+        </nav>
+        <footer class="footer">
+          <span>Era 412 · Epoch 61 / 168</span>
+        </footer>
+      </aside>
+
+      <main id="main" class="workspace">
+        <header class="workspace__top">
+          <div>
+            <h1>Proposals</h1>
+          </div>
+          <div class="mode-indicators">
+            <div class="mode-chip" data-mode-chip>Active Human node</div>
+          </div>
+        </header>
+
+        <section class="filter-drawer" data-filter-drawer>
+          <button class="filter-drawer__toggle" data-filter-toggle aria-expanded="false">
+            <div>
+              <strong>Filters &amp; search</strong>
+              <span class="filter-drawer__hint" data-filter-hint>Collapsed</span>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </button>
+
+          <div class="filter-drawer__body" data-filter-body>
+            <div class="filter-grid">
+              <label class="input-field input-field--full">
+                Keyword search
+                <div class="search-field">
+                  <input type="search" placeholder="Proposal, hash, proposer…" data-proposal-search />
+                  <button aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none" />
+                      <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </label>
+
+              <label class="input-field">
+                Status
+                <select>
+                  <option>Any</option>
+                  <option>Proposal pool</option>
+                  <option>Chamber vote</option>
+                  <option>Formation build</option>
+                  <option>Final vote</option>
+                  <option>Refused / archived</option>
+                </select>
+              </label>
+
+              <label class="input-field">
+                Chamber
+                <select>
+                  <option>All chambers</option>
+                  <option>Protocol Engineering</option>
+                  <option>Economics &amp; Treasury</option>
+                  <option>Security &amp; Infra</option>
+                  <option>Constitutional</option>
+                  <option>Social Impact</option>
+                </select>
+              </label>
+
+              <label class="input-field">
+                Tier requirement
+                <select>
+                  <option>Any</option>
+                  <option>Nominee</option>
+                  <option>Tribune</option>
+                  <option>Legate</option>
+                  <option>Consul</option>
+                  <option>Citizen</option>
+                </select>
+              </label>
+
+              <label class="input-field">
+                Proof emphasis
+                <select>
+                  <option>Any</option>
+                  <option>PoT heavy</option>
+                  <option>PoD heavy</option>
+                  <option>PoG heavy</option>
+                </select>
+              </label>
+
+              <label class="input-field">
+                Sort by
+                <select>
+                  <option>Newest</option>
+                  <option>Oldest</option>
+                  <option>Activity</option>
+                  <option>Votes casted</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="filter-chips">
+              <button class="chip">Infrastructure</button>
+              <button class="chip">Formation</button>
+              <button class="chip">Security</button>
+              <button class="chip">Research</button>
+              <button class="chip">Community</button>
+              <button class="chip">High quorum</button>
+            </div>
+
+            <div class="filter-actions">
+              <button class="btn btn--small btn--ghost">Reset</button>
+              <button class="btn btn--small btn--primary">Apply</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="proposal-stack" aria-live="polite">
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="orbital mesh sequencer upgrade protocol engineering legate proposal pool drafting delegations 28 redundancy latency"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Protocol Engineering · Legate tier</p>
+                <strong>Orbital Mesh Sequencer Upgrade</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--pool">Proposal pool</span>
+                <span class="summary-pill">Protocol Engineering chamber</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Introduce redundant biometric sequencer nodes to lower latency inside human-node verification flow and enable
+                inter-era checkpoints.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Pool momentum</h3>
+                  <p>Upvotes / Downvotes</p>
+                  <strong>128 / 14</strong>
+                </article>
+                <article>
+                  <h3>Attention quorum</h3>
+                  <p>20% of active governors or ≥10% upvotes</p>
+                  <strong class="text-ok">Met · 38% engaged</strong>
+                </article>
+                <article>
+                  <h3>Votes casted</h3>
+                  <p>Backing seats</p>
+                  <strong>28</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Proof mix:</strong> PoT 45% · PoD 35% · PoG 20%</li>
+                <li><strong>Budget ask:</strong> 210k HMND</li>
+                <li><strong>Formation impact:</strong> High</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Mozgiii">Proposer: Mozgiii</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">Open proposal</a>
+                <button class="btn btn--small btn--ghost">Watch</button>
+              </div>
+            </div>
+          </article>
+
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="adaptive fee shaping economics treasury consul chamber vote dynamic fees formation split delegations 51"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Economics &amp; Treasury · Consul</p>
+                <strong>Adaptive Fee Shaping</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--vote">Chamber vote</span>
+                <span class="summary-pill">Economics chamber</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Dynamic fee split that feeds Formation, treasury, and biometric maintenance based on network stress and quorum
+                activity.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Voting quorum</h3>
+                  <p>Strict 33% of active governors</p>
+                  <strong class="text-ok">Met · 35%</strong>
+                </article>
+                <article>
+                  <h3>Passing rule</h3>
+                  <p>≥66.6% + 1 vote yes</p>
+                  <strong>Current 57%</strong>
+                </article>
+                <article>
+                  <h3>Time left</h3>
+                  <p>Voting window</p>
+                  <strong>02h 15m</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Formation impact:</strong> Medium</li>
+                <li><strong>Votes casted:</strong> 51</li>
+                <li><strong>Proof mix:</strong> PoT 30% · PoD 50% · PoG 20%</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Victor">Proposer: Victor</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">Open proposal</a>
+                <button class="btn btn--small btn--ghost">Add to agenda</button>
+              </div>
+            </div>
+          </article>
+
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="sybilguard l2 mirror security infra legate formation build milestone rollup anti sybil bridge"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Security &amp; Infra · Legate</p>
+                <strong>SybilGuard L2 Mirror</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--build">Formation</span>
+                <span class="summary-pill">Milestone 2 / 4</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Mirror anti-Sybil heuristics onto an auxiliary rollup so partner DAOs can consume attestations via trust
+                minimised bridges.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Budget allocated</h3>
+                  <p>HMND</p>
+                  <strong>420k</strong>
+                </article>
+                <article>
+                  <h3>Team slots</h3>
+                  <p>Taken / Total</p>
+                  <strong>7 / 9</strong>
+                </article>
+                <article>
+                  <h3>Deployment progress</h3>
+                  <p>Reported completion</p>
+                  <strong>68%</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Lead chamber:</strong> Security &amp; Infra</li>
+                <li><strong>Next check-in:</strong> Epoch 186</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Sesh">Proposer: Sesh</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">View milestone</a>
+                <button class="btn btn--small btn--ghost">Ping team</button>
+              </div>
+            </div>
+          </article>
+
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="formation talent mesh onboarding education chamber pool nominations"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Formation Guild · Tribune tier</p>
+                <strong>Mesh Talent Onboarding Fund</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--pool">Proposal pool</span>
+                <span class="summary-pill">Formation committee</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Create a rolling grant for onboarding biometric researchers and UX engineers into the Mesh program with rapid
+                stipends.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Pool momentum</h3>
+                  <p>Upvotes / Downvotes</p>
+                  <strong>74 / 5</strong>
+                </article>
+                <article>
+                  <h3>Attention quorum</h3>
+                  <p>20% active or ≥10% upvotes</p>
+                  <strong>In progress · 18%</strong>
+                </article>
+                <article>
+                  <h3>Votes casted</h3>
+                  <p>Backing seats</p>
+                  <strong>19</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Requested budget:</strong> 95k HMND</li>
+                <li><strong>Impact area:</strong> Talent &amp; education</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Tony">Proposer: Tony</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">Open proposal</a>
+                <button class="btn btn--small btn--ghost">Watch</button>
+              </div>
+            </div>
+          </article>
+
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="liveness sentinel chamber security quorum vote"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Security · Legate</p>
+                <strong>Liveness Sentinel Retrofit</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--vote">Chamber vote</span>
+                <span class="summary-pill">Security chamber</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Retrofit legacy sentinel nodes with the new liveness circuit breaker to prevent cascading biometric outages across
+                shards.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Voting quorum</h3>
+                  <p>Strict 33% active governors</p>
+                  <strong>Pending · 28%</strong>
+                </article>
+                <article>
+                  <h3>Passing rule</h3>
+                  <p>≥66.6% + 1 vote yes</p>
+                  <strong>Current 62%</strong>
+                </article>
+                <article>
+                  <h3>Time left</h3>
+                  <p>Voting window</p>
+                  <strong>05h 42m</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Equipment budget:</strong> 60k HMND</li>
+                <li><strong>Rollout scope:</strong> 42 sentinel nodes</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Shannon">Proposer: Shannon</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">Open proposal</a>
+                <button class="btn btn--small btn--ghost">Track vote</button>
+              </div>
+            </div>
+          </article>
+
+          <article
+            class="proposal-item"
+            data-proposal
+            data-proposal-keywords="delegation transparency ledger constitutional citizen refused privacy zk snark observers"
+          >
+            <button class="proposal-summary" data-proposal-toggle aria-expanded="false">
+              <div>
+                <p class="proposal-meta">Constitutional · Citizen</p>
+                <strong>Delegation Transparency Ledger</strong>
+              </div>
+              <div class="summary-meta">
+                <span class="stage-chip stage-chip--archived">Archived</span>
+                <span class="summary-pill">Cycle 407</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              </div>
+            </button>
+            <div class="proposal-details" data-proposal-details hidden>
+              <p>
+                Immutable public feed of delegation shifts and vote reroutes with zk-SNARK concealed identities for observers.
+              </p>
+              <div class="stage-data">
+                <article>
+                  <h3>Chamber verdict</h3>
+                  <p>Constitutional quorum 33%</p>
+                  <strong class="text-warn">Refused</strong>
+                </article>
+                <article>
+                  <h3>Reapply conditions</h3>
+                  <p>Needed proof</p>
+                  <strong>New privacy circuit</strong>
+                </article>
+                <article>
+                  <h3>Cycle</h3>
+                  <p>Historic reference</p>
+                  <strong>407</strong>
+                </article>
+              </div>
+              <ul class="proposal-stats">
+                <li><strong>Rejection reason:</strong> Privacy load unresolved</li>
+                <li><strong>Author tier:</strong> Citizen</li>
+              </ul>
+              <a class="proposer-link" href="human-nodes.html#Sasha">Proposer: Sasha</a>
+              <div class="card-actions">
+                <a class="btn btn--small btn--primary" href="#">Open proposal</a>
+                <button class="btn btn--small btn--ghost">View audit notes</button>
+              </div>
+            </div>
+          </article>
+
+          <p class="proposal-empty" data-proposal-empty hidden>No proposals match the current search.</p>
+        </section>
+      </main>
+    </div>
+
+    <script defer src="assets/js/bootstrap.js"></script>
+    <script defer src="assets/js/proposals.js"></script>
+  </body>
+</html>

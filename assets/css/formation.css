@@ -1,0 +1,7 @@
+/* Page-specific styles for Formation */
+.grid-two > article:first-child {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.01);
+}
