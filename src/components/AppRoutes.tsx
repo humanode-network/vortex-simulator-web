@@ -1,10 +1,19 @@
-import { Route, Routes } from "react-router";
+import { Outlet, Route, Routes } from "react-router";
 import Welcome from "./Welcome";
+import AppShell from "./AppShell";
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<Welcome />} />
+      <Route
+        element={
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        }
+      >
+        <Route path="/" element={<Welcome />} />
+      </Route>
     </Routes>
   );
 };
