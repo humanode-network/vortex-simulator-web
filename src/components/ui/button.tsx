@@ -11,9 +11,9 @@ const buttonVariants = cva(
         primary:
           "bg-[var(--primary)] text-white shadow-md hover:opacity-90 focus-visible:ring-[var(--primary)]",
         ghost:
-          "border border-[color:var(--border)] text-[color:var(--text)] bg-transparent hover:bg-[color:var(--panel-alt)]",
+          "border border-border text-(--text) bg-transparent hover:bg-[color:var(--panel-alt)]",
         outline:
-          "border border-[color:var(--border)] text-[color:var(--text)] bg-[color:var(--panel)] hover:border-[color:var(--primary-dim)]",
+          "border border-border text-(--text) bg-[color:var(--panel)] hover:border-[color:var(--primary-dim)]",
       },
       size: {
         sm: "h-9 px-3",

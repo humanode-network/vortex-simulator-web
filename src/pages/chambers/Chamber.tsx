@@ -1,65 +1,60 @@
 import { useParams, Link } from "react-router";
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Stack,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Grid, Col } from "@/components/ui/layout";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
   const title = id ? id.replace(/-/g, " ") : "Unknown";
 
   return (
-    <Box className="app-page" display="flex" flexDirection="column" gap={2}>
-      <Typography variant="h5">Chamber: {title}</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Overview and key metrics for this chamber.
-      </Typography>
+    <div className="app-page flex flex-col gap-3">
+      <div>
+        <h1 className="text-xl font-semibold text-(--text)">Chamber: {title}</h1>
+        <p className="text-sm text-muted">Overview and key metrics for this chamber.</p>
+      </div>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Scope</Typography>
-              <Typography variant="body2" color="text.secondary">
+      <Grid cols={12} gap="4">
+        <Col span={{ base: 12, md: 8 }}>
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Scope</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              <p className="text-sm text-muted">
                 This chamber governs decisions related to its specialization. Add charter, mandates, and focuses here.
-              </Typography>
-              <Stack direction="row" spacing={1} mt={2} flexWrap="wrap">
-                <Chip label="Mandate" variant="outlined" />
-                <Chip label="Procedures" variant="outlined" />
-                <Chip label="Contacts" variant="outlined" />
-              </Stack>
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {["Mandate", "Procedures", "Contacts"].map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Leads & members</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Lead: TBD
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Active members: —
-              </Typography>
-              <Stack direction="row" spacing={1} mt={2}>
-                <Button component={Link} to="/chambers" variant="outlined" size="small">
-                  Back to chambers
+        </Col>
+
+        <Col span={{ base: 12, md: 4 }}>
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Leads & members</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              <p className="text-sm text-muted">Lead: TBD</p>
+              <p className="text-sm text-muted">Active members: —</p>
+              <div className="flex gap-2 pt-1">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/chambers">Back to chambers</Link>
                 </Button>
-                <Button variant="contained" size="small">
-                  Apply
-                </Button>
-              </Stack>
+                <Button size="sm">Apply</Button>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </Col>
       </Grid>
-    </Box>
+    </div>
   );
 };
 

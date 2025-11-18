@@ -1,144 +1,113 @@
-import {
-  Box,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-  Button,
-} from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Grid, Col } from "@/components/ui/layout";
+
+const proposals = [
+  {
+    id: "mesh",
+    title: "Orbital Mesh Sequencer Upgrade",
+    chamber: "Protocol Engineering · Legate tier",
+    status: "Proposal pool",
+    chamberTag: "Protocol chamber",
+    summary:
+      "Introduce redundant biometric sequencer nodes to lower latency inside human-node verification flow and enable inter-era checkpoints.",
+  },
+  {
+    id: "fees",
+    title: "Adaptive Fee Shaping",
+    chamber: "Economics & Treasury · Consul",
+    status: "Chamber vote",
+    chamberTag: "Economics chamber",
+    summary:
+      "Tune transaction fees dynamically based on network load to improve determinism for quorum settlement while protecting user experience.",
+  },
+];
 
 const Proposals: React.FC = () => {
   return (
-    <Box className="app-page" display="flex" flexDirection="column" gap={2}>
+    <div className="app-page flex flex-col gap-4">
       <Card>
-        <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-            <div>
-              <Typography className="eyebrow" component="p">
-                Filters
-              </Typography>
-              <Typography variant="h6">Search proposals</Typography>
-            </div>
-          </Stack>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField fullWidth label="Keyword search" placeholder="Proposal, hash, proposer…" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select defaultValue="any" label="Status">
-                  <MenuItem value="any">Any</MenuItem>
-                  <MenuItem value="pool">Proposal pool</MenuItem>
-                  <MenuItem value="vote">Chamber vote</MenuItem>
-                  <MenuItem value="build">Formation build</MenuItem>
-                  <MenuItem value="final">Final vote</MenuItem>
-                  <MenuItem value="archived">Archived</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Chamber</InputLabel>
-                <Select defaultValue="all" label="Chamber">
-                  <MenuItem value="all">All chambers</MenuItem>
-                  <MenuItem value="protocol">Protocol Engineering</MenuItem>
-                  <MenuItem value="economics">Economics</MenuItem>
-                  <MenuItem value="security">Security</MenuItem>
-                  <MenuItem value="social">Social</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Sort by</InputLabel>
-                <Select defaultValue="newest" label="Sort by">
-                  <MenuItem value="newest">Newest</MenuItem>
-                  <MenuItem value="oldest">Oldest</MenuItem>
-                  <MenuItem value="activity">Activity</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+        <CardHeader className="pb-2">
+          <p className="text-xs uppercase tracking-wide text-muted">Filters</p>
+          <CardTitle>Search proposals</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-4">
+          <Grid cols={12} gap="3">
+            <Col span={{ base: 12, sm: 6, md: 3 }}>
+              <Label htmlFor="keyword">Keyword search</Label>
+              <Input id="keyword" placeholder="Proposal, hash, proposer…" />
+            </Col>
+            <Col span={{ base: 12, sm: 6, md: 3 }}>
+              <Label htmlFor="status">Status</Label>
+              <Select id="status" defaultValue="any">
+                <option value="any">Any</option>
+                <option value="pool">Proposal pool</option>
+                <option value="vote">Chamber vote</option>
+                <option value="build">Formation build</option>
+                <option value="final">Final vote</option>
+                <option value="archived">Archived</option>
+              </Select>
+            </Col>
+            <Col span={{ base: 12, sm: 6, md: 3 }}>
+              <Label htmlFor="chamber">Chamber</Label>
+              <Select id="chamber" defaultValue="all">
+                <option value="all">All chambers</option>
+                <option value="protocol">Protocol Engineering</option>
+                <option value="economics">Economics</option>
+                <option value="security">Security</option>
+                <option value="social">Social</option>
+              </Select>
+            </Col>
+            <Col span={{ base: 12, sm: 6, md: 3 }}>
+              <Label htmlFor="sort">Sort by</Label>
+              <Select id="sort" defaultValue="newest">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="activity">Activity</option>
+              </Select>
+            </Col>
           </Grid>
-          <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
-            <Chip label="Infrastructure" />
-            <Chip label="Formation" />
-            <Chip label="Security" />
-            <Chip label="Research" />
-            <Chip label="Community" />
-            <Chip label="High quorum" />
-          </Stack>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            {["Infrastructure", "Formation", "Security", "Research", "Community", "High quorum"].map((tag) => (
+              <Badge key={tag} variant="outline">
+                {tag}
+              </Badge>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      <Stack spacing={2}>
-        <Card>
-          <CardContent>
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
-              <div>
-                <Typography variant="body2" color="text.secondary">
-                  Protocol Engineering · Legate tier
-                </Typography>
-                <Typography variant="h6">Orbital Mesh Sequencer Upgrade</Typography>
+      <div className="space-y-3">
+        {proposals.map((p) => (
+          <Card key={p.id} className="border-border">
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-sm text-muted">{p.chamber}</p>
+                  <h3 className="text-lg font-semibold">{p.title}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">{p.status}</Badge>
+                  <Badge variant="outline">{p.chamberTag}</Badge>
+                </div>
               </div>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Chip label="Proposal pool" color="primary" variant="outlined" />
-                <Chip label="Protocol chamber" variant="outlined" />
-              </Stack>
-            </Stack>
-            <Typography variant="body2" color="text.secondary" mt={1.5}>
-              Introduce redundant biometric sequencer nodes to lower latency inside human-node verification flow and
-              enable inter-era checkpoints.
-            </Typography>
-          </CardContent>
-          <CardActions sx={{ paddingX: 2, paddingBottom: 2 }}>
-            <Button variant="contained" color="primary" size="small">
-              Open proposal
-            </Button>
-            <Button variant="outlined" size="small">
-              Watch
-            </Button>
-          </CardActions>
-        </Card>
-
-        <Card>
-          <CardContent>
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
-              <div>
-                <Typography variant="body2" color="text.secondary">
-                  Economics &amp; Treasury · Consul
-                </Typography>
-                <Typography variant="h6">Adaptive Fee Shaping</Typography>
-              </div>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Chip label="Chamber vote" color="primary" variant="outlined" />
-                <Chip label="Economics chamber" variant="outlined" />
-              </Stack>
-            </Stack>
-            <Typography variant="body2" color="text.secondary" mt={1.5}>
-              Tune transaction fees dynamically based on network load to improve determinism for quorum settlement while
-              protecting user experience.
-            </Typography>
-          </CardContent>
-          <CardActions sx={{ paddingX: 2, paddingBottom: 2 }}>
-            <Button variant="contained" color="primary" size="small">
-              Open proposal
-            </Button>
-            <Button variant="outlined" size="small">
-              Watch
-            </Button>
-          </CardActions>
-        </Card>
-      </Stack>
-    </Box>
+              <p className="text-sm text-muted">{p.summary}</p>
+            </CardContent>
+            <CardFooter className="pt-0 gap-2">
+              <Button size="sm">Open proposal</Button>
+              <Button variant="outline" size="sm">
+                Watch
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };
 

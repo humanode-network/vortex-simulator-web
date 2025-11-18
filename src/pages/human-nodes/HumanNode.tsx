@@ -1,46 +1,55 @@
 import { useParams, Link } from "react-router";
-import { Box, Card, CardContent, Chip, Stack, Typography, Button } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Grid, Col } from "@/components/ui/layout";
 
 const HumanNode: React.FC = () => {
   const { id } = useParams();
   const name = id ?? "Unknown";
 
   return (
-    <Box className="app-page" display="flex" flexDirection="column" gap={2}>
-      <Typography variant="h5">Human node: {name}</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Profile overview and participation summary.
-      </Typography>
+    <div className="app-page flex flex-col gap-3">
+      <div>
+        <h1 className="text-xl font-semibold text-(--text)">Human node: {name}</h1>
+        <p className="text-sm text-muted">Profile overview and participation summary.</p>
+      </div>
 
-      <Stack spacing={2} direction={{ xs: "column", md: "row" }}>
-        <Card sx={{ flex: 1 }}>
-          <CardContent>
-            <Typography variant="h6">Summary</Typography>
-            <Stack direction="row" spacing={2} mt={1} flexWrap="wrap">
-              <Chip label="ACM: —" variant="outlined" />
-              <Chip label="MM: —" variant="outlined" />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" mt={1.5}>
-              Add bio, chamber affiliations, and last activity here.
-            </Typography>
-          </CardContent>
-        </Card>
+      <Grid cols={12} gap="4">
+        <Col span={{ base: 12, md: 8 }}>
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">ACM: —</Badge>
+                <Badge variant="outline">MM: —</Badge>
+              </div>
+              <p className="text-sm text-muted">
+                Add bio, chamber affiliations, and last activity here.
+              </p>
+            </CardContent>
+          </Card>
+        </Col>
 
-        <Card sx={{ width: { xs: "100%", md: 320 } }}>
-          <CardContent>
-            <Typography variant="h6">Actions</Typography>
-            <Stack direction="row" spacing={1} mt={1}>
-              <Button component={Link} to="/human-nodes" variant="outlined" size="small">
-                Back to list
-              </Button>
-              <Button variant="contained" size="small">
-                Contact
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-    </Box>
+        <Col span={{ base: 12, md: 4 }}>
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              <div className="flex gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/human-nodes">Back to list</Link>
+                </Button>
+                <Button size="sm">Contact</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </Col>
+      </Grid>
+    </div>
   );
 };
 

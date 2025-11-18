@@ -1,27 +1,16 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import Grid from "@mui/material/Grid";
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  FormControl,
-  FormControlLabel,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
-import Switch from "@mui/material/Switch";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tabs } from "@/components/ui/tabs";
+import { Grid, Col } from "@/components/ui/layout";
 
+// Data types and sample data
 type Node = {
   id: string;
   name: string;
@@ -83,240 +72,243 @@ const HumanNodes: React.FC = () => {
   }, [search, sortBy, tierFilter, chamberFilter, tagFilter, formationOnly, acmMin, mmMin]);
 
   return (
-    <Box className="app-page" display="flex" flexDirection="column" gap={2}>
-      <TextField
-        fullWidth
-        placeholder="Search Human nodes by handle, address, chamber, or focus…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <Button variant="outlined" size="small">
-                Search
-              </Button>
-            </InputAdornment>
-          ),
-        }}
-      />
+    <div className="app-page flex flex-col gap-4">
+      <div className="w-full rounded-2xl border border-border bg-[color:var(--panel)] p-3 shadow-sm">
+        <div className="flex w-full items-center gap-2">
+          <Input
+            placeholder="Search Human nodes by handle, address, chamber, or focus…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-11"
+          />
+          <Button variant="outline" size="md" className="shrink-0">
+            Search
+          </Button>
+        </div>
+      </div>
 
-      <Grid container spacing={2} columns={12} sx={{ alignItems: "stretch" }}>
-        <Grid size={{ xs: 12, md: 9 }} sx={{ display: "flex" }}>
-          <Card sx={{ width: "100%" }}>
-            <CardContent>
-              <Typography className="eyebrow" component="p" mb={1.5}>
-                Results ({filtered.length})
-              </Typography>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                justifyContent="space-between"
-                mb={2}
-              >
-                <FormControl size="small" sx={{ minWidth: 180 }}>
-                  <InputLabel>Sort by</InputLabel>
-                  <Select value={sortBy} label="Sort by" onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
-                    <MenuItem value="acm-desc">ACM (desc)</MenuItem>
-                    <MenuItem value="acm-asc">ACM (asc)</MenuItem>
-                    <MenuItem value="tier">Tier</MenuItem>
-                    <MenuItem value="name">Name</MenuItem>
-                  </Select>
-                </FormControl>
-                <Box display="flex" justifyContent="flex-end" width={{ xs: "100%", sm: "auto" }}>
-                  <ToggleButtonGroup
-                    value={view}
-                    exclusive
-                    size="small"
-                    onChange={(_, val) => val && setView(val)}
-                    sx={{ "& .MuiToggleButton-root": { flex: 1, minWidth: 96 } }}
+      <Grid cols={12} gap="4" className="items-start">
+        <Col span={{ base: 12, md: 9 }} className="flex">
+          <Card className="w-full">
+            <CardHeader className="pb-2">
+              <p className="text-xs uppercase tracking-wide text-muted">Results ({filtered.length})</p>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <Label>Sort by</Label>
+                  <Select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="min-w-[180px]"
                   >
-                    <ToggleButton value="cards">Cards</ToggleButton>
-                    <ToggleButton value="list">List</ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-              </Stack>
+                    <option value="acm-desc">ACM (desc)</option>
+                    <option value="acm-asc">ACM (asc)</option>
+                    <option value="tier">Tier</option>
+                    <option value="name">Name</option>
+                  </Select>
+                </div>
+                <Tabs
+                  value={view}
+                  onValueChange={(val) => setView(val as "cards" | "list")}
+                  options={[
+                    { value: "cards", label: "Cards" },
+                    { value: "list", label: "List" },
+                  ]}
+                />
+              </div>
 
-              <Stack spacing={2}>
-                {filtered.map((node) => (
+              <div className="space-y-3">
+                {filtered.map((node) =>
                   view === "cards" ? (
-                    <Card key={node.id} variant="outlined">
-                      <CardContent sx={{ pb: 0 }}>
-                        <Stack spacing={1.5}>
-                          <Box>
-                            <Typography variant="h6">{node.name}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {node.role}
-                            </Typography>
-                          </Box>
-                          <Stack direction="row" spacing={1} flexWrap="wrap">
-                            <Chip label={`ACM: ${node.acm}`} variant="outlined" />
-                            <Chip label={`MM: ${node.mm}`} variant="outlined" />
-                            <Chip label={`Tier: ${node.tier}`} variant="outlined" />
-                            <Chip label={node.active ? "Active governor" : "Not active"} color={node.active ? "success" : "default"} variant="outlined" />
-                          </Stack>
-                          <Grid container spacing={1}>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                              <Typography variant="body2">Main chamber: {node.chamber}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                              <Typography variant="body2">Formation member: {node.formationCapable ? "Yes" : "No"}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                              <Typography variant="body2">Main formation project: {node.formationProject ?? "—"}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 6 }}>
-                              <Typography variant="body2">Status: {node.active ? "Active" : "Not active"}</Typography>
-                            </Grid>
-                          </Grid>
-                          <Stack direction="row" spacing={1} flexWrap="wrap">
-                            {node.tags.map((tag) => (
-                              <Chip key={tag} label={tag} variant="outlined" />
-                            ))}
-                          </Stack>
-                        </Stack>
+                    <Card key={node.id} className="border-border">
+                      <CardContent className="pt-4 space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">{node.name}</h3>
+                          <p className="text-sm text-muted">{node.role}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge>ACM: {node.acm}</Badge>
+                          <Badge>MM: {node.mm}</Badge>
+                          <Badge>Tier: {node.tier}</Badge>
+                          <Badge variant={node.active ? "default" : "muted"}>
+                            {node.active ? "Active governor" : "Not active"}
+                          </Badge>
+                        </div>
+                        <Grid cols={12} gap="3" className="items-start">
+                          <Col span={{ base: 12, md: 6 }}>
+                            <p className="text-sm text-(--text)">Main chamber: {node.chamber}</p>
+                          </Col>
+                          <Col span={{ base: 12, md: 6 }}>
+                            <p className="text-sm text-(--text)">
+                              Formation member: {node.formationCapable ? "Yes" : "No"}
+                            </p>
+                          </Col>
+                          <Col span={{ base: 12, md: 6 }}>
+                            <p className="text-sm text-(--text)">
+                              Main formation project: {node.formationProject ?? "—"}
+                            </p>
+                          </Col>
+                          <Col span={{ base: 12, md: 6 }}>
+                            <p className="text-sm text-(--text)">
+                              Status: {node.active ? "Active" : "Not active"}
+                            </p>
+                          </Col>
+                        </Grid>
+                        <div className="flex flex-wrap gap-2">
+                          {node.tags.map((tag) => (
+                            <Badge key={tag} variant="outline">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
                       </CardContent>
-                      <CardActions sx={{ px: 2, pb: 2 }}>
-                        <Button component={Link} to={`/human-nodes/${node.id}`} size="small" variant="contained">
-                          Open profile
+                      <CardFooter className="pt-0 justify-end gap-2">
+                        <Button asChild size="sm">
+                          <Link to={`/human-nodes/${node.id}`}>Open profile</Link>
                         </Button>
-                      </CardActions>
+                      </CardFooter>
                     </Card>
                   ) : (
-                    <Card key={node.id} variant="outlined">
-                      <CardContent sx={{ pb: 1.5 }}>
-                        <Grid container spacing={1} sx={{ alignItems: "center" }}>
-                          <Grid size={{ xs: 12, md: 5 }}>
-                            <Typography variant="subtitle1">{node.name}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {node.role}
-                            </Typography>
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                              <Chip label={`ACM: ${node.acm}`} variant="outlined" size="small" />
-                              <Chip label={`MM: ${node.mm}`} variant="outlined" size="small" />
-                              {node.formationCapable && <Chip label="Formation" color="primary" variant="outlined" size="small" />}
-                            </Stack>
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 3 }}>
-                            <Stack direction="row" spacing={1} justifyContent={{ xs: "flex-start", md: "flex-end" }}>
-                              <Button component={Link} to={`/human-nodes/${node.id}`} size="small" variant="contained">
-                                Open
+                    <Card key={node.id} className="border-border">
+                      <CardContent className="pt-4 pb-3">
+                        <Grid cols={12} gap="3" className="items-center">
+                          <Col span={{ base: 12, md: 5 }}>
+                            <h4 className="text-base font-semibold">{node.name}</h4>
+                            <p className="text-sm text-muted">{node.role}</p>
+                          </Col>
+                          <Col span={{ base: 12, md: 4 }}>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge size="sm">ACM: {node.acm}</Badge>
+                              <Badge size="sm">MM: {node.mm}</Badge>
+                              {node.formationCapable && (
+                                <Badge size="sm" variant="outline">
+                                  Formation
+                                </Badge>
+                              )}
+                            </div>
+                          </Col>
+                          <Col span={{ base: 12, md: 3 }}>
+                            <div className="flex justify-start md:justify-end">
+                              <Button asChild size="sm">
+                                <Link to={`/human-nodes/${node.id}`}>Open</Link>
                               </Button>
-                            </Stack>
-                          </Grid>
+                            </div>
+                          </Col>
                         </Grid>
                       </CardContent>
                     </Card>
-                  )
-                ))}
-              </Stack>
+                  ),
+                )}
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </Col>
 
-        <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-          <Card sx={{ width: "100%" }}>
-            <CardContent>
-              <Typography className="eyebrow" component="p">
-                Filters
-              </Typography>
-              <Typography variant="h6">Refine directory</Typography>
-
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid size={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Tier</InputLabel>
-                    <Select value={tierFilter} label="Tier" onChange={(e) => setTierFilter(e.target.value)}>
-                      <MenuItem value="any">Any</MenuItem>
-                      <MenuItem value="nominee">Nominee</MenuItem>
-                      <MenuItem value="ecclesiast">Ecclesiast</MenuItem>
-                      <MenuItem value="legate">Legate</MenuItem>
-                      <MenuItem value="consul">Consul</MenuItem>
-                      <MenuItem value="citizen">Citizen</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Chamber</InputLabel>
-                    <Select value={chamberFilter} label="Chamber" onChange={(e) => setChamberFilter(e.target.value)}>
-                      <MenuItem value="all">All specializations</MenuItem>
-                      <MenuItem value="protocol">Protocol Engineering</MenuItem>
-                      <MenuItem value="research">Research</MenuItem>
-                      <MenuItem value="finance">Finance</MenuItem>
-                      <MenuItem value="social">Social</MenuItem>
-                      <MenuItem value="formation">Formation Logistics</MenuItem>
-                      <MenuItem value="economics">Economics</MenuItem>
-                      <MenuItem value="security">Security & Infra</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Specialty tag</InputLabel>
-                    <Select value={tagFilter} label="Specialty tag" onChange={(e) => setTagFilter(e.target.value)}>
-                      <MenuItem value="any">Any</MenuItem>
-                      <MenuItem value="protocol">Protocol</MenuItem>
-                      <MenuItem value="security">Security</MenuItem>
-                      <MenuItem value="research">Research</MenuItem>
-                      <MenuItem value="economics">Treasury / Economics</MenuItem>
-                      <MenuItem value="formation">Formation</MenuItem>
-                      <MenuItem value="social">Social / Community</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={12}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    <TextField
-                      label="ACM ≥"
-                      type="number"
-                      value={acmMin}
-                      onChange={(e) => setAcmMin(Number(e.target.value) || 0)}
-                      fullWidth
-                      inputProps={{ min: 0 }}
+        <Col span={{ base: 12, md: 3 }} className="flex">
+          <Card className="w-full">
+            <CardHeader className="pb-2">
+              <p className="text-xs uppercase tracking-wide text-muted">Filters</p>
+              <CardTitle>Refine directory</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
+              <Grid cols={12} gap="3">
+                <Col span={{ base: 12 }}>
+                  <Label htmlFor="tier">Tier</Label>
+                  <Select id="tier" value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}>
+                    <option value="any">Any</option>
+                    <option value="nominee">Nominee</option>
+                    <option value="ecclesiast">Ecclesiast</option>
+                    <option value="legate">Legate</option>
+                    <option value="consul">Consul</option>
+                    <option value="citizen">Citizen</option>
+                  </Select>
+                </Col>
+                <Col span={{ base: 12 }}>
+                  <Label htmlFor="chamber">Chamber</Label>
+                  <Select id="chamber" value={chamberFilter} onChange={(e) => setChamberFilter(e.target.value)}>
+                    <option value="all">All specializations</option>
+                    <option value="protocol">Protocol Engineering</option>
+                    <option value="research">Research</option>
+                    <option value="finance">Finance</option>
+                    <option value="social">Social</option>
+                    <option value="formation">Formation Logistics</option>
+                    <option value="economics">Economics</option>
+                    <option value="security">Security & Infra</option>
+                  </Select>
+                </Col>
+                <Col span={{ base: 12 }}>
+                  <Label htmlFor="tag">Specialty tag</Label>
+                  <Select id="tag" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+                    <option value="any">Any</option>
+                    <option value="protocol">Protocol</option>
+                    <option value="security">Security</option>
+                    <option value="research">Research</option>
+                    <option value="economics">Treasury / Economics</option>
+                    <option value="formation">Formation</option>
+                    <option value="social">Social / Community</option>
+                  </Select>
+                </Col>
+                <Col span={{ base: 12 }}>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="w-full">
+                      <Label htmlFor="acm">ACM ≥</Label>
+                      <Input
+                        id="acm"
+                        type="number"
+                        value={acmMin}
+                        onChange={(e) => setAcmMin(Number(e.target.value) || 0)}
+                        min={0}
+                      />
+                    </div>
+                    <div className="w-full">
+                      <Label htmlFor="mm">MM ≥</Label>
+                      <Input
+                        id="mm"
+                        type="number"
+                        value={mmMin}
+                        onChange={(e) => setMmMin(Number(e.target.value) || 0)}
+                        min={0}
+                      />
+                    </div>
+                  </div>
+                </Col>
+                <Col span={{ base: 12 }}>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={formationOnly}
+                      onChange={(e) => setFormationOnly(e.target.checked)}
+                      aria-label="Formation members only"
                     />
-                    <TextField
-                      label="MM ≥"
-                      type="number"
-                      value={mmMin}
-                      onChange={(e) => setMmMin(Number(e.target.value) || 0)}
-                      fullWidth
-                      inputProps={{ min: 0 }}
-                    />
-                  </Stack>
-                </Grid>
-                <Grid size={12}>
-                  <FormControlLabel
-                    control={<Switch checked={formationOnly} onChange={(e) => setFormationOnly(e.target.checked)} />}
-                    label="Formation members only"
-                  />
-                </Grid>
+                    <span className="text-sm">Formation members only</span>
+                  </div>
+                </Col>
               </Grid>
 
-              <Stack direction="row" justifyContent="flex-end" spacing={1} mt={2}>
+              <div className="flex justify-end gap-2 pt-1">
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setTierFilter("any");
                     setChamberFilter("all");
                     setSearch("");
                     setSortBy("acm-desc");
+                    setTagFilter("any");
+                    setFormationOnly(false);
+                    setAcmMin(0);
+                    setMmMin(0);
                   }}
                 >
                   Reset
                 </Button>
-                <Button variant="contained" size="small">
-                  Apply
-                </Button>
-              </Stack>
+                <Button size="sm">Apply</Button>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </Col>
       </Grid>
-    </Box>
+    </div>
   );
 };
 

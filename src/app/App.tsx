@@ -1,16 +1,13 @@
 import { BrowserRouter } from "react-router";
-import { CssBaseline, ThemeProvider } from "@mui/material";
 import AppRoutes from "./AppRoutes";
-import { theme } from "./theme";
+import "../styles/base.css";
+import "../styles/global.css";
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   );
 };
 
