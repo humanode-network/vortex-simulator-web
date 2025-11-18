@@ -9,7 +9,7 @@ import Formation from "../pages/formation/Formation";
 import Invision from "../pages/invision/Invision";
 import Factions from "../pages/factions/Factions";
 import Settings from "../pages/Settings";
-import Profile from "../pages/Profile";
+import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
 import Chamber from "../pages/chambers/Chamber";
 
