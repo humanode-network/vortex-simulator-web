@@ -1,16 +1,16 @@
 import { Outlet, Route, Routes } from "react-router";
-import Welcome from "@/pages/Welcome";
+import Welcome from "../pages/Welcome";
 import AppShell from "./AppShell";
-import HumanNodes from "@/pages/human-nodes/HumanNodes";
-import Proposals from "@/pages/proposals/Proposals";
-import Chambers from "@/pages/chambers/Chambers";
-import Formation from "@/pages/formation/Formation";
-import Invision from "@/pages/invision/Invision";
-import Factions from "@/pages/factions/Factions";
-import Settings from "@/pages/Settings";
-import Profile from "@/pages/profile/Profile";
-import HumanNode from "@/pages/human-nodes/HumanNode";
-import Chamber from "@/pages/chambers/Chamber";
+import HumanNodes from "../pages/human-nodes/HumanNodes";
+import Proposals from "../pages/proposals/Proposals";
+import Chambers from "../pages/chambers/Chambers";
+import Formation from "../pages/formation/Formation";
+import Invision from "../pages/invision/Invision";
+import Factions from "../pages/factions/Factions";
+import Settings from "../pages/Settings";
+import Profile from "../pages/profile/Profile";
+import HumanNode from "../pages/human-nodes/HumanNode";
+import Chamber from "../pages/chambers/Chamber";
 
 const AppRoutes: React.FC = () => {
   return (
