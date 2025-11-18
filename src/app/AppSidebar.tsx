@@ -1,8 +1,9 @@
 import { NavLink } from "react-router";
 import "./AppSidebar.css";
+import clsx from "clsx";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `sidebar__link${isActive ? " sidebar__link--active" : ""}`;
+  clsx("sidebar__link", isActive && "sidebar__link--active");
 
 const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
   return (
