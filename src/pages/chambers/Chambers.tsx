@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Grid, Col } from "@/components/ui/layout";
+import "./Chambers.css";
 
 const chambers = [
   {
@@ -36,27 +36,25 @@ const Chambers: React.FC = () => {
         <p className="text-sm text-muted">Browse active governance chambers.</p>
       </div>
 
-      <Grid cols={12} gap="4">
+      <div className="chambers-grid">
         {chambers.map((chamber) => (
-          <Col key={chamber.id} span={{ base: 12, sm: 6, md: 4 }}>
-            <Card className="h-full">
-              <CardHeader className="pb-2">
-                <CardTitle>{chamber.name}</CardTitle>
-                <p className="text-sm text-muted">{chamber.meta}</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-muted">{chamber.summary}</p>
-              </CardContent>
-              <CardFooter className="pt-0 justify-between">
-                <Badge variant="outline">Lead: {chamber.lead}</Badge>
-                <Button asChild size="sm">
-                  <Link to={`/chambers/${chamber.id}`}>Open chamber</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          </Col>
+          <Card key={chamber.id} className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>{chamber.name}</CardTitle>
+              <p className="text-sm text-muted">{chamber.meta}</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted">{chamber.summary}</p>
+            </CardContent>
+            <CardFooter className="pt-0 justify-between">
+              <Badge variant="outline">Lead: {chamber.lead}</Badge>
+              <Button asChild size="sm">
+                <Link to={`/chambers/${chamber.id}`}>Open chamber</Link>
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
-      </Grid>
+      </div>
     </div>
   );
 };

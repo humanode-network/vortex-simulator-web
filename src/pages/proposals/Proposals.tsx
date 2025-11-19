@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Grid, Col } from "@/components/ui/layout";
+import "./Proposals.css";
 
 const proposals = [
   {
@@ -36,12 +36,12 @@ const Proposals: React.FC = () => {
           <CardTitle>Search proposals</CardTitle>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
-          <Grid cols={12} gap="3">
-            <Col span={{ base: 12, sm: 6, md: 3 }}>
+          <div className="proposals-filter-grid">
+            <div>
               <Label htmlFor="keyword">Keyword search</Label>
               <Input id="keyword" placeholder="Proposal, hash, proposer…" />
-            </Col>
-            <Col span={{ base: 12, sm: 6, md: 3 }}>
+            </div>
+            <div>
               <Label htmlFor="status">Status</Label>
               <Select id="status" defaultValue="any">
                 <option value="any">Any</option>
@@ -51,8 +51,8 @@ const Proposals: React.FC = () => {
                 <option value="final">Final vote</option>
                 <option value="archived">Archived</option>
               </Select>
-            </Col>
-            <Col span={{ base: 12, sm: 6, md: 3 }}>
+            </div>
+            <div>
               <Label htmlFor="chamber">Chamber</Label>
               <Select id="chamber" defaultValue="all">
                 <option value="all">All chambers</option>
@@ -61,16 +61,16 @@ const Proposals: React.FC = () => {
                 <option value="security">Security</option>
                 <option value="social">Social</option>
               </Select>
-            </Col>
-            <Col span={{ base: 12, sm: 6, md: 3 }}>
+            </div>
+            <div>
               <Label htmlFor="sort">Sort by</Label>
               <Select id="sort" defaultValue="newest">
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
                 <option value="activity">Activity</option>
               </Select>
-            </Col>
-          </Grid>
+            </div>
+          </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
             {["Infrastructure", "Formation", "Security", "Research", "Community", "High quorum"].map((tag) => (

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Grid, Col } from "@/components/ui/layout";
+import "./Invision.css";
 
 const cards = [
   { title: "Invision score", text: "82 / 100 · Deterrence influence rating across last 12 epochs." },
@@ -16,20 +16,18 @@ const Invision: React.FC = () => {
         <p className="text-sm text-muted">Deterrence & oversight signals</p>
       </div>
 
-      <Grid cols={12} gap="3">
+      <div className="invision-grid">
         {cards.map((card) => (
-          <Col key={card.title} span={{ base: 12, sm: 6, md: 3 }}>
-            <Card className="h-full">
-              <CardHeader className="pb-2">
-                <CardTitle>{card.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-muted">{card.text}</p>
-              </CardContent>
-            </Card>
-          </Col>
+          <Card key={card.title} className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>{card.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted">{card.text}</p>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </div>
     </div>
   );
 };

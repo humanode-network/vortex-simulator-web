@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
-import { Grid, Col } from "@/components/ui/layout";
+import "./HumanNodes.css";
 
 // Data types and sample data
 type Node = {
@@ -72,36 +72,32 @@ const HumanNodes: React.FC = () => {
   }, [search, sortBy, tierFilter, chamberFilter, tagFilter, formationOnly, acmMin, mmMin]);
 
   return (
-    <div className="app-page flex flex-col gap-4">
-      <div className="w-full rounded-2xl border border-border bg-[color:var(--panel)] p-3 shadow-sm">
-        <div className="flex w-full items-center gap-2">
+    <div className="app-page human-nodes-page">
+      <div className="w-full rounded-2xl border border-border bg-(--panel) p-3 shadow-sm">
+        <div className="human-nodes-toolbar">
           <Input
             placeholder="Search Human nodes by handle, address, chamber, or focus…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-11"
           />
-          <Button variant="outline" size="md" className="shrink-0">
+          <Button variant="outline" size="md">
             Search
           </Button>
         </div>
       </div>
 
-      <Grid cols={12} gap="4" className="items-start">
-        <Col span={{ base: 12, md: 9 }} className="flex">
+      <div className="human-nodes-layout">
+        <div className="human-nodes-main">
           <Card className="w-full">
             <CardHeader className="pb-2">
               <p className="text-xs uppercase tracking-wide text-muted">Results ({filtered.length})</p>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-1">
+              <div className="human-nodes-toolbar">
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                   <Label>Sort by</Label>
-                  <Select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="min-w-[180px]"
-                  >
+                  <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
                     <option value="acm-desc">ACM (desc)</option>
                     <option value="acm-asc">ACM (asc)</option>
                     <option value="tier">Tier</option>
@@ -135,26 +131,18 @@ const HumanNodes: React.FC = () => {
                             {node.active ? "Active governor" : "Not active"}
                           </Badge>
                         </div>
-                        <Grid cols={12} gap="3" className="items-start">
-                          <Col span={{ base: 12, md: 6 }}>
-                            <p className="text-sm text-(--text)">Main chamber: {node.chamber}</p>
-                          </Col>
-                          <Col span={{ base: 12, md: 6 }}>
-                            <p className="text-sm text-(--text)">
-                              Formation member: {node.formationCapable ? "Yes" : "No"}
-                            </p>
-                          </Col>
-                          <Col span={{ base: 12, md: 6 }}>
-                            <p className="text-sm text-(--text)">
-                              Main formation project: {node.formationProject ?? "—"}
-                            </p>
-                          </Col>
-                          <Col span={{ base: 12, md: 6 }}>
-                            <p className="text-sm text-(--text)">
-                              Status: {node.active ? "Active" : "Not active"}
-                            </p>
-                          </Col>
-                        </Grid>
+                        <div className="human-node-meta">
+                          <p className="text-sm text-(--text)">Main chamber: {node.chamber}</p>
+                          <p className="text-sm text-(--text)">
+                            Formation member: {node.formationCapable ? "Yes" : "No"}
+                          </p>
+                          <p className="text-sm text-(--text)">
+                            Main formation project: {node.formationProject ?? "—"}
+                          </p>
+                          <p className="text-sm text-(--text)">
+                            Status: {node.active ? "Active" : "Not active"}
+                          </p>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {node.tags.map((tag) => (
                             <Badge key={tag} variant="outline">
@@ -172,30 +160,26 @@ const HumanNodes: React.FC = () => {
                   ) : (
                     <Card key={node.id} className="border-border">
                       <CardContent className="pt-4 pb-3">
-                        <Grid cols={12} gap="3" className="items-center">
-                          <Col span={{ base: 12, md: 5 }}>
+                        <div className="human-node-row">
+                          <div className="human-node-row__details">
                             <h4 className="text-base font-semibold">{node.name}</h4>
                             <p className="text-sm text-muted">{node.role}</p>
-                          </Col>
-                          <Col span={{ base: 12, md: 4 }}>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge size="sm">ACM: {node.acm}</Badge>
-                              <Badge size="sm">MM: {node.mm}</Badge>
-                              {node.formationCapable && (
-                                <Badge size="sm" variant="outline">
-                                  Formation
-                                </Badge>
-                              )}
-                            </div>
-                          </Col>
-                          <Col span={{ base: 12, md: 3 }}>
-                            <div className="flex justify-start md:justify-end">
-                              <Button asChild size="sm">
-                                <Link to={`/human-nodes/${node.id}`}>Open</Link>
-                              </Button>
-                            </div>
-                          </Col>
-                        </Grid>
+                          </div>
+                          <div className="human-node-row__stats">
+                            <Badge size="sm">ACM: {node.acm}</Badge>
+                            <Badge size="sm">MM: {node.mm}</Badge>
+                            {node.formationCapable && (
+                              <Badge size="sm" variant="outline">
+                                Formation
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="human-node-row__action">
+                            <Button asChild size="sm">
+                              <Link to={`/human-nodes/${node.id}`}>Open</Link>
+                            </Button>
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
                   ),
@@ -203,17 +187,17 @@ const HumanNodes: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </Col>
+        </div>
 
-        <Col span={{ base: 12, md: 3 }} className="flex">
+        <aside className="human-nodes-sidebar">
           <Card className="w-full">
             <CardHeader className="pb-2">
               <p className="text-xs uppercase tracking-wide text-muted">Filters</p>
               <CardTitle>Refine directory</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 space-y-4">
-              <Grid cols={12} gap="3">
-                <Col span={{ base: 12 }}>
+              <div className="human-nodes-filter-groups">
+                <div>
                   <Label htmlFor="tier">Tier</Label>
                   <Select id="tier" value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}>
                     <option value="any">Any</option>
@@ -223,8 +207,8 @@ const HumanNodes: React.FC = () => {
                     <option value="consul">Consul</option>
                     <option value="citizen">Citizen</option>
                   </Select>
-                </Col>
-                <Col span={{ base: 12 }}>
+                </div>
+                <div>
                   <Label htmlFor="chamber">Chamber</Label>
                   <Select id="chamber" value={chamberFilter} onChange={(e) => setChamberFilter(e.target.value)}>
                     <option value="all">All specializations</option>
@@ -236,8 +220,8 @@ const HumanNodes: React.FC = () => {
                     <option value="economics">Economics</option>
                     <option value="security">Security & Infra</option>
                   </Select>
-                </Col>
-                <Col span={{ base: 12 }}>
+                </div>
+                <div>
                   <Label htmlFor="tag">Specialty tag</Label>
                   <Select id="tag" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
                     <option value="any">Any</option>
@@ -248,42 +232,38 @@ const HumanNodes: React.FC = () => {
                     <option value="formation">Formation</option>
                     <option value="social">Social / Community</option>
                   </Select>
-                </Col>
-                <Col span={{ base: 12 }}>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <div className="w-full">
-                      <Label htmlFor="acm">ACM ≥</Label>
-                      <Input
-                        id="acm"
-                        type="number"
-                        value={acmMin}
-                        onChange={(e) => setAcmMin(Number(e.target.value) || 0)}
-                        min={0}
-                      />
-                    </div>
-                    <div className="w-full">
-                      <Label htmlFor="mm">MM ≥</Label>
-                      <Input
-                        id="mm"
-                        type="number"
-                        value={mmMin}
-                        onChange={(e) => setMmMin(Number(e.target.value) || 0)}
-                        min={0}
-                      />
-                    </div>
-                  </div>
-                </Col>
-                <Col span={{ base: 12 }}>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={formationOnly}
-                      onChange={(e) => setFormationOnly(e.target.checked)}
-                      aria-label="Formation members only"
+                </div>
+                <div className="human-nodes-filter-row">
+                  <div>
+                    <Label htmlFor="acm">ACM ≥</Label>
+                    <Input
+                      id="acm"
+                      type="number"
+                      value={acmMin}
+                      onChange={(e) => setAcmMin(Number(e.target.value) || 0)}
+                      min={0}
                     />
-                    <span className="text-sm">Formation members only</span>
                   </div>
-                </Col>
-              </Grid>
+                  <div>
+                    <Label htmlFor="mm">MM ≥</Label>
+                    <Input
+                      id="mm"
+                      type="number"
+                      value={mmMin}
+                      onChange={(e) => setMmMin(Number(e.target.value) || 0)}
+                      min={0}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Switch
+                    checked={formationOnly}
+                    onChange={(e) => setFormationOnly(e.target.checked)}
+                    aria-label="Formation members only"
+                  />
+                  <span className="text-sm">Formation members only</span>
+                </div>
+              </div>
 
               <div className="flex justify-end gap-2 pt-1">
                 <Button
@@ -306,8 +286,8 @@ const HumanNodes: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </Col>
-      </Grid>
+        </aside>
+      </div>
     </div>
   );
 };

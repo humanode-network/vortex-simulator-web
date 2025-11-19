@@ -1,0 +1,13 @@
+.human-node-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.human-node-detail__main {
+  flex: 2 1 260px;
+}
+
+.human-node-detail__side {
+  flex: 1 1 220px;
+}

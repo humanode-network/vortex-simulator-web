@@ -1,0 +1,13 @@
+.chamber-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.chamber-layout__main {
+  flex: 2 1 260px;
+}
+
+.chamber-layout__side {
+  flex: 1 1 220px;
+}

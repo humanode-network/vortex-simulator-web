@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Grid, Col } from "@/components/ui/layout";
+import "./Chamber.css";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
@@ -15,8 +15,8 @@ const Chamber: React.FC = () => {
         <p className="text-sm text-muted">Overview and key metrics for this chamber.</p>
       </div>
 
-      <Grid cols={12} gap="4">
-        <Col span={{ base: 12, md: 8 }}>
+      <div className="chamber-layout">
+        <div className="chamber-layout__main">
           <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle>Scope</CardTitle>
@@ -34,9 +34,9 @@ const Chamber: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </Col>
+        </div>
 
-        <Col span={{ base: 12, md: 4 }}>
+        <div className="chamber-layout__side">
           <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle>Leads & members</CardTitle>
@@ -52,8 +52,8 @@ const Chamber: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </Col>
-      </Grid>
+        </div>
+      </div>
     </div>
   );
 };

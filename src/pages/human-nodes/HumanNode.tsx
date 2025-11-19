@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Grid, Col } from "@/components/ui/layout";
+import "./HumanNode.css";
 
 const HumanNode: React.FC = () => {
   const { id } = useParams();
@@ -15,8 +15,8 @@ const HumanNode: React.FC = () => {
         <p className="text-sm text-muted">Profile overview and participation summary.</p>
       </div>
 
-      <Grid cols={12} gap="4">
-        <Col span={{ base: 12, md: 8 }}>
+      <div className="human-node-detail">
+        <div className="human-node-detail__main">
           <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle>Summary</CardTitle>
@@ -31,9 +31,9 @@ const HumanNode: React.FC = () => {
               </p>
             </CardContent>
           </Card>
-        </Col>
+        </div>
 
-        <Col span={{ base: 12, md: 4 }}>
+        <div className="human-node-detail__side">
           <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle>Actions</CardTitle>
@@ -47,8 +47,8 @@ const HumanNode: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </Col>
-      </Grid>
+        </div>
+      </div>
     </div>
   );
 };

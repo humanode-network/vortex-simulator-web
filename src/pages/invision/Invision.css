@@ -1,0 +1,10 @@
+.invision-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+}
+
+.invision-grid > * {
+  flex: 1 1 220px;
+}
