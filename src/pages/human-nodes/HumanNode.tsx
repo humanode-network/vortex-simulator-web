@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router";
-import { Button } from "@/components/ui/button";
+import { useParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -206,7 +205,7 @@ const HumanNode: React.FC = () => {
                         key={option.key}
                         type="button"
                         onClick={() => setActiveProof((prev) => (prev === option.key ? "" : option.key))}
-                        className={`min-w-[80px] rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                        className={`min-w-20 rounded-full px-3 py-1.5 text-sm font-medium transition ${
                           isActive ? "bg-primary text-white shadow" : "text-text hover:bg-panel-alt"
                         }`}
                       >
@@ -219,8 +218,8 @@ const HumanNode: React.FC = () => {
                   <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
                     {proofSections[activeProof].items.map((item) => (
                       <div key={item.label} className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center">
-                        <p className="text-xs uppercase tracking-wide text-muted leading-tight min-h-[24px]">{item.label}</p>
-                        <p className="text-sm font-semibold text-text min-h-[20px]">{item.value}</p>
+                        <p className="text-xs uppercase tracking-wide text-muted leading-tight min-h-6">{item.label}</p>
+                        <p className="text-sm font-semibold text-text min-h-5">{item.value}</p>
                       </div>
                     ))}
                   </div>
