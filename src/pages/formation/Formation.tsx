@@ -1,105 +1,249 @@
-import { Link } from "react-router";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import "./Formation.css";
+import { useId, useMemo, useState } from "react";
 
-const metrics = [
-  { label: "Total funded HMND", value: "210k" },
-  { label: "Active projects", value: "12" },
-  { label: "Open team slots", value: "9" },
-  { label: "Milestones delivered", value: "46" },
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+type Category = "all" | "research" | "development" | "social";
+type Stage = "live" | "upcoming" | "completed";
+
+type FormationMetric = {
+  label: string;
+  value: string;
+  dataAttr: string;
+};
+
+type FormationProject = {
+  id: string;
+  title: string;
+  focus: string;
+  proposer: string;
+  summary: string;
+  category: Category;
+  stage: Stage;
+  budget: string;
+  milestones: string;
+  teamSlots: string;
+};
+
+const metrics: FormationMetric[] = [
+  { label: "Total funded HMND", value: "340k", dataAttr: "metric-hmnd" },
+  { label: "Active projects", value: "12", dataAttr: "metric-active" },
+  { label: "Open team slots", value: "9", dataAttr: "metric-slots" },
+  { label: "Milestones delivered", value: "46", dataAttr: "metric-milestones" },
 ];
 
-const categories = ["All", "Research", "Development", "Social"];
-const statuses = ["Live", "Upcoming", "Completed"];
+const categoryOptions: { label: string; value: Category }[] = [
+  { label: "All", value: "all" },
+  { label: "Research", value: "research" },
+  { label: "Development & Product", value: "development" },
+  { label: "Social Good & Community", value: "social" },
+];
 
-const projects = [
+const stageLegend: { label: string; value: Stage; dotClass: string }[] = [
+  { label: "Live", value: "live", dotClass: "bg-emerald-500" },
+  { label: "Upcoming", value: "upcoming", dotClass: "bg-amber-500" },
+  { label: "Completed", value: "completed", dotClass: "bg-slate-400" },
+];
+
+const projects: FormationProject[] = [
   {
     id: "node-health-kit",
     title: "Node Health Kit",
-    track: "Formation Logistics · Live",
-    summary: "Tooling bundle to automate node diagnostics and recovery workflows for operators.",
-    chips: ["Budget: 80k HMND", "Milestones: 6 / 9", "Team slots: 2 open"],
+    focus: "Formation Logistics · Tooling",
     proposer: "Mozgiii",
+    summary: "Tooling bundle to automate node diagnostics and recovery workflows for operators.",
+    category: "development",
+    stage: "live",
+    budget: "80k HMND",
+    milestones: "6 / 9",
+    teamSlots: "2 open",
   },
   {
     id: "identity-risk-lab",
     title: "Identity Risk Lab",
-    track: "Research · Upcoming",
-    summary: "Experimental track exploring threat modeling for biometric verification attacks.",
-    chips: ["Budget: 45k HMND", "Milestones: 0 / 5", "Team slots: 3 open"],
+    focus: "Research · Upcoming cohort",
     proposer: "Raamara",
+    summary: "Exploratory track modeling biometric verification attacks and mitigation strategies.",
+    category: "research",
+    stage: "upcoming",
+    budget: "45k HMND",
+    milestones: "0 / 5",
+    teamSlots: "3 open",
+  },
+  {
+    id: "community-field-unit",
+    title: "Community Field Unit",
+    focus: "Social Good · Outreach",
+    proposer: "Nana",
+    summary: "Mobile mesh of community ambassadors for onboarding and support coverage.",
+    category: "social",
+    stage: "live",
+    budget: "65k HMND",
+    milestones: "4 / 6",
+    teamSlots: "1 open",
+  },
+  {
+    id: "deterrence-sim-lab",
+    title: "Deterrence Sim Lab",
+    focus: "Research · Security",
+    proposer: "Victor",
+    summary: "Scenario simulator for deterrence drills and biometric failure rehearsals.",
+    category: "research",
+    stage: "completed",
+    budget: "50k HMND",
+    milestones: "6 / 6",
+    teamSlots: "0 open",
   },
 ];
 
 const Formation: React.FC = () => {
+  const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const [search, setSearch] = useState("");
+  const searchId = `${useId()}-formation-search`;
+
+  const filteredProjects = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return projects.filter((project) => {
+      const matchesCategory = activeCategory === "all" || project.category === activeCategory;
+      const matchesSearch =
+        term.length === 0 ||
+        project.title.toLowerCase().includes(term) ||
+        project.proposer.toLowerCase().includes(term) ||
+        project.summary.toLowerCase().includes(term) ||
+        project.focus.toLowerCase().includes(term);
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategory, search]);
+
   return (
-    <div className="app-page flex flex-col gap-4">
+    <div className="app-page flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-(--text)">Formation</h1>
+        <p className="text-sm text-muted">Formation programs, squads, and milestone progress.</p>
       </div>
 
-      <div className="formation-metrics">
-        {metrics.map((m) => (
-          <Card key={m.label} className="h-full">
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted">{m.label}</p>
-              <p className="text-lg font-semibold text-(--text)">{m.value}</p>
-            </CardContent>
-          </Card>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <article
+            key={metric.label}
+            data-metric={metric.dataAttr}
+            className="rounded-2xl border border-border bg-panel-alt px-4 py-5 shadow-sm"
+          >
+            <p className="text-sm text-muted">{metric.label}</p>
+            <strong className="text-2xl font-semibold text-(--text)">{metric.value}</strong>
+          </article>
         ))}
-      </div>
-
-      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-[color:var(--panel)] p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <Badge key={c} variant={c === "All" ? "default" : "outline"}>
-              {c}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {statuses.map((s) => (
-            <Badge key={s} variant="outline">
-              {s}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <section className="space-y-2">
-        <p className="text-xs uppercase tracking-wide text-muted">Search projects</p>
-        <Input placeholder="Search by project, proposer, focus…" />
       </section>
 
-      <div className="formation-projects">
-        {projects.map((p) => (
-          <Card key={p.id} className="h-full">
-            <CardContent className="pt-4 space-y-2">
-              <h3 className="text-lg font-semibold text-(--text)">{p.title}</h3>
-              <p className="text-sm text-muted">{p.track}</p>
-              <p className="text-sm text-muted">{p.summary}</p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {p.chips.map((c) => (
-                  <Badge key={c} variant="outline">
-                    {c}
-                  </Badge>
-                ))}
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-panel p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Formation filters">
+          {categoryOptions.map((category) => (
+            <button
+              key={category.value}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === category.value}
+              onClick={() => setActiveCategory(category.value)}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                activeCategory === category.value
+                  ? "bg-primary text-white shadow"
+                  : "border border-border bg-panel-alt text-(--text) hover:border-[color:var(--primary-dim)]"
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
+          {stageLegend.map((stage) => (
+            <span key={stage.value} className="inline-flex items-center gap-2">
+              <span className={`h-2.5 w-2.5 rounded-full ${stage.dotClass}`} />
+              {stage.label}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section role="search" className="space-y-2">
+        <label htmlFor={searchId} className="text-xs uppercase tracking-wide text-muted">
+          Search projects
+        </label>
+        <div className="relative">
+          <Input
+            id={searchId}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by project, proposer, focus, stage…"
+            autoComplete="off"
+          />
+          {search && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full px-2 text-muted"
+              onClick={() => setSearch("")}
+            >
+              ×
+            </Button>
+          )}
+        </div>
+      </section>
+
+      <section
+        aria-live="polite"
+        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        data-formation-list={filteredProjects.length}
+      >
+        {filteredProjects.map((project) => (
+          <Card key={project.id} className="border border-border bg-panel shadow-sm">
+            <CardHeader className="flex items-center justify-between pb-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted">{project.focus}</p>
+                <h3 className="text-lg font-semibold text-(--text)">{project.title}</h3>
+              </div>
+              <Badge variant="outline" className="text-xs font-semibold">
+                {project.stage === "live"
+                  ? "Live"
+                  : project.stage === "upcoming"
+                    ? "Upcoming"
+                    : "Completed"}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-(--text)">{project.summary}</p>
+              <div className="grid gap-2 text-sm text-(--text)">
+                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-muted">Budget</p>
+                  <p className="font-semibold">{project.budget}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-muted">Milestones</p>
+                  <p className="font-semibold">{project.milestones}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-muted">Team slots</p>
+                  <p className="font-semibold">{project.teamSlots}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted">
+                <span>
+                  Proposer:{" "}
+                  <span className="font-semibold text-(--text) hover:text-primary">{project.proposer}</span>
+                </span>
+                <Button size="sm">Open project</Button>
               </div>
             </CardContent>
-            <CardFooter className="pt-0 justify-between">
-              <p className="text-sm text-muted">
-                Proposer: <Link to={`/human-nodes/${p.proposer}`}>{p.proposer}</Link>
-              </p>
-              <Button asChild size="sm">
-                <Link to={`/formation/${p.id}`}>Open project</Link>
-              </Button>
-            </CardFooter>
           </Card>
         ))}
-      </div>
+        {filteredProjects.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border/70 bg-panel px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
+            No Formation projects match the current filters.
+          </div>
+        )}
+      </section>
     </div>
   );
 };

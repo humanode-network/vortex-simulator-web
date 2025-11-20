@@ -1,9 +1,0 @@
-.proposals-filter-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.proposals-filter-grid > * {
-  flex: 1 1 220px;
-}

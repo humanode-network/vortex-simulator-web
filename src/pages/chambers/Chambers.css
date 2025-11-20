@@ -1,9 +1,0 @@
-.chambers-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.chambers-grid > * {
-  flex: 1 1 280px;
-}
