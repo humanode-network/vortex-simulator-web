@@ -2,10 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const governanceState = {
   label: "Egalitarian Republic",
-  subtitle: "Balanced council with rotating chancellors",
-  summary:
-    "The Vortex network operates as an egalitarian republic. Power is split between chambers, Formation squads, and elected councils. " +
-    "Legitimacy is stable, and factions are cooperating on expansion and treasury projects.",
   metrics: [
     { label: "Legitimacy", value: "78%", trend: "+3% vs last epoch" },
     { label: "Stability", value: "72%", trend: "Neutral" },
@@ -16,22 +12,30 @@ const governanceState = {
 const factions = [
   {
     name: "Civic Union",
-    members: "38 members",
+    members: 38,
+    threads: 22,
+    activity: "high",
     stance: "Pro-expansion, social reform",
   },
   {
     name: "Protocol Guard",
-    members: "31 members",
+    members: 31,
+    threads: 18,
+    activity: "very high",
     stance: "Security-first, validator hawks",
   },
   {
     name: "Arcadian Treasury",
-    members: "24 members",
+    members: 24,
+    threads: 14,
+    activity: "average",
     stance: "Fiscal conservatives",
   },
   {
     name: "Formation League",
-    members: "17 members",
+    members: 17,
+    threads: 12,
+    activity: "average",
     stance: "Growth of squads & guilds",
   },
 ];
@@ -99,51 +103,66 @@ const chamberProposals = [
 const Invision: React.FC = () => {
   return (
     <div className="app-page flex flex-col gap-5">
-      <section className="bg-panel space-y-4 rounded-2xl border border-border p-6">
-        <div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-2xl border border-border bg-panel-alt px-6 py-5 text-center shadow-sm sm:col-span-2 lg:col-span-3">
           <p className="text-xs tracking-wide text-muted uppercase">
-            Current governance state
+            Governance model
           </p>
           <h1 className="text-text text-2xl font-semibold">
             {governanceState.label}
           </h1>
-          <p className="text-sm text-muted">{governanceState.subtitle}</p>
         </div>
-        <p className="text-sm leading-relaxed text-muted">
-          {governanceState.summary}
-        </p>
-        <div className="grid gap-3 text-center sm:grid-cols-3">
-          {governanceState.metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-xl border border-border px-3 py-3"
-            >
-              <p className="text-xs tracking-wide text-muted uppercase">
-                {metric.label}
-              </p>
-              <p className="text-text text-2xl font-semibold">{metric.value}</p>
-              <p className="text-xs text-muted">{metric.trend}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        {governanceState.metrics.map((metric) => (
+          <div
+            key={metric.label}
+            className="rounded-2xl border border-border bg-panel px-3 py-3 text-center"
+          >
+            <p className="text-xs tracking-wide text-muted uppercase">
+              {metric.label}
+            </p>
+            <p className="text-text text-2xl font-semibold">{metric.value}</p>
+            <p className="text-xs text-muted">{metric.trend}</p>
+          </div>
+        ))}
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card className="h-full">
           <CardHeader className="pb-2">
-            <CardTitle>Factions</CardTitle>
+            <CardTitle>Largest factions</CardTitle>
           </CardHeader>
-          <CardContent className="text-text grid gap-3 text-sm sm:grid-cols-2">
+          <CardContent className="text-text grid gap-4 text-sm sm:grid-cols-2">
             {factions.map((faction) => (
               <div
                 key={faction.name}
-                className="bg-panel-alt rounded-xl border border-border px-4 py-3"
+                className="bg-panel-alt rounded-2xl border border-border px-5 py-4 shadow-sm"
               >
-                <p className="text-text text-base font-semibold">{faction.name}</p>
+                <p className="text-text text-lg font-semibold">{faction.name}</p>
                 <p className="text-xs tracking-wide text-primary uppercase">
-                  {faction.members}
+                  {faction.stance}
                 </p>
-                <p className="text-xs text-muted">{faction.stance}</p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-panel rounded-xl border border-border px-2 py-2">
+                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                      Members
+                    </p>
+                    <p className="text-lg font-semibold">{faction.members}</p>
+                  </div>
+                  <div className="bg-panel rounded-xl border border-border px-2 py-2">
+                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                      Threads
+                    </p>
+                    <p className="text-lg font-semibold">{faction.threads}</p>
+                  </div>
+                  <div className="bg-panel rounded-xl border border-border px-2 py-2">
+                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                      Activity
+                    </p>
+                    <p className="text-lg font-semibold capitalize">
+                      {faction.activity}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </CardContent>
