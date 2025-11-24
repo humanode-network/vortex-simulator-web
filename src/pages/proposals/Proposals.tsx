@@ -59,8 +59,17 @@ const proposalData: Proposal[] = [
     summary:
       "Introduce redundant biometric sequencer nodes to lower latency in the verification flow and enable inter-era checkpoints.",
     stageData: [
-      { title: "Pool momentum", description: "Upvotes / Downvotes", value: "128 / 14" },
-      { title: "Attention quorum", description: "20% active or ≥10% upvotes", value: "Met · 38% engaged", tone: "ok" },
+      {
+        title: "Pool momentum",
+        description: "Upvotes / Downvotes",
+        value: "128 / 14",
+      },
+      {
+        title: "Attention quorum",
+        description: "20% active or ≥10% upvotes",
+        value: "Met · 38% engaged",
+        tone: "ok",
+      },
       { title: "Votes casted", description: "Backing seats", value: "28" },
     ],
     stats: [
@@ -101,8 +110,18 @@ const proposalData: Proposal[] = [
     summary:
       "Dynamic fee split that feeds Formation, treasury, and biometric maintenance based on network stress and quorum activity.",
     stageData: [
-      { title: "Voting quorum", description: "Strict 33% active governors", value: "Met · 35%", tone: "ok" },
-      { title: "Passing rule", description: "≥66.6% + 1 vote yes", value: "Current 57%", tone: "warn" },
+      {
+        title: "Voting quorum",
+        description: "Strict 33% active governors",
+        value: "Met · 35%",
+        tone: "ok",
+      },
+      {
+        title: "Passing rule",
+        description: "≥66.6% + 1 vote yes",
+        value: "Current 57%",
+        tone: "warn",
+      },
       { title: "Time left", description: "Voting window", value: "02h 15m" },
     ],
     stats: [
@@ -116,7 +135,14 @@ const proposalData: Proposal[] = [
     tier: "Consul",
     proofFocus: "pod",
     tags: ["Formation", "Community", "High quorum"],
-    keywords: ["adaptive", "fee", "treasury", "economics", "consul", "formation"],
+    keywords: [
+      "adaptive",
+      "fee",
+      "treasury",
+      "economics",
+      "consul",
+      "formation",
+    ],
     date: "2024-04-16",
     votes: 51,
     activityScore: 90,
@@ -135,7 +161,11 @@ const proposalData: Proposal[] = [
     stageData: [
       { title: "Budget allocated", description: "HMND", value: "420k" },
       { title: "Team slots", description: "Taken / Total", value: "7 / 9" },
-      { title: "Deployment progress", description: "Reported completion", value: "68%" },
+      {
+        title: "Deployment progress",
+        description: "Reported completion",
+        value: "68%",
+      },
     ],
     stats: [
       { label: "Lead chamber", value: "Security & Infra" },
@@ -147,7 +177,14 @@ const proposalData: Proposal[] = [
     tier: "Legate",
     proofFocus: "pog",
     tags: ["Security", "Research", "Infrastructure"],
-    keywords: ["sybilguard", "mirror", "security", "legate", "formation", "rollup"],
+    keywords: [
+      "sybilguard",
+      "mirror",
+      "security",
+      "legate",
+      "formation",
+      "rollup",
+    ],
     date: "2024-04-12",
     votes: 9,
     activityScore: 74,
@@ -164,8 +201,16 @@ const proposalData: Proposal[] = [
     summary:
       "Create a rolling grant for onboarding biometric researchers and UX engineers into the Mesh program with rapid stipends.",
     stageData: [
-      { title: "Pool momentum", description: "Upvotes / Downvotes", value: "74 / 5" },
-      { title: "Attention quorum", description: "20% active or ≥10% upvotes", value: "In progress · 18%" },
+      {
+        title: "Pool momentum",
+        description: "Upvotes / Downvotes",
+        value: "74 / 5",
+      },
+      {
+        title: "Attention quorum",
+        description: "20% active or ≥10% upvotes",
+        value: "In progress · 18%",
+      },
       { title: "Votes casted", description: "Backing seats", value: "19" },
     ],
     stats: [
@@ -195,8 +240,17 @@ const proposalData: Proposal[] = [
     summary:
       "Retrofit legacy sentinel nodes with the new liveness circuit breaker to prevent cascading biometric outages across shards.",
     stageData: [
-      { title: "Voting quorum", description: "Strict 33% active governors", value: "Pending · 28%", tone: "warn" },
-      { title: "Passing rule", description: "≥66.6% + 1 vote yes", value: "Current 62%" },
+      {
+        title: "Voting quorum",
+        description: "Strict 33% active governors",
+        value: "Pending · 28%",
+        tone: "warn",
+      },
+      {
+        title: "Passing rule",
+        description: "≥66.6% + 1 vote yes",
+        value: "Current 62%",
+      },
       { title: "Time left", description: "Voting window", value: "05h 42m" },
     ],
     stats: [
@@ -226,8 +280,17 @@ const proposalData: Proposal[] = [
     summary:
       "Immutable public feed of delegation shifts and vote reroutes with zk-SNARK concealed identities for observers.",
     stageData: [
-      { title: "Chamber verdict", description: "Constitutional quorum 33%", value: "Refused", tone: "warn" },
-      { title: "Reapply conditions", description: "Needed proof", value: "New privacy circuit" },
+      {
+        title: "Chamber verdict",
+        description: "Constitutional quorum 33%",
+        value: "Refused",
+        tone: "warn",
+      },
+      {
+        title: "Reapply conditions",
+        description: "Needed proof",
+        value: "New privacy circuit",
+      },
       { title: "Cycle", description: "Historic reference", value: "407" },
     ],
     stats: [
@@ -240,7 +303,13 @@ const proposalData: Proposal[] = [
     tier: "Citizen",
     proofFocus: "pot",
     tags: ["Research", "Infrastructure"],
-    keywords: ["delegation", "transparency", "ledger", "constitutional", "refused"],
+    keywords: [
+      "delegation",
+      "transparency",
+      "ledger",
+      "constitutional",
+      "refused",
+    ],
     date: "2023-11-18",
     votes: 12,
     activityScore: 34,
@@ -257,7 +326,14 @@ const stageStyles: Record<Stage, string> = {
   archived: "border border-slate-400/40 bg-slate-400/10 text-muted",
 };
 
-const chipOptions = ["Infrastructure", "Formation", "Security", "Research", "Community", "High quorum"];
+const chipOptions = [
+  "Infrastructure",
+  "Formation",
+  "Security",
+  "Research",
+  "Community",
+  "High quorum",
+];
 
 const statusOptions: { label: string; value: Stage | "any" }[] = [
   { label: "Any", value: "any" },
@@ -277,7 +353,14 @@ const chamberOptions = [
   "Social Impact",
 ];
 
-const tierOptions = ["Any", "Nominee", "Tribune", "Legate", "Consul", "Citizen"];
+const tierOptions = [
+  "Any",
+  "Nominee",
+  "Tribune",
+  "Legate",
+  "Consul",
+  "Citizen",
+];
 const proofOptions = ["Any", "PoT heavy", "PoD heavy", "PoG heavy"];
 const sortOptions = ["Newest", "Oldest", "Activity", "Votes casted"];
 
@@ -316,12 +399,19 @@ const Proposals: React.FC = () => {
           ? proposal.title.toLowerCase().includes(term) ||
             proposal.summary.toLowerCase().includes(term) ||
             proposal.meta.toLowerCase().includes(term) ||
-            proposal.keywords.some((keyword) => keyword.toLowerCase().includes(term))
+            proposal.keywords.some((keyword) =>
+              keyword.toLowerCase().includes(term),
+            )
           : true;
 
-        const matchesStatus = statusFilter === "any" ? true : proposal.stage === statusFilter;
-        const matchesChamber = chamberFilter === "All chambers" ? true : proposal.chamber === chamberFilter;
-        const matchesTier = tierFilter === "Any" ? true : proposal.tier === tierFilter;
+        const matchesStatus =
+          statusFilter === "any" ? true : proposal.stage === statusFilter;
+        const matchesChamber =
+          chamberFilter === "All chambers"
+            ? true
+            : proposal.chamber === chamberFilter;
+        const matchesTier =
+          tierFilter === "Any" ? true : proposal.tier === tierFilter;
 
         const proofMatch =
           proofFilter === "Any"
@@ -330,9 +420,18 @@ const Proposals: React.FC = () => {
               (proofFilter === "PoD heavy" && proposal.proofFocus === "pod") ||
               (proofFilter === "PoG heavy" && proposal.proofFocus === "pog");
 
-        const chipMatch = selectedChip ? proposal.tags.includes(selectedChip) : true;
+        const chipMatch = selectedChip
+          ? proposal.tags.includes(selectedChip)
+          : true;
 
-        return matchesSearch && matchesStatus && matchesChamber && matchesTier && proofMatch && chipMatch;
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesChamber &&
+          matchesTier &&
+          proofMatch &&
+          chipMatch
+        );
       })
       .sort((a, b) => {
         if (sortBy === "Newest") {
@@ -349,7 +448,15 @@ const Proposals: React.FC = () => {
         }
         return 0;
       });
-  }, [search, statusFilter, chamberFilter, tierFilter, proofFilter, selectedChip, sortBy]);
+  }, [
+    search,
+    statusFilter,
+    chamberFilter,
+    tierFilter,
+    proofFilter,
+    selectedChip,
+    sortBy,
+  ]);
 
   const toggleChip = (chip: string) => {
     setSelectedChip((current) => (current === chip ? null : chip));
@@ -379,26 +486,39 @@ const Proposals: React.FC = () => {
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <Card className="overflow-hidden border border-border bg-panel">
+      <Card className="bg-panel overflow-hidden border border-border">
         <button
           type="button"
           aria-expanded={filtersOpen}
           aria-controls={filtersPanelId}
           onClick={() => setFiltersOpen((open) => !open)}
-          className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-panel-alt"
+          className="hover:bg-panel-alt flex w-full items-center justify-between px-5 py-4 text-left transition"
         >
           <div>
-            <p className="text-base font-semibold text-(--text)">Filters & search</p>
+            <p className="text-base font-semibold text-(--text)">
+              Filters & search
+            </p>
             <p className="text-xs text-muted">{filtersHint}</p>
           </div>
-          <ChevronDown className={cn("h-5 w-5 text-muted transition-transform", filtersOpen && "rotate-180")} />
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-muted transition-transform",
+              filtersOpen && "rotate-180",
+            )}
+          />
         </button>
 
         {filtersOpen && (
-          <div id={filtersPanelId} className="space-y-6 border-t border-border p-5">
+          <div
+            id={filtersPanelId}
+            className="space-y-6 border-t border-border p-5"
+          >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div className="md:col-span-2 xl:col-span-3">
-                <label htmlFor={keywordId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+                <label
+                  htmlFor={keywordId}
+                  className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+                >
                   <span>Keyword search</span>
                   <div className="flex items-center gap-2">
                     <Input
@@ -408,19 +528,29 @@ const Proposals: React.FC = () => {
                       placeholder="Proposal, hash, proposer…"
                       aria-label="Search proposals"
                     />
-                    <Button variant="outline" size="sm" type="button" aria-label="Run search">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      aria-label="Run search"
+                    >
                       <Search className="h-4 w-4 text-muted" />
                     </Button>
                   </div>
                 </label>
               </div>
 
-              <label htmlFor={statusId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+              <label
+                htmlFor={statusId}
+                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+              >
                 <span>Status</span>
                 <Select
                   id={statusId}
                   value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as Stage | "any")}
+                  onChange={(event) =>
+                    setStatusFilter(event.target.value as Stage | "any")
+                  }
                 >
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -430,7 +560,10 @@ const Proposals: React.FC = () => {
                 </Select>
               </label>
 
-              <label htmlFor={chamberId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+              <label
+                htmlFor={chamberId}
+                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+              >
                 <span>Chamber</span>
                 <Select
                   id={chamberId}
@@ -445,9 +578,16 @@ const Proposals: React.FC = () => {
                 </Select>
               </label>
 
-              <label htmlFor={tierId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+              <label
+                htmlFor={tierId}
+                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+              >
                 <span>Tier requirement</span>
-                <Select id={tierId} value={tierFilter} onChange={(event) => setTierFilter(event.target.value)}>
+                <Select
+                  id={tierId}
+                  value={tierFilter}
+                  onChange={(event) => setTierFilter(event.target.value)}
+                >
                   {tierOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -456,9 +596,16 @@ const Proposals: React.FC = () => {
                 </Select>
               </label>
 
-              <label htmlFor={proofId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+              <label
+                htmlFor={proofId}
+                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+              >
                 <span>Proof emphasis</span>
-                <Select id={proofId} value={proofFilter} onChange={(event) => setProofFilter(event.target.value)}>
+                <Select
+                  id={proofId}
+                  value={proofFilter}
+                  onChange={(event) => setProofFilter(event.target.value)}
+                >
                   {proofOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -467,9 +614,16 @@ const Proposals: React.FC = () => {
                 </Select>
               </label>
 
-              <label htmlFor={sortId} className="flex flex-col gap-2 text-sm font-medium text-(--text)">
+              <label
+                htmlFor={sortId}
+                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
+              >
                 <span>Sort by</span>
-                <Select id={sortId} value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                <Select
+                  id={sortId}
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                >
                   {sortOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -489,7 +643,7 @@ const Proposals: React.FC = () => {
                     "rounded-full border px-3 py-1 text-sm font-medium transition",
                     selectedChip === chip
                       ? "border-transparent bg-primary text-white shadow"
-                      : "border-border bg-panel-alt text-(--text) hover:border-[color:var(--primary-dim)]",
+                      : "bg-panel-alt border-border text-(--text) hover:border-[color:var(--primary-dim)]",
                   )}
                 >
                   {chip}
@@ -498,10 +652,19 @@ const Proposals: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap justify-end gap-3">
-              <Button variant="ghost" size="sm" type="button" onClick={resetFilters}>
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={resetFilters}
+              >
                 Reset
               </Button>
-              <Button size="sm" type="button" onClick={() => setFiltersOpen(false)}>
+              <Button
+                size="sm"
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+              >
                 Apply
               </Button>
             </div>
@@ -511,31 +674,52 @@ const Proposals: React.FC = () => {
 
       <section aria-live="polite" className="flex flex-col gap-4">
         {filteredProposals.length === 0 && (
-          <Card className="border border-dashed border-border bg-panel px-5 py-6 text-center text-sm text-muted">
+          <Card className="bg-panel border border-dashed border-border px-5 py-6 text-center text-sm text-muted">
             No proposals match the current search.
           </Card>
         )}
 
         {filteredProposals.map((proposal) => (
-          <Card key={proposal.id} className="overflow-hidden border border-border bg-panel">
+          <Card
+            key={proposal.id}
+            className="bg-panel overflow-hidden border border-border"
+          >
             <button
               type="button"
-              className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-panel-alt sm:flex-row sm:items-center sm:justify-between"
+              className="hover:bg-panel-alt flex w-full flex-col gap-4 px-5 py-4 text-left transition sm:flex-row sm:items-center sm:justify-between"
               aria-expanded={expanded === proposal.id}
               onClick={() => toggleProposal(proposal.id)}
             >
               <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted">{proposal.meta}</p>
-                <p className="text-lg font-semibold text-(--text)">{proposal.title}</p>
+                <p className="text-xs tracking-wide text-muted uppercase">
+                  {proposal.meta}
+                </p>
+                <p className="text-lg font-semibold text-(--text)">
+                  {proposal.title}
+                </p>
               </div>
               <div className="flex flex-col gap-2 text-right sm:flex-row sm:items-center sm:gap-3">
-                <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide", stageStyles[proposal.stage])}>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase",
+                    stageStyles[proposal.stage],
+                  )}
+                >
                   {proposal.stageLabel}
                 </span>
-                <Badge variant="outline" size="sm" className="whitespace-nowrap">
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  className="whitespace-nowrap"
+                >
                   {proposal.summaryPill}
                 </Badge>
-                <ChevronDown className={cn("ml-auto h-5 w-5 text-muted transition-transform sm:ml-0", expanded === proposal.id && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "ml-auto h-5 w-5 text-muted transition-transform sm:ml-0",
+                    expanded === proposal.id && "rotate-180",
+                  )}
+                />
               </div>
             </button>
 
@@ -545,8 +729,13 @@ const Proposals: React.FC = () => {
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {proposal.stageData.map((item) => (
-                    <div key={item.title} className="rounded-xl border border-border bg-panel-alt p-4">
-                      <p className="text-sm font-semibold text-muted">{item.title}</p>
+                    <div
+                      key={item.title}
+                      className="bg-panel-alt rounded-xl border border-border p-4"
+                    >
+                      <p className="text-sm font-semibold text-muted">
+                        {item.title}
+                      </p>
                       <p className="text-xs text-muted">{item.description}</p>
                       <p
                         className={cn(
@@ -563,14 +752,21 @@ const Proposals: React.FC = () => {
 
                 <ul className="grid gap-2 text-sm text-(--text) md:grid-cols-2">
                   {proposal.stats.map((stat) => (
-                    <li key={stat.label} className="rounded-xl border border-dashed border-border/70 bg-panel-alt px-4 py-3">
-                      <span className="font-semibold">{stat.label}:</span> {stat.value}
+                    <li
+                      key={stat.label}
+                      className="bg-panel-alt rounded-xl border border-dashed border-border/70 px-4 py-3"
+                    >
+                      <span className="font-semibold">{stat.label}:</span>{" "}
+                      {stat.value}
                     </li>
                   ))}
                 </ul>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <Link to={`/human-nodes/${proposal.proposerId}`} className="text-sm font-semibold text-primary">
+                  <Link
+                    to={`/human-nodes/${proposal.proposerId}`}
+                    className="text-sm font-semibold text-primary"
+                  >
                     Proposer: {proposal.proposer}
                   </Link>
                   <div className="flex flex-wrap gap-2">

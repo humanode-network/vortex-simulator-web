@@ -196,7 +196,7 @@ const HumanNode: React.FC = () => {
   const humanNodeActive = true;
 
   return (
-    <div  className="app-page flex flex-col gap-6">
+    <div className="app-page flex flex-col gap-6">
       <section className="bg-panel rounded-2xl border border-border p-6">
         <div className="grid items-center gap-6 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex justify-center lg:justify-start">

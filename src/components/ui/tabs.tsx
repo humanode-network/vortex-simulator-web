@@ -7,13 +7,29 @@ export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   options: { value: string; label: string }[];
 }
 
-export function Tabs({ value, onValueChange, options, className, ...props }: TabsProps) {
+export function Tabs({
+  value,
+  onValueChange,
+  options,
+  className,
+  ...props
+}: TabsProps) {
   return (
-    <div className={cn("inline-flex rounded-full border border-border bg-panel p-1", className)} {...props}>
+    <div
+      className={cn(
+        "bg-panel inline-flex rounded-full border border-border p-1",
+        className,
+      )}
+      {...props}
+    >
       {options.map((opt) => {
         const active = opt.value === value;
         const style = active
-          ? { backgroundColor: "var(--primary)", color: "#fff", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }
+          ? {
+              backgroundColor: "var(--primary)",
+              color: "#fff",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            }
           : { color: "var(--text)", backgroundColor: "transparent" };
         return (
           <button

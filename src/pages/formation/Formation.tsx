@@ -53,7 +53,8 @@ const projects: FormationProject[] = [
     title: "Node Health Kit",
     focus: "Formation Logistics · Tooling",
     proposer: "Mozgiii",
-    summary: "Tooling bundle to automate node diagnostics and recovery workflows for operators.",
+    summary:
+      "Tooling bundle to automate node diagnostics and recovery workflows for operators.",
     category: "development",
     stage: "live",
     budget: "80k HMND",
@@ -65,7 +66,8 @@ const projects: FormationProject[] = [
     title: "Identity Risk Lab",
     focus: "Research · Upcoming cohort",
     proposer: "Raamara",
-    summary: "Exploratory track modeling biometric verification attacks and mitigation strategies.",
+    summary:
+      "Exploratory track modeling biometric verification attacks and mitigation strategies.",
     category: "research",
     stage: "upcoming",
     budget: "45k HMND",
@@ -77,7 +79,8 @@ const projects: FormationProject[] = [
     title: "Community Field Unit",
     focus: "Social Good · Outreach",
     proposer: "Nana",
-    summary: "Mobile mesh of community ambassadors for onboarding and support coverage.",
+    summary:
+      "Mobile mesh of community ambassadors for onboarding and support coverage.",
     category: "social",
     stage: "live",
     budget: "65k HMND",
@@ -89,7 +92,8 @@ const projects: FormationProject[] = [
     title: "Deterrence Sim Lab",
     focus: "Research · Security",
     proposer: "Victor",
-    summary: "Scenario simulator for deterrence drills and biometric failure rehearsals.",
+    summary:
+      "Scenario simulator for deterrence drills and biometric failure rehearsals.",
     category: "research",
     stage: "completed",
     budget: "50k HMND",
@@ -106,7 +110,8 @@ const Formation: React.FC = () => {
   const filteredProjects = useMemo(() => {
     const term = search.trim().toLowerCase();
     return projects.filter((project) => {
-      const matchesCategory = activeCategory === "all" || project.category === activeCategory;
+      const matchesCategory =
+        activeCategory === "all" || project.category === activeCategory;
       const matchesSearch =
         term.length === 0 ||
         project.title.toLowerCase().includes(term) ||
@@ -121,7 +126,9 @@ const Formation: React.FC = () => {
     <div className="app-page flex flex-col gap-6">
       <div>
         <h1 className="text-xl font-semibold text-(--text)">Formation</h1>
-        <p className="text-sm text-muted">Formation programs, squads, and milestone progress.</p>
+        <p className="text-sm text-muted">
+          Formation programs, squads, and milestone progress.
+        </p>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -129,16 +136,22 @@ const Formation: React.FC = () => {
           <article
             key={metric.label}
             data-metric={metric.dataAttr}
-            className="rounded-2xl border border-border bg-panel-alt px-4 py-5 shadow-sm"
+            className="bg-panel-alt rounded-2xl border border-border px-4 py-5 shadow-sm"
           >
             <p className="text-sm text-muted">{metric.label}</p>
-            <strong className="text-2xl font-semibold text-(--text)">{metric.value}</strong>
+            <strong className="text-2xl font-semibold text-(--text)">
+              {metric.value}
+            </strong>
           </article>
         ))}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-panel p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Formation filters">
+      <section className="bg-panel flex flex-col gap-3 rounded-2xl border border-border p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div
+          className="flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Formation filters"
+        >
           {categoryOptions.map((category) => (
             <button
               key={category.value}
@@ -149,7 +162,7 @@ const Formation: React.FC = () => {
               className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
                 activeCategory === category.value
                   ? "bg-primary text-white shadow"
-                  : "border border-border bg-panel-alt text-(--text) hover:border-[color:var(--primary-dim)]"
+                  : "bg-panel-alt border border-border text-(--text) hover:border-[color:var(--primary-dim)]"
               }`}
             >
               {category.label}
@@ -167,7 +180,10 @@ const Formation: React.FC = () => {
       </section>
 
       <section role="search" className="space-y-2">
-        <label htmlFor={searchId} className="text-xs uppercase tracking-wide text-muted">
+        <label
+          htmlFor={searchId}
+          className="text-xs tracking-wide text-muted uppercase"
+        >
           Search projects
         </label>
         <div className="relative">
@@ -183,7 +199,7 @@ const Formation: React.FC = () => {
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full px-2 text-muted"
+              className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full px-2 text-muted"
               onClick={() => setSearch("")}
             >
               ×
@@ -198,11 +214,18 @@ const Formation: React.FC = () => {
         data-formation-list={filteredProjects.length}
       >
         {filteredProjects.map((project) => (
-          <Card key={project.id} className="border border-border bg-panel shadow-sm">
+          <Card
+            key={project.id}
+            className="bg-panel border border-border shadow-sm"
+          >
             <CardHeader className="flex items-center justify-between pb-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">{project.focus}</p>
-                <h3 className="text-lg font-semibold text-(--text)">{project.title}</h3>
+                <p className="text-xs tracking-wide text-muted uppercase">
+                  {project.focus}
+                </p>
+                <h3 className="text-lg font-semibold text-(--text)">
+                  {project.title}
+                </h3>
               </div>
               <Badge variant="outline" className="text-xs font-semibold">
                 {project.stage === "live"
@@ -215,23 +238,31 @@ const Formation: React.FC = () => {
             <CardContent className="space-y-3">
               <p className="text-sm text-(--text)">{project.summary}</p>
               <div className="grid gap-2 text-sm text-(--text)">
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-muted">Budget</p>
+                <div className="bg-panel-alt rounded-xl border border-border px-3 py-2">
+                  <p className="text-xs tracking-wide text-muted uppercase">
+                    Budget
+                  </p>
                   <p className="font-semibold">{project.budget}</p>
                 </div>
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-muted">Milestones</p>
+                <div className="bg-panel-alt rounded-xl border border-border px-3 py-2">
+                  <p className="text-xs tracking-wide text-muted uppercase">
+                    Milestones
+                  </p>
                   <p className="font-semibold">{project.milestones}</p>
                 </div>
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-muted">Team slots</p>
+                <div className="bg-panel-alt rounded-xl border border-border px-3 py-2">
+                  <p className="text-xs tracking-wide text-muted uppercase">
+                    Team slots
+                  </p>
                   <p className="font-semibold">{project.teamSlots}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>
                   Proposer:{" "}
-                  <span className="font-semibold text-(--text) hover:text-primary">{project.proposer}</span>
+                  <span className="font-semibold text-(--text) hover:text-primary">
+                    {project.proposer}
+                  </span>
                 </span>
                 <Button size="sm">Open project</Button>
               </div>
@@ -239,7 +270,7 @@ const Formation: React.FC = () => {
           </Card>
         ))}
         {filteredProjects.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-panel px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
+          <div className="bg-panel rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
             No Formation projects match the current filters.
           </div>
         )}

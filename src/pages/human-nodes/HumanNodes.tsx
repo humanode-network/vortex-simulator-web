@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -26,27 +32,221 @@ type Node = {
 };
 
 const sampleNodes: Node[] = [
-  { id: "Mozgiii", name: "Mozgiii", role: "Legate · Protocol Engineering", chamber: "protocol", tier: "legate", acm: 182, mm: 92, formationCapable: true, active: true, formationProject: "Protocol council", tags: ["protocol", "security", "research"] },
-  { id: "Raamara", name: "Raamara", role: "Consul · Economics", chamber: "economics", tier: "consul", acm: 168, mm: 80, formationCapable: true, active: true, formationProject: "Treasury ops", tags: ["treasury", "formation", "community"] },
-  { id: "Nyx", name: "Nyx", role: "Ecclesiast · Security", chamber: "security", tier: "ecclesiast", acm: 155, mm: 78, formationCapable: false, active: false, formationProject: "Security audits", tags: ["security", "infra", "audits"] },
-  { id: "Nana", name: "Nana", role: "Consul · Community & Treasury", chamber: "economics", tier: "consul", acm: 161, mm: 84, formationCapable: true, active: true, formationProject: "Community treasury", tags: ["treasury", "community", "formation"] },
-  { id: "Victor", name: "Victor", role: "Legate · Research Ops", chamber: "research", tier: "legate", acm: 149, mm: 76, formationCapable: false, active: true, formationProject: "Research guild", tags: ["research", "protocol", "infra"] },
-  { id: "Tony", name: "Tony", role: "Ecclesiast · Social", chamber: "social", tier: "ecclesiast", acm: 138, mm: 70, formationCapable: true, active: false, formationProject: "Community outreach", tags: ["social", "community", "formation"] },
-  { id: "Dima", name: "Dima", role: "Nominee · Security Apprentice", chamber: "security", tier: "nominee", acm: 122, mm: 62, formationCapable: false, active: true, formationProject: "Audit rotation", tags: ["security", "audits"] },
-  { id: "Shannon", name: "Shannon", role: "Consul · Formation Logistics", chamber: "formation", tier: "consul", acm: 171, mm: 88, formationCapable: true, active: true, formationProject: "Formation logistics", tags: ["formation", "operations", "logistics"] },
-  { id: "Sasha", name: "Sasha", role: "Citizen · Constitutional Observer", chamber: "protocol", tier: "citizen", acm: 118, mm: 60, formationCapable: false, active: true, formationProject: "Audit trail", tags: ["research", "protocol"] },
-  { id: "VictorM", name: "Victor M", role: "Legate · Mesh Ops", chamber: "protocol", tier: "legate", acm: 165, mm: 85, formationCapable: true, active: true, formationProject: "Mesh redundancy", tags: ["protocol", "infra", "formation"] },
-  { id: "Cass", name: "Cass", role: "Ecclesiast · Treasury Ops", chamber: "economics", tier: "ecclesiast", acm: 147, mm: 74, formationCapable: true, active: true, formationProject: "Treasury dashboard", tags: ["treasury", "community"] },
-  { id: "Lena", name: "Lena", role: "Consul · Social Impact", chamber: "social", tier: "consul", acm: 158, mm: 83, formationCapable: true, active: true, formationProject: "Impact guild", tags: ["social", "community"] },
-  { id: "Artem", name: "Artem", role: "Legate · Security Infra", chamber: "security", tier: "legate", acm: 166, mm: 89, formationCapable: true, active: true, formationProject: "Deterrence drills", tags: ["security", "infra"] },
-  { id: "Juno", name: "Juno", role: "Nominee · Research Fellow", chamber: "research", tier: "nominee", acm: 119, mm: 64, formationCapable: false, active: true, formationProject: "Research fellowship", tags: ["research", "protocol"] },
-  { id: "Iris", name: "Iris", role: "Ecclesiast · Community Ops", chamber: "social", tier: "ecclesiast", acm: 140, mm: 72, formationCapable: true, active: false, formationProject: "Care outreach", tags: ["social", "community", "formation"] },
-  { id: "Taro", name: "Taro", role: "Consul · Formation Logistics", chamber: "formation", tier: "consul", acm: 172, mm: 87, formationCapable: true, active: true, formationProject: "Formation supply", tags: ["formation", "operations"] },
+  {
+    id: "Mozgiii",
+    name: "Mozgiii",
+    role: "Legate · Protocol Engineering",
+    chamber: "protocol",
+    tier: "legate",
+    acm: 182,
+    mm: 92,
+    formationCapable: true,
+    active: true,
+    formationProject: "Protocol council",
+    tags: ["protocol", "security", "research"],
+  },
+  {
+    id: "Raamara",
+    name: "Raamara",
+    role: "Consul · Economics",
+    chamber: "economics",
+    tier: "consul",
+    acm: 168,
+    mm: 80,
+    formationCapable: true,
+    active: true,
+    formationProject: "Treasury ops",
+    tags: ["treasury", "formation", "community"],
+  },
+  {
+    id: "Nyx",
+    name: "Nyx",
+    role: "Ecclesiast · Security",
+    chamber: "security",
+    tier: "ecclesiast",
+    acm: 155,
+    mm: 78,
+    formationCapable: false,
+    active: false,
+    formationProject: "Security audits",
+    tags: ["security", "infra", "audits"],
+  },
+  {
+    id: "Nana",
+    name: "Nana",
+    role: "Consul · Community & Treasury",
+    chamber: "economics",
+    tier: "consul",
+    acm: 161,
+    mm: 84,
+    formationCapable: true,
+    active: true,
+    formationProject: "Community treasury",
+    tags: ["treasury", "community", "formation"],
+  },
+  {
+    id: "Victor",
+    name: "Victor",
+    role: "Legate · Research Ops",
+    chamber: "research",
+    tier: "legate",
+    acm: 149,
+    mm: 76,
+    formationCapable: false,
+    active: true,
+    formationProject: "Research guild",
+    tags: ["research", "protocol", "infra"],
+  },
+  {
+    id: "Tony",
+    name: "Tony",
+    role: "Ecclesiast · Social",
+    chamber: "social",
+    tier: "ecclesiast",
+    acm: 138,
+    mm: 70,
+    formationCapable: true,
+    active: false,
+    formationProject: "Community outreach",
+    tags: ["social", "community", "formation"],
+  },
+  {
+    id: "Dima",
+    name: "Dima",
+    role: "Nominee · Security Apprentice",
+    chamber: "security",
+    tier: "nominee",
+    acm: 122,
+    mm: 62,
+    formationCapable: false,
+    active: true,
+    formationProject: "Audit rotation",
+    tags: ["security", "audits"],
+  },
+  {
+    id: "Shannon",
+    name: "Shannon",
+    role: "Consul · Formation Logistics",
+    chamber: "formation",
+    tier: "consul",
+    acm: 171,
+    mm: 88,
+    formationCapable: true,
+    active: true,
+    formationProject: "Formation logistics",
+    tags: ["formation", "operations", "logistics"],
+  },
+  {
+    id: "Sasha",
+    name: "Sasha",
+    role: "Citizen · Constitutional Observer",
+    chamber: "protocol",
+    tier: "citizen",
+    acm: 118,
+    mm: 60,
+    formationCapable: false,
+    active: true,
+    formationProject: "Audit trail",
+    tags: ["research", "protocol"],
+  },
+  {
+    id: "VictorM",
+    name: "Victor M",
+    role: "Legate · Mesh Ops",
+    chamber: "protocol",
+    tier: "legate",
+    acm: 165,
+    mm: 85,
+    formationCapable: true,
+    active: true,
+    formationProject: "Mesh redundancy",
+    tags: ["protocol", "infra", "formation"],
+  },
+  {
+    id: "Cass",
+    name: "Cass",
+    role: "Ecclesiast · Treasury Ops",
+    chamber: "economics",
+    tier: "ecclesiast",
+    acm: 147,
+    mm: 74,
+    formationCapable: true,
+    active: true,
+    formationProject: "Treasury dashboard",
+    tags: ["treasury", "community"],
+  },
+  {
+    id: "Lena",
+    name: "Lena",
+    role: "Consul · Social Impact",
+    chamber: "social",
+    tier: "consul",
+    acm: 158,
+    mm: 83,
+    formationCapable: true,
+    active: true,
+    formationProject: "Impact guild",
+    tags: ["social", "community"],
+  },
+  {
+    id: "Artem",
+    name: "Artem",
+    role: "Legate · Security Infra",
+    chamber: "security",
+    tier: "legate",
+    acm: 166,
+    mm: 89,
+    formationCapable: true,
+    active: true,
+    formationProject: "Deterrence drills",
+    tags: ["security", "infra"],
+  },
+  {
+    id: "Juno",
+    name: "Juno",
+    role: "Nominee · Research Fellow",
+    chamber: "research",
+    tier: "nominee",
+    acm: 119,
+    mm: 64,
+    formationCapable: false,
+    active: true,
+    formationProject: "Research fellowship",
+    tags: ["research", "protocol"],
+  },
+  {
+    id: "Iris",
+    name: "Iris",
+    role: "Ecclesiast · Community Ops",
+    chamber: "social",
+    tier: "ecclesiast",
+    acm: 140,
+    mm: 72,
+    formationCapable: true,
+    active: false,
+    formationProject: "Care outreach",
+    tags: ["social", "community", "formation"],
+  },
+  {
+    id: "Taro",
+    name: "Taro",
+    role: "Consul · Formation Logistics",
+    chamber: "formation",
+    tier: "consul",
+    acm: 172,
+    mm: 87,
+    formationCapable: true,
+    active: true,
+    formationProject: "Formation supply",
+    tags: ["formation", "operations"],
+  },
 ];
 
 const HumanNodes: React.FC = () => {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"acm-desc" | "acm-asc" | "tier" | "name">("acm-desc");
+  const [sortBy, setSortBy] = useState<
+    "acm-desc" | "acm-asc" | "tier" | "name"
+  >("acm-desc");
   const [view, setView] = useState<"cards" | "list">("cards");
   const [tierFilter, setTierFilter] = useState("any");
   const [chamberFilter, setChamberFilter] = useState("all");
@@ -64,11 +264,21 @@ const HumanNodes: React.FC = () => {
           node.role.toLowerCase().includes(term) ||
           node.tags.some((t) => t.toLowerCase().includes(term));
         const matchesTier = tierFilter === "any" || node.tier === tierFilter;
-        const matchesChamber = chamberFilter === "all" || node.chamber === chamberFilter;
-        const matchesTag = tagFilter === "any" || node.tags.some((t) => t.toLowerCase() === tagFilter);
+        const matchesChamber =
+          chamberFilter === "all" || node.chamber === chamberFilter;
+        const matchesTag =
+          tagFilter === "any" ||
+          node.tags.some((t) => t.toLowerCase() === tagFilter);
         const matchesFormation = !formationOnly || node.formationCapable;
         const matchesScores = node.acm >= acmMin && node.mm >= mmMin;
-        return matchesTerm && matchesTier && matchesChamber && matchesTag && matchesFormation && matchesScores;
+        return (
+          matchesTerm &&
+          matchesTier &&
+          matchesChamber &&
+          matchesTag &&
+          matchesFormation &&
+          matchesScores
+        );
       })
       .sort((a, b) => {
         if (sortBy === "acm-desc") return b.acm - a.acm;
@@ -77,11 +287,20 @@ const HumanNodes: React.FC = () => {
         const order = ["nominee", "ecclesiast", "legate", "consul", "citizen"];
         return order.indexOf(a.tier) - order.indexOf(b.tier);
       });
-  }, [search, sortBy, tierFilter, chamberFilter, tagFilter, formationOnly, acmMin, mmMin]);
+  }, [
+    search,
+    sortBy,
+    tierFilter,
+    chamberFilter,
+    tagFilter,
+    formationOnly,
+    acmMin,
+    mmMin,
+  ]);
 
   return (
     <div className="app-page human-nodes-page">
-      <div className="w-full rounded-2xl border border-border bg-panel p-3 shadow-sm">
+      <div className="bg-panel w-full rounded-2xl border border-border p-3 shadow-sm">
         <div className="human-nodes-toolbar">
           <Input
             placeholder="Search Human nodes by handle, address, chamber, or focus…"
@@ -89,7 +308,11 @@ const HumanNodes: React.FC = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="human-nodes-search-input"
           />
-          <Button variant="outline" size="md" className="human-nodes-search-button">
+          <Button
+            variant="outline"
+            size="md"
+            className="human-nodes-search-button"
+          >
             Search
           </Button>
         </div>
@@ -99,9 +322,11 @@ const HumanNodes: React.FC = () => {
         <div className="human-nodes-main">
           <Card className="w-full">
             <CardHeader className="pb-2">
-              <p className="text-xs uppercase tracking-wide text-muted">Results ({filtered.length})</p>
+              <p className="text-xs tracking-wide text-muted uppercase">
+                Results ({filtered.length})
+              </p>
             </CardHeader>
-            <CardContent className="pt-0 space-y-3">
+            <CardContent className="space-y-3 pt-0">
               <div className="human-nodes-toolbar">
                 <div className="human-nodes-sort">
                   <Label htmlFor="sort" className="human-nodes-sort-label">
@@ -146,36 +371,69 @@ const HumanNodes: React.FC = () => {
                     const tileItems = [
                       { label: "ACM", value: node.acm.toString() },
                       { label: "MM", value: node.mm.toString() },
-                      { label: "Tier", value: node.tier.charAt(0).toUpperCase() + node.tier.slice(1) },
-                      { label: "Governor", value: node.active ? "Active" : "Not active" },
-                      { label: "Human node", value: node.active ? "Active" : "Inactive" },
+                      {
+                        label: "Tier",
+                        value:
+                          node.tier.charAt(0).toUpperCase() +
+                          node.tier.slice(1),
+                      },
+                      {
+                        label: "Governor",
+                        value: node.active ? "Active" : "Not active",
+                      },
+                      {
+                        label: "Human node",
+                        value: node.active ? "Active" : "Inactive",
+                      },
                       { label: "Main chamber", value: node.chamber },
-                      { label: "Formation member", value: node.formationCapable ? "Yes" : "No" },
-                      { label: "Formation project", value: node.formationProject ?? "—" },
+                      {
+                        label: "Formation member",
+                        value: node.formationCapable ? "Yes" : "No",
+                      },
+                      {
+                        label: "Formation project",
+                        value: node.formationProject ?? "—",
+                      },
                       {
                         label: "Human node since",
-                        value: sinceDates[node.id as keyof typeof sinceDates] ?? "01.01.2021",
+                        value:
+                          sinceDates[node.id as keyof typeof sinceDates] ??
+                          "01.01.2021",
                       },
                     ];
                     return (
-                      <Card key={node.id} className="border-border human-node-card">
+                      <Card
+                        key={node.id}
+                        className="human-node-card border-border"
+                      >
                         <CardContent className="human-node-card__content pt-4">
                           <div>
-                            <h3 className="text-lg font-semibold">{node.name}</h3>
+                            <h3 className="text-lg font-semibold">
+                              {node.name}
+                            </h3>
                             <p className="text-sm text-muted">{node.role}</p>
                           </div>
                           <div className="human-node-card__tiles">
                             {tileItems.map((item) => (
-                              <div key={item.label} className="human-node-card__tile">
-                                <span className="human-node-card__tile-label">{item.label}</span>
-                                <span className="human-node-card__tile-value">{item.value}</span>
+                              <div
+                                key={item.label}
+                                className="human-node-card__tile"
+                              >
+                                <span className="human-node-card__tile-label">
+                                  {item.label}
+                                </span>
+                                <span className="human-node-card__tile-value">
+                                  {item.value}
+                                </span>
                               </div>
                             ))}
                           </div>
                         </CardContent>
-                        <CardFooter className="pt-0 justify-end gap-2 human-node-card__footer">
+                        <CardFooter className="human-node-card__footer justify-end gap-2 pt-0">
                           <Button asChild size="sm">
-                            <Link to={`/human-nodes/${node.id}`}>Open profile</Link>
+                            <Link to={`/human-nodes/${node.id}`}>
+                              Open profile
+                            </Link>
                           </Button>
                         </CardFooter>
                       </Card>
@@ -189,7 +447,9 @@ const HumanNodes: React.FC = () => {
                       <CardContent className="pt-4 pb-3">
                         <div className="human-node-row">
                           <div className="human-node-row__details">
-                            <h4 className="text-base font-semibold">{node.name}</h4>
+                            <h4 className="text-base font-semibold">
+                              {node.name}
+                            </h4>
                             <p className="text-sm text-muted">{node.role}</p>
                           </div>
                           <div className="human-node-row__stats">
@@ -219,14 +479,20 @@ const HumanNodes: React.FC = () => {
         <aside className="human-nodes-sidebar">
           <Card className="w-full">
             <CardHeader className="pb-2">
-              <p className="text-xs uppercase tracking-wide text-muted">Filters</p>
+              <p className="text-xs tracking-wide text-muted uppercase">
+                Filters
+              </p>
               <CardTitle>Refine directory</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 space-y-4">
+            <CardContent className="space-y-4 pt-0">
               <div className="human-nodes-filter-groups">
                 <div>
                   <Label htmlFor="tier">Tier</Label>
-                  <Select id="tier" value={tierFilter} onChange={(e) => setTierFilter(e.target.value)}>
+                  <Select
+                    id="tier"
+                    value={tierFilter}
+                    onChange={(e) => setTierFilter(e.target.value)}
+                  >
                     <option value="any">Any</option>
                     <option value="nominee">Nominee</option>
                     <option value="ecclesiast">Ecclesiast</option>
@@ -237,7 +503,11 @@ const HumanNodes: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="chamber">Chamber</Label>
-                  <Select id="chamber" value={chamberFilter} onChange={(e) => setChamberFilter(e.target.value)}>
+                  <Select
+                    id="chamber"
+                    value={chamberFilter}
+                    onChange={(e) => setChamberFilter(e.target.value)}
+                  >
                     <option value="all">All specializations</option>
                     <option value="protocol">Protocol Engineering</option>
                     <option value="research">Research</option>
@@ -250,7 +520,11 @@ const HumanNodes: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="tag">Specialty tag</Label>
-                  <Select id="tag" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+                  <Select
+                    id="tag"
+                    value={tagFilter}
+                    onChange={(e) => setTagFilter(e.target.value)}
+                  >
                     <option value="any">Any</option>
                     <option value="protocol">Protocol</option>
                     <option value="security">Security</option>
@@ -282,7 +556,13 @@ const HumanNodes: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
                   <Switch
                     checked={formationOnly}
                     onChange={(e) => setFormationOnly(e.target.checked)}

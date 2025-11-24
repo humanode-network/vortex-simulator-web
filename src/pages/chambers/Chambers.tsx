@@ -1,7 +1,13 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type Metric = {
   label: string;
@@ -87,44 +93,61 @@ const Chambers: React.FC = () => {
         {metricCards.map((metric) => (
           <div
             key={metric.label}
-            className="rounded-2xl border border-border bg-panel-alt px-4 py-5 text-center shadow-sm"
+            className="bg-panel-alt rounded-2xl border border-border px-4 py-5 text-center shadow-sm"
           >
             <p className="text-sm text-muted">{metric.label}</p>
-            <p className="text-2xl font-semibold text-(--text)">{metric.value}</p>
+            <p className="text-2xl font-semibold text-(--text)">
+              {metric.value}
+            </p>
           </div>
         ))}
       </section>
 
-      <section aria-live="polite" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section
+        aria-live="polite"
+        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      >
         {chambers.map((chamber) => (
-            <Card key={chamber.id} className="h-full border border-border bg-panel">
+          <Card
+            key={chamber.id}
+            className="bg-panel h-full border border-border"
+          >
             <CardHeader className="pb-2">
               <div className="flex min-h-16 items-start justify-between gap-2">
                 <CardTitle className="max-w-[70%]">{chamber.name}</CardTitle>
-                <Badge className="whitespace-nowrap text-center text-xs font-semibold uppercase" variant="outline">
+                <Badge
+                  className="text-center text-xs font-semibold whitespace-nowrap uppercase"
+                  variant="outline"
+                >
                   M × {chamber.multiplier.replace("×", "").trim()}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <dl className="grid grid-cols-3 gap-3 text-center text-sm text-(--text)">
-                <div className="flex flex-col items-center rounded-xl border border-border bg-panel-alt px-3 py-2 text-center">
-                  <dt className="text-center text-[0.65rem] uppercase tracking-wide text-muted whitespace-nowrap leading-tight">
+                <div className="bg-panel-alt flex flex-col items-center rounded-xl border border-border px-3 py-2 text-center">
+                  <dt className="text-center text-[0.65rem] leading-tight tracking-wide whitespace-nowrap text-muted uppercase">
                     Governors
                   </dt>
-                  <dd className="text-lg font-semibold">{chamber.stats.governors}</dd>
+                  <dd className="text-lg font-semibold">
+                    {chamber.stats.governors}
+                  </dd>
                 </div>
-                <div className="flex flex-col items-center rounded-xl border border-border bg-panel-alt px-3 py-2 text-center">
-                  <dt className="text-[0.65rem] uppercase tracking-wide text-muted whitespace-nowrap leading-tight">MCM</dt>
+                <div className="bg-panel-alt flex flex-col items-center rounded-xl border border-border px-3 py-2 text-center">
+                  <dt className="text-[0.65rem] leading-tight tracking-wide whitespace-nowrap text-muted uppercase">
+                    MCM
+                  </dt>
                   <dd className="text-lg font-semibold">{chamber.stats.mcm}</dd>
                 </div>
-                <div className="flex flex-col items-center rounded-xl border border-border bg-panel-alt px-3 py-2 text-center">
-                  <dt className="text-[0.65rem] uppercase tracking-wide text-muted whitespace-nowrap leading-tight">LCM</dt>
+                <div className="bg-panel-alt flex flex-col items-center rounded-xl border border-border px-3 py-2 text-center">
+                  <dt className="text-[0.65rem] leading-tight tracking-wide whitespace-nowrap text-muted uppercase">
+                    LCM
+                  </dt>
                   <dd className="text-lg font-semibold">{chamber.stats.lcm}</dd>
                 </div>
               </dl>
 
-              <ul className="rounded-2xl border border-dashed border-border/80 bg-panel-alt px-3 py-3 text-sm">
+              <ul className="bg-panel-alt rounded-2xl border border-dashed border-border/80 px-3 py-3 text-sm">
                 <li className="flex items-center justify-between border-b border-border/50 pb-2 text-(--text)">
                   <span>Proposal pool</span>
                   <strong>{chamber.pipeline.pool}</strong>
