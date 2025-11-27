@@ -31,10 +31,10 @@ type Chamber = {
 };
 
 const metricCards: Metric[] = [
-  { label: "Total chambers", value: "12" },
-  { label: "Active governors", value: "284" },
-  { label: "Total ACM", value: "21,439" },
-  { label: "Live proposals", value: "17" },
+  { label: "Total chambers", value: "6" },
+  { label: "Active governors", value: "100" },
+  { label: "Total ACM", value: "7,600" },
+  { label: "Live proposals", value: "9" },
 ];
 
 const chambers: Chamber[] = [
@@ -42,43 +42,43 @@ const chambers: Chamber[] = [
     id: "protocol-engineering",
     name: "Protocol Engineering",
     multiplier: "×1.5",
-    stats: { governors: "64", mcm: "5,480", lcm: "6,850" },
-    pipeline: { pool: 3, vote: 2, build: 1 },
+    stats: { governors: "22", mcm: "1,600", lcm: "1,800" },
+    pipeline: { pool: 2, vote: 2, build: 1 },
   },
   {
     id: "research-cryptobiometrics",
     name: "Research & Cryptobiometrics",
     multiplier: "×1.8",
-    stats: { governors: "41", mcm: "4,120", lcm: "5,560" },
-    pipeline: { pool: 4, vote: 1, build: 0 },
+    stats: { governors: "15", mcm: "1,200", lcm: "1,400" },
+    pipeline: { pool: 2, vote: 1, build: 0 },
   },
   {
     id: "treasury-economics",
     name: "Treasury & Economics",
     multiplier: "×1.3",
-    stats: { governors: "53", mcm: "3,970", lcm: "4,367" },
-    pipeline: { pool: 2, vote: 3, build: 1 },
+    stats: { governors: "18", mcm: "1,400", lcm: "1,550" },
+    pipeline: { pool: 2, vote: 2, build: 1 },
   },
   {
     id: "formation-logistics",
     name: "Formation Logistics",
     multiplier: "×1.2",
-    stats: { governors: "32", mcm: "2,210", lcm: "2,320" },
-    pipeline: { pool: 1, vote: 0, build: 4 },
+    stats: { governors: "12", mcm: "900", lcm: "1,000" },
+    pipeline: { pool: 1, vote: 0, build: 3 },
   },
   {
     id: "social-outreach",
     name: "Social Outreach",
     multiplier: "×1.1",
-    stats: { governors: "28", mcm: "1,720", lcm: "1,634" },
-    pipeline: { pool: 2, vote: 1, build: 0 },
+    stats: { governors: "10", mcm: "700", lcm: "780" },
+    pipeline: { pool: 1, vote: 1, build: 0 },
   },
   {
     id: "security-council",
     name: "Security Council",
     multiplier: "×1.7",
-    stats: { governors: "66", mcm: "4,930", lcm: "6,409" },
-    pipeline: { pool: 1, vote: 2, build: 2 },
+    stats: { governors: "23", mcm: "1,800", lcm: "2,000" },
+    pipeline: { pool: 1, vote: 2, build: 1 },
   },
 ];
 

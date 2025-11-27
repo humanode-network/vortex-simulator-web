@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router";
 
 type Category = "all" | "research" | "development" | "social";
 type Stage = "live" | "upcoming" | "completed";
@@ -264,7 +265,11 @@ const Formation: React.FC = () => {
                     {project.proposer}
                   </span>
                 </span>
-                <Button size="sm">Open project</Button>
+                <Button asChild size="sm">
+                  <Link to={`/proposals/${project.id ?? "project"}/formation`}>
+                    Open project
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
