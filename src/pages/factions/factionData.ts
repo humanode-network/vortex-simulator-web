@@ -16,9 +16,9 @@ export const factions: Faction[] = [
     name: "Protocol Keepers",
     description:
       "Pushes for harder liveness guarantees and validator neutrality.",
-    members: 61,
-    votes: "28",
-    acm: "6,850",
+    members: 24,
+    votes: "24",
+    acm: "1,800",
     focus: "Core protocol",
     goals: [
       "Guarantee validator neutrality and reduce reliance on trusted relays.",
@@ -35,9 +35,9 @@ export const factions: Faction[] = [
     name: "Formation Guild",
     description:
       "Wants Formation to own more budget and streamline squad approvals.",
-    members: 54,
-    votes: "21",
-    acm: "5,120",
+    members: 18,
+    votes: "18",
+    acm: "1,500",
     focus: "Execution & delivery",
     goals: [
       "Delegate more discretionary budget to guild leads.",
@@ -53,9 +53,9 @@ export const factions: Faction[] = [
     id: "mesh-vanguard",
     name: "Mesh Vanguard",
     description: "Advocates anonymous identities and stronger mesh privacy.",
-    members: 48,
-    votes: "19",
-    acm: "4,930",
+    members: 16,
+    votes: "16",
+    acm: "1,400",
     focus: "Reliability & ops",
     goals: [
       "Enable anonymous identities inside the mesh without sacrificing quorum.",
@@ -72,9 +72,9 @@ export const factions: Faction[] = [
     name: "Treasury Collective",
     description:
       "Advocates changing fee structures and treasury distributions.",
-    members: 37,
-    votes: "14",
-    acm: "4,110",
+    members: 15,
+    votes: "15",
+    acm: "1,300",
     focus: "Economics",
     goals: [
       "Rebalance civic vs ops disbursements.",
@@ -91,9 +91,9 @@ export const factions: Faction[] = [
     name: "Guardian Circle",
     description:
       "Expands mentorship and onboarding safety nets for new governors.",
-    members: 29,
-    votes: "9",
-    acm: "3,220",
+    members: 12,
+    votes: "12",
+    acm: "900",
     focus: "Mentorship",
     goals: [
       "Reduce churn in new governor cohorts.",
@@ -110,9 +110,9 @@ export const factions: Faction[] = [
     name: "Research Lab",
     description:
       "Explores deterrence models and privacy-first biometrics research.",
-    members: 33,
-    votes: "12",
-    acm: "3,780",
+    members: 15,
+    votes: "15",
+    acm: "1,100",
     focus: "Research",
     goals: [
       "Advance deterrence simulations for hostile scenarios.",

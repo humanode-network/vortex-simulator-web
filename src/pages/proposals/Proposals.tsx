@@ -62,15 +62,15 @@ const proposalData: Proposal[] = [
       {
         title: "Pool momentum",
         description: "Upvotes / Downvotes",
-        value: "128 / 14",
+        value: "24 / 6",
       },
       {
         title: "Attention quorum",
         description: "20% active or ≥10% upvotes",
-        value: "Met · 38% engaged",
+        value: "Met · 30% engaged",
         tone: "ok",
       },
-      { title: "Votes casted", description: "Backing seats", value: "28" },
+      { title: "Votes casted", description: "Backing seats", value: "24" },
     ],
     stats: [
       { label: "Proof mix", value: "PoT 45% · PoD 35% · PoG 20%" },
@@ -113,7 +113,7 @@ const proposalData: Proposal[] = [
       {
         title: "Voting quorum",
         description: "Strict 33% active governors",
-        value: "Met · 35%",
+        value: "Met · 34%",
         tone: "ok",
       },
       {
@@ -126,7 +126,7 @@ const proposalData: Proposal[] = [
     ],
     stats: [
       { label: "Formation impact", value: "Medium" },
-      { label: "Votes casted", value: "51" },
+      { label: "Votes casted", value: "34" },
       { label: "Proof mix", value: "PoT 30% · PoD 50% · PoG 20%" },
     ],
     proposer: "Victor",
@@ -762,7 +762,7 @@ const Proposals: React.FC = () => {
                   ))}
                 </ul>
 
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                   <Link
                     to={`/human-nodes/${proposal.proposerId}`}
                     className="text-sm font-semibold text-primary"
@@ -770,7 +770,21 @@ const Proposals: React.FC = () => {
                     Proposer: {proposal.proposer}
                   </Link>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm">{proposal.ctaPrimary}</Button>
+                    {(() => {
+                      const primaryHref =
+                        proposal.stage === "pool"
+                          ? `/proposals/${proposal.id}/pp`
+                          : proposal.stage === "vote"
+                            ? `/proposals/${proposal.id}/chamber`
+                            : proposal.stage === "build"
+                              ? `/proposals/${proposal.id}/formation`
+                              : `/proposals/${proposal.id}/pp`;
+                      return (
+                        <Button asChild size="sm">
+                          <Link to={primaryHref}>{proposal.ctaPrimary}</Link>
+                        </Button>
+                      );
+                    })()}
                     <Button size="sm" variant="ghost">
                       {proposal.ctaSecondary}
                     </Button>
