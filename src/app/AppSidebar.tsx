@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import { useState } from "react";
 import "./AppSidebar.css";
 import clsx from "clsx";
 
@@ -6,6 +7,8 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
   clsx("sidebar__link", isActive && "sidebar__link--active");
 
 const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
@@ -37,18 +40,23 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
         <NavLink className={navClass} to="/courts">
           Courts
         </NavLink>
-        <details className="group">
-          <summary className="cursor-pointer list-none">
-            <NavLink className={navClass} to="/settings">
-              Settings
-            </NavLink>
-          </summary>
+        <button
+          type="button"
+          className={clsx("sidebar__link", settingsOpen && "sidebar__link--active")}
+          onClick={() => setSettingsOpen((open) => !open)}
+        >
+          Settings
+        </button>
+        {settingsOpen && (
           <div className="pl-4 pt-1">
+            <NavLink className={navClass} to="/settings">
+              General
+            </NavLink>
             <NavLink className={navClass} to="/profile">
               My profile
             </NavLink>
           </div>
-        </details>
+        )}
       </nav>
 
       {children}

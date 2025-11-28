@@ -10,13 +10,13 @@ import Faction from "../pages/factions/Faction";
 import ProposalPP from "../pages/proposals/ProposalPP";
 import ProposalChamber from "../pages/proposals/ProposalChamber";
 import ProposalFormation from "../pages/proposals/ProposalFormation";
-import Settings from "../pages/Settings";
+import General from "../pages/General";
 import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
 import Chamber from "../pages/chambers/Chamber";
 import Feed from "../pages/feed/Feed";
 import Courts from "../pages/courts/Courts";
-import CMMultiplier from "../pages/cm/CMMultiplier";
+import CMPannel from "../pages/cm/CMPannel";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -36,7 +36,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/human-nodes" element={<HumanNodes />} />
         <Route path="/human-nodes/:id" element={<HumanNode />} />
         <Route path="/courts" element={<Courts />} />
-        <Route path="/cm" element={<CMMultiplier />} />
+        <Route path="/cm" element={<CMPannel />} />
         <Route path="/proposals" element={<Proposals />} />
         <Route path="/proposals/:id/pp" element={<ProposalPP />} />
         <Route path="/proposals/:id/chamber" element={<ProposalChamber />} />
@@ -45,7 +45,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/chambers/:id" element={<Chamber />} />
         <Route path="/formation" element={<Formation />} />
         <Route path="/invision" element={<Invision />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings" element={<General />} />
       </Route>
     </Routes>
   );
