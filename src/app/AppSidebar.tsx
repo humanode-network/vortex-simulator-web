@@ -13,14 +13,8 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
         <span className="sidebar__logo" aria-hidden="true"></span>
       </div>
       <nav className="sidebar__nav" aria-label="Primary">
-        <NavLink className={navClass} to="/profile">
-          My profile
-        </NavLink>
-        <NavLink className={navClass} to="/factions">
-          Factions
-        </NavLink>
-        <NavLink className={navClass} to="/human-nodes">
-          Human nodes
+        <NavLink className={navClass} to="/feed">
+          Feed
         </NavLink>
         <NavLink className={navClass} to="/proposals">
           Proposals
@@ -28,15 +22,33 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
         <NavLink className={navClass} to="/chambers">
           Chambers
         </NavLink>
+        <NavLink className={navClass} to="/human-nodes">
+          Human nodes
+        </NavLink>
         <NavLink className={navClass} to="/formation">
           Formation
+        </NavLink>
+        <NavLink className={navClass} to="/cm">
+          CM panel
         </NavLink>
         <NavLink className={navClass} to="/invision">
           Invision
         </NavLink>
-        <NavLink className={navClass} to="/settings">
-          Settings
+        <NavLink className={navClass} to="/courts">
+          Courts
         </NavLink>
+        <details className="group">
+          <summary className="cursor-pointer list-none">
+            <NavLink className={navClass} to="/settings">
+              Settings
+            </NavLink>
+          </summary>
+          <div className="pl-4 pt-1">
+            <NavLink className={navClass} to="/profile">
+              My profile
+            </NavLink>
+          </div>
+        </details>
       </nav>
 
       {children}

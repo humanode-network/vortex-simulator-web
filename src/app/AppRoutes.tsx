@@ -14,6 +14,9 @@ import Settings from "../pages/Settings";
 import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
 import Chamber from "../pages/chambers/Chamber";
+import Feed from "../pages/feed/Feed";
+import Courts from "../pages/courts/Courts";
+import CMMultiplier from "../pages/cm/CMMultiplier";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -25,12 +28,15 @@ const AppRoutes: React.FC = () => {
           </AppShell>
         }
       >
-        <Route path="/" element={<Navigate to="/profile" />} />
+        <Route path="/" element={<Navigate to="/feed" />} />
+        <Route path="/feed" element={<Feed />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/factions" element={<Factions />} />
         <Route path="/factions/:id" element={<Faction />} />
         <Route path="/human-nodes" element={<HumanNodes />} />
         <Route path="/human-nodes/:id" element={<HumanNode />} />
+        <Route path="/courts" element={<Courts />} />
+        <Route path="/cm" element={<CMMultiplier />} />
         <Route path="/proposals" element={<Proposals />} />
         <Route path="/proposals/:id/pp" element={<ProposalPP />} />
         <Route path="/proposals/:id/chamber" element={<ProposalChamber />} />
