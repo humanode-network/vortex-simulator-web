@@ -237,19 +237,6 @@ const feedItems: FeedItem[] = [
   },
 ];
 
-const eraActivity = {
-  era: "Era 142",
-  thresholdLabel: "Required actions",
-  required: 18,
-  completed: 11,
-  actions: [
-    { label: "Pool votes", done: 5, required: 6 },
-    { label: "Chamber votes", done: 3, required: 6 },
-    { label: "Court actions", done: 1, required: 3 },
-    { label: "Proposals", done: 2, required: 3 },
-  ],
-};
-
 const formatDate = (iso: string) => {
   const d = new Date(iso);
   const day = String(d.getDate()).padStart(2, "0");
@@ -303,7 +290,13 @@ const Feed: React.FC = () => {
                     stageStyles[item.stage],
                   )}
                 >
-                  {item.stageLabel}
+                  {item.stageLabel === "Chamber vote" ? (
+                    <HintLabel termId="chamber_vote">
+                      {item.stageLabel}
+                    </HintLabel>
+                  ) : (
+                    item.stageLabel
+                  )}
                 </span>
                 <Badge
                   variant="outline"

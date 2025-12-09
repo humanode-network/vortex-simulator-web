@@ -1064,6 +1064,33 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     updated: "2025-12-04",
   },
   {
+    ref: 49,
+    id: "chamber_vote",
+    name: "Chamber vote",
+    category: "governance",
+    short:
+      "Stage where governors cast binding votes on proposals that cleared proposal pools; requires quorum and passing threshold.",
+    long: [
+      "Proposals reaching attention quorum in a proposal pool advance to a chamber vote.",
+      "Chamber voting counts delegations and requires a voting quorum (e.g., 33% of active governors).",
+      "Passing typically needs ≥66.6% + 1 yes vote within quorum.",
+    ],
+    tags: ["vote", "chamber", "quorum", "governance"],
+    related: [
+      "proposal_pools",
+      "quorum_of_vote",
+      "quorum_of_attention",
+      "delegation_policy",
+    ],
+    examples: [
+      "A proposal that met pool attention quorum proceeds to chamber vote; if 66.6% + 1 yes within quorum, it passes.",
+    ],
+    stages: ["chamber"],
+    links: [{ label: "Docs", url: "https://gitbook.humanode.io/vortex-1.0" }],
+    source: "Voting, Delegation and Quorum",
+    updated: "2025-12-04",
+  },
+  {
     ref: 48,
     id: "cognitocratic_drain",
     name: "Cognitocratic drain",

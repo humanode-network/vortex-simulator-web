@@ -90,7 +90,10 @@ export const Hint: React.FC<HintProps> = ({
   return (
     <span className="relative inline-flex items-center align-baseline">
       <span
-        className={cn("hint-trigger", noUnderline && "no-underline")}
+        className={cn(
+          "hint-trigger tracking-normal whitespace-pre-wrap normal-case",
+          noUnderline && "no-underline",
+        )}
         onMouseEnter={(e) => {
           startHover(e.clientX, e.clientY);
         }}

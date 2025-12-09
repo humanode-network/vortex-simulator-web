@@ -198,6 +198,8 @@ const Profile: React.FC = () => {
               <p className="text-xs tracking-wide text-muted uppercase">
                 {stat.label === "ACM" ? (
                   <HintLabel termId="acm" termText="ACM" />
+                ) : stat.label === "MM" ? (
+                  <HintLabel termId="meritocratic_measure" termText="MM" />
                 ) : (
                   stat.label
                 )}

@@ -148,8 +148,8 @@ const Chambers: React.FC = () => {
                   <dd className="text-lg font-semibold">{chamber.stats.mcm}</dd>
                 </div>
                 <div className="bg-panel-alt flex flex-col items-center rounded-xl border border-border px-3 py-2 text-center">
-                  <dt className="text-[0.65rem] leading-tight tracking-wide whitespace-nowrap text-muted uppercase">
-                    LCM
+                  <dt className="text-[0.65rem] leading-tight tracking-normal whitespace-nowrap text-muted normal-case">
+                    <HintLabel termId="lcm">LCM</HintLabel>
                   </dt>
                   <dd className="text-lg font-semibold">{chamber.stats.lcm}</dd>
                 </div>
@@ -157,11 +157,15 @@ const Chambers: React.FC = () => {
 
               <ul className="bg-panel-alt rounded-2xl border border-dashed border-border/80 px-3 py-3 text-sm">
                 <li className="flex items-center justify-between border-b border-border/50 pb-2 text-(--text)">
-                  <span>Proposal pool</span>
+                  <span>
+                    <HintLabel termId="proposal_pools">Proposal pool</HintLabel>
+                  </span>
                   <strong>{chamber.pipeline.pool}</strong>
                 </li>
                 <li className="flex items-center justify-between border-b border-border/50 py-2 text-(--text)">
-                  <span>Chamber vote</span>
+                  <span>
+                    <HintLabel termId="chamber_vote">Chamber vote</HintLabel>
+                  </span>
                   <strong>{chamber.pipeline.vote}</strong>
                 </li>
                 <li className="flex items-center justify-between pt-2 text-(--text)">

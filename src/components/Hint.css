@@ -8,6 +8,7 @@
   line-height: inherit;
   letter-spacing: normal;
   text-transform: none;
+  white-space: pre-wrap;
   text-decoration-line: underline;
   text-decoration-style: dashed;
   text-decoration-color: var(--primary);

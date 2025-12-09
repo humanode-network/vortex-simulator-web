@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { HintLabel } from "@/components/Hint";
 
 const CMPanel: React.FC = () => {
   const initialChambers = [
@@ -62,19 +63,14 @@ const CMPanel: React.FC = () => {
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <header>
-        <h1 className="text-xl font-semibold text-(--text)">CM panel</h1>
-        <p className="text-sm text-muted">
-          Track and adjust CM multipliers across chambers.
-        </p>
-      </header>
       <Card className="bg-panel border border-border">
         <CardHeader className="pb-2">
           <CardTitle>Overview</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted">
-          Set your CM multipliers for chambers you are not a member of. Chambers
-          you belong to are blurred and not adjustable here.
+          Set your <HintLabel termId="cognitocratic_measure">CM</HintLabel>{" "}
+          multipliers for chambers you are not a member of. Chambers you belong
+          to are blurred and not adjustable here.
         </CardContent>
       </Card>
 

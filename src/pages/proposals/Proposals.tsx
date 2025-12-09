@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { HintLabel } from "@/components/Hint";
 
 type Stage = "pool" | "vote" | "build" | "final" | "archived";
 type ProofWeight = "pot" | "pod" | "pog";
@@ -337,8 +338,20 @@ const chipOptions = [
 
 const statusOptions: { label: string; value: Stage | "any" }[] = [
   { label: "Any", value: "any" },
-  { label: "Proposal pool", value: "pool" },
-  { label: "Chamber vote", value: "vote" },
+  {
+    label: "Proposal pool",
+    value: "pool",
+    render: () => (
+      <HintLabel termId="proposal_pool_system_vortex_formation_stack">
+        Proposal pool
+      </HintLabel>
+    ),
+  },
+  {
+    label: "Chamber vote",
+    value: "vote",
+    render: () => <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
+  },
   { label: "Formation build", value: "build" },
   { label: "Final vote", value: "final" },
   { label: "Refused / archived", value: "archived" },
@@ -711,7 +724,17 @@ const Proposals: React.FC = () => {
                     stageStyles[proposal.stage],
                   )}
                 >
-                  {proposal.stageLabel}
+                  {proposal.stageLabel === "Proposal pool" ? (
+                    <HintLabel termId="proposal_pools">
+                      {proposal.stageLabel}
+                    </HintLabel>
+                  ) : proposal.stageLabel === "Chamber vote" ? (
+                    <HintLabel termId="chamber_vote">
+                      {proposal.stageLabel}
+                    </HintLabel>
+                  ) : (
+                    proposal.stageLabel
+                  )}
                 </span>
                 <Badge
                   variant="outline"
