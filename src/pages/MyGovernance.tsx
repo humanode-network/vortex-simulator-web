@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HintLabel } from "@/components/Hint";
 
 const eraActivity = {
-  era: "Era 142",
+  era: "142",
   required: 18,
   completed: 11,
   actions: [
@@ -30,7 +31,13 @@ const MyGovernance: React.FC = () => {
                 key={tile.label}
                 className="bg-panel-alt flex h-full flex-col items-center justify-center rounded-2xl border border-border px-4 py-4 text-center"
               >
-                <p className="text-sm text-muted">{tile.label}</p>
+                <p className="text-sm text-muted">
+                  {tile.label === "Era" ? (
+                    <HintLabel termId="governing_era">{tile.label}</HintLabel>
+                  ) : (
+                    tile.label
+                  )}
+                </p>
                 <p className="text-xl font-semibold text-(--text)">
                   {tile.value}
                 </p>

@@ -414,7 +414,12 @@ const HumanNodes: React.FC = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="mm">MM ≥</Label>
+                <Label htmlFor="mm">
+                  <HintLabel termId="meritocratic_measure" className="mr-1">
+                    MM
+                  </HintLabel>
+                  ≥
+                </Label>
                 <Input
                   id="mm"
                   type="number"
@@ -551,6 +556,10 @@ const HumanNodes: React.FC = () => {
                             <span className="human-node-card__tile-label">
                               {item.label === "ACM" ? (
                                 <HintLabel termId="acm">{item.label}</HintLabel>
+                              ) : item.label === "MM" ? (
+                                <HintLabel termId="meritocratic_measure">
+                                  {item.label}
+                                </HintLabel>
                               ) : (
                                 item.label
                               )}
@@ -588,7 +597,15 @@ const HumanNodes: React.FC = () => {
                           </HintLabel>{" "}
                           {node.acm}
                         </Badge>
-                        <Badge size="sm">MM: {node.mm}</Badge>
+                        <Badge size="sm">
+                          <HintLabel
+                            termId="meritocratic_measure"
+                            className="mr-1"
+                          >
+                            MM
+                          </HintLabel>{" "}
+                          {node.mm}
+                        </Badge>
                         {node.formationCapable && (
                           <Badge size="sm" variant="outline">
                             Formation

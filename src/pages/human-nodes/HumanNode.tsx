@@ -240,6 +240,10 @@ const HumanNode: React.FC = () => {
               <p className="text-xs tracking-wide text-muted uppercase">
                 {stat.label.startsWith("ACM") ? (
                   <HintLabel termId="acm">{stat.label}</HintLabel>
+                ) : stat.label.startsWith("MM") ? (
+                  <HintLabel termId="meritocratic_measure">
+                    {stat.label}
+                  </HintLabel>
                 ) : (
                   stat.label
                 )}

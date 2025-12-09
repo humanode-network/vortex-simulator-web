@@ -56,7 +56,18 @@ const Faction: React.FC = () => {
       ),
     },
     { name: "Raamara", role: "Ops & delivery", tag: "Votes 52" },
-    { name: "Nyx", role: "Signals & privacy", tag: "MM 81" },
+    {
+      name: "Nyx",
+      role: "Signals & privacy",
+      tag: (
+        <>
+          <HintLabel termId="meritocratic_measure" className="mr-1">
+            MM
+          </HintLabel>
+          81
+        </>
+      ),
+    },
   ];
 
   const resources = [
@@ -69,12 +80,12 @@ const Faction: React.FC = () => {
     { title: "Deterrence sim lab", stage: "Launched", location: "Formation" },
     {
       title: "Sequencer redundancy rollout",
-      stage: "Chamber vote",
+      stage: <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
       location: "Protocol chamber",
     },
     {
       title: "Treasury split recalibration",
-      stage: "Proposal pool",
+      stage: <HintLabel termId="proposal_pools">Proposal pool</HintLabel>,
       location: "Treasury chamber",
     },
     { title: "Guild ops stack", stage: "Launched", location: "Formation" },
@@ -85,7 +96,7 @@ const Faction: React.FC = () => {
     },
     {
       title: "Privacy sprint",
-      stage: "Proposal pool",
+      stage: <HintLabel termId="proposal_pools">Proposal pool</HintLabel>,
       location: "Research chamber",
     },
   ];

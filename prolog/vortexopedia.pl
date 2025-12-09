@@ -943,5 +943,25 @@ vortex_term(
   "2025-12-04"
 ).
 
+vortex_term(
+  49,
+  "chamber_vote",
+  "Chamber vote",
+  governance,
+  "Stage where governors cast binding votes on proposals that cleared proposal pools; requires quorum and a passing threshold.",
+  [
+    "Proposals reaching attention quorum in a proposal pool advance to a chamber vote.",
+    "Chamber voting counts delegations and requires a voting quorum (e.g., 33.3% of active governors).",
+    "Passing typically needs ≥66.6% + 1 yes vote within quorum."
+  ],
+  [vote, chamber, quorum, governance],
+  ["proposal_pools", "quorum_of_vote", "quorum_of_attention", "delegation_policy"],
+  ["A proposal that met pool attention quorum proceeds to chamber vote; if 66.6% + 1 yes within quorum, it passes."],
+  [chamber],
+  [link{label:"Docs", url:"https://gitbook.humanode.io/vortex-1.0"}],
+  "Voting, Delegation and Quorum",
+  "2025-12-04"
+).
+
 % ---
 % You can add a search helper later (e.g., search_terms/3) to return dicts/JSON.

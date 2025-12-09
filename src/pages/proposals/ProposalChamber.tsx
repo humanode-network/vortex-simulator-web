@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HintLabel } from "@/components/Hint";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -37,11 +38,17 @@ const ProposalChamber: React.FC = () => {
   ) => {
     const stages = [
       { key: "draft", label: "Draft", color: "bg-slate-300 text-slate-800" },
-      { key: "pool", label: "Proposal pool", color: "bg-blue-500 text-white" },
+      {
+        key: "pool",
+        label: "Proposal pool",
+        color: "bg-blue-500 text-white",
+        render: <HintLabel termId="proposal_pools">Proposal pool</HintLabel>,
+      },
       {
         key: "chamber",
         label: "Chamber vote",
         color: "bg-emerald-500 text-white",
+        render: <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
       },
       {
         key: "formation",
@@ -58,7 +65,7 @@ const ProposalChamber: React.FC = () => {
               current === stage.key ? stage.color : "bg-slate-200 text-muted"
             }`}
           >
-            {stage.label}
+            {"render" in stage && stage.render ? stage.render : stage.label}
           </div>
         ))}
       </div>
