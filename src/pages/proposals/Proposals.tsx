@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
+import { PageHint } from "@/components/PageHint";
 
 type Stage = "pool" | "vote" | "build" | "final" | "archived";
 type ProofWeight = "pot" | "pod" | "pog";
