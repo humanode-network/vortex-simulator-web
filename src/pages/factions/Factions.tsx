@@ -1,16 +1,15 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { HintLabel } from "@/components/Hint";
 import { factions } from "./factionData";
 import { PageHint } from "@/components/PageHint";
+import { SearchBar } from "@/components/SearchBar";
 
 const Factions: React.FC = () => {
   const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const totals = useMemo(() => {
     const totalMembers = factions.reduce((sum, f) => sum + f.members, 0);
@@ -45,16 +44,13 @@ const Factions: React.FC = () => {
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <Input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by faction, focus, description…"
-          aria-label="Search factions"
-        />
-        <PageHint pageId="factions" />
-      </div>
+      <SearchBar
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search by faction, focus, description…"
+        ariaLabel="Search factions"
+        rightContent={<PageHint pageId="factions" />}
+      />
 
       {!showResultsOnly && (
         <>

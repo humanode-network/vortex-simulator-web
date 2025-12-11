@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router";
+import { Link } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,7 +112,6 @@ const renderStageBar = () => {
 };
 
 const ProposalDraft: React.FC = () => {
-  const { id } = useParams();
   const [filledSlots, totalSlots] = draftDetails.teamSlots
     .split("/")
     .map((v) => Number(v.trim()));

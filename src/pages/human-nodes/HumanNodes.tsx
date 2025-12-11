@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,17 +7,14 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import "./HumanNodes.css";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
-import { ChevronDown } from "lucide-react";
-import clsx from "clsx";
+import { SearchBar } from "@/components/SearchBar";
 
 // Data types and sample data
 type Node = {
@@ -251,14 +248,6 @@ const HumanNodes: React.FC = () => {
     "acm-desc" | "acm-asc" | "tier" | "name"
   >("acm-desc");
   const [view, setView] = useState<"cards" | "list">("cards");
-  const [tierFilter, setTierFilter] = useState("any");
-  const [chamberFilter, setChamberFilter] = useState("all");
-  const [tagFilter, setTagFilter] = useState("any");
-  const [formationOnly, setFormationOnly] = useState(false);
-  const [acmMin, setAcmMin] = useState(0);
-  const [mmMin, setMmMin] = useState(0);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filtersPanelId = `${useId()}-filters`;
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
@@ -267,23 +256,9 @@ const HumanNodes: React.FC = () => {
         const matchesTerm =
           node.name.toLowerCase().includes(term) ||
           node.role.toLowerCase().includes(term) ||
-          node.tags.some((t) => t.toLowerCase().includes(term));
-        const matchesTier = tierFilter === "any" || node.tier === tierFilter;
-        const matchesChamber =
-          chamberFilter === "all" || node.chamber === chamberFilter;
-        const matchesTag =
-          tagFilter === "any" ||
-          node.tags.some((t) => t.toLowerCase() === tagFilter);
-        const matchesFormation = !formationOnly || node.formationCapable;
-        const matchesScores = node.acm >= acmMin && node.mm >= mmMin;
-        return (
-          matchesTerm &&
-          matchesTier &&
-          matchesChamber &&
-          matchesTag &&
-          matchesFormation &&
-          matchesScores
-        );
+          node.tags.some((t) => t.toLowerCase().includes(term)) ||
+          node.chamber.toLowerCase().includes(term);
+        return matchesTerm;
       })
       .sort((a, b) => {
         if (sortBy === "acm-desc") return b.acm - a.acm;
@@ -292,187 +267,17 @@ const HumanNodes: React.FC = () => {
         const order = ["nominee", "ecclesiast", "legate", "consul", "citizen"];
         return order.indexOf(a.tier) - order.indexOf(b.tier);
       });
-  }, [
-    search,
-    sortBy,
-    tierFilter,
-    chamberFilter,
-    tagFilter,
-    formationOnly,
-    acmMin,
-    mmMin,
-  ]);
+  }, [search, sortBy]);
 
   return (
     <div className="app-page human-nodes-page">
-      <div className="flex justify-end pb-2">
-        <PageHint pageId="human-nodes" />
-      </div>
-      <Card className="bg-panel overflow-hidden border border-border">
-        <button
-          type="button"
-          aria-expanded={filtersOpen}
-          aria-controls={filtersPanelId}
-          onClick={() => setFiltersOpen((open) => !open)}
-          className="hover:bg-panel-alt flex w-full items-center justify-between px-5 py-4 text-left transition"
-        >
-          <div>
-            <p className="text-base font-semibold text-(--text)">
-              Filters & search
-            </p>
-            <p className="text-xs text-muted">
-              {filtersOpen ? "Expanded" : "Collapsed"}
-            </p>
-          </div>
-          <ChevronDown
-            className={clsx(
-              "h-5 w-5 text-muted transition-transform",
-              filtersOpen && "rotate-180",
-            )}
-          />
-        </button>
-        {filtersOpen && (
-          <div
-            id={filtersPanelId}
-            className="space-y-6 border-t border-border p-5"
-          >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="md:col-span-2 xl:col-span-3">
-                <Label
-                  htmlFor="human-node-search"
-                  className="text-sm font-medium text-(--text)"
-                >
-                  Keyword search
-                </Label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    id="human-node-search"
-                    placeholder="Search Human nodes by handle, address, chamber, or focus…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  <Button variant="outline">Search</Button>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="tier">Tier</Label>
-                <Select
-                  id="tier"
-                  value={tierFilter}
-                  onChange={(e) => setTierFilter(e.target.value)}
-                >
-                  <option value="any">Any</option>
-                  <option value="nominee">
-                    <HintLabel termId="tier1_nominee">Nominee</HintLabel>
-                  </option>
-                  <option value="ecclesiast">
-                    <HintLabel termId="tier2_ecclesiast">Ecclesiast</HintLabel>
-                  </option>
-                  <option value="legate">
-                    <HintLabel termId="tier3_legate">Legate</HintLabel>
-                  </option>
-                  <option value="consul">
-                    <HintLabel termId="tier4_consul">Consul</HintLabel>
-                  </option>
-                  <option value="citizen">
-                    <HintLabel termId="tier5_citizen">Citizen</HintLabel>
-                  </option>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="chamber">Chamber</Label>
-                <Select
-                  id="chamber"
-                  value={chamberFilter}
-                  onChange={(e) => setChamberFilter(e.target.value)}
-                >
-                  <option value="all">All specializations</option>
-                  <option value="protocol">Protocol Engineering</option>
-                  <option value="research">Research</option>
-                  <option value="finance">Finance</option>
-                  <option value="social">Social</option>
-                  <option value="formation">Formation Logistics</option>
-                  <option value="economics">Economics</option>
-                  <option value="security">Security & Infra</option>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="tag">Specialty tag</Label>
-                <Select
-                  id="tag"
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                >
-                  <option value="any">Any</option>
-                  <option value="protocol">Protocol</option>
-                  <option value="security">Security</option>
-                  <option value="research">Research</option>
-                  <option value="economics">Treasury / Economics</option>
-                  <option value="formation">Formation</option>
-                  <option value="social">Social / Community</option>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="acm">
-                  <HintLabel termId="acm" className="mr-1">
-                    ACM
-                  </HintLabel>
-                  ≥
-                </Label>
-                <Input
-                  id="acm"
-                  type="number"
-                  value={acmMin}
-                  onChange={(e) => setAcmMin(Number(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-              <div>
-                <Label htmlFor="mm">
-                  <HintLabel termId="meritocratic_measure" className="mr-1">
-                    MM
-                  </HintLabel>
-                  ≥
-                </Label>
-                <Input
-                  id="mm"
-                  type="number"
-                  value={mmMin}
-                  onChange={(e) => setMmMin(Number(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formationOnly}
-                  onChange={(e) => setFormationOnly(e.target.checked)}
-                  aria-label="Formation members only"
-                />
-                <span className="text-sm">Formation members only</span>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setTierFilter("any");
-                  setChamberFilter("all");
-                  setSearch("");
-                  setSortBy("acm-desc");
-                  setTagFilter("any");
-                  setFormationOnly(false);
-                  setAcmMin(0);
-                  setMmMin(0);
-                }}
-              >
-                Reset
-              </Button>
-              <Button size="sm">Apply</Button>
-            </div>
-          </div>
-        )}
-      </Card>
+      <SearchBar
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search human nodes by handle, chamber, focus…"
+        ariaLabel="Search human nodes"
+        rightContent={<PageHint pageId="human-nodes" />}
+      />
 
       <Card className="w-full">
         <CardHeader className="pb-2">

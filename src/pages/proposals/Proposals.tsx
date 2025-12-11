@@ -1,16 +1,15 @@
 import type { ReactNode } from "react";
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { SearchBar } from "@/components/SearchBar";
 
 type Stage = "pool" | "vote" | "build" | "final" | "archived";
 type ProofWeight = "pot" | "pod" | "pog";
@@ -321,175 +320,35 @@ const stageStyles: Record<Stage, string> = {
   archived: "border border-slate-400/40 bg-slate-400/10 text-muted",
 };
 
-const chipOptions = [
-  "Infrastructure",
-  "Formation",
-  "Security",
-  "Research",
-  "Community",
-  "High quorum",
-];
-
-const statusOptions: { label: string; value: Stage | "any" }[] = [
-  { label: "Any", value: "any" },
-  {
-    label: "Proposal pool",
-    value: "pool",
-    render: () => (
-      <HintLabel termId="proposal_pool_system_vortex_formation_stack">
-        Proposal pool
-      </HintLabel>
-    ),
-  },
-  {
-    label: "Chamber vote",
-    value: "vote",
-    render: () => <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
-  },
-  { label: "Formation build", value: "build" },
-  { label: "Final vote", value: "final" },
-  { label: "Refused / archived", value: "archived" },
-];
-
-const chamberOptions = [
-  "All chambers",
-  "Protocol Engineering",
-  "Economics & Treasury",
-  "Security & Infra",
-  "Constitutional",
-  "Social Impact",
-];
-
-const tierOptions = [
-  "Any",
-  "Nominee",
-  "Tribune",
-  "Legate",
-  "Consul",
-  "Citizen",
-];
-const proofOptions = ["Any", "PoT heavy", "PoD heavy", "PoG heavy"];
-const sortOptions = ["Newest", "Oldest", "Activity", "Votes casted"];
-
 const Proposals: React.FC = () => {
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Stage | "any">("any");
-  const [chamberFilter, setChamberFilter] = useState("All chambers");
-  const [tierFilter, setTierFilter] = useState("Any");
-  const [proofFilter, setProofFilter] = useState("Any");
-  const [sortBy, setSortBy] = useState("Newest");
-  const [selectedChip, setSelectedChip] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const filtersPanelId = `${useId()}-filters`;
-  const keywordId = `${useId()}-keyword`;
-  const statusId = `${useId()}-status`;
-  const chamberId = `${useId()}-chamber`;
-  const tierId = `${useId()}-tier`;
-  const proofId = `${useId()}-proof`;
-  const sortId = `${useId()}-sort`;
-
-  const activeFilters =
-    (search.trim() ? 1 : 0) +
-    (statusFilter !== "any" ? 1 : 0) +
-    (chamberFilter !== "All chambers" ? 1 : 0) +
-    (tierFilter !== "Any" ? 1 : 0) +
-    (proofFilter !== "Any" ? 1 : 0) +
-    (selectedChip ? 1 : 0);
 
   const filteredProposals = useMemo(() => {
     const term = search.trim().toLowerCase();
 
     return proposalData
       .filter((proposal) => {
-        const matchesSearch = term
-          ? proposal.title.toLowerCase().includes(term) ||
-            proposal.summary.toLowerCase().includes(term) ||
-            proposal.meta.toLowerCase().includes(term) ||
-            proposal.keywords.some((keyword) =>
-              keyword.toLowerCase().includes(term),
-            )
-          : true;
-
-        const matchesStatus =
-          statusFilter === "any" ? true : proposal.stage === statusFilter;
-        const matchesChamber =
-          chamberFilter === "All chambers"
-            ? true
-            : proposal.chamber === chamberFilter;
-        const matchesTier =
-          tierFilter === "Any" ? true : proposal.tier === tierFilter;
-
-        const proofMatch =
-          proofFilter === "Any"
-            ? true
-            : (proofFilter === "PoT heavy" && proposal.proofFocus === "pot") ||
-              (proofFilter === "PoD heavy" && proposal.proofFocus === "pod") ||
-              (proofFilter === "PoG heavy" && proposal.proofFocus === "pog");
-
-        const chipMatch = selectedChip
-          ? proposal.tags.includes(selectedChip)
-          : true;
-
+        if (!term) return true;
         return (
-          matchesSearch &&
-          matchesStatus &&
-          matchesChamber &&
-          matchesTier &&
-          proofMatch &&
-          chipMatch
+          proposal.title.toLowerCase().includes(term) ||
+          proposal.summary.toLowerCase().includes(term) ||
+          proposal.meta.toLowerCase().includes(term) ||
+          proposal.keywords.some((keyword) =>
+            keyword.toLowerCase().includes(term),
+          )
         );
       })
-      .sort((a, b) => {
-        if (sortBy === "Newest") {
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        }
-        if (sortBy === "Oldest") {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        }
-        if (sortBy === "Activity") {
-          return b.activityScore - a.activityScore;
-        }
-        if (sortBy === "Votes casted") {
-          return b.votes - a.votes;
-        }
-        return 0;
-      });
-  }, [
-    search,
-    statusFilter,
-    chamberFilter,
-    tierFilter,
-    proofFilter,
-    selectedChip,
-    sortBy,
-  ]);
-
-  const toggleChip = (chip: string) => {
-    setSelectedChip((current) => (current === chip ? null : chip));
-  };
+      .sort(
+        (a, b) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime() ||
+          b.activityScore - a.activityScore,
+      );
+  }, [search]);
 
   const toggleProposal = (id: string) => {
     setExpanded((current) => (current === id ? null : id));
   };
-
-  const resetFilters = () => {
-    setSearch("");
-    setStatusFilter("any");
-    setChamberFilter("All chambers");
-    setTierFilter("Any");
-    setProofFilter("Any");
-    setSortBy("Newest");
-    setSelectedChip(null);
-  };
-
-  const filtersHint = filtersOpen
-    ? activeFilters
-      ? `${activeFilters} active`
-      : "Expanded"
-    : activeFilters
-      ? `${activeFilters} active`
-      : "Collapsed";
 
   return (
     <div className="app-page flex flex-col gap-6">
@@ -505,191 +364,12 @@ const Proposals: React.FC = () => {
         </div>
       </div>
 
-      <Card className="bg-panel overflow-hidden border border-border">
-        <button
-          type="button"
-          aria-expanded={filtersOpen}
-          aria-controls={filtersPanelId}
-          onClick={() => setFiltersOpen((open) => !open)}
-          className="hover:bg-panel-alt flex w-full items-center justify-between px-5 py-4 text-left transition"
-        >
-          <div>
-            <p className="text-base font-semibold text-(--text)">
-              Filters & search
-            </p>
-            <p className="text-xs text-muted">{filtersHint}</p>
-          </div>
-          <ChevronDown
-            className={cn(
-              "h-5 w-5 text-muted transition-transform",
-              filtersOpen && "rotate-180",
-            )}
-          />
-        </button>
-
-        {filtersOpen && (
-          <div
-            id={filtersPanelId}
-            className="space-y-6 border-t border-border p-5"
-          >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="md:col-span-2 xl:col-span-3">
-                <label
-                  htmlFor={keywordId}
-                  className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-                >
-                  <span>Keyword search</span>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id={keywordId}
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Proposal, hash, proposer…"
-                      aria-label="Search proposals"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      aria-label="Run search"
-                    >
-                      <Search className="h-4 w-4 text-muted" />
-                    </Button>
-                  </div>
-                </label>
-              </div>
-
-              <label
-                htmlFor={statusId}
-                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-              >
-                <span>Status</span>
-                <Select
-                  id={statusId}
-                  value={statusFilter}
-                  onChange={(event) =>
-                    setStatusFilter(event.target.value as Stage | "any")
-                  }
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label
-                htmlFor={chamberId}
-                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-              >
-                <span>Chamber</span>
-                <Select
-                  id={chamberId}
-                  value={chamberFilter}
-                  onChange={(event) => setChamberFilter(event.target.value)}
-                >
-                  {chamberOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label
-                htmlFor={tierId}
-                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-              >
-                <span>Tier requirement</span>
-                <Select
-                  id={tierId}
-                  value={tierFilter}
-                  onChange={(event) => setTierFilter(event.target.value)}
-                >
-                  {tierOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label
-                htmlFor={proofId}
-                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-              >
-                <span>Proof emphasis</span>
-                <Select
-                  id={proofId}
-                  value={proofFilter}
-                  onChange={(event) => setProofFilter(event.target.value)}
-                >
-                  {proofOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-
-              <label
-                htmlFor={sortId}
-                className="flex flex-col gap-2 text-sm font-medium text-(--text)"
-              >
-                <span>Sort by</span>
-                <Select
-                  id={sortId}
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {chipOptions.map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => toggleChip(chip)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-sm font-medium transition",
-                    selectedChip === chip
-                      ? "border-transparent bg-primary text-white shadow"
-                      : "bg-panel-alt border-border text-(--text) hover:border-(--primary-dim)",
-                  )}
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap justify-end gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                onClick={resetFilters}
-              >
-                Reset
-              </Button>
-              <Button
-                size="sm"
-                type="button"
-                onClick={() => setFiltersOpen(false)}
-              >
-                Apply
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
+      <SearchBar
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search proposals by title, hash, proposer…"
+        ariaLabel="Search proposals"
+      />
 
       <section aria-live="polite" className="flex flex-col gap-4">
         {filteredProposals.length === 0 && (

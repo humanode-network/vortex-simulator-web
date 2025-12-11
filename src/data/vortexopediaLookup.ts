@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { vortexopediaTerms, VortexopediaTerm } from "@/data/vortexopedia";
+import { vortexopediaTerms } from "@/data/vortexopedia";
+import type { VortexopediaTerm } from "@/data/vortexopedia";
 
 const termMap = new Map<string, VortexopediaTerm>(
   vortexopediaTerms.map((t) => [t.id, t]),

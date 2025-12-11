@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { vortexopediaTerms } from "@/data/vortexopedia";
 import { cn } from "@/lib/utils";
+import { SearchBar } from "@/components/SearchBar";
 
 const Vortexopedia: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -67,11 +67,12 @@ const Vortexopedia: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <Input
+            <SearchBar
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by term, tag, or description…"
-              className="md:max-w-md"
+              ariaLabel="Search terms"
+              className="w-full md:max-w-md"
             />
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => {

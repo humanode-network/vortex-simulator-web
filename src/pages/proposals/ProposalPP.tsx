@@ -1,10 +1,8 @@
-import { useParams } from "react-router";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HintLabel } from "@/components/Hint";
 
 const ProposalPP: React.FC = () => {
-  const { id } = useParams();
   const proposal = {
     title: "Sequencer redundancy rollout",
     proposer: "John Doe",

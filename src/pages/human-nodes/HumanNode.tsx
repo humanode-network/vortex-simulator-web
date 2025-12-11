@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { HintLabel } from "@/components/Hint";
+import { PageHint } from "@/components/PageHint";
 
 const heroStats = [
   { label: "ACM", value: "182" },
@@ -21,7 +22,14 @@ const quickDetails = [
   { label: "Proposals created", value: "28" },
 ];
 
-const proofSections = {
+type ProofSection = {
+  title: string;
+  items: { label: string; value: string }[];
+};
+
+type ProofKey = "time" | "devotion" | "governance";
+
+const proofSections: Record<ProofKey, ProofSection> = {
   time: {
     title: "Proof-of-Time",
     items: [
@@ -190,14 +198,21 @@ const history = [
   "Epoch 181 · Presented fee split adjustment #883",
 ];
 
+const proofToggleOptions: { key: ProofKey; label: string }[] = [
+  { key: "time", label: "PoT" },
+  { key: "devotion", label: "PoD" },
+  { key: "governance", label: "PoG" },
+];
+
 const HumanNode: React.FC = () => {
   const { id } = useParams();
-  const [activeProof, setActiveProof] = useState<
-    "" | "time" | "devotion" | "governance"
-  >("");
+  const [activeProof, setActiveProof] = useState<ProofKey | "">("");
   const name = id ?? "Unknown";
   const governorActive = true;
   const humanNodeActive = true;
+  const activeSection: ProofSection | null = activeProof
+    ? proofSections[activeProof]
+    : null;
 
   return (
     <div className="app-page flex flex-col gap-6">
@@ -361,13 +376,7 @@ const HumanNode: React.FC = () => {
               </div>
               <div className="space-y-3 text-center">
                 <div className="bg-panel inline-flex rounded-full border border-border p-1">
-                  {(
-                    [
-                      { key: "time", label: "PoT" },
-                      { key: "devotion", label: "PoD" },
-                      { key: "governance", label: "PoG" },
-                    ] as const
-                  ).map((option) => {
+                  {proofToggleOptions.map((option) => {
                     const isActive = activeProof === option.key;
                     const style = isActive
                       ? {
@@ -410,23 +419,25 @@ const HumanNode: React.FC = () => {
                     );
                   })}
                 </div>
-                {activeProof && (
+                {activeSection ? (
                   <div className="text-text grid gap-3 text-sm sm:grid-cols-2">
-                    {proofSections[activeProof].items.map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
-                      >
-                        <p className="min-h-6 text-center text-xs leading-tight tracking-wide text-muted uppercase">
-                          {item.label}
-                        </p>
-                        <p className="text-text min-h-5 text-center text-sm font-semibold">
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
+                    {(activeSection.items ?? []).map(
+                      (item: { label: string; value: string }) => (
+                        <div
+                          key={item.label}
+                          className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
+                        >
+                          <p className="min-h-6 text-center text-xs leading-tight tracking-wide text-muted uppercase">
+                            {item.label}
+                          </p>
+                          <p className="text-text min-h-5 text-center text-sm font-semibold">
+                            {item.value}
+                          </p>
+                        </div>
+                      ),
+                    )}
                   </div>
-                )}
+                ) : null}
               </div>
             </CardContent>
           </Card>

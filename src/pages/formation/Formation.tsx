@@ -1,12 +1,12 @@
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { PageHint } from "@/components/PageHint";
+import { SearchBar } from "@/components/SearchBar";
 
 type Category = "all" | "research" | "development" | "social";
 type Stage = "live" | "gathering" | "completed";
@@ -114,7 +114,6 @@ const projects: FormationProject[] = [
 const Formation: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category>("all");
   const [search, setSearch] = useState("");
-  const searchId = `${useId()}-formation-search`;
 
   const filteredProjects = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -195,32 +194,13 @@ const Formation: React.FC = () => {
       </section>
 
       <section role="search" className="space-y-2">
-        <label
-          htmlFor={searchId}
-          className="text-xs tracking-wide text-muted uppercase"
-        >
-          Search projects
-        </label>
-        <div className="relative">
-          <Input
-            id={searchId}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by project, proposer, focus, stage…"
-            autoComplete="off"
-          />
-          {search && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full px-2 text-muted"
-              onClick={() => setSearch("")}
-            >
-              ×
-            </Button>
-          )}
-        </div>
+        <SearchBar
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search by project, proposer, focus, stage…"
+          ariaLabel="Search projects"
+          inputClassName="w-full"
+        />
       </section>
 
       <section

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
-import { HintLabel } from "@/components/Hint";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();

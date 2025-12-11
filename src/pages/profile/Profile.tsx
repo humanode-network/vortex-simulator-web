@@ -22,7 +22,14 @@ const quickDetails = [
   { label: "Delegation share", value: "2.4%" },
 ];
 
-const proofSections = {
+type ProofSection = {
+  title: string;
+  items: { label: string; value: string }[];
+};
+
+type ProofKey = "time" | "devotion" | "governance";
+
+const proofSections: Record<ProofKey, ProofSection> = {
   time: {
     title: "Proof-of-Time",
     items: [
@@ -144,13 +151,20 @@ const history = [
   "Epoch 205 · Led guardian mentorship sync",
 ];
 
+const proofToggleOptions: { key: ProofKey; label: string }[] = [
+  { key: "time", label: "PoT" },
+  { key: "devotion", label: "PoD" },
+  { key: "governance", label: "PoG" },
+];
+
 const Profile: React.FC = () => {
-  const [activeProof, setActiveProof] = useState<
-    "" | "time" | "devotion" | "governance"
-  >("");
+  const [activeProof, setActiveProof] = useState<ProofKey | "">("");
   const name = "JohnDoe";
   const governorActive = true;
   const humanNodeActive = true;
+  const activeSection: ProofSection | null = activeProof
+    ? proofSections[activeProof]
+    : null;
 
   return (
     <div className="app-page flex flex-col gap-6">
@@ -320,13 +334,7 @@ const Profile: React.FC = () => {
               </div>
               <div className="space-y-3 text-center">
                 <div className="bg-panel inline-flex rounded-full border border-border p-1">
-                  {(
-                    [
-                      { key: "time", label: "PoT" },
-                      { key: "devotion", label: "PoD" },
-                      { key: "governance", label: "PoG" },
-                    ] as const
-                  ).map((option) => {
+                  {proofToggleOptions.map((option) => {
                     const isActive = activeProof === option.key;
                     const style = isActive
                       ? {
@@ -369,23 +377,25 @@ const Profile: React.FC = () => {
                     );
                   })}
                 </div>
-                {activeProof && (
+                {activeSection ? (
                   <div className="text-text grid gap-3 text-sm sm:grid-cols-2">
-                    {proofSections[activeProof].items.map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
-                      >
-                        <p className="min-h-6 text-xs leading-tight tracking-wide text-muted uppercase">
-                          {item.label}
-                        </p>
-                        <p className="text-text min-h-5 text-sm font-semibold">
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
+                    {(activeSection.items ?? []).map(
+                      (item: { label: string; value: string }) => (
+                        <div
+                          key={item.label}
+                          className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
+                        >
+                          <p className="min-h-6 text-xs leading-tight tracking-wide text-muted uppercase">
+                            {item.label}
+                          </p>
+                          <p className="text-text min-h-5 text-sm font-semibold">
+                            {item.value}
+                          </p>
+                        </div>
+                      ),
+                    )}
                   </div>
-                )}
+                ) : null}
               </div>
             </CardContent>
           </Card>

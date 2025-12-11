@@ -3,8 +3,8 @@ import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { PageHint } from "@/components/PageHint";
+import { SearchBar } from "@/components/SearchBar";
 
 type Draft = {
   id: string;
@@ -71,10 +71,11 @@ const ProposalDrafts: React.FC = () => {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-(--text)">Drafts</h1>
-        <Input
+        <SearchBar
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search drafts by title or chamber…"
+          ariaLabel="Search drafts"
           className="max-w-md"
         />
       </div>
