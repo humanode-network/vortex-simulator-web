@@ -500,7 +500,7 @@ const Proposals: React.FC = () => {
         <div className="flex items-center gap-2">
           <PageHint pageId="proposals" />
           <Button asChild size="sm" className="rounded-full px-4">
-            <Link to="/proposals/new">Edit proposal</Link>
+            <Link to="/proposals/new">Create proposal</Link>
           </Button>
         </div>
       </div>
