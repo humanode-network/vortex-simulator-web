@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 const eraActivity = {
   era: "142",
@@ -21,7 +22,7 @@ const MyGovernance: React.FC = () => {
       <div className="flex items-center justify-end">
         <PageHint pageId="my-governance" />
       </div>
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>
             <HintLabel termId="governing_threshold">
@@ -35,9 +36,12 @@ const MyGovernance: React.FC = () => {
               { label: "Era", value: eraActivity.era },
               { label: "Time left", value: eraActivity.timeLeft },
             ].map((tile) => (
-              <div
+              <Surface
                 key={tile.label}
-                className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center"
+                variant="panelAlt"
+                radius="2xl"
+                shadow="tile"
+                className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
               >
                 <p className="text-sm text-muted">
                   {tile.label === "Era" ? (
@@ -49,7 +53,7 @@ const MyGovernance: React.FC = () => {
                 <p className="text-xl font-semibold text-(--text)">
                   {tile.value}
                 </p>
-              </div>
+              </Surface>
             ))}
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -72,22 +76,28 @@ const MyGovernance: React.FC = () => {
                     : "At risk",
               },
             ].map((tile) => (
-              <div
+              <Surface
                 key={tile.key}
-                className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center"
+                variant="panelAlt"
+                radius="2xl"
+                shadow="tile"
+                className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
               >
                 <p className="text-sm text-muted">{tile.label}</p>
                 <p className="text-xl font-semibold text-(--text)">
                   {tile.value}
                 </p>
-              </div>
+              </Surface>
             ))}
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {eraActivity.actions.map((act) => (
-              <div
+              <Surface
                 key={act.label}
-                className="flex h-full flex-col items-center justify-center rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
+                variant="panelAlt"
+                radius="xl"
+                shadow="tile"
+                className="flex h-full flex-col items-center justify-center px-3 py-3 text-center"
               >
                 <p className="text-[0.7rem] tracking-wide text-muted uppercase">
                   {act.label}
@@ -95,26 +105,31 @@ const MyGovernance: React.FC = () => {
                 <p className="text-base font-semibold text-(--text)">
                   {act.done} / {act.required}
                 </p>
-              </div>
+              </Surface>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>Progression dashboard</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid items-center gap-4 lg:grid-cols-[1fr_auto_1fr]">
-            <div className="rounded-2xl border border-border bg-panel-alt p-4 text-center">
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="p-4 text-center"
+            >
               <p className="text-xs tracking-wide text-muted uppercase">
                 Current tier
               </p>
               <p className="text-lg font-semibold text-(--text)">
                 <HintLabel termId="tier3_legate">Legate</HintLabel>
               </p>
-            </div>
+            </Surface>
             <div className="flex flex-col items-center justify-center gap-3 px-2">
               <p className="text-xs tracking-wide text-muted uppercase">
                 Progress
@@ -129,16 +144,26 @@ const MyGovernance: React.FC = () => {
                 68% to Consul
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-panel-alt p-4 text-center">
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="p-4 text-center"
+            >
               <p className="text-xs tracking-wide text-muted uppercase">
                 Next tier
               </p>
               <p className="text-lg font-semibold text-(--text)">
                 <HintLabel termId="tier4_consul">Consul</HintLabel>
               </p>
-            </div>
+            </Surface>
           </div>
-          <div className="mt-4 rounded-2xl border border-border bg-panel-alt p-4">
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="mt-4 p-4"
+          >
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-(--text)">
                 Run a node for 2 years
@@ -152,8 +177,8 @@ const MyGovernance: React.FC = () => {
               />
             </div>
             <p className="mt-2 text-xs font-semibold text-(--text)">78%</p>
-          </div>
-          <div className="rounded-2xl border border-border bg-panel-alt p-4">
+          </Surface>
+          <Surface variant="panelAlt" radius="2xl" shadow="tile" className="p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-(--text)">
                 Be an active governor for 2 years
@@ -167,25 +192,28 @@ const MyGovernance: React.FC = () => {
               />
             </div>
             <p className="mt-2 text-xs font-semibold text-(--text)">50%</p>
-          </div>
+          </Surface>
           <div className="grid gap-3 md:grid-cols-2">
             {[
               "Have your proposal accepted in Vortex",
               "Participate in a project through Formation",
             ].map((label) => (
-              <div
+              <Surface
                 key={label}
-                className="flex items-center justify-between rounded-2xl border border-border bg-panel-alt p-4"
+                variant="panelAlt"
+                radius="2xl"
+                shadow="tile"
+                className="flex items-center justify-between p-4"
               >
                 <p className="text-sm font-semibold text-(--text)">{label}</p>
                 <span className="bg-ok/20 text-ok inline-flex h-6 w-6 items-center justify-center rounded-full">
                   ✓
                 </span>
-              </div>
+              </Surface>
             ))}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-panel-alt p-4">
+            <Surface variant="panelAlt" radius="2xl" shadow="tile" className="p-4">
               <p className="text-sm font-semibold text-(--text)">
                 Proposals available with{" "}
                 <HintLabel termId="tier3_legate">Legate</HintLabel>
@@ -199,8 +227,8 @@ const MyGovernance: React.FC = () => {
                 <li>Monetary system</li>
                 <li>Core infrastructure</li>
               </ul>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt p-4">
+            </Surface>
+            <Surface variant="panelAlt" radius="2xl" shadow="tile" className="p-4">
               <p className="text-sm font-semibold text-(--text)">
                 Proposals available with{" "}
                 <HintLabel termId="tier4_consul">Consul</HintLabel>
@@ -208,7 +236,7 @@ const MyGovernance: React.FC = () => {
               <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-muted">
                 <li>Administrative</li>
               </ul>
-            </div>
+            </Surface>
           </div>
         </CardContent>
       </Card>

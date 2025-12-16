@@ -31,9 +31,9 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-[var(--veil)] p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-[var(--veil)] p-4 backdrop-blur-sm">
           <div className="relative mt-8 w-full max-w-2xl">
-            <Card className="rounded-2xl border border-border bg-[var(--panel)] text-[var(--text)] shadow-[var(--shadow-popover)]">
+            <Card className="shadow-[var(--shadow-popover)]">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-3">
                   <div>

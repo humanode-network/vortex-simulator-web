@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 const CMPanel: React.FC = () => {
   const initialChambers = [
@@ -67,7 +68,7 @@ const CMPanel: React.FC = () => {
       <div className="flex items-center justify-end">
         <PageHint pageId="cm-panel" />
       </div>
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>Overview</CardTitle>
         </CardHeader>
@@ -78,15 +79,16 @@ const CMPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>Multipliers</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {chambers.map((chamber) => (
-            <div
+            <Surface
               key={chamber.id}
-              className={`relative rounded-2xl border border-border bg-panel-alt px-4 py-3 ${chamber.member ? "opacity-50" : ""}`}
+              variant="panelAlt"
+              className={`relative px-4 py-3 ${chamber.member ? "opacity-50" : ""}`}
             >
               {chamber.member && (
                 <div className="absolute inset-0 rounded-2xl bg-panel-alt/60 backdrop-blur-sm" />
@@ -119,7 +121,7 @@ const CMPanel: React.FC = () => {
                   </p>
                 )}
               </div>
-            </div>
+            </Surface>
           ))}
         </CardContent>
       </Card>

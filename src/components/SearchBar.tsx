@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Surface } from "@/components/Surface";
 
 type SearchBarProps = {
   value: string;
@@ -98,7 +99,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           )}
         />
         {filtersOpen ? (
-          <div className="absolute top-[calc(100%+0.5rem)] right-0 left-0 z-50 w-full rounded-2xl border border-[var(--primary-dim)] bg-panel [background-image:var(--card-grad)] p-4 shadow-[var(--shadow-popover)] ring-1 ring-inset ring-[color:var(--glass-border)]">
+          <Surface
+            variant="panel"
+            radius="2xl"
+            shadow="popover"
+            className="absolute top-[calc(100%+0.5rem)] right-0 left-0 z-50 w-full border-[var(--primary-dim)] p-4"
+          >
             <div className="space-y-3 text-sm text-text">{content}</div>
             <div className="mt-4 flex justify-end gap-2">
               <Button
@@ -119,7 +125,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 Apply
               </Button>
             </div>
-          </div>
+          </Surface>
         ) : null}
       </div>
       {rightContent ? (

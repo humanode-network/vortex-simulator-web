@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router";
 import { PageHint } from "@/components/PageHint";
 import { SearchBar } from "@/components/SearchBar";
+import { MetricTile } from "@/components/MetricTile";
+import { Surface } from "@/components/Surface";
 
 type Category = "all" | "research" | "development" | "social";
 type Stage = "live" | "gathering" | "completed";
@@ -133,16 +135,17 @@ const Formation: React.FC = () => {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
-          <article
+          <div
             key={metric.label}
             data-metric={metric.dataAttr}
-            className="rounded-2xl border border-border bg-panel-alt px-4 py-5 shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]"
+            className="contents"
           >
-            <p className="text-sm text-muted">{metric.label}</p>
-            <strong className="text-2xl font-semibold text-(--text)">
-              {metric.value}
-            </strong>
-          </article>
+            <MetricTile
+              label={metric.label}
+              value={metric.value}
+              className="px-4 py-5"
+            />
+          </div>
         ))}
       </section>
 
@@ -191,10 +194,7 @@ const Formation: React.FC = () => {
         data-formation-list={filteredProjects.length}
       >
         {filteredProjects.map((project) => (
-          <Card
-            key={project.id}
-            className="border border-border bg-panel"
-          >
+          <Card key={project.id}>
             <CardHeader className="flex items-center justify-between pb-2">
               <div>
                 <p className="text-xs tracking-wide text-muted uppercase">
@@ -211,24 +211,39 @@ const Formation: React.FC = () => {
             <CardContent className="space-y-3">
               <p className="text-sm text-(--text)">{project.summary}</p>
               <div className="grid gap-2 text-sm text-(--text)">
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                <Surface
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="control"
+                  className="px-3 py-2"
+                >
                   <p className="text-xs tracking-wide text-muted uppercase">
                     Budget
                   </p>
                   <p className="font-semibold">{project.budget}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                </Surface>
+                <Surface
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="control"
+                  className="px-3 py-2"
+                >
                   <p className="text-xs tracking-wide text-muted uppercase">
                     Milestones
                   </p>
                   <p className="font-semibold">{project.milestones}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+                </Surface>
+                <Surface
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="control"
+                  className="px-3 py-2"
+                >
                   <p className="text-xs tracking-wide text-muted uppercase">
                     Team slots
                   </p>
                   <p className="font-semibold">{project.teamSlots}</p>
-                </div>
+                </Surface>
               </div>
               <div className="flex items-center justify-between text-sm text-muted">
                 <span>
@@ -247,9 +262,13 @@ const Formation: React.FC = () => {
           </Card>
         ))}
         {filteredProjects.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-panel px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
+          <Surface
+            variant="panel"
+            borderStyle="dashed"
+            className="px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3"
+          >
             No Formation projects match the current filters.
-          </div>
+          </Surface>
         )}
       </section>
     </div>

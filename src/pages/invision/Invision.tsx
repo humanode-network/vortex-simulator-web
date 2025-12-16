@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
 import { SearchBar } from "@/components/SearchBar";
+import { Surface } from "@/components/Surface";
 
 const governanceState = {
   label: "Egalitarian Republic",
@@ -129,24 +130,28 @@ const Invision: React.FC = () => {
         <PageHint pageId="invision" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-panel-alt px-6 py-5 text-center shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)] sm:col-span-2 lg:col-span-3">
+        <Surface
+          variant="panelAlt"
+          className="px-6 py-5 text-center sm:col-span-2 lg:col-span-3"
+        >
           <p className="text-xs tracking-wide text-muted uppercase">
             Governance model
           </p>
           <h1 className="text-2xl font-semibold text-text">
             {governanceState.label}
           </h1>
-        </div>
+        </Surface>
         {governanceState.metrics.map((metric) => (
-          <div
+          <Surface
             key={metric.label}
-            className="rounded-2xl border border-border bg-panel px-3 py-3 text-center"
+            variant="panel"
+            className="px-3 py-3 text-center"
           >
             <p className="text-xs tracking-wide text-muted uppercase">
               {metric.label}
             </p>
             <p className="text-2xl font-semibold text-text">{metric.value}</p>
-          </div>
+          </Surface>
         ))}
       </div>
 
@@ -182,36 +187,55 @@ const Invision: React.FC = () => {
             {filteredFactions.map((faction) => (
               <div
                 key={faction.name}
-                className="rounded-2xl border border-border bg-panel-alt px-5 py-4 shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]"
+                className="contents"
               >
-                <p className="text-lg font-semibold text-text">
-                  {faction.name}
-                </p>
-                <p className="text-xs tracking-wide text-primary uppercase">
-                  {faction.stance}
-                </p>
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl border border-border bg-panel px-2 py-2">
-                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                      Members
-                    </p>
-                    <p className="text-lg font-semibold">{faction.members}</p>
+                <Surface variant="panelAlt" className="px-5 py-4">
+                  <p className="text-lg font-semibold text-text">
+                    {faction.name}
+                  </p>
+                  <p className="text-xs tracking-wide text-primary uppercase">
+                    {faction.stance}
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-2 py-2"
+                    >
+                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                        Members
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {faction.members}
+                      </p>
+                    </Surface>
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-2 py-2"
+                    >
+                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                        Votes, %
+                      </p>
+                      <p className="text-lg font-semibold">{faction.votes}</p>
+                    </Surface>
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-2 py-2"
+                    >
+                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
+                        <HintLabel termId="acm">ACM</HintLabel>
+                      </p>
+                      <p className="text-lg font-semibold capitalize">
+                        {faction.acm}
+                      </p>
+                    </Surface>
                   </div>
-                  <div className="rounded-xl border border-border bg-panel px-2 py-2">
-                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                      Votes, %
-                    </p>
-                    <p className="text-lg font-semibold">{faction.votes}</p>
-                  </div>
-                  <div className="rounded-xl border border-border bg-panel px-2 py-2">
-                    <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                      <HintLabel termId="acm">ACM</HintLabel>
-                    </p>
-                    <p className="text-lg font-semibold capitalize">
-                      {faction.acm}
-                    </p>
-                  </div>
-                </div>
+                </Surface>
               </div>
             ))}
           </CardContent>

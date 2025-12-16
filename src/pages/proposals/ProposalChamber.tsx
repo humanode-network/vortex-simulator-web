@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
 import ProposalStageBar from "@/components/ProposalStageBar";
+import { Surface } from "@/components/Surface";
+import { StatTile } from "@/components/StatTile";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -40,7 +42,13 @@ const ProposalChamber: React.FC = () => {
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <section className="rounded-2xl border border-border bg-panel p-6">
+      <Surface
+        as="section"
+        variant="panel"
+        radius="2xl"
+        shadow="card"
+        className="p-6"
+      >
         <div className="grid gap-4">
           <div className="space-y-4">
             <h1 className="text-center text-2xl font-semibold text-(--text)">
@@ -48,18 +56,22 @@ const ProposalChamber: React.FC = () => {
             </h1>
             {renderStageBar("chamber")}
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-                <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                  Chamber
-                </p>
-                <p className="text-2xl font-semibold">{proposal.chamber}</p>
-              </div>
-              <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-                <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                  Proposer
-                </p>
-                <p className="text-2xl font-semibold">{proposal.proposer}</p>
-              </div>
+              <StatTile
+                label="Chamber"
+                value={proposal.chamber}
+                radius="2xl"
+                className="px-4 py-4"
+                labelClassName="text-[0.8rem]"
+                valueClassName="text-2xl"
+              />
+              <StatTile
+                label="Proposer"
+                value={proposal.proposer}
+                radius="2xl"
+                className="px-4 py-4"
+                labelClassName="text-[0.8rem]"
+                valueClassName="text-2xl"
+              />
             </div>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button className="min-w-[140px] rounded-full border-2 border-[var(--accent)] px-6 py-2 text-sm font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]">
@@ -74,47 +86,53 @@ const ProposalChamber: React.FC = () => {
             </div>
           </div>
 
-          <Card className="h-full border border-border bg-panel-alt">
+          <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle>Voting quorum</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm text-(--text) sm:grid-cols-2 lg:grid-cols-4">
-              <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Governors
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {engaged} / {quorumNeeded}
-                </p>
-              </div>
-              <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Yes / No / Abstain
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {yesTotal} / {noTotal} / {abstainTotal}
-                </p>
-              </div>
-              <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Quorum (%)
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {quorumPercent}%
-                </p>
-              </div>
-              <div className="flex h-full min-h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Passing
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {yesPercentOfQuorum}% yes
-                </p>
-              </div>
+              <StatTile
+                label="Governors"
+                value={
+                  <>
+                    {engaged} / {quorumNeeded}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Yes / No / Abstain"
+                value={
+                  <>
+                    {yesTotal} / {noTotal} / {abstainTotal}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+                labelClassName="whitespace-nowrap"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Quorum (%)"
+                value={quorumPercent}
+                variant="panel"
+                className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+                labelClassName="whitespace-nowrap"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Passing"
+                value={`${yesPercentOfQuorum}% yes`}
+                variant="panel"
+                className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
             </CardContent>
           </Card>
         </div>
-      </section>
+      </Surface>
 
       <Card>
         <CardHeader className="pb-2">
@@ -132,27 +150,24 @@ const ProposalChamber: React.FC = () => {
               { label: "Time left", value: proposal.timeLeft },
               { label: "Passing rule", value: proposal.passingRule },
             ].map((item) => (
-              <div
+              <StatTile
                 key={item.label}
-                className="rounded-xl border border-border bg-panel-alt px-3 py-2 text-center"
-              >
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  {item.label}
-                </p>
-                <p className="text-base font-semibold">{item.value}</p>
-              </div>
+                label={item.label}
+                value={item.value}
+                className="px-3 py-2"
+              />
             ))}
           </div>
           <div className="space-y-4 text-(--text)">
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Proposal overview</p>
               <p className="text-sm leading-relaxed text-muted">
                 Adjusts fee splits dynamically to balance treasury, Formation,
                 and biometric maintenance. Aims to align incentives with network
                 stress signals.
               </p>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Execution plan</p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
                 <li>
@@ -168,37 +183,49 @@ const ProposalChamber: React.FC = () => {
                   thresholds.
                 </li>
               </ul>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Budget & scope</p>
               <p className="text-sm text-muted">
                 210k HMND covering telemetry work, contract changes, and
                 validation. Focused on Economics chamber with cross-chamber
                 reporting.
               </p>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Attachments</p>
               <ul className="space-y-2 text-sm text-muted">
-                <li className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2">
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
                   <span>Fee split design (PDF)</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
-                <li className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2">
+                </Surface>
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
                   <span>Telemetry checklist (DOC)</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
+                </Surface>
               </ul>
-            </div>
+            </Surface>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border border-border bg-panel">
+      <Card className="overflow-hidden">
         <CardContent className="space-y-3 pt-4">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {[
@@ -220,9 +247,12 @@ const ProposalChamber: React.FC = () => {
                 value: proposal.timeLeft,
               },
             ].map((entry) => (
-              <div
+              <Surface
                 key={entry.title}
-                className="rounded-xl border border-border bg-panel-alt p-4"
+                variant="panelAlt"
+                radius="xl"
+                shadow="tile"
+                className="p-4"
               >
                 <p className="text-sm font-semibold text-muted">
                   {entry.title}
@@ -237,7 +267,7 @@ const ProposalChamber: React.FC = () => {
                 >
                   {entry.value}
                 </p>
-              </div>
+              </Surface>
             ))}
           </div>
 
@@ -249,13 +279,17 @@ const ProposalChamber: React.FC = () => {
                 value: <HintLabel termId="tier4_consul">Consul</HintLabel>,
               },
             ].map((stat) => (
-              <li
+              <Surface
                 key={stat.label}
-                className="rounded-xl border border-dashed border-border/70 bg-panel-alt px-4 py-3"
+                as="li"
+                variant="panelAlt"
+                radius="xl"
+                borderStyle="dashed"
+                className="px-4 py-3"
               >
                 <span className="font-semibold">{stat.label}:</span>{" "}
                 {stat.value}
-              </li>
+              </Surface>
             ))}
           </ul>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { HintLabel } from "@/components/Hint";
+import { Surface } from "@/components/Surface";
 
 type StatItem = {
   label: React.ReactNode;
@@ -11,16 +12,16 @@ type StatGridProps = {
   items: StatItem[];
 };
 
-const tileClass =
-  "flex flex-col items-center rounded-xl border bg-panel-alt px-3 py-2 text-center text-text shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)] bg-cover bg-no-repeat";
-
 export const StatGrid: React.FC<StatGridProps> = ({ items }) => {
   return (
     <dl className="grid grid-cols-3 gap-3 text-center text-sm text-text">
       {items.map((item) => (
-        <div
+        <Surface
           key={typeof item.label === "string" ? item.label : `${item.value}`}
-          className={tileClass}
+          variant="panelAlt"
+          radius="xl"
+          shadow="tile"
+          className="flex flex-col items-center px-3 py-2 text-center"
           style={{
             backgroundImage:
               item.tone === "primary"
@@ -36,7 +37,7 @@ export const StatGrid: React.FC<StatGridProps> = ({ items }) => {
             {item.label}
           </dt>
           <dd className="text-lg font-semibold">{item.value}</dd>
-        </div>
+        </Surface>
       ))}
     </dl>
   );

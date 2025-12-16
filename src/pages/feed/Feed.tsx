@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 type Stage = "pool" | "vote" | "build" | "thread" | "courts" | "faction";
 
@@ -326,9 +327,12 @@ const Feed: React.FC = () => {
                 {item.stageData && (
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {item.stageData.map((entry) => (
-                      <div
+                      <Surface
                         key={entry.title}
-                        className="rounded-xl border border-border bg-panel-alt p-4"
+                        variant="panelAlt"
+                        radius="xl"
+                        shadow="tile"
+                        className="p-4"
                       >
                         <p className="text-sm font-semibold text-muted">
                           {entry.title}
@@ -346,7 +350,7 @@ const Feed: React.FC = () => {
                         >
                           {entry.value}
                         </p>
-                      </div>
+                      </Surface>
                     ))}
                   </div>
                 )}
@@ -354,13 +358,17 @@ const Feed: React.FC = () => {
                 {item.stats && (
                   <ul className="grid gap-2 text-sm text-(--text) md:grid-cols-2">
                     {item.stats.map((stat) => (
-                      <li
+                      <Surface
                         key={stat.label}
-                        className="rounded-xl border border-dashed border-border/70 bg-panel-alt px-4 py-3"
+                        as="li"
+                        variant="panelAlt"
+                        radius="xl"
+                        borderStyle="dashed"
+                        className="px-4 py-3"
                       >
                         <span className="font-semibold">{stat.label}:</span>{" "}
                         {stat.value}
-                      </li>
+                      </Surface>
                     ))}
                   </ul>
                 )}

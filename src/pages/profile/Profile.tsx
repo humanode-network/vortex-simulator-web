@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 const heroStats = [
   { label: "ACM", value: "168" },
@@ -171,7 +172,7 @@ const Profile: React.FC = () => {
       <div className="flex items-center justify-end">
         <PageHint pageId="profile" />
       </div>
-      <section className="rounded-2xl border border-border bg-panel p-6">
+      <Surface as="section" variant="panel" radius="2xl" shadow="card" className="p-6">
         <div className="grid items-center gap-6 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex justify-center lg:justify-start">
             <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-border bg-panel-alt text-lg font-semibold text-muted shadow-inner">
@@ -210,7 +211,7 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
+      </Surface>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {heroStats.map((stat) => (
@@ -255,7 +256,12 @@ const Profile: React.FC = () => {
               <div className="grid max-h-72 grid-cols-1 gap-3 overflow-y-scroll pr-2 sm:grid-cols-2 xl:grid-cols-3">
                 {governanceActions.map((action) => (
                   <div key={action.title} className="group relative">
-                    <div className="space-y-1 rounded-xl border border-border bg-panel-alt px-3 py-3 text-center">
+                    <Surface
+                      variant="panelAlt"
+                      radius="xl"
+                      shadow="tile"
+                      className="space-y-1 px-3 py-3 text-center"
+                    >
                       <p className="line-clamp-1 text-sm font-semibold text-text">
                         {action.title}
                       </p>
@@ -265,12 +271,17 @@ const Profile: React.FC = () => {
                       <p className="line-clamp-1 text-xs text-muted">
                         {action.context}
                       </p>
-                    </div>
-                    <div className="pointer-events-none absolute top-full left-1/2 z-10 mt-2 w-64 -translate-x-1/2 rounded-xl border border-border bg-panel p-3 text-left text-xs text-text opacity-0 shadow-[var(--shadow-popover)] ring-1 ring-inset ring-[color:var(--glass-border)] transition group-hover:opacity-100">
+                    </Surface>
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="popover"
+                      className="pointer-events-none absolute top-full left-1/2 z-10 mt-2 w-64 -translate-x-1/2 p-3 text-left text-xs text-text opacity-0 transition group-hover:opacity-100"
+                    >
                       <p className="font-semibold">{action.title}</p>
                       <p className="text-muted">{action.context}</p>
                       <p className="mt-1 leading-snug">{action.detail}</p>
-                    </div>
+                    </Surface>
                   </div>
                 ))}
               </div>
@@ -283,10 +294,7 @@ const Profile: React.FC = () => {
             </CardHeader>
             <CardContent className="max-h-96 space-y-4 overflow-y-auto pr-1">
               {projects.map((project) => (
-                <div
-                  key={project.title}
-                  className="rounded-xl border border-border px-4 py-3"
-                >
+                <Surface key={project.title} variant="panelAlt" radius="xl" className="px-4 py-3">
                   <div className="flex flex-col gap-1 text-center">
                     <p className="text-sm font-semibold text-text">
                       {project.title}
@@ -305,7 +313,7 @@ const Profile: React.FC = () => {
                       </Badge>
                     ))}
                   </div>
-                </div>
+                </Surface>
               ))}
             </CardContent>
           </Card>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HintLabel } from "@/components/Hint";
 import ProposalStageBar from "@/components/ProposalStageBar";
+import { Surface } from "@/components/Surface";
+import { StatTile } from "@/components/StatTile";
 
 const ProposalPP: React.FC = () => {
   const proposal = {
@@ -87,7 +89,13 @@ const ProposalPP: React.FC = () => {
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <section className="rounded-2xl border border-border bg-panel p-6">
+      <Surface
+        as="section"
+        variant="panel"
+        radius="2xl"
+        shadow="card"
+        className="p-6"
+      >
         <div className="grid items-start gap-4">
           <div className="space-y-4">
             <h1 className="text-center text-2xl font-semibold text-(--text)">
@@ -95,18 +103,22 @@ const ProposalPP: React.FC = () => {
             </h1>
             {renderStageBar("pool")}
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-                <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                  Chamber
-                </p>
-                <p className="text-2xl font-semibold">{proposal.chamber}</p>
-              </div>
-              <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-                <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                  Proposer
-                </p>
-                <p className="text-2xl font-semibold">{proposal.proposer}</p>
-              </div>
+              <StatTile
+                label="Chamber"
+                value={proposal.chamber}
+                radius="2xl"
+                className="px-4 py-4"
+                labelClassName="text-[0.8rem]"
+                valueClassName="text-2xl"
+              />
+              <StatTile
+                label="Proposer"
+                value={proposal.proposer}
+                radius="2xl"
+                className="px-4 py-4"
+                labelClassName="text-[0.8rem]"
+                valueClassName="text-2xl"
+              />
             </div>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
@@ -145,47 +157,61 @@ const ProposalPP: React.FC = () => {
             </div>
           </div>
 
-          <Card className="h-full border border-border bg-panel-alt">
+          <Card className="h-full bg-panel-alt">
             <CardHeader className="pb-2">
               <CardTitle>Quorum of attention</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm text-(--text) sm:grid-cols-2 lg:grid-cols-2">
-              <div className="flex h-full min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Governors
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {engaged} / {attentionNeeded}
-                </p>
-              </div>
-              <div className="flex h-full min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  Upvotes
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {proposal.upvotes} / {proposal.upvoteFloor}
-                </p>
-              </div>
-              <div className="flex h-full min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide whitespace-nowrap text-muted uppercase">
-                  Governors (%)
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {attentionPercent} / {attentionNeededPercent}
-                </p>
-              </div>
-              <div className="flex h-full min-h-[96px] flex-col items-center justify-center gap-1 rounded-xl border border-border bg-panel px-3 py-4 text-center">
-                <p className="text-[0.7rem] tracking-wide whitespace-nowrap text-muted uppercase">
-                  Upvotes (%)
-                </p>
-                <p className="text-2xl font-semibold whitespace-nowrap">
-                  {upvoteCurrentPercent} / {upvoteFloorPercent}
-                </p>
-              </div>
+              <StatTile
+                label="Governors"
+                value={
+                  <>
+                    {engaged} / {attentionNeeded}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Upvotes"
+                value={
+                  <>
+                    {proposal.upvotes} / {proposal.upvoteFloor}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Governors (%)"
+                value={
+                  <>
+                    {attentionPercent} / {attentionNeededPercent}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+                labelClassName="whitespace-nowrap"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
+              <StatTile
+                label="Upvotes (%)"
+                value={
+                  <>
+                    {upvoteCurrentPercent} / {upvoteFloorPercent}
+                  </>
+                }
+                variant="panel"
+                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+                labelClassName="whitespace-nowrap"
+                valueClassName="text-2xl font-semibold whitespace-nowrap"
+              />
             </CardContent>
           </Card>
         </div>
-      </section>
+      </Surface>
 
       <Card className="h-full">
         <CardHeader className="pb-2">
@@ -213,19 +239,11 @@ const ProposalPP: React.FC = () => {
                 value: `${proposal.milestones} planned · pilot + rollout`,
               },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
-              >
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  {item.label}
-                </p>
-                <p className="text-base font-semibold">{item.value}</p>
-              </div>
+              <StatTile key={item.label} label={item.label} value={item.value} />
             ))}
           </div>
           <div className="space-y-4 text-(--text)">
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Proposal overview</p>
               <p className="text-sm leading-relaxed text-muted">
                 Redundant sequencers across clusters with cross-epoch
@@ -234,8 +252,8 @@ const ProposalPP: React.FC = () => {
                 rollback gates tied to liveness SLOs. Targets neutral failover
                 without privileging any validator set.
               </p>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Execution plan</p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
                 <li>
@@ -254,93 +272,128 @@ const ProposalPP: React.FC = () => {
                   Post-rollout: document runbooks and handoff to chamber ops.
                 </li>
               </ul>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Budget & scope</p>
               <p className="text-sm text-muted">
                 210k HMND covering hardware, telemetry integration, and rollout
                 validation. Team: {proposal.teamSlots} with milestone target of{" "}
                 {proposal.milestones}; includes QA, ops, and telemetry owners.
               </p>
-            </div>
+            </Surface>
             <div className="grid gap-3 lg:grid-cols-2">
-              <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+              <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
                 <p className="text-sm font-semibold">Team (locked)</p>
                 <ul className="space-y-2 text-sm text-muted">
                   {teamLocked.map((member) => (
-                    <li
+                    <Surface
                       key={member.name}
-                      className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2"
+                      as="li"
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="flex items-center justify-between px-3 py-2"
                     >
                       <span className="font-semibold text-(--text)">
                         {member.name}
                       </span>
                       <span className="text-xs text-muted">{member.role}</span>
-                    </li>
+                    </Surface>
                   ))}
                 </ul>
-              </div>
-              <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+              </Surface>
+              <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
                 <p className="text-sm font-semibold">Open slots (positions)</p>
                 <ul className="space-y-2 text-sm text-muted">
                   {openSlotNeeds.map((slot) => (
-                    <li
+                    <Surface
                       key={slot.title}
-                      className="rounded-xl border border-border bg-panel px-3 py-2"
+                      as="li"
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-3 py-2"
                     >
                       <p className="font-semibold text-(--text)">
                         {slot.title}
                       </p>
                       <p className="text-xs text-muted">{slot.desc}</p>
-                    </li>
+                    </Surface>
                   ))}
                 </ul>
-              </div>
+              </Surface>
             </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Milestones</p>
               <ul className="space-y-2 text-sm text-muted">
                 {milestonesDetail.map((ms) => (
-                  <li
+                  <Surface
                     key={ms.title}
-                    className="rounded-xl border border-border bg-panel px-3 py-2"
+                    as="li"
+                    variant="panel"
+                    radius="xl"
+                    shadow="control"
+                    className="px-3 py-2"
                   >
                     <p className="font-semibold text-(--text)">{ms.title}</p>
                     <p className="text-xs text-muted">{ms.desc}</p>
-                  </li>
+                  </Surface>
                 ))}
               </ul>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Attachments</p>
               <ul className="space-y-2 text-sm text-muted">
-                <li className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2">
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
                   <span>Rollout plan (PDF)</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
-                <li className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2">
+                </Surface>
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
                   <span>Telemetry checklist (DOC)</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
-                <li className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2">
+                </Surface>
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
                   <span>Budget breakdown (XLS)</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
+                </Surface>
               </ul>
-            </div>
+            </Surface>
           </div>
         </CardContent>
       </Card>
 
       {showRules && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--veil)] p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-2xl border border-border bg-panel [background-image:var(--card-grad)] bg-cover bg-no-repeat p-6 text-text shadow-[var(--shadow-popover)]">
+          <Surface
+            variant="panel"
+            radius="2xl"
+            shadow="popover"
+            className="w-full max-w-xl p-6 text-text"
+          >
             <div className="mb-4 flex items-center justify-between">
               <p className="text-lg font-semibold">Pool rules</p>
               <button
@@ -357,7 +410,12 @@ const ProposalPP: React.FC = () => {
                 <li>Delegated votes are ignored in the pool.</li>
               </ul>
             </div>
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-border bg-panel-alt px-3 py-2">
+            <Surface
+              variant="panelAlt"
+              radius="xl"
+              shadow="control"
+              className="mt-4 flex items-center gap-2 px-3 py-2"
+            >
               <input
                 id="rules-confirm"
                 type="checkbox"
@@ -368,7 +426,7 @@ const ProposalPP: React.FC = () => {
               <label htmlFor="rules-confirm" className="text-sm text-text">
                 I read the proposal and know the rules
               </label>
-            </div>
+            </Surface>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -394,7 +452,7 @@ const ProposalPP: React.FC = () => {
                   : "Confirm upvote"}
               </button>
             </div>
-          </div>
+          </Surface>
         </div>
       )}
 

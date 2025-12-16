@@ -7,6 +7,8 @@ import { HintLabel } from "@/components/Hint";
 import { factions } from "./factionData";
 import { PageHint } from "@/components/PageHint";
 import { SearchBar } from "@/components/SearchBar";
+import { MetricTile } from "@/components/MetricTile";
+import { StatTile } from "@/components/StatTile";
 
 const Factions: React.FC = () => {
   const [query, setQuery] = useState("");
@@ -68,41 +70,16 @@ const Factions: React.FC = () => {
         <PageHint pageId="factions" />
       </div>
 
-          {!showResultsOnly && (
+      {!showResultsOnly && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
-              <p className="text-xs tracking-wide text-muted uppercase">
-                Total factions
-              </p>
-              <p className="text-2xl font-semibold text-text">
-                {totals.totalFactions}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
-              <p className="text-xs tracking-wide text-muted uppercase">
-                Members
-              </p>
-              <p className="text-2xl font-semibold text-text">
-                {totals.totalMembers}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
-              <p className="text-xs tracking-wide text-muted uppercase">
-                Votes
-              </p>
-              <p className="text-2xl font-semibold text-text">
-                {totals.totalVotes}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
-              <p className="text-xs tracking-wide text-muted uppercase">
-                <HintLabel termId="acm" termText="ACM" />
-              </p>
-              <p className="text-2xl font-semibold text-text">
-                {totals.totalAcm}
-              </p>
-            </div>
+            <MetricTile label="Total factions" value={totals.totalFactions} />
+            <MetricTile label="Members" value={totals.totalMembers} />
+            <MetricTile label="Votes" value={totals.totalVotes} />
+            <MetricTile
+              label={<HintLabel termId="acm" termText="ACM" />}
+              value={totals.totalAcm}
+            />
           </section>
 
           <SearchBar
@@ -154,24 +131,24 @@ const Factions: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-text">
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-xl border border-border bg-panel-alt px-2 py-2">
-                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                        Members
-                      </p>
-                      <p className="text-lg font-semibold">{faction.members}</p>
-                    </div>
-                    <div className="rounded-xl border border-border bg-panel-alt px-2 py-2">
-                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                        Votes
-                      </p>
-                      <p className="text-lg font-semibold">{faction.votes}</p>
-                    </div>
-                    <div className="rounded-xl border border-border bg-panel-alt px-2 py-2">
-                      <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                        <HintLabel termId="acm" termText="ACM" />
-                      </p>
-                      <p className="text-lg font-semibold">{faction.acm}</p>
-                    </div>
+                    <StatTile
+                      label="Members"
+                      value={faction.members}
+                      className="px-2 py-2"
+                      valueClassName="text-lg"
+                    />
+                    <StatTile
+                      label="Votes"
+                      value={faction.votes}
+                      className="px-2 py-2"
+                      valueClassName="text-lg"
+                    />
+                    <StatTile
+                      label={<HintLabel termId="acm" termText="ACM" />}
+                      value={faction.acm}
+                      className="px-2 py-2"
+                      valueClassName="text-lg"
+                    />
                   </div>
                   <Button asChild size="sm" className="w-full">
                     <Link to={`/factions/${faction.id}`}>View faction</Link>

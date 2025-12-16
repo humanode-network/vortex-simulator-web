@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHint } from "@/components/PageHint";
 import ProposalStageBar from "@/components/ProposalStageBar";
+import { HintLabel } from "@/components/Hint";
+import { Surface } from "@/components/Surface";
+import { StatTile } from "@/components/StatTile";
 
 const draftDetails = {
   title: "Mesh Telemetry Upgrade",
@@ -92,37 +95,39 @@ const ProposalDraft: React.FC = () => {
         </div>
       </div>
 
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="space-y-3 pb-3">
           <CardTitle className="text-2xl font-semibold text-(--text)">
             {draftDetails.title}
           </CardTitle>
           <ProposalStageBar current="draft" />
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-              <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                Chamber
-              </p>
-              <p className="text-lg font-semibold text-(--text)">
-                {draftDetails.chamber}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-              <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                Proposer
-              </p>
-              <p className="text-lg font-semibold text-(--text)">
-                {draftDetails.proposer}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-panel-alt px-4 py-4 text-center">
-              <p className="text-[0.8rem] tracking-wide text-muted uppercase">
-                Tier
-              </p>
-              <p className="text-lg font-semibold text-(--text)">
+            <StatTile
+              label="Chamber"
+              value={draftDetails.chamber}
+              radius="2xl"
+              className="px-4 py-4"
+              labelClassName="text-[0.8rem]"
+              valueClassName="text-lg"
+            />
+            <StatTile
+              label="Proposer"
+              value={draftDetails.proposer}
+              radius="2xl"
+              className="px-4 py-4"
+              labelClassName="text-[0.8rem]"
+              valueClassName="text-lg"
+            />
+            <StatTile
+              label="Tier"
+              value={
                 <HintLabel termId="tier3_legate">{draftDetails.tier}</HintLabel>
-              </p>
-            </div>
+              }
+              radius="2xl"
+              className="px-4 py-4"
+              labelClassName="text-[0.8rem]"
+              valueClassName="text-lg"
+            />
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -142,26 +147,23 @@ const ProposalDraft: React.FC = () => {
                 value: draftDetails.milestonesPlanned,
               },
             ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
-              >
-                <p className="text-[0.7rem] tracking-wide text-muted uppercase">
-                  {item.label}
-                </p>
-                <p className="text-base font-semibold">{item.value}</p>
-              </div>
+              <StatTile key={item.label} label={item.label} value={item.value} />
             ))}
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-border bg-panel-alt px-4 py-4 text-(--text)">
+          <Surface variant="panelAlt" className="space-y-4 px-4 py-4 text-(--text)">
             <div className="space-y-2">
               <p className="text-sm font-semibold">Summary</p>
               <p className="text-sm leading-relaxed text-muted">
                 {draftDetails.summary}
               </p>
             </div>
-            <div className="space-y-2 rounded-xl border border-border bg-panel px-3 py-3">
+            <Surface
+              variant="panel"
+              radius="xl"
+              shadow="control"
+              className="space-y-2 px-3 py-3"
+            >
               <p className="text-sm font-semibold">Proposal overview</p>
               <p className="text-sm leading-relaxed text-muted">
                 Redundant sequencers across clusters with cross-epoch
@@ -170,8 +172,13 @@ const ProposalDraft: React.FC = () => {
                 rollback gates tied to liveness SLOs. Targets neutral failover
                 without privileging any validator set.
               </p>
-            </div>
-            <div className="space-y-2 rounded-xl border border-border bg-panel px-3 py-3">
+            </Surface>
+            <Surface
+              variant="panel"
+              radius="xl"
+              shadow="control"
+              className="space-y-2 px-3 py-3"
+            >
               <p className="text-sm font-semibold">Execution plan</p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
                 <li>
@@ -190,8 +197,13 @@ const ProposalDraft: React.FC = () => {
                   Post-rollout: document runbooks and handoff to chamber ops.
                 </li>
               </ul>
-            </div>
-            <div className="space-y-2 rounded-xl border border-border bg-panel px-3 py-3">
+            </Surface>
+            <Surface
+              variant="panel"
+              radius="xl"
+              shadow="control"
+              className="space-y-2 px-3 py-3"
+            >
               <p className="text-sm font-semibold">Budget &amp; scope</p>
               <p className="text-sm text-muted">
                 210k HMND covering hardware, telemetry integration, and rollout
@@ -199,73 +211,89 @@ const ProposalDraft: React.FC = () => {
                 of {draftDetails.milestones.length}; includes QA, ops, and
                 telemetry owners.
               </p>
-            </div>
-          </div>
+            </Surface>
+          </Surface>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Team (locked)</p>
               <ul className="space-y-2 text-sm text-muted">
                 {draftDetails.teamLocked.map((member) => (
-                  <li
+                  <Surface
                     key={member.name}
-                    className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2"
+                    as="li"
+                    variant="panel"
+                    radius="xl"
+                    shadow="control"
+                    className="flex items-center justify-between px-3 py-2"
                   >
                     <span className="font-semibold text-(--text)">
                       {member.name}
                     </span>
                     <span className="text-xs text-muted">{member.role}</span>
-                  </li>
+                  </Surface>
                 ))}
               </ul>
-            </div>
-            <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+            </Surface>
+            <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
               <p className="text-sm font-semibold">Open slots (positions)</p>
               <ul className="space-y-2 text-sm text-muted">
                 {draftDetails.openSlotNeeds.map((slot) => (
-                  <li
+                  <Surface
                     key={slot.title}
-                    className="rounded-xl border border-border bg-panel px-3 py-2"
+                    as="li"
+                    variant="panel"
+                    radius="xl"
+                    shadow="control"
+                    className="px-3 py-2"
                   >
                     <p className="font-semibold text-(--text)">{slot.title}</p>
                     <p className="text-xs text-muted">{slot.desc}</p>
-                  </li>
+                  </Surface>
                 ))}
               </ul>
-            </div>
+            </Surface>
           </div>
 
-          <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+          <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
             <p className="text-sm font-semibold">Milestones</p>
             <ul className="space-y-2 text-sm text-muted">
               {draftDetails.milestonesDetail.map((ms) => (
-                <li
+                <Surface
                   key={ms.title}
-                  className="rounded-xl border border-border bg-panel px-3 py-2"
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="px-3 py-2"
                 >
                   <p className="font-semibold text-(--text)">{ms.title}</p>
                   <p className="text-xs text-muted">{ms.desc}</p>
-                </li>
+                </Surface>
               ))}
             </ul>
-          </div>
+          </Surface>
 
-          <div className="space-y-2 rounded-2xl border border-border bg-panel-alt px-4 py-3">
+          <Surface variant="panelAlt" className="space-y-2 px-4 py-3">
             <p className="text-sm font-semibold">Attachments</p>
             <ul className="space-y-2 text-sm text-muted">
               {draftDetails.attachments.map((file) => (
-                <li
+                <Surface
                   key={file.title}
-                  className="flex items-center justify-between rounded-xl border border-border bg-panel px-3 py-2"
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
                 >
                   <span>{file.title}</span>
                   <button className="text-sm font-semibold text-primary">
                     View
                   </button>
-                </li>
+                </Surface>
               ))}
             </ul>
-          </div>
+          </Surface>
         </CardContent>
       </Card>
 

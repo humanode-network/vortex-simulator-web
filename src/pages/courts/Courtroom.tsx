@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useParams } from "react-router";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 const jury = [
   "John Doe",
@@ -28,7 +29,7 @@ const Courtroom: React.FC = () => {
       <div className="flex items-center justify-end">
         <PageHint pageId="courtroom" />
       </div>
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>{caseTitle}</CardTitle>
           <p className="text-sm text-muted">
@@ -42,55 +43,58 @@ const Courtroom: React.FC = () => {
             <Badge variant="outline">Reports: 18</Badge>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-border bg-panel-alt p-3">
+            <Surface variant="panelAlt" radius="xl" shadow="tile" className="p-3">
               <p className="text-xs tracking-wide text-muted uppercase">
                 Subject
               </p>
               <p className="text-sm font-semibold text-(--text)">
                 Delegation dispute on Protocol Keepers
               </p>
-            </div>
-            <div className="rounded-xl border border-border bg-panel-alt p-3">
+            </Surface>
+            <Surface variant="panelAlt" radius="xl" shadow="tile" className="p-3">
               <p className="text-xs tracking-wide text-muted uppercase">
                 Trigger
               </p>
               <p className="text-sm font-semibold text-(--text)">
                 18 reports · Delegation shift
               </p>
-            </div>
+            </Surface>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>Jury</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {jury.map((member) => (
-            <div
+            <Surface
               key={member}
-              className="rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-(--text)"
+              variant="panelAlt"
+              radius="xl"
+              shadow="control"
+              className="px-3 py-2 text-sm text-(--text)"
             >
               {member}
-            </div>
+            </Surface>
           ))}
         </CardContent>
       </Card>
 
-      <Card className="border border-border bg-panel">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle>Proceedings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted">
-          <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+          <Surface variant="panelAlt" radius="xl" shadow="tile" className="px-3 py-2">
             <p className="text-xs tracking-wide text-muted uppercase">Claim</p>
             <p>
               Delegation was rerouted without consent; requester asks for
               reversal and audit.
             </p>
-          </div>
-          <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+          </Surface>
+          <Surface variant="panelAlt" radius="xl" shadow="tile" className="px-3 py-2">
             <p className="text-xs tracking-wide text-muted uppercase">
               Evidence
             </p>
@@ -98,8 +102,8 @@ const Courtroom: React.FC = () => {
               <li>Delegation log entries · epoch 220-221</li>
               <li>Screenshots from faction portal</li>
             </ul>
-          </div>
-          <div className="rounded-xl border border-border bg-panel-alt px-3 py-2">
+          </Surface>
+          <Surface variant="panelAlt" radius="xl" shadow="tile" className="px-3 py-2">
             <p className="text-xs tracking-wide text-muted uppercase">
               Next steps
             </p>
@@ -107,7 +111,7 @@ const Courtroom: React.FC = () => {
               <li>Collect jury statements</li>
               <li>Schedule deliberation</li>
             </ul>
-          </div>
+          </Surface>
         </CardContent>
       </Card>
 

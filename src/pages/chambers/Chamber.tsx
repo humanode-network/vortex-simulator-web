@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 type ProposalStage = "upcoming" | "live" | "ended";
 
@@ -213,14 +214,19 @@ const Chamber: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {filteredProposals.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-border/70 bg-panel-alt px-4 py-6 text-center text-sm text-muted">
+              <Surface
+                variant="panelAlt"
+                borderStyle="dashed"
+                className="px-4 py-6 text-center text-sm text-muted"
+              >
                 No proposals in this stage.
-              </p>
+              </Surface>
             ) : (
               filteredProposals.map((proposal) => (
-                <div
+                <Surface
                   key={proposal.id}
-                  className="rounded-2xl border border-border bg-panel-alt p-4"
+                  variant="panelAlt"
+                  className="p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -243,22 +249,32 @@ const Chamber: React.FC = () => {
                     {proposal.summary}
                   </p>
                   <div className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
-                    <div className="rounded-xl border border-border bg-panel px-3 py-2">
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-3 py-2"
+                    >
                       <p className="text-xs tracking-wide uppercase">
                         Next step
                       </p>
                       <p className="text-sm font-semibold text-(--text)">
                         {proposal.nextStep}
                       </p>
-                    </div>
-                    <div className="rounded-xl border border-border bg-panel px-3 py-2">
+                    </Surface>
+                    <Surface
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-3 py-2"
+                    >
                       <p className="text-xs tracking-wide uppercase">Timing</p>
                       <p className="text-sm font-semibold text-(--text)">
                         {proposal.timing}
                       </p>
-                    </div>
+                    </Surface>
                   </div>
-                </div>
+                </Surface>
               ))
             )}
           </CardContent>
@@ -284,9 +300,13 @@ const Chamber: React.FC = () => {
             />
             <ul className="max-h-[360px] space-y-2 overflow-auto pr-1 text-sm text-(--text)">
               {filteredGovernors.map((gov) => (
-                <li
+                <Surface
+                  as="li"
                   key={gov.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-panel-alt px-3 py-2"
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
                 >
                   <div>
                     <p className="font-semibold">{gov.name}</p>
@@ -312,19 +332,25 @@ const Chamber: React.FC = () => {
                   <Button asChild size="sm" variant="ghost">
                     <Link to={`/human-nodes/${gov.name}`}>Profile</Link>
                   </Button>
-                </li>
+                </Surface>
               ))}
               {filteredGovernors.length === 0 && (
-                <li className="rounded-xl border border-dashed border-border/70 bg-panel-alt px-3 py-4 text-center text-muted">
+                <Surface
+                  as="li"
+                  variant="panelAlt"
+                  radius="xl"
+                  borderStyle="dashed"
+                  className="px-3 py-4 text-center text-muted"
+                >
                   No governors found.
-                </li>
+                </Surface>
               )}
             </ul>
           </CardContent>
         </Card>
       </div>
 
-      <section className="rounded-2xl border border-border bg-panel p-5">
+      <Surface as="section" variant="panel" radius="2xl" shadow="card" className="p-5">
         <header className="mb-4 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs tracking-wide text-muted uppercase">
@@ -344,20 +370,22 @@ const Chamber: React.FC = () => {
             {threads.map((thread) => (
               <article
                 key={thread.id}
-                className="rounded-2xl border border-border bg-panel-alt px-4 py-3 shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]"
+                className="contents"
               >
-                <h3 className="text-base font-semibold text-(--text)">
-                  {thread.title}
-                </h3>
-                <p className="text-sm text-muted">
-                  {thread.author} · {thread.replies} replies · Updated{" "}
-                  {thread.updated}
-                </p>
+                <Surface variant="panelAlt" className="px-4 py-3">
+                  <h3 className="text-base font-semibold text-(--text)">
+                    {thread.title}
+                  </h3>
+                  <p className="text-sm text-muted">
+                    {thread.author} · {thread.replies} replies · Updated{" "}
+                    {thread.updated}
+                  </p>
+                </Surface>
               </article>
             ))}
           </div>
 
-          <div className="rounded-2xl border border-border bg-panel-alt p-4 shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
+          <Surface variant="panelAlt" className="p-4">
             <header className="text-sm font-semibold text-(--text)">
               Chamber chat
             </header>
@@ -378,9 +406,9 @@ const Chamber: React.FC = () => {
                 Send
               </Button>
             </form>
-          </div>
+          </Surface>
         </div>
-      </section>
+      </Surface>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import { HintLabel } from "@/components/Hint";
+import { Surface } from "@/components/Surface";
 
 type Pipeline = {
   pool: number;
@@ -16,26 +17,34 @@ const badgeClass =
 
 export const PipelineList: React.FC<PipelineListProps> = ({ pipeline }) => {
   return (
-    <ul className="rounded-2xl border border-dashed border-border bg-panel-alt [background-image:var(--card-grad)] bg-cover bg-no-repeat px-3 py-3 text-sm shadow-[var(--shadow-tile)] ring-1 ring-inset ring-[color:var(--glass-border)]">
-      <li className="flex items-center justify-between border-b border-border/50 pb-2 text-text">
-        <span>
-          <HintLabel termId="proposal_pools">Proposal pool</HintLabel>
-        </span>
-        <span className={badgeClass}>{pipeline.pool}</span>
-      </li>
-      <li className="flex items-center justify-between border-b border-border/50 py-2 text-text">
-        <span>
-          <HintLabel termId="chamber_vote">Chamber vote</HintLabel>
-        </span>
-        <span className={badgeClass}>{pipeline.vote}</span>
-      </li>
-      <li className="flex items-center justify-between pt-2 text-text">
-        <span>
-          <HintLabel termId="formation">Formation</HintLabel> builds
-        </span>
-        <span className={badgeClass}>{pipeline.build}</span>
-      </li>
-    </ul>
+    <Surface
+      variant="panelAlt"
+      borderStyle="dashed"
+      radius="2xl"
+      shadow="tile"
+      className="px-3 py-3"
+    >
+      <ul className="text-sm">
+        <li className="flex items-center justify-between border-b border-border/50 pb-2 text-text">
+          <span>
+            <HintLabel termId="proposal_pools">Proposal pool</HintLabel>
+          </span>
+          <span className={badgeClass}>{pipeline.pool}</span>
+        </li>
+        <li className="flex items-center justify-between border-b border-border/50 py-2 text-text">
+          <span>
+            <HintLabel termId="chamber_vote">Chamber vote</HintLabel>
+          </span>
+          <span className={badgeClass}>{pipeline.vote}</span>
+        </li>
+        <li className="flex items-center justify-between pt-2 text-text">
+          <span>
+            <HintLabel termId="formation">Formation</HintLabel> builds
+          </span>
+          <span className={badgeClass}>{pipeline.build}</span>
+        </li>
+      </ul>
+    </Surface>
   );
 };
 

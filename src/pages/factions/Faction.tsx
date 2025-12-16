@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { factions } from "./factionData";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
+import { Surface } from "@/components/Surface";
 
 const Faction: React.FC = () => {
   const { id } = useParams();
@@ -107,7 +108,7 @@ const Faction: React.FC = () => {
       <div className="flex items-center justify-end">
         <PageHint pageId="faction" />
       </div>
-      <section className="rounded-2xl border border-border bg-panel p-6">
+      <Surface as="section" variant="panel" radius="2xl" shadow="card" className="p-6">
         <div className="grid items-center gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <div className="flex justify-center lg:justify-start">
             <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-border bg-panel-alt text-lg font-semibold text-muted shadow-inner">
@@ -121,7 +122,7 @@ const Faction: React.FC = () => {
             <Button size="sm">Join faction</Button>
           </div>
         </div>
-      </section>
+      </Surface>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
@@ -149,17 +150,20 @@ const Faction: React.FC = () => {
         <CardHeader className="pb-2">
           <CardTitle>Goals</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted">
-          {faction.goals.map((goal) => (
-            <div
-              key={goal}
-              className="rounded-xl border border-border bg-panel-alt px-3 py-2 text-text"
-            >
-              {goal}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+          <CardContent className="space-y-3 text-sm text-muted">
+            {faction.goals.map((goal) => (
+              <Surface
+                key={goal}
+                variant="panelAlt"
+                radius="xl"
+                shadow="control"
+                className="px-3 py-2 text-text"
+              >
+                {goal}
+              </Surface>
+            ))}
+          </CardContent>
+        </Card>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card>
@@ -168,9 +172,12 @@ const Faction: React.FC = () => {
           </CardHeader>
           <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-3">
             {initiatives.map((item) => (
-              <div
+              <Surface
                 key={item.title}
-                className="flex h-[140px] flex-col items-center justify-between rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
+                variant="panelAlt"
+                radius="xl"
+                shadow="tile"
+                className="flex h-[140px] flex-col items-center justify-between px-3 py-3 text-center"
               >
                 <p className="h-10 overflow-hidden text-sm leading-snug font-semibold">
                   {item.title}
@@ -181,7 +188,7 @@ const Faction: React.FC = () => {
                 <p className="text-xs font-semibold text-primary">
                   {item.stage}
                 </p>
-              </div>
+              </Surface>
             ))}
           </CardContent>
         </Card>
@@ -192,15 +199,18 @@ const Faction: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-text">
             {resources.map((item) => (
-              <div
+              <Surface
                 key={item.label}
-                className="rounded-xl border border-border bg-panel-alt px-3 py-2"
+                variant="panelAlt"
+                radius="xl"
+                shadow="control"
+                className="px-3 py-2"
               >
                 <p className="font-semibold">{item.label}</p>
                 <p className="text-xs text-muted">
                   {item.href === "#" ? "Internal link" : item.href}
                 </p>
-              </div>
+              </Surface>
             ))}
           </CardContent>
         </Card>
@@ -212,14 +222,17 @@ const Faction: React.FC = () => {
         </CardHeader>
         <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-3">
           {roster.map((member) => (
-            <div
+            <Surface
               key={member.name}
-              className="rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
+              variant="panelAlt"
+              radius="xl"
+              shadow="tile"
+              className="px-3 py-3 text-center"
             >
               <p className="text-base font-semibold">{member.name}</p>
               <p className="text-xs text-muted">{member.role}</p>
               <p className="text-xs font-semibold text-primary">{member.tag}</p>
-            </div>
+            </Surface>
           ))}
         </CardContent>
       </Card>
@@ -230,16 +243,19 @@ const Faction: React.FC = () => {
         </CardHeader>
         <CardContent className="grid max-h-72 grid-cols-1 gap-3 overflow-y-auto pr-2 text-sm text-text sm:grid-cols-2 xl:grid-cols-3">
           {activity.map((item) => (
-            <div
+            <Surface
               key={item.title}
-              className="rounded-xl border border-border bg-panel-alt px-3 py-3 text-center"
+              variant="panelAlt"
+              radius="xl"
+              shadow="tile"
+              className="px-3 py-3 text-center"
             >
               <p className="line-clamp-1 text-sm font-semibold">{item.title}</p>
               <p className="line-clamp-1 text-xs tracking-wide text-primary uppercase">
                 {item.action}
               </p>
               <p className="line-clamp-1 text-xs text-muted">{item.location}</p>
-            </div>
+            </Surface>
           ))}
         </CardContent>
       </Card>

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { HintLabel } from "@/components/Hint";
 import { PageHint } from "@/components/PageHint";
 import { SearchBar } from "@/components/SearchBar";
+import { Surface } from "@/components/Surface";
 
 type Stage = "pool" | "vote" | "build" | "final" | "archived";
 type ProofWeight = "pot" | "pod" | "pog";
@@ -520,9 +521,12 @@ const Proposals: React.FC = () => {
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {proposal.stageData.map((item) => (
-                    <div
+                    <Surface
                       key={item.title}
-                      className="rounded-xl border border-border bg-panel-alt p-4"
+                      variant="panelAlt"
+                      radius="xl"
+                      shadow="tile"
+                      className="p-4"
                     >
                       <p className="text-sm font-semibold text-muted">
                         {item.title}
@@ -537,19 +541,23 @@ const Proposals: React.FC = () => {
                       >
                         {item.value}
                       </p>
-                    </div>
+                    </Surface>
                   ))}
                 </div>
 
                 <ul className="grid gap-2 text-sm text-(--text) md:grid-cols-2">
                   {proposal.stats.map((stat) => (
-                    <li
+                    <Surface
                       key={stat.label}
-                      className="rounded-xl border border-dashed border-border/70 bg-panel-alt px-4 py-3"
+                      as="li"
+                      variant="panelAlt"
+                      radius="xl"
+                      borderStyle="dashed"
+                      className="px-4 py-3"
                     >
                       <span className="font-semibold">{stat.label}:</span>{" "}
                       {stat.value}
-                    </li>
+                    </Surface>
                   ))}
                 </ul>
 

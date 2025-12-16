@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Surface } from "@/components/Surface";
 
 type MetricTileProps = {
   label: React.ReactNode;
@@ -7,25 +8,21 @@ type MetricTileProps = {
   className?: string;
 };
 
-const singleTileClass =
-  "border border-border bg-panel-alt text-text shadow-[var(--shadow-tile)] [background-image:var(--card-grad)]";
-
 export const MetricTile: React.FC<MetricTileProps> = ({
   label,
   value,
   className,
 }) => {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border px-4 py-5 text-center ring-1 ring-inset ring-[color:var(--glass-border)]",
-        singleTileClass,
-        className,
-      )}
+    <Surface
+      variant="panelAlt"
+      radius="2xl"
+      shadow="tile"
+      className={cn("px-4 py-5 text-center", className)}
     >
       <p className="text-sm text-muted">{label}</p>
       <p className="text-2xl font-semibold text-[var(--text)]">{value}</p>
-    </div>
+    </Surface>
   );
 };
 
