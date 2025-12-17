@@ -41,7 +41,7 @@ export function Tabs({
             className={cn(
               "min-w-[90px] rounded-full px-3 py-1.5 text-sm font-semibold transition",
               active
-                ? "border border-[color:var(--glass-border)] bg-[var(--primary)] [background-image:var(--btn-primary-grad),var(--btn-sheen)] bg-cover bg-no-repeat text-[var(--primary-foreground)] shadow-[var(--shadow-control)]"
+                ? "border border-[color:var(--glass-border)] bg-[color:var(--btn-primary-hover-bg)] text-[var(--primary-foreground)] shadow-[var(--shadow-control)] supports-[backdrop-filter]:backdrop-blur-sm supports-[backdrop-filter]:backdrop-saturate-150"
                 : "bg-transparent text-text hover:bg-panel-alt",
             )}
           >

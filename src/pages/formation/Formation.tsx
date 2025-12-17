@@ -8,7 +8,6 @@ import { SearchBar } from "@/components/SearchBar";
 import { MetricTile } from "@/components/MetricTile";
 import { Surface } from "@/components/Surface";
 import { AppPage } from "@/components/AppPage";
-import { PageHeader } from "@/components/PageHeader";
 import { Kicker } from "@/components/Kicker";
 import {
   formationMetrics as metrics,
@@ -50,11 +49,6 @@ const Formation: React.FC = () => {
 
   return (
     <AppPage pageId="formation">
-      <PageHeader
-        title="Formation"
-        description="Formation programs, squads, and milestone progress."
-      />
-
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <div

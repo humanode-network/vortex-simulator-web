@@ -75,20 +75,3 @@
   margin-top: 4px;
   color: var(--muted);
 }
-
-.hint-actions .btn,
-.hint-actions button {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border-color: var(--primary);
-}
-
-.hint-actions .btn:hover,
-.hint-actions button:hover {
-  background-color: var(--primary-hover);
-  color: var(--primary-foreground);
-}
-
-.hint-actions button {
-  width: fit-content;
-}

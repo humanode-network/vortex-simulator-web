@@ -61,27 +61,10 @@
   --grad-primary: none;
   --grad-cool: none;
   --grad-warm: none;
-  /* Button-only subtle gradients (requested). */
-  --btn-primary-grad: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.28),
-    rgba(0, 0, 0, 0.16)
-  );
-  --btn-primary-hover-grad: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.32),
-    rgba(0, 0, 0, 0.2)
-  );
   /* Glassy button base (tint + transparency) */
-  --btn-primary-bg: rgba(111, 168, 255, 0.78);
-  --btn-primary-hover-bg: rgba(130, 182, 255, 0.84);
-  /* Extra “glassy” sheen overlay for primary buttons. */
-  --btn-sheen: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.4),
-    rgba(255, 255, 255, 0.12) 35%,
-    rgba(255, 255, 255, 0) 60%
-  );
+  --btn-primary-bg: rgba(111, 168, 255, 0.56);
+  --btn-primary-hover-bg: rgba(111, 168, 255, 0.92);
+  --btn-primary-active-bg: rgba(111, 168, 255, 1);
   font-family:
     "Inter",
     "Segoe UI",
@@ -109,8 +92,9 @@
   --shadow-popover: 0 22px 60px rgba(17, 24, 39, 0.16);
   --shadow-tile: 0 14px 34px rgba(17, 24, 39, 0.09);
   --shadow-control: 0 10px 22px rgba(17, 24, 39, 0.08);
-  --btn-primary-bg: rgba(111, 168, 255, 0.72);
-  --btn-primary-hover-bg: rgba(130, 182, 255, 0.8);
+  --btn-primary-bg: rgba(111, 168, 255, 0.52);
+  --btn-primary-hover-bg: rgba(111, 168, 255, 0.9);
+  --btn-primary-active-bg: rgba(111, 168, 255, 1);
 }
 
 :root[data-theme="night"] {
@@ -135,8 +119,9 @@
   --shadow-tile: 0 14px 34px rgba(0, 0, 0, 0.64);
   --shadow-control: 0 10px 22px rgba(0, 0, 0, 0.5);
   --shadow-primary: 0 12px 28px rgba(111, 168, 255, 0.24);
-  --btn-primary-bg: rgba(111, 168, 255, 0.38);
-  --btn-primary-hover-bg: rgba(130, 182, 255, 0.46);
+  --btn-primary-bg: rgba(111, 168, 255, 0.3);
+  --btn-primary-hover-bg: rgba(111, 168, 255, 0.72);
+  --btn-primary-active-bg: rgba(111, 168, 255, 0.9);
 
   /* Sidebar goes dark only in Night mode. */
   --sidebar-bg: #000000;
@@ -237,46 +222,17 @@ h3 {
   line-height: 1.35;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  border: 1px solid transparent;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    opacity 0.2s;
-}
-
-.btn--primary {
-  background: var(--btn-primary-bg);
-  background-image: var(--btn-primary-grad), var(--btn-sheen);
-  background-repeat: no-repeat;
-  background-size: cover;
-  color: var(--primary-foreground);
-  border-color: var(--glass-border);
-  box-shadow: var(--shadow-primary);
-}
-
-.btn--primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-popover);
-  background: var(--btn-primary-hover-bg);
-  background-image: var(--btn-primary-hover-grad), var(--btn-sheen);
-  border-color: var(--glass-border-strong);
-}
-
-.btn--ghost {
-  border-color: var(--border);
-  color: var(--text);
-  background: transparent;
-}
-
-.btn--small {
-  padding: 0.4rem 1.1rem;
-  font-size: 0.85rem;
+@keyframes btn-flash {
+  0% {
+    opacity: 0;
+    transform: translateY(6%) scale(0.98);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8%) scale(1.02);
+  }
 }

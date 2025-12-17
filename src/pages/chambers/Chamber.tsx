@@ -62,13 +62,13 @@ const Chamber: React.FC = () => {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <Card>
-          <CardHeader className="flex flex-col gap-4 pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <CardHeader className="flex flex-col gap-4 pb-4">
             <div>
               <Kicker>Chamber vote</Kicker>
               <CardTitle>Proposal status</CardTitle>
             </div>
             <div
-              className="flex flex-wrap gap-2"
+              className="flex w-full flex-wrap justify-center gap-2"
               role="tablist"
               aria-label="Proposal stages"
             >
@@ -80,7 +80,6 @@ const Chamber: React.FC = () => {
                   size="sm"
                   aria-selected={stageFilter === option.value}
                   variant={stageFilter === option.value ? "primary" : "outline"}
-                  className="rounded-full px-4"
                   onClick={() => setStageFilter(option.value)}
                 >
                   {option.label}
@@ -211,7 +210,7 @@ const Chamber: React.FC = () => {
             <Kicker>Chamber forum</Kicker>
             <h2 className="text-lg font-semibold text-text">Threads & chat</h2>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="self-center">
             New thread
           </Button>
         </header>
