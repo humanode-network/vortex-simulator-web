@@ -92,7 +92,7 @@ const Landing: React.FC = () => {
         </div>
 
         <footer className="absolute right-0 bottom-0 left-0 px-6 pt-4 pb-6 text-center text-xs text-white/70">
-          2021 – 2025 Humanode.io
+          2021 – 2026 Humanode.io
         </footer>
       </div>
     </div>
