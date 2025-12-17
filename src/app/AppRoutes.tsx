@@ -25,6 +25,8 @@ import ProposalDrafts from "../pages/proposals/ProposalDrafts";
 import ProposalDraft from "../pages/proposals/ProposalDraft";
 import FullHistory from "../pages/human-nodes/FullHistory";
 import Landing from "../pages/Landing";
+import Paper from "../pages/Paper";
+import Guide from "../pages/Guide";
 
 // Backwards-compat redirects for old app URLs (pre `/app` split).
 // Safe to delete once you no longer need to support old bookmarks/links.
@@ -42,6 +44,8 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/paper" element={<Paper />} />
+      <Route path="/guide" element={<Guide />} />
       <Route
         path="/app"
         element={

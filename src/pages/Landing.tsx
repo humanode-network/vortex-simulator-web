@@ -1,97 +1,77 @@
+import * as React from "react";
 import { Link } from "react-router";
-import { ArrowRight, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { Pill } from "@/components/Pill";
+
+const usePrefersReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setPrefersReducedMotion(mediaQuery.matches);
+    onChange();
+    mediaQuery.addEventListener("change", onChange);
+    return () => mediaQuery.removeEventListener("change", onChange);
+  }, []);
+
+  return prefersReducedMotion;
+};
 
 const Landing: React.FC = () => {
+  const prefersReducedMotion = usePrefersReducedMotion();
   return (
-    <div className="relative min-h-[calc(100vh-2rem)] px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="flex flex-col items-center gap-4 text-center">
-          <Pill tone="muted" size="sm" className="px-3 py-1">
-            Vortex · Humanode governance
-          </Pill>
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance text-text sm:text-5xl">
-            A governance interface for a network of verified humans.
-          </h1>
-          <p className="max-w-2xl text-base text-pretty text-muted sm:text-lg">
-            Explore proposals, chambers, human nodes, and the Vortexopedia —
-            built to feel fast, consistent, and calm.
-          </p>
+    <div className="relative min-h-[100svh] overflow-hidden">
+      {!prefersReducedMotion && (
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full scale-[1.06] object-cover blur-xl brightness-[0.72] saturate-125 select-none"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster="/landing/poster.jpg"
+          aria-hidden="true"
+        >
+          <source src="/landing/loop.mp4" type="video/mp4" />
+        </video>
+      )}
 
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild size="lg" className="min-w-[220px]">
-              <Link to="/app/feed">
-                Enter Vortex{" "}
-                <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
-              </Link>
+      <div
+        className="pointer-events-none absolute -inset-40 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(111,168,255,0.35),rgba(91,194,181,0.22),rgba(244,179,127,0.18),rgba(111,168,255,0.35))] opacity-35 blur-3xl motion-safe:animate-[spin_120s_linear_infinite]"
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(1000px_circle_at_50%_10%,rgba(255,255,255,0.16),transparent_60%),linear-gradient(to_bottom,rgba(2,6,23,0.40),rgba(2,6,23,0.78))]"
+        aria-hidden="true"
+      />
+
+      <div className="relative flex min-h-[100svh] flex-col items-center justify-center px-6 py-10">
+        <div className="flex flex-col items-center gap-4">
+          <Button
+            asChild
+            size="lg"
+            className="h-16 min-w-[320px] rounded-2xl px-10 text-xl tracking-tight"
+          >
+            <Link to="/app/feed">
+              Enter Vortex
+              <ArrowRight className="ml-3 h-6 w-6" aria-hidden="true" />
+            </Link>
+          </Button>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="md" variant="ghost" className="min-w-[140px]">
+              <Link to="/paper">Paper</Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="min-w-[220px]"
-            >
-              <Link to="/app/vortexopedia">Browse Vortexopedia</Link>
+            <Button asChild size="md" variant="ghost" className="min-w-[140px]">
+              <Link to="/guide">Guide</Link>
             </Button>
           </div>
-        </header>
+        </div>
 
-        <section className="mt-10 grid gap-4 md:grid-cols-3">
-          <Card className="bg-panel-alt">
-            <CardHeader className="pb-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-panel">
-                <Users className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <CardTitle className="text-center">Human-first</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-sm text-muted">
-              Built around human nodes and governor participation, with hints
-              that explain every term in context.
-            </CardContent>
-          </Card>
-
-          <Card className="bg-panel-alt">
-            <CardHeader className="pb-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-panel">
-                <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
-              </div>
-              <CardTitle className="text-center">Polished UI</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-sm text-muted">
-              Token-driven design, glass controls, and consistent components —
-              so the interface stays cohesive as it grows.
-            </CardContent>
-          </Card>
-
-          <Card className="bg-panel-alt">
-            <CardHeader className="pb-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-panel">
-                <ShieldCheck
-                  className="h-6 w-6 text-primary"
-                  aria-hidden="true"
-                />
-              </div>
-              <CardTitle className="text-center">Sustainable</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-sm text-muted">
-              The app lives under <code className="text-text">/app</code>,
-              keeping the landing page flexible for onboarding, marketing, and
-              future auth.
-            </CardContent>
-          </Card>
-        </section>
-
-        <footer className="mt-10 text-center text-xs text-muted">
-          <span className="font-semibold text-text">Tip:</span> Use Settings →
-          Theme inside the app to switch Sky / Light / Night.
+        <footer className="absolute right-0 bottom-0 left-0 px-6 pt-4 pb-6 text-center text-xs text-white/70">
+          2021 – 2025 Humanode.io
         </footer>
       </div>
     </div>
