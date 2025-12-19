@@ -9,7 +9,6 @@ import {
 } from "@/components/primitives/card";
 import { Link } from "react-router";
 import { MetricTile } from "@/components/MetricTile";
-import { Kicker } from "@/components/Kicker";
 import { courtCases } from "@/data/mock/courts";
 import type { CourtCase } from "@/data/mock/types";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
@@ -48,11 +47,11 @@ const Courts: React.FC = () => {
         {[
           {
             label: "Open cases",
-            value: courtCases.filter((c) => c.status !== "closed").length,
+            value: courtCases.filter((c) => c.status !== "ended").length,
           },
           { label: "Jury panels", value: "12 seats / case" },
           { label: "New reports", value: "27 this week" },
-          { label: "Closed cases (30d)", value: "6" },
+          { label: "Ended (30d)", value: "6" },
         ].map((metric) => (
           <MetricTile
             key={metric.label}
@@ -75,8 +74,8 @@ const Courts: React.FC = () => {
             options: [
               { value: "any", label: "Any status" },
               { value: "jury", label: "Jury forming" },
-              { value: "deliberating", label: "Deliberating" },
-              { value: "closed", label: "Closed" },
+              { value: "live", label: "Session live" },
+              { value: "ended", label: "Ended" },
             ],
           },
           {
@@ -102,12 +101,8 @@ const Courts: React.FC = () => {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <Kicker>{courtCase.subject}</Kicker>
                     <p className="text-lg font-semibold text-foreground">
-                      {courtCase.title}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {courtCase.triggeredBy}
+                      {courtCase.subject}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -122,9 +117,6 @@ const Courts: React.FC = () => {
                 <div className="flex flex-wrap gap-3 text-sm text-foreground">
                   <span className="rounded-full bg-panel px-3 py-1">
                     Reports: {courtCase.reports}
-                  </span>
-                  <span className="rounded-full bg-panel px-3 py-1">
-                    Jury: {courtCase.juryCount} governors
                   </span>
                 </div>
                 <Button asChild size="sm">

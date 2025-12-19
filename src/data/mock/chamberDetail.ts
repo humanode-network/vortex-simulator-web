@@ -45,7 +45,7 @@ export const chamberProposals: ChamberProposal[] = [
     meta: "Legate · Protocol chamber",
     summary:
       "Starter kit + sandbox so developers can deploy EVM dApps on Humanode in under 30 minutes.",
-    lead: "Jonas",
+    lead: "Sesh",
     nextStep: "Formation · Milestone 1 in progress",
     timing: "Live · Week 3/12",
     stage: "live",
@@ -53,10 +53,10 @@ export const chamberProposals: ChamberProposal[] = [
   {
     id: "voluntary-commitment-staking",
     title: "Voluntary Governor Commitment Staking",
-    meta: "Consul · Governance chamber",
+    meta: "Legate · Governance chamber",
     summary:
       "Optional commitment staking + opt-in self-slashing without changing governance access or voting power.",
-    lead: "Mira",
+    lead: "Victor",
     nextStep: "Chamber vote",
     timing: "Live · 3d 12h",
     stage: "live",
@@ -76,14 +76,14 @@ export const chamberThreads: Thread[] = [
   {
     id: "thread-1",
     title: "EVM Dev Starter Kit — scope & milestone review",
-    author: "Jonas",
+    author: "Sesh",
     replies: 7,
     updated: "1h ago",
   },
   {
     id: "thread-2",
     title: "Commitment staking — UX + slashing conditions",
-    author: "Mira",
+    author: "Victor",
     replies: 12,
     updated: "3h ago",
   },
@@ -92,17 +92,17 @@ export const chamberThreads: Thread[] = [
 export const chamberChatLog: ChatMessage[] = [
   {
     id: "chat-1",
-    author: "Jonas",
+    author: "Sesh",
     message: "SDK API surface draft is ready — looking for review on naming.",
   },
   {
     id: "chat-2",
-    author: "Mira",
+    author: "Victor",
     message: "Added notes on voluntary vs mandatory stake framing for the UI.",
   },
   {
     id: "chat-3",
-    author: "Jonas",
+    author: "Sesh",
     message:
       "Sandbox + faucet flow: what’s the simplest onboarding UX we want?",
   },

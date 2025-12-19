@@ -92,8 +92,8 @@ export type FormationProposalPage = {
 const poolProposals: Record<string, PoolProposalPage> = {
   "humanode-dreamscapes-visual-lore": {
     title: "Humanode Dreamscapes: Visual Lore Series",
-    proposer: "void-artist",
-    proposerId: "void-artist",
+    proposer: "Fiona",
+    proposerId: "fiona",
     chamber: "Design chamber",
     focus: "Visual lore & culture",
     tier: "Ecclesiast",
@@ -115,7 +115,7 @@ const poolProposals: Record<string, PoolProposalPage> = {
     attachments: [
       { id: "portfolio", title: "Portfolio: https://…/void-artist" },
     ],
-    teamLocked: [{ name: "void-artist", role: "Visual artist & art director" }],
+    teamLocked: [{ name: "Fiona", role: "Visual artist & art director" }],
     openSlotNeeds: [],
     milestonesDetail: [
       {
@@ -154,8 +154,8 @@ const poolProposals: Record<string, PoolProposalPage> = {
   },
   "biometric-account-recovery": {
     title: "Biometric Account Recovery & Key Rotation Pallet",
-    proposer: "Arman",
-    proposerId: "arman",
+    proposer: "Shahmeer",
+    proposerId: "shahmeer",
     chamber: "Engineering chamber",
     focus: "Account safety & identity UX",
     tier: "Citizen",
@@ -179,7 +179,7 @@ const poolProposals: Record<string, PoolProposalPage> = {
       { id: "security-notes", title: "Security invariants (draft)" },
       { id: "audit-scope", title: "Audit scope & shortlist (draft)" },
     ],
-    teamLocked: [{ name: "Arman", role: "Architect & reviewer" }],
+    teamLocked: [{ name: "Shahmeer", role: "Architect & reviewer" }],
     openSlotNeeds: [
       {
         title: "Rust / Substrate engineer",
@@ -225,8 +225,8 @@ const poolProposals: Record<string, PoolProposalPage> = {
   },
   "humanode-ai-video-shorts": {
     title: "Humanode AI Video Series: 3 Viral-Quality Shorts for Mass Reach",
-    proposer: "Artyom",
-    proposerId: "artyom",
+    proposer: "Tony",
+    proposerId: "tony",
     chamber: "Design chamber",
     focus: "High-quality shorts for mass reach",
     tier: "Ecclesiast",
@@ -250,7 +250,7 @@ const poolProposals: Record<string, PoolProposalPage> = {
       { id: "tools", title: "Tooling list + licensing plan (draft)" },
       { id: "style", title: "Style test snippets (draft)" },
     ],
-    teamLocked: [{ name: "Artyom", role: "AI motion designer & producer" }],
+    teamLocked: [{ name: "Tony", role: "AI motion designer & producer" }],
     openSlotNeeds: [],
     milestonesDetail: [
       {
@@ -289,8 +289,8 @@ const poolProposals: Record<string, PoolProposalPage> = {
   "ai-video-launch-distribution-sprint": {
     title:
       "AI Video Launch & Distribution Sprint: Turn Visual Assets into Reach",
-    proposer: "clip-captain",
-    proposerId: "clip-captain",
+    proposer: "Petr",
+    proposerId: "petr",
     chamber: "Marketing chamber",
     focus: "Distribution execution + playbook",
     tier: "Ecclesiast",
@@ -312,7 +312,7 @@ const poolProposals: Record<string, PoolProposalPage> = {
     attachments: [
       { id: "github", title: "GitHub: https://github.com/clip-captain" },
     ],
-    teamLocked: [{ name: "clip-captain", role: "Campaign lead & strategist" }],
+    teamLocked: [{ name: "Petr", role: "Campaign lead & strategist" }],
     openSlotNeeds: [
       {
         title: "shorts-wizard",
@@ -361,8 +361,8 @@ const poolProposals: Record<string, PoolProposalPage> = {
   },
   "vortex-field-experiments-s1": {
     title: "Vortex Field Experiments: Season 1 (Find the True Believers)",
-    proposer: "Luka",
-    proposerId: "luka",
+    proposer: "Ekko",
+    proposerId: "ekko",
     chamber: "Marketing chamber",
     focus: "High-signal onboarding",
     tier: "Ecclesiast",
@@ -386,7 +386,7 @@ const poolProposals: Record<string, PoolProposalPage> = {
       { id: "hub", title: "Season 1 hub page (draft)" },
       { id: "briefs", title: "Experiment briefs & KPI targets (draft)" },
     ],
-    teamLocked: [{ name: "Luka", role: "Campaign architect / growth" }],
+    teamLocked: [{ name: "Ekko", role: "Campaign architect / growth" }],
     openSlotNeeds: [
       {
         title: "Content & design generalist",
@@ -439,8 +439,8 @@ const poolProposals: Record<string, PoolProposalPage> = {
 const chamberProposals: Record<string, ChamberProposalPage> = {
   "fixed-governor-stake-spam-slashing": {
     title: "Fixed Governor Stake & Spam Slashing Rule for Vortex",
-    proposer: "Elena",
-    proposerId: "elena",
+    proposer: "Fares",
+    proposerId: "fares",
     chamber: "Economics chamber",
     budget: "18k HMND",
     formationEligible: true,
@@ -456,7 +456,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
       { id: "policy", title: "Spam definition & governance process (draft)" },
       { id: "params", title: "Parameter sheet: stake, slash curve, cooldowns" },
     ],
-    teamLocked: [{ name: "Elena", role: "Economic design lead / proposer" }],
+    teamLocked: [{ name: "Fares", role: "Economic design lead / proposer" }],
     openSlotNeeds: [
       {
         title: "Rust / Substrate engineer",
@@ -502,8 +502,8 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
   },
   "tier-decay-v1": {
     title: "Tier Decay v1: Nominee → Ecclesiast → Legate → Consul → Citizen",
-    proposer: "Maksim",
-    proposerId: "maksim",
+    proposer: "Andrei",
+    proposerId: "andrei",
     chamber: "General chamber",
     budget: "13k HMND",
     formationEligible: true,
@@ -520,7 +520,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
       { id: "shadow", title: "Shadow-mode report template (draft)" },
     ],
     teamLocked: [
-      { name: "Maksim", role: "Governance design lead / proposer" },
+      { name: "Andrei", role: "Governance design lead / proposer" },
       { name: "Engineer (TBD)", role: "Backend / data engineer (part-time)" },
     ],
     openSlotNeeds: [],
@@ -560,8 +560,8 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
   "voluntary-commitment-staking": {
     title:
       "Voluntary Governor Commitment Staking (No Mandatory Stake, No Plutocracy)",
-    proposer: "Mira",
-    proposerId: "mira",
+    proposer: "Victor",
+    proposerId: "victor",
     chamber: "Governance chamber",
     budget: "16k HMND",
     formationEligible: true,
@@ -576,7 +576,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
     attachments: [
       { id: "spec-v1", title: "Voluntary Commitment Staking Spec v1" },
     ],
-    teamLocked: [{ name: "Mira", role: "Economic design lead / proposer" }],
+    teamLocked: [{ name: "Victor", role: "Economic design lead / proposer" }],
     openSlotNeeds: [
       {
         title: "Rust / Substrate engineer",
@@ -626,8 +626,8 @@ const formationProposals: Record<string, FormationProposalPage> = {
   "evm-dev-starter-kit": {
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
     chamber: "Protocol chamber",
-    proposer: "Jonas",
-    proposerId: "jonas",
+    proposer: "Sesh",
+    proposerId: "sesh",
     budget: "180k HMND",
     timeLeft: "12w",
     teamSlots: "1 / 3",
@@ -642,7 +642,7 @@ const formationProposals: Record<string, FormationProposalPage> = {
       { label: "Lead chamber", value: "Protocol chamber" },
       { label: "Duration", value: "12 weeks" },
     ],
-    lockedTeam: [{ name: "Jonas", role: "Lead engineer" }],
+    lockedTeam: [{ name: "Sesh", role: "Lead engineer" }],
     openSlots: [
       {
         title: "EVM full-stack developer",
@@ -698,8 +698,8 @@ const formationProposals: Record<string, FormationProposalPage> = {
   "mev-safe-dex-v1-launch-sprint": {
     title: "Humanode MEV-Safe DEX v1 + Launch Sprint",
     chamber: "Engineering chamber",
-    proposer: "defi-synth",
-    proposerId: "defi-synth",
+    proposer: "Dato",
+    proposerId: "dato",
     budget: "245k HMND",
     timeLeft: "16w",
     teamSlots: "3 / 5",
@@ -715,7 +715,7 @@ const formationProposals: Record<string, FormationProposalPage> = {
       { label: "Audit", value: "In progress" },
     ],
     lockedTeam: [
-      { name: "defi-synth", role: "Protocol lead" },
+      { name: "Dato", role: "Protocol lead" },
       { name: "mev-ops", role: "MEV / relayer engineer (recruiting)" },
       { name: "frontend-loop", role: "Frontend dApp dev (recruiting)" },
     ],

@@ -1,9 +1,9 @@
 export const proposalDraftDetails = {
   title: "Vortex Governance Hub UX Refresh & Design System v1",
-  proposer: "Nina",
+  proposer: "Temo",
   chamber: "Product & UX chamber",
   focus: "Clarity, hierarchy, and mobile UX",
-  tier: "Ecclesiast",
+  tier: "Nominee",
   budget: "20k HMND",
   formationEligible: true,
   teamSlots: "1 / 2",
@@ -33,7 +33,7 @@ export const proposalDraftDetails = {
     "M2 — Design System & Key Screens",
     "M3 — Handoff Ready",
   ],
-  teamLocked: [{ name: "Nina", role: "Lead product & UX designer" }],
+  teamLocked: [{ name: "Temo", role: "Lead product & UX designer" }],
   openSlotNeeds: [
     {
       title: "Frontend dev (part-time, optional)",

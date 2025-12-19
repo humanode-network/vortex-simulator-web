@@ -32,7 +32,7 @@ export const formationProjects: FormationProject[] = [
     id: "evm-dev-starter-kit",
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
     focus: "Protocol chamber · Developer tooling",
-    proposer: "Jonas",
+    proposer: "Sesh",
     summary:
       "Starter kit + public sandbox so developers can deploy EVM dApps on Humanode in under 30 minutes.",
     category: "development",
@@ -45,7 +45,7 @@ export const formationProjects: FormationProject[] = [
     id: "mev-safe-dex-v1-launch-sprint",
     title: "Humanode MEV-Safe DEX v1 + Launch Sprint",
     focus: "Engineering chamber · Protected swaps",
-    proposer: "defi-synth",
+    proposer: "Dato",
     summary:
       "MEV-protected DEX + Biostaker/getHMND integrations and fees to Human Nodes, with an audited mainnet launch.",
     category: "development",

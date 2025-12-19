@@ -4,14 +4,14 @@ import type { CourtCase } from "@/data/mock/types";
 
 const statusClasses: Record<CourtCase["status"], string> = {
   jury: "bg-[color:var(--accent)]/15 text-[var(--accent)]",
-  deliberating: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
-  closed: "bg-panel-alt text-muted",
+  live: "bg-[color:var(--pagehint)]/15 text-[color:var(--pagehint)]",
+  ended: "bg-panel-alt text-muted",
 };
 
 const statusLabels: Record<CourtCase["status"], string> = {
   jury: "Jury forming",
-  deliberating: "Deliberating",
-  closed: "Closed",
+  live: "Session live",
+  ended: "Ended",
 };
 
 type CourtStatusBadgeProps = {

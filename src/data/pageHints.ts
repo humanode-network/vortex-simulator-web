@@ -270,7 +270,7 @@ export const pageHints: Record<string, PageHintEntry> = {
       {
         heading: "What you see",
         items: [
-          "Cards for court cases with status (jury/deliberating/closed), reports count, and opened date.",
+          "Cards for court cases with status (jury/live/ended), reports count, and opened date.",
           "Links to open specific courtrooms for details and participation.",
         ],
       },
