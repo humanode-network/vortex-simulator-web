@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/primitives/card";
 import { pageHints } from "@/data/pageHints";
-import { X, HelpCircle } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Kicker } from "@/components/Kicker";
 import { Modal } from "@/components/Modal";
@@ -26,18 +26,20 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
   return (
     <div
       className={cn(
-        "fixed top-4 right-4 z-40 sm:top-6 sm:right-6 md:right-8",
+        "fixed top-4 right-1 z-40 sm:top-6 sm:right-2 md:right-3",
         className,
       )}
     >
       <Button
         variant="ghost"
         size="sm"
-        className="h-10 w-10 rounded-full border border-[var(--pagehint-dim)] bg-[var(--pagehint)] text-[var(--pagehint-foreground)] shadow-[var(--shadow-pagehint)] hover:bg-[var(--pagehint-hover)] hover:text-[var(--pagehint-foreground)] focus-visible:ring-[var(--pagehint-dim)]"
+        className="h-10 w-10 rounded-full border border-[color:var(--pagehint)] bg-[var(--pagehint)] text-[var(--pagehint-foreground)] shadow-[var(--shadow-pagehint)] hover:bg-[var(--pagehint-hover)] hover:text-[var(--pagehint-foreground)] focus-visible:ring-[var(--pagehint-dim)]"
         onClick={() => setOpen(true)}
         aria-label="Open page hint"
       >
-        <HelpCircle className="h-7 w-7" />
+        <span className="text-3xl leading-none font-bold" aria-hidden="true">
+          ?
+        </span>
       </Button>
 
       <Modal
