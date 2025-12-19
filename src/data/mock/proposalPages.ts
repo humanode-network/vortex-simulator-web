@@ -481,7 +481,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
     overview:
       "Adds a single gate (fixed governor stake) and a slashing hook for repeated spam proposals. Voting power remains equal; stake only enforces eligibility and discipline.",
     executionPlan: [
-      "Week 0–1: confirm Substrate engineer; align spam definition and parameters with Governance chamber.",
+      "Week 0–1: confirm Substrate engineer; align spam definition and parameters with General chamber.",
       "Weeks 2–3: publish spec (stake size, slash curve, cooldowns, tagging process).",
       "Weeks 4–6: runtime implementation + tests + testnet scenario runs.",
       "Weeks 7–8: mainnet activation + minimal monitoring + public post-deploy note.",
@@ -562,7 +562,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
       "Voluntary Governor Commitment Staking (No Mandatory Stake, No Plutocracy)",
     proposer: "Victor",
     proposerId: "victor",
-    chamber: "Governance chamber",
+    chamber: "General chamber",
     budget: "16k HMND",
     formationEligible: true,
     teamSlots: "1 / 2",
@@ -625,7 +625,7 @@ const chamberProposals: Record<string, ChamberProposalPage> = {
 const formationProposals: Record<string, FormationProposalPage> = {
   "evm-dev-starter-kit": {
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
-    chamber: "Protocol chamber",
+    chamber: "Engineering chamber",
     proposer: "Sesh",
     proposerId: "sesh",
     budget: "180k HMND",
@@ -639,7 +639,7 @@ const formationProposals: Record<string, FormationProposalPage> = {
       { title: "Milestones", description: "Completed / Total", value: "1 / 3" },
     ],
     stats: [
-      { label: "Lead chamber", value: "Protocol chamber" },
+      { label: "Lead chamber", value: "Engineering chamber" },
       { label: "Duration", value: "12 weeks" },
     ],
     lockedTeam: [{ name: "Sesh", role: "Lead engineer" }],

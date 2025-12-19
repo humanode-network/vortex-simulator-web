@@ -29,7 +29,7 @@ export const feedItems: FeedItem[] = [
   {
     id: "voluntary-commitment-staking",
     title: "Voluntary Governor Commitment Staking",
-    meta: "Governance chamber · Legate tier",
+    meta: "General chamber · Legate tier",
     stage: "vote",
     summaryPill: "No mandatory stake",
     summary:
@@ -63,7 +63,7 @@ export const feedItems: FeedItem[] = [
   {
     id: "evm-dev-starter-kit",
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
-    meta: "Protocol chamber · Legate tier",
+    meta: "Engineering chamber · Legate tier",
     stage: "build",
     summaryPill: "Milestone 1 / 3",
     summary:
@@ -111,14 +111,14 @@ export const feedItems: FeedItem[] = [
   },
   {
     id: "protocol-council-thread",
-    title: "Protocol Council Thread",
-    meta: "Protocol chamber · Thread",
+    title: "Engineering thread",
+    meta: "Engineering chamber · Thread",
     stage: "thread",
-    summaryPill: "Protocol chamber",
+    summaryPill: "Engineering chamber",
     summary: "Incident review for redundant checkpoints · new replies.",
     ctaPrimary: "Open thread",
     ctaSecondary: "Mark read",
-    href: "/app/chambers/protocol-engineering",
+    href: "/app/chambers/engineering",
     timestamp: "2025-03-30T05:10:00Z",
   },
   {

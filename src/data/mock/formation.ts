@@ -31,7 +31,7 @@ export const formationProjects: FormationProject[] = [
   {
     id: "evm-dev-starter-kit",
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
-    focus: "Protocol chamber · Developer tooling",
+    focus: "Engineering chamber · Developer tooling",
     proposer: "Sesh",
     summary:
       "Starter kit + public sandbox so developers can deploy EVM dApps on Humanode in under 30 minutes.",

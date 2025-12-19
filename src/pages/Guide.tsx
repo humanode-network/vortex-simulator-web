@@ -437,9 +437,10 @@ const Guide: React.FC = () => {
               subtitle="The legislative map: specialization-based decision-making."
             >
               <p>
-                Chambers represent specialization areas (protocol, governance,
-                engineering, etc.). The chamber list shows a compact “health
-                snapshot” and lets you jump into a chamber to see what’s active.
+                Chambers represent specialization areas (design, engineering,
+                economics, marketing, general, product). The chamber list shows
+                a compact “health snapshot” and lets you jump into a chamber to
+                see what’s active.
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>

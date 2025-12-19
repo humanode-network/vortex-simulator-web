@@ -42,7 +42,7 @@ export const chamberProposals: ChamberProposal[] = [
   {
     id: "evm-dev-starter-kit",
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
-    meta: "Legate · Protocol chamber",
+    meta: "Legate · Engineering chamber",
     summary:
       "Starter kit + sandbox so developers can deploy EVM dApps on Humanode in under 30 minutes.",
     lead: "Sesh",
@@ -53,7 +53,7 @@ export const chamberProposals: ChamberProposal[] = [
   {
     id: "voluntary-commitment-staking",
     title: "Voluntary Governor Commitment Staking",
-    meta: "Legate · Governance chamber",
+    meta: "Legate · General chamber",
     summary:
       "Optional commitment staking + opt-in self-slashing without changing governance access or voting power.",
     lead: "Victor",
@@ -64,10 +64,10 @@ export const chamberProposals: ChamberProposal[] = [
 ];
 
 export const chamberGovernors: Governor[] = [
-  { id: "shahmeer", name: "Shahmeer", tier: "Citizen", focus: "Protocol" },
+  { id: "shahmeer", name: "Shahmeer", tier: "Citizen", focus: "Engineering" },
   { id: "dato", name: "Dato", tier: "Consul", focus: "Infra" },
   { id: "andrei", name: "Andrei", tier: "Consul", focus: "Observability" },
-  { id: "victor", name: "Victor", tier: "Legate", focus: "Legal" },
+  { id: "victor", name: "Victor", tier: "Legate", focus: "Policy" },
   { id: "fares", name: "Fares", tier: "Legate", focus: "Economics" },
   { id: "sesh", name: "Sesh", tier: "Legate", focus: "Security" },
 ];

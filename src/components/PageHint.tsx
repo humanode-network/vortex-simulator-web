@@ -25,7 +25,10 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
 
   return (
     <div
-      className={cn("fixed top-4 right-2 z-40 sm:top-6 sm:right-4", className)}
+      className={cn(
+        "fixed top-4 right-4 z-40 sm:top-6 sm:right-6 md:right-8",
+        className,
+      )}
     >
       <Button
         variant="ghost"
@@ -34,7 +37,7 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
         onClick={() => setOpen(true)}
         aria-label="Open page hint"
       >
-        <HelpCircle className="h-6 w-6" />
+        <HelpCircle className="h-7 w-7" />
       </Button>
 
       <Modal

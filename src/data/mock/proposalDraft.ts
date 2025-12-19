@@ -1,7 +1,7 @@
 export const proposalDraftDetails = {
   title: "Vortex Governance Hub UX Refresh & Design System v1",
   proposer: "Temo",
-  chamber: "Product & UX chamber",
+  chamber: "Design chamber",
   focus: "Clarity, hierarchy, and mobile UX",
   tier: "Nominee",
   budget: "20k HMND",

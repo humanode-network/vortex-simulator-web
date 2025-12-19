@@ -20,6 +20,7 @@ import { ToggleGroup } from "@/components/ToggleGroup";
 import { humanNodes as sampleNodes } from "@/data/mock/humanNodes";
 import { getFactionById } from "@/data/mock/factions";
 import { getFormationProjectById } from "@/data/mock/formation";
+import { getChamberById } from "@/data/mock/chambers";
 
 const HumanNodes: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -170,7 +171,10 @@ const HumanNodes: React.FC = () => {
                     label: "Human node",
                     value: node.active ? "Active" : "Inactive",
                   },
-                  { label: "Main chamber", value: node.chamber },
+                  {
+                    label: "Main chamber",
+                    value: getChamberById(node.chamber)?.name ?? node.chamber,
+                  },
                   {
                     label: "Formation member",
                     value: node.formationCapable ? "Yes" : "No",

@@ -15,6 +15,7 @@ import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { PageHeader } from "@/components/PageHeader";
 import { TierLabel } from "@/components/TierLabel";
+import { getChamberById } from "@/data/mock/chambers";
 import {
   proposalStageOptions,
   chamberProposals as proposals,
@@ -26,7 +27,9 @@ import type { ProposalStage } from "@/data/mock/types";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
-  const chamberTitle = id ? id.replace(/-/g, " ") : "Chamber";
+  const chamber = getChamberById(id);
+  const chamberTitle =
+    chamber?.name ?? (id ? id.replace(/-/g, " ") : "Chamber");
 
   const [stageFilter, setStageFilter] = useState<ProposalStage>("upcoming");
   const [governorSearch, setGovernorSearch] = useState("");
@@ -187,7 +190,7 @@ const Chamber: React.FC = () => {
                     </p>
                   </div>
                   <Button asChild size="sm" variant="ghost">
-                    <Link to={`/app/human-nodes/${gov.name}`}>Profile</Link>
+                    <Link to={`/app/human-nodes/${gov.id}`}>Profile</Link>
                   </Button>
                 </Surface>
               ))}

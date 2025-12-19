@@ -36,9 +36,13 @@ const Faction: React.FC = () => {
     {
       title: `${faction.name} budget motion`,
       action: "Opened proposal",
-      location: "Treasury",
+      location: "Economics",
     },
-    { title: "Governance drill", action: "Coordinated", location: "Protocol" },
+    {
+      title: "Governance drill",
+      action: "Coordinated",
+      location: "Engineering",
+    },
     {
       title: "Formation ops stack",
       action: "Pushed milestone",
@@ -47,7 +51,7 @@ const Faction: React.FC = () => {
     {
       title: "Privacy sprint",
       action: "Filed research note",
-      location: "Research",
+      location: "Design",
     },
   ];
 

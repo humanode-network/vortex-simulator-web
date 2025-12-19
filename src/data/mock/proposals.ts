@@ -185,7 +185,7 @@ export const proposals: ProposalListItem[] = [
   {
     id: "evm-dev-starter-kit",
     title: "Humanode EVM Dev Starter Kit & Testing Sandbox",
-    meta: "Protocol chamber · Legate tier",
+    meta: "Engineering chamber · Legate tier",
     stage: "build",
     summaryPill: "Milestone 1 / 3",
     summary:
@@ -213,7 +213,7 @@ export const proposals: ProposalListItem[] = [
     ],
     proposer: "Sesh",
     proposerId: "sesh",
-    chamber: "Protocol chamber",
+    chamber: "Engineering chamber",
     tier: "Legate",
     proofFocus: "pod",
     tags: ["Dev tooling", "EVM", "Docs"],
@@ -486,7 +486,7 @@ export const proposals: ProposalListItem[] = [
   {
     id: "voluntary-commitment-staking",
     title: "Voluntary Governor Commitment Staking",
-    meta: "Governance chamber · Legate tier",
+    meta: "General chamber · Legate tier",
     stage: "vote",
     summaryPill: "No mandatory stake",
     summary:
@@ -509,7 +509,7 @@ export const proposals: ProposalListItem[] = [
     stats: [{ label: "Budget ask", value: "16k HMND" }],
     proposer: "Victor",
     proposerId: "victor",
-    chamber: "Governance chamber",
+    chamber: "General chamber",
     tier: "Legate",
     proofFocus: "pog",
     tags: ["Governance", "Economics", "Reputation"],

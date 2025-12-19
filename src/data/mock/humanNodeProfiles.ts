@@ -73,19 +73,19 @@ const defaultGovernanceActions: GovernanceAction[] = [
   {
     title: "EVM Dev Starter Kit",
     action: "Reviewed scope",
-    context: "Protocol chamber",
+    context: "Engineering chamber",
     detail: "Left notes on SDK ergonomics and sandbox onboarding flow.",
   },
   {
     title: "Commitment staking",
     action: "Casted vote",
-    context: "Governance chamber",
+    context: "General chamber",
     detail: "Suggested UX framing for voluntary vs mandatory stake.",
   },
   {
     title: "Chamber policy refresh",
     action: "Commented",
-    context: "Legal chamber",
+    context: "General chamber",
     detail: "Proposed a short checklist for proposal compliance and clarity.",
   },
   {
@@ -103,7 +103,7 @@ const defaultGovernanceActions: GovernanceAction[] = [
   {
     title: "Governance onboarding",
     action: "Hosted session",
-    context: "Social Outreach",
+    context: "Marketing",
     detail: "Walked new governors through pools, chambers, and Formation.",
   },
 ];
@@ -112,21 +112,21 @@ const defaultActivity: HistoryItem[] = [
   {
     title: "EVM Dev Starter Kit",
     action: "Reviewed scope",
-    context: "Protocol chamber",
+    context: "Engineering chamber",
     detail: "Left notes on SDK ergonomics and sandbox onboarding flow.",
     date: "Epoch 214",
   },
   {
     title: "Commitment staking",
     action: "Casted vote",
-    context: "Governance chamber",
+    context: "General chamber",
     detail: "Suggested UX framing for voluntary vs mandatory stake.",
     date: "Epoch 209",
   },
   {
     title: "Chamber policy refresh",
     action: "Commented",
-    context: "Legal chamber",
+    context: "General chamber",
     detail: "Proposed a short checklist for proposal compliance and clarity.",
     date: "Epoch 205",
   },
@@ -140,7 +140,7 @@ const defaultActivity: HistoryItem[] = [
   {
     title: "Governance onboarding",
     action: "Hosted session",
-    context: "Social Outreach",
+    context: "Marketing",
     detail: "Walked new governors through pools, chambers, and Formation.",
     date: "Epoch 198",
   },

@@ -99,7 +99,7 @@ export const factions: Faction[] = [
     members: 17,
     votes: "17",
     acm: "1,780",
-    focus: "Security & protocol",
+    focus: "Engineering & security",
     goals: [
       "Require clear specs and review before upgrades.",
       "Prefer verified safety over “ship now, patch later.”",

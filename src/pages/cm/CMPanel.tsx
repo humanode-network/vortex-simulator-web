@@ -20,9 +20,7 @@ const CMPanel: React.FC = () => {
       name: chamber.name,
       current: chamber.multiplier,
       suggested: chamber.multiplier,
-      member:
-        chamber.id === "protocol-engineering" ||
-        chamber.id === "security-council",
+      member: chamber.id === "engineering" || chamber.id === "product",
     })),
   );
 
