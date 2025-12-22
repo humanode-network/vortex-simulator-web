@@ -1,15 +1,18 @@
 import { Link } from "react-router";
 
 import { Button } from "@/components/primitives/button";
+import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 const Paper: React.FC = () => {
   return (
-    <div className="relative min-h-[100svh] overflow-hidden px-6 py-10">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_50%_10%,rgba(255,255,255,0.10),transparent_60%),linear-gradient(to_bottom,rgba(2,6,23,0.55),rgba(2,6,23,0.88))]"
-        aria-hidden="true"
-      />
-
+    <MarketingPage
+      background={
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_50%_10%,rgba(255,255,255,0.10),transparent_60%),linear-gradient(to_bottom,rgba(2,6,23,0.55),rgba(2,6,23,0.88))]"
+          aria-hidden="true"
+        />
+      }
+    >
       <div className="relative mx-auto flex min-h-[100svh] max-w-xl flex-col items-center justify-center text-center">
         <h1 className="text-3xl font-semibold tracking-tight text-white">
           Paper
@@ -33,7 +36,7 @@ const Paper: React.FC = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </MarketingPage>
   );
 };
 

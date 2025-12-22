@@ -2,6 +2,8 @@ import { Link } from "react-router";
 import type { CSSProperties, ReactNode } from "react";
 
 import { Button } from "@/components/primitives/button";
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import { MarketingPage } from "@/components/marketing/MarketingPage";
 
 const PARTICLES: Array<{
   top: string;
@@ -219,43 +221,48 @@ const GuideSection: React.FC<{
 
 const Guide: React.FC = () => {
   return (
-    <div className="relative min-h-[100svh] overflow-hidden px-6 py-10 text-white">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(950px_circle_at_50%_0%,rgba(255,255,255,0.06),transparent_62%),linear-gradient(to_bottom,rgba(2,6,23,0.78),rgba(0,0,0,0.985))]"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -inset-40 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(244,179,127,0.28),rgba(244,179,127,0.18),rgba(111,168,255,0.14),rgba(244,179,127,0.28))] opacity-30 blur-xl motion-safe:animate-[spin_160s_linear_infinite]"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute inset-0 opacity-85 mix-blend-screen">
-          {PARTICLES.map((particle, index) => {
-            const style: CSSProperties = {
-              top: particle.top,
-              left: particle.left,
-              width: particle.size,
-              height: particle.size,
-              opacity: particle.opacity,
-              animationDelay: particle.delay,
-              animationDuration: particle.duration,
-            };
+    <MarketingPage
+      className="text-white"
+      background={
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(950px_circle_at_50%_0%,rgba(255,255,255,0.06),transparent_62%),linear-gradient(to_bottom,rgba(2,6,23,0.78),rgba(0,0,0,0.985))]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -inset-40 bg-[conic-gradient(from_180deg_at_50%_50%,rgba(244,179,127,0.28),rgba(244,179,127,0.18),rgba(111,168,255,0.14),rgba(244,179,127,0.28))] opacity-30 blur-xl motion-safe:animate-[spin_160s_linear_infinite]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
+            aria-hidden="true"
+          >
+            <div className="absolute inset-0 opacity-85 mix-blend-screen">
+              {PARTICLES.map((particle, index) => {
+                const style: CSSProperties = {
+                  top: particle.top,
+                  left: particle.left,
+                  width: particle.size,
+                  height: particle.size,
+                  opacity: particle.opacity,
+                  animationDelay: particle.delay,
+                  animationDuration: particle.duration,
+                };
 
-            return (
-              <span
-                key={index}
-                className="absolute rounded-full bg-[color:var(--pagehint)] shadow-[0_0_24px_rgba(244,179,127,0.55)] blur-[0.25px] [animation-iteration-count:infinite] [animation-name:guide-particle-float] [animation-timing-function:ease-in-out]"
-                style={style}
-              />
-            );
-          })}
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-[radial-gradient(600px_circle_at_50%_100%,rgba(244,179,127,0.20),transparent_70%)] blur-xl" />
-      </div>
-
+                return (
+                  <span
+                    key={index}
+                    className="absolute rounded-full bg-[color:var(--pagehint)] shadow-[0_0_24px_rgba(244,179,127,0.55)] blur-[0.25px] [animation-iteration-count:infinite] [animation-name:guide-particle-float] [animation-timing-function:ease-in-out]"
+                    style={style}
+                  />
+                );
+              })}
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-52 bg-[radial-gradient(600px_circle_at_50%_100%,rgba(244,179,127,0.20),transparent_70%)] blur-xl" />
+          </div>
+        </>
+      }
+    >
       <div className="relative mx-auto max-w-5xl">
         <header className="mx-auto max-w-3xl text-center">
           <h1 className="text-3xl font-semibold tracking-tight !text-white [text-shadow:0_0_28px_rgba(244,179,127,0.22),0_0_3px_rgba(255,255,255,0.35)] sm:text-4xl">
@@ -619,12 +626,12 @@ const Guide: React.FC = () => {
           </aside>
         </div>
 
-        <footer className="mt-12 text-center text-xs text-white">
+        <MarketingFooter className="mt-12 text-white">
           This guide describes the demo mockups shipped in this repo and will
           evolve as the community tests and gives feedback.
-        </footer>
+        </MarketingFooter>
       </div>
-    </div>
+    </MarketingPage>
   );
 };
 

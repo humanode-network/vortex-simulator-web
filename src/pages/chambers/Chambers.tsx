@@ -10,6 +10,7 @@ import PipelineList from "@/components/PipelineList";
 import { Button } from "@/components/primitives/button";
 import { Link } from "react-router";
 import { chambers } from "@/data/mock/chambers";
+import { InlineHelp } from "@/components/InlineHelp";
 
 type Metric = {
   label: string;
@@ -64,21 +65,28 @@ const Chambers: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="chambers" />
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((metric) => {
-          const label =
-            metric.label === "Total ACM" ? (
-              <>
-                <span className="font-normal">Total</span>{" "}
-                <HintLabel termId="acm" termText="ACM" />
-              </>
-            ) : (
-              metric.label
+      <section className="space-y-2">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {metricCards.map((metric) => {
+            const label =
+              metric.label === "Total ACM" ? (
+                <>
+                  <span className="font-normal">Total</span>{" "}
+                  <HintLabel termId="acm" termText="ACM" />
+                </>
+              ) : (
+                metric.label
+              );
+            return (
+              <MetricTile
+                key={metric.label}
+                label={label}
+                value={metric.value}
+              />
             );
-          return (
-            <MetricTile key={metric.label} label={label} value={metric.value} />
-          );
-        })}
+          })}
+        </div>
+        <InlineHelp pageId="chambers" sectionId="metrics" />
       </section>
 
       <SearchBar
@@ -111,7 +119,9 @@ const Chambers: React.FC = () => {
         filtersState={filters}
         onFiltersChange={setFilters}
       />
+      <InlineHelp pageId="chambers" sectionId="filters" />
 
+      <InlineHelp pageId="chambers" sectionId="cards" />
       <section
         aria-live="polite"
         className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"

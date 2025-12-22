@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import {
-  Card,
   CardContent,
   CardHeader,
   CardTitle,
@@ -53,103 +52,95 @@ const ProposalPP: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      <Surface
-        as="section"
-        variant="panel"
-        radius="2xl"
-        shadow="card"
-        className="p-6"
-      >
-        <div className="grid items-start gap-4">
-          <div className="space-y-4">
-            <h1 className="text-center text-2xl font-semibold text-text">
-              {proposal.title}
-            </h1>
-            {renderStageBar("pool")}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <StatTile
-                label="Chamber"
-                value={proposal.chamber}
-                radius="2xl"
-                className="px-4 py-4"
-                labelClassName="text-[0.8rem]"
-                valueClassName="text-2xl"
-              />
-              <StatTile
-                label="Proposer"
-                value={proposal.proposer}
-                radius="2xl"
-                className="px-4 py-4"
-                labelClassName="text-[0.8rem]"
-                valueClassName="text-2xl"
-              />
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <VoteButton
-                size="lg"
-                tone="accent"
-                icon="▲"
-                label="Upvote"
-                onClick={() => {
-                  setPendingAction("upvote");
-                  setRulesChecked(false);
-                  setShowRules(true);
-                }}
-              />
-              <VoteButton
-                size="lg"
-                tone="destructive"
-                icon="▼"
-                label="Downvote"
-                onClick={() => {
-                  setPendingAction("downvote");
-                  setRulesChecked(false);
-                  setShowRules(true);
-                }}
-              />
-            </div>
-            <div className="mx-auto flex w-fit items-center gap-5 rounded-full border border-border bg-panel-alt px-14 py-7 text-2xl font-semibold text-text">
-              <span className="text-[var(--accent)]">
-                {proposal.upvotes} upvotes
-              </span>
-              <span className="text-muted">·</span>
-              <span className="text-[var(--destructive)]">
-                {proposal.downvotes} downvotes
-              </span>
-            </div>
+      <div className="grid items-start gap-4">
+        <div className="space-y-4">
+          <h1 className="text-center text-2xl font-semibold text-text">
+            {proposal.title}
+          </h1>
+          {renderStageBar("pool")}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <StatTile
+              label="Chamber"
+              value={proposal.chamber}
+              radius="2xl"
+              className="px-4 py-4"
+              labelClassName="text-[0.8rem]"
+              valueClassName="text-2xl"
+            />
+            <StatTile
+              label="Proposer"
+              value={proposal.proposer}
+              radius="2xl"
+              className="px-4 py-4"
+              labelClassName="text-[0.8rem]"
+              valueClassName="text-2xl"
+            />
           </div>
-
-          <Card className="h-full bg-panel-alt">
-            <CardHeader className="pb-2">
-              <CardTitle>Quorum of attention</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-2">
-              <StatTile
-                label="Attention quorum (%)"
-                value={
-                  <>
-                    {attentionPercent}% / {attentionNeededPercent}%
-                  </>
-                }
-                variant="panel"
-                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
-                valueClassName="text-2xl font-semibold whitespace-nowrap"
-              />
-              <StatTile
-                label="Upvote floor (%)"
-                value={
-                  <>
-                    {upvoteCurrentPercent}% / {upvoteFloorPercent}%
-                  </>
-                }
-                variant="panel"
-                className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
-                valueClassName="text-2xl font-semibold whitespace-nowrap"
-              />
-            </CardContent>
-          </Card>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <VoteButton
+              size="lg"
+              tone="accent"
+              icon="▲"
+              label="Upvote"
+              onClick={() => {
+                setPendingAction("upvote");
+                setRulesChecked(false);
+                setShowRules(true);
+              }}
+            />
+            <VoteButton
+              size="lg"
+              tone="destructive"
+              icon="▼"
+              label="Downvote"
+              onClick={() => {
+                setPendingAction("downvote");
+                setRulesChecked(false);
+                setShowRules(true);
+              }}
+            />
+          </div>
+          <div className="mx-auto flex w-fit items-center gap-5 rounded-full border border-border bg-panel-alt px-14 py-7 text-2xl font-semibold text-text">
+            <span className="text-[var(--accent)]">
+              {proposal.upvotes} upvotes
+            </span>
+            <span className="text-muted">·</span>
+            <span className="text-[var(--destructive)]">
+              {proposal.downvotes} downvotes
+            </span>
+          </div>
         </div>
-      </Surface>
+
+        <div className="h-full">
+          <CardHeader className="pb-2">
+            <CardTitle>Quorum of attention</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-2">
+            <StatTile
+              label="Attention quorum (%)"
+              value={
+                <>
+                  {attentionPercent}% / {attentionNeededPercent}%
+                </>
+              }
+              variant="panel"
+              className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+              valueClassName="text-2xl font-semibold whitespace-nowrap"
+            />
+            <StatTile
+              label="Upvote floor (%)"
+              value={
+                <>
+                  {upvoteCurrentPercent}% / {upvoteFloorPercent}%
+                </>
+              }
+              variant="panel"
+              className="flex min-h-[96px] flex-col items-center justify-center gap-1 py-4"
+              valueClassName="text-2xl font-semibold whitespace-nowrap"
+            />
+          </CardContent>
+        </div>
+      </div>
 
       <ProposalSummaryCard
         summary={proposal.summary}

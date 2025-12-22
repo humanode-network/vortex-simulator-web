@@ -2,20 +2,9 @@ import * as React from "react";
 import { Link } from "react-router";
 
 import { Button } from "@/components/primitives/button";
-
-const usePrefersReducedMotion = () => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
-
-  React.useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    onChange();
-    mediaQuery.addEventListener("change", onChange);
-    return () => mediaQuery.removeEventListener("change", onChange);
-  }, []);
-
-  return prefersReducedMotion;
-};
+import { MarketingFooter } from "@/components/marketing/MarketingFooter";
+import { MarketingPage } from "@/components/marketing/MarketingPage";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const Landing: React.FC = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -28,14 +17,21 @@ const Landing: React.FC = () => {
   React.useEffect(() => {
     const loadConfig = async () => {
       try {
-        const res = await fetch("/landing/config.json", { cache: "no-store" });
-        if (!res.ok) return;
-        const json = (await res.json()) as Partial<{
-          posterSrc: string;
-          videoSrc: string;
-        }>;
-        if (json.posterSrc) setPosterSrc(json.posterSrc);
-        if (json.videoSrc) setVideoSrc(json.videoSrc);
+        const endpoints = [
+          "/landing/config.local.json",
+          "/landing/config.json",
+        ];
+        for (const endpoint of endpoints) {
+          const res = await fetch(endpoint, { cache: "no-store" });
+          if (!res.ok) continue;
+          const json = (await res.json()) as Partial<{
+            posterSrc: string;
+            videoSrc: string;
+          }>;
+          if (json.posterSrc) setPosterSrc(json.posterSrc);
+          if (json.videoSrc) setVideoSrc(json.videoSrc);
+          break;
+        }
       } catch {
         // Optional config; ignore failures.
       }
@@ -62,7 +58,7 @@ const Landing: React.FC = () => {
   }, [prefersReducedMotion, videoFailed]);
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden">
+    <MarketingPage padded={false}>
       {(!videoReady || prefersReducedMotion || videoFailed) && (
         <img
           className="pointer-events-none absolute inset-0 h-full w-full scale-[1.06] object-cover blur-md brightness-[0.72] saturate-125 select-none"
@@ -153,11 +149,9 @@ const Landing: React.FC = () => {
           </a>
           . Welcome to testing.
         </div>
-        <footer className="absolute right-0 bottom-0 left-0 px-6 pt-4 pb-6 text-center text-xs text-white/70">
-          2021 – 2026 Humanode.io
-        </footer>
+        <MarketingFooter pinned>2021 – 2026 Humanode.io</MarketingFooter>
       </div>
-    </div>
+    </MarketingPage>
   );
 };
 
