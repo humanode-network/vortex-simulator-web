@@ -2,28 +2,99 @@
 
 This plan turns `docs/vortex-simulation-processes.md` + `docs/vortex-simulation-tech-architecture.md` into an executable roadmap.
 
+## Current status (what exists in the repo right now)
+
+Implemented (backend skeleton):
+
+- Cloudflare Pages Functions under `functions/`
+- Minimal API routes:
+  - `GET /api/health`
+  - `POST /api/auth/nonce` (sets `vortex_nonce` cookie)
+  - `POST /api/auth/verify` (sets `vortex_session` cookie; real signature verification not implemented yet)
+  - `POST /api/auth/logout`
+  - `GET /api/me`
+  - `GET /api/gate/status` (eligibility is dev-stubbed for now)
+- Cookie-signed nonce + session helpers (requires `SESSION_SECRET`)
+- Dev toggles for local progress:
+  - `DEV_BYPASS_SIGNATURE`, `DEV_BYPASS_GATE`, `DEV_ELIGIBLE_ADDRESSES`, `DEV_INSECURE_COOKIES`
+- Local dev notes: `docs/vortex-simulation-local-dev.md`
+
+Not implemented yet:
+
+- Phase 0 decisions (DB choice, “active Human Node” rule, gating source)
+- Phase 1 API contracts (explicit DTOs matching the UI mocks)
+- DB schema/migrations/seeding
+- Real signature verification (Proof A)
+- Real on-chain eligibility verification (Proof B)
+- Event log + domain state machines + any write commands
+
 ## Guiding principles
+
 - Ship a **thin vertical slice** first: auth → gate → read models → one write action → feed events.
 - Keep domain logic **pure and shared** (state machine + events). The API is a thin adapter.
 - Prefer **deterministic**, testable transitions; avoid “magic UI-only numbers”.
 - Enforce gating on **every write**: “browse open, write gated”.
 - Minimize UI churn: start by making API responses **match the shapes** currently provided by `src/data/mock/*`, then gradually improve.
 
-## Phase 0 — Lock v1 decisions (1–2 days)
-1) Decide database now: **Postgres (recommended)** or **D1**.
-2) Decide gating source priority: **RPC first** with **Subscan fallback**.
-3) Decide what “active Human Node” means for v1:
+## Testing requirement (applies to every phase)
+
+We treat every phase as “done” only when tests are added and run.
+
+Testing layers we’ll use:
+
+1. **Unit tests** (pure TS): state machines, invariants, calculations (quorums, passing rules, tier rules).
+2. **API integration tests**: call Pages Functions handlers with `Request` objects and assert status/JSON/cookies.
+3. **DB integration tests** (once DB exists): migrations apply, basic queries work, constraints enforced.
+
+Test execution policy:
+
+- Add a `yarn test` script and run it after each feature batch.
+- Keep CI in sync (extend `.github/workflows/code.yml` to run `yarn test` and `yarn build` once tests exist).
+
+Tooling note:
+
+- We will add a minimal test harness early (next phases) so we can test Pages Functions without relying on manual clicking.
+
+## Execution sequence (the phases we will implement, in order)
+
+This is the order we’ll follow from now on, based on what’s already landed.
+
+1. **Phase 0 — Lock v1 decisions**
+2. **Phase 1 — Freeze API contracts (DTOs) to match `src/data/mock/*`**
+3. **Phase 2a — API skeleton (DONE)**
+4. **Phase 2b — Test harness for API + domain**
+5. **Phase 2c — DB skeleton + migrations + seed-from-mocks**
+6. **Phase 3 — Auth + eligibility gate (real Proof A + Proof B)**
+7. **Phase 4 — Read models first (Chambers/Proposals/Feed)**
+8. **Phase 5 — Event log backbone**
+9. **Phase 6 — First write slice (pool voting)**
+10. **Phase 7 — Chamber vote + CM awarding**
+11. **Phase 8 — Formation v1**
+12. **Phase 9 — Courts v1**
+13. **Phase 10 — Era rollups + tier statuses**
+14. **Phase 11 — Hardening + moderation**
+
+## Phase 0 — Lock v1 decisions (required before DB + real gate)
+
+1. Decide database now: **Postgres (recommended)** or **D1**.
+2. Decide gating source priority: **RPC first** with **Subscan fallback**.
+3. Decide what “active Human Node” means for v1:
    - “In current validator set”, or
    - “Bioauth epochs 42/42 last week”, or
    - a composite rule.
-4) Decide era length for simulation rollups (e.g. 1 week) and where it’s configured.
+4. Decide era length for simulation rollups (e.g. 1 week) and where it’s configured.
 
 Deliverable: a short “v1 constants” section committed to docs or config.
 
+Tests:
+
+- None required (doc-only), but we must record decisions so later tests can assert exact thresholds/constants.
+
 ## Phase 1 — Define contracts that mirror the UI (1–2 days)
+
 The UI is currently driven by `src/data/mock/*` (e.g. proposals list cards, proposal pages, chamber detail). Start by freezing the “API contract” so backend and frontend can meet in the middle.
 
-1) Define response DTOs that match the current UI needs:
+1. Define response DTOs that match the current UI needs:
    - Chambers directory card: id/name/multiplier + stats + pipeline.
    - Chamber detail: stage-filtered proposals + governors + threads/chat.
    - Proposals list: the exact data currently rendered in collapsed/expanded cards.
@@ -31,130 +102,224 @@ The UI is currently driven by `src/data/mock/*` (e.g. proposals list cards, prop
    - Courts list + courtroom page model.
    - Human nodes list + profile model.
    - Feed item model (the card layout currently used).
-2) Decide how IDs work across the system (proposalId, chamberId, humanId) and make them consistent.
+2. Decide how IDs work across the system (proposalId, chamberId, humanId) and make them consistent.
 
 Deliverable: a short “API contract v1” section (types + endpoint list) that the backend must satisfy.
 
-## Phase 2 — API + DB skeleton (1–3 days)
-1) Create API worker entry (Cloudflare Worker / Pages Function).
-2) Add DB migrations + Drizzle schema (minimal tables first).
-3) Add `GET /api/health`.
-4) Add a `clock_state` row and an admin-only `POST /api/clock/advance-era` stub (no rollup logic yet).
-5) Add a small “seed” script/job that imports today’s `src/data/mock/*` into DB tables (so the first backend responses can match the UI immediately).
+Tests:
+
+- Add unit tests that validate DTO shapes against the existing mocks (smoke: “mock data can be encoded into the DTOs without loss”).
+
+## Phase 2a — API skeleton (DONE)
+
+Delivered in this repo:
+
+- Pages Functions routes: `health`, `auth`, `me`, `gate`
+- Cookie-signed nonce/session (requires `SESSION_SECRET`)
+- Dev bypass knobs while we build real auth/gate
+
+Tests (to add in Phase 2b):
+
+- `GET /api/health` returns `{ ok: true }`.
+- `POST /api/auth/nonce` returns a nonce and sets a `vortex_nonce` cookie.
+- `POST /api/auth/verify`:
+  - fails with 501 if `DEV_BYPASS_SIGNATURE` is false
+  - succeeds and sets `vortex_session` if bypass is enabled
+- `GET /api/me` reflects authentication state
+- `GET /api/gate/status` returns `not_authenticated` when logged out
+
+## Phase 2b — Test harness for API + domain (1–2 days)
+
+1. Add a `tests/` folder and a `yarn test` script.
+2. Pick a runner:
+   - Minimal: Node’s built-in `node:test` for pure JS tests.
+   - Recommended (for TS + Workers): Vitest + Workers pool (adds dev deps).
+3. Add helpers to invoke Pages Functions handlers with fake `Request` + `env`.
+
+Deliverable: `yarn test` runs locally and in CI.
+
+## Phase 2c — DB skeleton (1–3 days)
+
+1. Create API worker entry (Cloudflare Worker / Pages Function).
+2. Add DB migrations + Drizzle schema (minimal tables first).
+3. Add `GET /api/health`.
+4. Add a `clock_state` row and an admin-only `POST /api/clock/advance-era` stub (no rollup logic yet).
+5. Add a small “seed” script/job that imports today’s `src/data/mock/*` into DB tables (so the first backend responses can match the UI immediately).
 
 Deliverable: deployed API that responds and can connect to the DB.
 
+Tests:
+
+- Migrations apply cleanly on a fresh DB.
+- Seed job is idempotent (run twice yields the same IDs/state).
+- Read endpoints return deterministic results from seeded data.
+
 ## Phase 3 — Auth + eligibility gate (3–7 days)
-1) `POST /api/auth/nonce`:
+
+1. `POST /api/auth/nonce`:
    - store nonce with expiry
    - rate limit per IP/address
-2) `POST /api/auth/verify`:
+2. `POST /api/auth/verify`:
    - verify signature
    - create/find `users` row
    - create session cookie/JWT
-3) `GET /api/gate/status`:
+3. `GET /api/gate/status`:
    - read session address
    - query eligibility via RPC/Subscan
    - cache result with TTL (`eligibility_cache`)
-4) Frontend wiring:
+4. Frontend wiring:
    - add “Connect wallet / Verify” UI (even a simple modal is enough)
    - disable all write buttons unless eligible (and show a short reason on hover)
    - allow non-eligible users to browse everything
 
 Deliverable: users can log in; the UI knows if they’re eligible; buttons are blocked for non-eligible users.
 
+Tests:
+
+- Nonce expires; nonce is single-use.
+- Signature verification passes for valid signatures and fails for invalid ones.
+- Eligibility check caches with TTL and returns consistent `expiresAt`.
+- Every write endpoint fails with 401 (no session) or 403 (not eligible).
+
 ## Phase 4 — Read models first (3–8 days)
+
 Goal: replace `src/data/mock/*` progressively with API reads, with minimal UI refactor.
 
-1) `GET /api/chambers`:
+1. `GET /api/chambers`:
    - return chamber list + multipliers + computed stats
    - match `src/data/mock/chambers.ts` shape first
-2) `GET /api/proposals?stage=...`:
+2. `GET /api/proposals?stage=...`:
    - return proposal list cards for the Proposals page
    - match `src/data/mock/proposals.ts` shape first
-3) `GET /api/proposals/:id`:
+3. `GET /api/proposals/:id`:
    - return proposal page model for ProposalPP/Chamber/Formation
    - match `src/data/mock/proposalPages.ts` getters first
-4) `GET /api/feed?cursor=...`:
+4. `GET /api/feed?cursor=...`:
    - return feed items derived from `events`
    - match `src/data/mock/feed.tsx` shape first
 
 Frontend:
+
 - Create a tiny `src/lib/api.ts` fetch wrapper (base URL, typed helpers, error handling).
 - Add `src/lib/useApiQuery.ts` (simple cache) or adopt TanStack Query later.
 - Swap one page at a time from mock imports to API reads; keep a dev fallback flag if needed.
 
 Deliverable: app renders from backend reads (at least Chambers + Proposals + Feed).
 
+Tests:
+
+- DTO compatibility snapshot tests (API payload matches mock-driven shape).
+- Pagination cursors stable (no duplicates/missing items across pages).
+
 ## Phase 5 — Event log (feed) as the backbone (2–6 days)
-1) Create `events` table (append-only).
-2) Define event types (union) and payload schemas (zod).
-3) Implement a simple “projector”:
+
+1. Create `events` table (append-only).
+2. Define event types (union) and payload schemas (zod).
+3. Implement a simple “projector”:
    - basic derived feed cards from events
    - cursors for pagination
-4) Backfill initial events from seeded mock data (so the feed isn’t empty on day 1).
+4. Backfill initial events from seeded mock data (so the feed isn’t empty on day 1).
 
 Deliverable: feed is powered by real events; pages can also show histories from the event stream.
 
+Tests:
+
+- Events are append-only (no updates/deletes).
+- Projector determinism: given the same event stream, derived feed cards are identical.
+
 ## Phase 6 — First write slice: Proposal pool voting (4–10 days)
-1) Implement `POST /api/command` with:
+
+1. Implement `POST /api/command` with:
    - auth required
    - gating required (`isActiveHumanNode`)
    - idempotency key support
-2) Implement `pool.vote` command:
+2. Implement `pool.vote` command:
    - write pool vote with unique constraint (proposalId + userId)
    - emit `pool.vote_cast`
    - update/compute pool metrics
    - if gates met, emit `proposal.moved_to_vote` + transition record
-3) Frontend:
+3. Frontend:
    - ProposalPP page upvote/downvote calls API
    - optimistic UI optional (but must reconcile)
 
 Deliverable: users can perform one real action (pool vote) and see it in metrics + feed.
 
+Tests:
+
+- One vote per user per proposal (idempotency + uniqueness).
+- Pool metrics computed correctly from votes + era baselines.
+- Stage transition triggers exactly once when thresholds are met.
+
 ## Phase 7 — Chamber vote (decision) + CM awarding (5–14 days)
-1) Add `chamber.vote` command:
+
+1. Add `chamber.vote` command:
    - yes/no/abstain
    - quorum + passing rule evaluation
    - emit events
-2) On pass:
+2. On pass:
    - transition to Formation if eligible
    - award CM (LCM per chamber) and recompute derived ACM
-3) Frontend:
+3. Frontend:
    - ProposalChamber becomes real
 
 Deliverable: end-to-end proposal lifecycle from pool → vote (pass/fail) is operational.
 
+Tests:
+
+- Vote constraints (one vote per user, valid choices).
+- Quorum + passing calculation accuracy (including rounding rules like 66.6%).
+- CM awarding updates LCM/MCM/ACM deterministically after acceptance.
+
 ## Phase 8 — Formation v1 (execution) (5–14 days)
-1) Formation project row is created when proposal enters Formation.
-2) `formation.join` fills team slots.
-3) `formation.milestone.submit` records deliverables.
-4) `formation.milestone.requestUnlock` emits an event; acceptance can be mocked initially.
-5) Formation metrics and pages read from DB/events.
+
+1. Formation project row is created when proposal enters Formation.
+2. `formation.join` fills team slots.
+3. `formation.milestone.submit` records deliverables.
+4. `formation.milestone.requestUnlock` emits an event; acceptance can be mocked initially.
+5. Formation metrics and pages read from DB/events.
 
 Deliverable: Formation pages become real and emit feed events.
 
+Tests:
+
+- Team slots cannot exceed total.
+- Milestone unlock rules enforced (cannot unlock before request; cannot double-unlock).
+
 ## Phase 9 — Courts v1 (disputes) (5–14 days)
-1) `court.case.report` creates or increments cases.
-2) Case state machine: Jury → Session live → Ended (driven by time or thresholds).
-3) `court.case.verdict` records guilty/not-guilty.
-4) Outcome hooks (v1):
+
+1. `court.case.report` creates or increments cases.
+2. Case state machine: Jury → Session live → Ended (driven by time or thresholds).
+3. `court.case.verdict` records guilty/not-guilty.
+4. Outcome hooks (v1):
    - hold/release a milestone unlock request
    - flag identity as “restricted” (simulation only)
 
 Deliverable: courts flow works and affects off-chain simulation outcomes.
 
+Tests:
+
+- Case state machine transitions are valid only.
+- Verdict is single-per-user and only allowed in appropriate case states.
+- Outcome hooks apply the intended flags (hold/release/restrict).
+
 ## Phase 10 — Era rollups + tier statuses (ongoing)
-1) Implement cron rollup:
+
+1. Implement cron rollup:
    - freeze era action counts
    - compute `isActiveGovernorNextEra`
    - compute tier decay + statuses (Ahead/Stable/Falling behind/At risk/Losing status)
    - update quorum baselines
-2) Store `era_snapshots` and emit `era.rolled` events.
+2. Store `era_snapshots` and emit `era.rolled` events.
 
 Deliverable: system “moves” with time and feels like governance.
 
+Tests:
+
+- Rollup is deterministic and idempotent for a given era window.
+- Tier status mapping (Ahead/Stable/Falling behind/At risk/Losing status) matches policy.
+
 ## Phase 11 — Hardening + moderation (ongoing)
+
 - Rate limiting (per IP/address) and anti-spam (per-era quotas).
 - Auditability: make all state transitions and changes event-backed.
 - Admin tools: manual “advance era”, seed data, freeze/unfreeze.
@@ -164,17 +329,20 @@ Deliverable: system “moves” with time and feels like governance.
   - court-driven restrictions flags (simulation)
 
 ## Suggested implementation order (lowest risk / highest value)
-1) Auth + gate
-2) Read models for Chambers + Proposals + Feed
-3) Event log
-4) Pool voting
-5) Chamber voting + CM awarding
-6) Formation
-7) Courts
-8) Era rollups + tier statuses
+
+1. Auth + gate
+2. Read models for Chambers + Proposals + Feed
+3. Event log
+4. Pool voting
+5. Chamber voting + CM awarding
+6. Formation
+7. Courts
+8. Era rollups + tier statuses
 
 ## Milestone definition for “proto-vortex launch”
+
 Minimum viable proto-vortex for community:
+
 - Login with wallet signature
 - Eligibility gate from mainnet
 - Read-only browsing for all users
@@ -185,6 +353,7 @@ Minimum viable proto-vortex for community:
 - Era rollup runs at least manually (admin endpoint)
 
 ## Notes specific to the current UI
+
 - The UI already has the key surfaces for v1:
   - `ProposalCreation` wizard (draft), ProposalPP (pool), ProposalChamber (vote), ProposalFormation (formation), Courts/Courtroom (courts).
 - Start by returning API payloads that match the existing mock getters (`src/data/mock/proposalPages.ts`, etc.) to avoid rewriting UI components.

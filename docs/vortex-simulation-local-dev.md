@@ -1,0 +1,41 @@
+# Vortex Simulation Backend — Local Dev (Pages Functions)
+
+This repo uses **Cloudflare Pages** for hosting. Backend endpoints live in **Pages Functions** under `functions/`.
+
+## Endpoints (current skeleton)
+
+- `GET /api/health`
+- `POST /api/auth/nonce` → `{ address }` → `{ nonce }` (sets `vortex_nonce` cookie)
+- `POST /api/auth/verify` → `{ address, nonce, signature }` (sets `vortex_session` cookie)
+- `POST /api/auth/logout`
+- `GET /api/me`
+- `GET /api/gate/status`
+
+## Required env vars
+
+Pages Functions run server-side; configure these via `wrangler pages dev` (local) or Pages project settings (deploy).
+
+- `SESSION_SECRET` (required): used to sign `vortex_nonce` and `vortex_session` cookies.
+
+## Dev-only toggles
+
+Until signature verification and chain gating are implemented:
+
+- `DEV_BYPASS_SIGNATURE=true` to accept any signature.
+- `DEV_BYPASS_GATE=true` to mark any signed-in user as eligible.
+- `DEV_ELIGIBLE_ADDRESSES=addr1,addr2,...` allowlist for eligibility when `DEV_BYPASS_GATE` is false.
+- `DEV_INSECURE_COOKIES=true` to allow auth cookies over plain HTTP (local dev only).
+
+## Running locally (recommended)
+
+1. Build the frontend: `yarn build`
+2. Serve Pages output + functions:
+
+`wrangler pages dev ./dist --compatibility-date=2024-11-01 --binding SESSION_SECRET=dev-secret --binding DEV_BYPASS_SIGNATURE=true --binding DEV_BYPASS_GATE=true`
+
+Then open the provided local URL and call endpoints under `/api/*`.
+
+Notes:
+
+- `rsbuild dev` does not run Pages Functions; use `wrangler pages dev` for API work.
+- Prefer `wrangler pages dev ... --local-protocol=https` for local dev so cookies behave like production.
