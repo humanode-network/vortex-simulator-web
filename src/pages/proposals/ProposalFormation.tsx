@@ -1,49 +1,220 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import ProposalStageBar from "@/components/ProposalStageBar";
 import { Surface } from "@/components/Surface";
-import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
+import { ProposalPageHeader } from "@/components/ProposalPageHeader";
+import { Button } from "@/components/primitives/button";
 import {
   ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
+  ProposalTimelineCard,
 } from "@/components/ProposalSections";
-import { getFormationProposalPage } from "@/data/mock/proposalPages";
+import {
+  apiFormationJoin,
+  apiFormationMilestoneRequestUnlock,
+  apiFormationMilestoneSubmit,
+  apiProposalFormationPage,
+  apiProposalTimeline,
+} from "@/lib/apiClient";
+import { useAuth } from "@/app/auth/AuthContext";
+import type {
+  FormationProposalPageDto,
+  ProposalTimelineItemDto,
+} from "@/types/api";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
-  const project = getFormationProposalPage(id);
+  const [project, setProject] = useState<FormationProposalPageDto | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
+  const auth = useAuth();
 
-  const renderStageBar = (
-    current: "draft" | "pool" | "chamber" | "formation",
-  ) => <ProposalStageBar current={current} />;
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    (async () => {
+      try {
+        const [pageResult, timelineResult] = await Promise.allSettled([
+          apiProposalFormationPage(id),
+          apiProposalTimeline(id),
+        ]);
+        if (!active) return;
+        if (pageResult.status === "fulfilled") {
+          setProject(pageResult.value);
+          setLoadError(null);
+        } else {
+          setProject(null);
+          setLoadError(pageResult.reason?.message ?? "Failed to load proposal");
+        }
+        if (timelineResult.status === "fulfilled") {
+          setTimeline(timelineResult.value.items);
+          setTimelineError(null);
+        } else {
+          setTimeline([]);
+          setTimelineError(
+            timelineResult.reason?.message ?? "Failed to load timeline",
+          );
+        }
+      } catch (error) {
+        if (!active) return;
+        setProject(null);
+        setLoadError((error as Error).message);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (!project) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHint pageId="proposals" />
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {loadError
+            ? `Proposal unavailable: ${loadError}`
+            : "Loading proposal…"}
+        </Surface>
+      </div>
+    );
+  }
+
+  const parseRatio = (value: string): { filled: number; total: number } => {
+    const parts = value.split("/").map((p) => p.trim());
+    if (parts.length !== 2) return { filled: 0, total: 0 };
+    const filled = Number(parts[0]);
+    const total = Number(parts[1]);
+    return {
+      filled: Number.isFinite(filled) ? filled : 0,
+      total: Number.isFinite(total) ? total : 0,
+    };
+  };
+
+  const milestones = parseRatio(project.milestones);
+  const nextMilestone =
+    milestones.total > 0 ? milestones.filled + 1 : undefined;
+
+  const runAction = async (fn: () => Promise<void>) => {
+    setActionError(null);
+    setActionBusy(true);
+    try {
+      await fn();
+      if (id) {
+        const next = await apiProposalFormationPage(id);
+        setProject(next);
+      }
+    } catch (error) {
+      setActionError((error as Error).message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      <section className="space-y-4">
-        <h1 className="text-center text-2xl font-semibold text-text">
-          {project.title}
-        </h1>
-        {renderStageBar("formation")}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatTile
-            label="Chamber"
-            value={project.chamber}
-            radius="2xl"
-            className="px-4 py-4"
-            labelClassName="text-[0.8rem]"
-            valueClassName="text-2xl"
-          />
-          <StatTile
-            label="Proposer"
-            value={project.proposer}
-            radius="2xl"
-            className="px-4 py-4"
-            labelClassName="text-[0.8rem]"
-            valueClassName="text-2xl"
-          />
-        </div>
+      <ProposalPageHeader
+        title={project.title}
+        stage="formation"
+        chamber={project.chamber}
+        proposer={project.proposer}
+      />
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-text">Formation actions</h2>
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="space-y-3 p-4"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button
+              type="button"
+              size="lg"
+              disabled={!auth.authenticated || !auth.eligible || actionBusy}
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id) return;
+                  await apiFormationJoin({ proposalId: id });
+                })
+              }
+            >
+              Join project
+            </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={
+                !auth.authenticated ||
+                !auth.eligible ||
+                actionBusy ||
+                !nextMilestone ||
+                nextMilestone > milestones.total
+              }
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id || !nextMilestone) return;
+                  await apiFormationMilestoneSubmit({
+                    proposalId: id,
+                    milestoneIndex: nextMilestone,
+                  });
+                })
+              }
+            >
+              Submit M{nextMilestone ?? "—"}
+            </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={
+                !auth.authenticated ||
+                !auth.eligible ||
+                actionBusy ||
+                !nextMilestone ||
+                nextMilestone > milestones.total
+              }
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id || !nextMilestone) return;
+                  await apiFormationMilestoneRequestUnlock({
+                    proposalId: id,
+                    milestoneIndex: nextMilestone,
+                  });
+                })
+              }
+            >
+              Unlock M{nextMilestone ?? "—"}
+            </Button>
+          </div>
+
+          {!auth.authenticated ? (
+            <p className="text-xs text-muted">Connect a wallet to act.</p>
+          ) : auth.authenticated && !auth.eligible ? (
+            <p className="text-xs text-muted">
+              Wallet is connected, but not active (gated).
+            </p>
+          ) : null}
+
+          {actionError ? (
+            <p className="text-xs text-muted" role="status">
+              {actionError}
+            </p>
+          ) : null}
+        </Surface>
       </section>
 
       <section className="space-y-3">
@@ -86,6 +257,19 @@ const ProposalFormation: React.FC = () => {
       />
 
       <ProposalInvisionInsightCard insight={project.invisionInsight} />
+
+      {timelineError ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          Timeline unavailable: {timelineError}
+        </Surface>
+      ) : (
+        <ProposalTimelineCard items={timeline} />
+      )}
     </div>
   );
 };

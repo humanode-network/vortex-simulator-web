@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Card,
@@ -7,17 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/primitives/card";
-import AppCard from "@/components/AppCard";
+import { AppCard } from "@/components/AppCard";
 import { HintLabel } from "@/components/Hint";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
-import PipelineList from "@/components/PipelineList";
-import StatGrid, { makeChamberStats } from "@/components/StatGrid";
+import { PipelineList } from "@/components/PipelineList";
+import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
-import { chambers } from "@/data/mock/chambers";
-import { eraActivity, myChamberIds } from "@/data/mock/myGovernance";
+import { apiChambers, apiMyGovernance } from "@/lib/apiClient";
+import type { ChamberDto, GetMyGovernanceResponse } from "@/types/api";
+import { cn } from "@/lib/utils";
 
 type GoverningStatus =
   | "Ahead"
@@ -58,18 +60,75 @@ const governingStatusForProgress = (
   };
 };
 
+const governingStatusTermId = (label: GoverningStatus): string => {
+  if (label === "Ahead") return "governing_status_ahead";
+  if (label === "Stable") return "governing_status_stable";
+  if (label === "Falling behind") return "governing_status_falling_behind";
+  if (label === "At risk") return "governing_status_at_risk";
+  return "governing_status_losing_status";
+};
+
 const MyGovernance: React.FC = () => {
-  const status = governingStatusForProgress(
-    eraActivity.completed,
-    eraActivity.required,
-  );
-  const myChambers = chambers.filter((chamber) =>
-    myChamberIds.includes(chamber.id as (typeof myChamberIds)[number]),
-  );
+  const [gov, setGov] = useState<GetMyGovernanceResponse | null>(null);
+  const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const [govRes, chambersRes] = await Promise.all([
+          apiMyGovernance(),
+          apiChambers(),
+        ]);
+        if (!active) return;
+        setGov(govRes);
+        setChambers(chambersRes.items);
+        setLoadError(null);
+      } catch (error) {
+        if (!active) return;
+        setGov(null);
+        setChambers(null);
+        setLoadError((error as Error).message);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const eraActivity = gov?.eraActivity;
+  const status: { label: GoverningStatus; termId: string } = gov?.rollup
+    ? {
+        label: gov.rollup.status,
+        termId: governingStatusTermId(gov.rollup.status),
+      }
+    : governingStatusForProgress(
+        eraActivity?.completed ?? 0,
+        eraActivity?.required ?? 0,
+      );
+
+  const myChambers = useMemo(() => {
+    if (!gov || !chambers) return [];
+    return chambers.filter((chamber) => gov.myChamberIds.includes(chamber.id));
+  }, [gov, chambers]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="my-governance" />
+      {gov === null || chambers === null ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className={cn(
+            "px-5 py-4 text-sm text-muted",
+            loadError ? "text-destructive" : undefined,
+          )}
+        >
+          {loadError ? `My governance unavailable: ${loadError}` : "Loading…"}
+        </Surface>
+      ) : null}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle>
@@ -81,8 +140,8 @@ const MyGovernance: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              { label: "Era", value: eraActivity.era },
-              { label: "Time left", value: eraActivity.timeLeft },
+              { label: "Era", value: eraActivity?.era ?? "—" },
+              { label: "Time left", value: eraActivity?.timeLeft ?? "—" },
             ].map((tile) => (
               <Surface
                 key={tile.label}
@@ -111,7 +170,9 @@ const MyGovernance: React.FC = () => {
                     Required actions
                   </HintLabel>
                 ),
-                value: `${eraActivity.completed} / ${eraActivity.required} completed`,
+                value: eraActivity
+                  ? `${eraActivity.completed} / ${eraActivity.required} completed`
+                  : "—",
               },
               {
                 key: "status",
@@ -134,7 +195,7 @@ const MyGovernance: React.FC = () => {
             ))}
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {eraActivity.actions.map((act) => (
+            {(eraActivity?.actions ?? []).map((act) => (
               <Surface
                 key={act.label}
                 variant="panelAlt"
@@ -336,7 +397,7 @@ const MyGovernance: React.FC = () => {
                 badge={
                   <Badge
                     size="md"
-                    className="border-none bg-[var(--primary-dim)] px-4 py-1 text-center text-sm font-bold tracking-wide whitespace-nowrap text-[var(--primary)] uppercase"
+                    className="border-none bg-(--primary-dim) px-4 py-1 text-center text-sm font-bold tracking-wide whitespace-nowrap text-primary uppercase"
                   >
                     M × {chamber.multiplier}
                   </Badge>

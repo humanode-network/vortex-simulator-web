@@ -1,4 +1,5 @@
-import { checkEligibility, readSession } from "../../_lib/auth.ts";
+import { readSession } from "../../_lib/auth.ts";
+import { checkEligibility } from "../../_lib/gate.ts";
 import { jsonResponse } from "../../_lib/http.ts";
 
 export const onRequestGet: PagesFunction = async (context) => {
@@ -10,5 +11,7 @@ export const onRequestGet: PagesFunction = async (context) => {
       expiresAt: new Date().toISOString(),
     });
   }
-  return jsonResponse(await checkEligibility(context.env, session.address));
+  return jsonResponse(
+    await checkEligibility(context.env, session.address, context.request.url),
+  );
 };

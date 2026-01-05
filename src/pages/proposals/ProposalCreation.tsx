@@ -6,135 +6,66 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/primitives/card";
-import { Input } from "@/components/primitives/input";
-import { Label } from "@/components/primitives/label";
 import { Button } from "@/components/primitives/button";
 import { Tabs } from "@/components/primitives/tabs";
 import { PageHint } from "@/components/PageHint";
-import { Select } from "@/components/primitives/select";
-import { chambers } from "@/data/mock/chambers";
-
-type StepKey = "essentials" | "plan" | "budget" | "review";
-
-type TimelineItem = {
-  id: string;
-  title: string;
-  timeframe: string;
-};
-
-type LinkItem = {
-  id: string;
-  label: string;
-  url: string;
-};
-
-type BudgetItem = {
-  id: string;
-  description: string;
-  amount: string;
-};
-
-type ProposalDraftForm = {
-  title: string;
-  chamberId: string;
-  summary: string;
-  what: string;
-  why: string;
-  how: string;
-  timeline: TimelineItem[];
-  outputs: LinkItem[];
-  budgetItems: BudgetItem[];
-  aboutMe: string;
-  attachments: LinkItem[];
-  agreeRules: boolean;
-  confirmBudget: boolean;
-};
-
-const STORAGE_KEY = "vortex:proposalCreation:draft";
-const STORAGE_STEP_KEY = "vortex:proposalCreation:step";
-
-const DEFAULT_DRAFT: ProposalDraftForm = {
-  title: "",
-  chamberId: "",
-  summary: "",
-  what: "",
-  why: "",
-  how: "",
-  timeline: [
-    { id: "ms-1", title: "Milestone 1", timeframe: "2 weeks" },
-    { id: "ms-2", title: "Milestone 2", timeframe: "1 month" },
-  ],
-  outputs: [{ id: "out-1", label: "Public update", url: "" }],
-  budgetItems: [{ id: "b-1", description: "Work package", amount: "" }],
-  aboutMe: "",
-  attachments: [],
-  agreeRules: false,
-  confirmBudget: false,
-};
-
-function newId(prefix: string) {
-  return `${prefix}-${Math.random().toString(16).slice(2)}-${Date.now()}`;
-}
-
-function loadDraft(): ProposalDraftForm {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_DRAFT;
-    const parsed = JSON.parse(raw) as Partial<ProposalDraftForm>;
-    const legacyChamber = (parsed as { chamber?: unknown }).chamber;
-    const chamberId =
-      typeof parsed.chamberId === "string"
-        ? parsed.chamberId
-        : typeof legacyChamber === "string"
-          ? (chambers.find((c) => c.id === legacyChamber)?.id ??
-            chambers.find(
-              (c) => c.name.toLowerCase() === legacyChamber.toLowerCase(),
-            )?.id ??
-            "")
-          : "";
-    return {
-      ...DEFAULT_DRAFT,
-      ...parsed,
-      chamberId,
-      timeline: Array.isArray(parsed.timeline)
-        ? parsed.timeline.filter(Boolean)
-        : DEFAULT_DRAFT.timeline,
-      outputs: Array.isArray(parsed.outputs)
-        ? parsed.outputs.filter(Boolean)
-        : DEFAULT_DRAFT.outputs,
-      budgetItems: Array.isArray(parsed.budgetItems)
-        ? parsed.budgetItems.filter(Boolean)
-        : DEFAULT_DRAFT.budgetItems,
-      attachments: Array.isArray(parsed.attachments)
-        ? parsed.attachments.filter(Boolean)
-        : DEFAULT_DRAFT.attachments,
-    };
-  } catch {
-    return DEFAULT_DRAFT;
-  }
-}
-
-function loadStep(): StepKey {
-  const raw = localStorage.getItem(STORAGE_STEP_KEY);
-  if (raw === "essentials" || raw === "plan" || raw === "budget") return raw;
-  return "review";
-}
-
-function isStepKey(value: string): value is StepKey {
-  return value === "essentials" || value === "plan" || value === "budget";
-}
+import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
+import { useAuth } from "@/app/auth/AuthContext";
+import {
+  apiChambers,
+  apiProposalDraftDelete,
+  apiProposalDraftSave,
+  apiProposalSubmitToPool,
+} from "@/lib/apiClient";
+import type { ChamberDto } from "@/types/api";
+import { BudgetStep } from "./proposalCreation/steps/BudgetStep";
+import { EssentialsStep } from "./proposalCreation/steps/EssentialsStep";
+import { PlanStep } from "./proposalCreation/steps/PlanStep";
+import { ReviewStep } from "./proposalCreation/steps/ReviewStep";
+import {
+  clearDraftStorage,
+  loadDraft,
+  loadServerDraftId,
+  loadStep,
+  loadTemplateId,
+  persistDraft,
+  persistServerDraftId,
+  persistStep,
+  persistTemplateId,
+} from "./proposalCreation/storage";
+import { draftToApiForm } from "./proposalCreation/toApiForm";
+import {
+  DEFAULT_DRAFT,
+  isStepKey,
+  type ProposalDraftForm,
+  type StepKey,
+} from "./proposalCreation/types";
+import { getWizardTemplate } from "./proposalCreation/templates/registry";
 
 const ProposalCreation: React.FC = () => {
+  const auth = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [draft, setDraft] = useState<ProposalDraftForm>(() => loadDraft());
-  const [submitted, setSubmitted] = useState(false);
+  const [templateId, setTemplateId] = useState<string>(() => {
+    return (
+      loadTemplateId() ?? (loadDraft().metaGovernance ? "system" : "project")
+    );
+  });
   const [attemptedNext, setAttemptedNext] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [serverDraftId, setServerDraftId] = useState<string | null>(() =>
+    loadServerDraftId(),
+  );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [chambers, setChambers] = useState<ChamberDto[]>([]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+      persistDraft(draft);
     }, 250);
     return () => window.clearTimeout(handle);
   }, [draft]);
@@ -155,18 +86,21 @@ const ProposalCreation: React.FC = () => {
     }, 0);
   }, [draft.budgetItems]);
 
-  const essentialsValid =
-    draft.title.trim().length > 0 &&
-    draft.what.trim().length > 0 &&
-    draft.why.trim().length > 0;
-  const planValid = draft.how.trim().length > 0;
-  const budgetValid =
-    draft.budgetItems.some(
-      (item) =>
-        item.description.trim().length > 0 &&
-        Number.isFinite(Number(item.amount)) &&
-        Number(item.amount) > 0,
-    ) && budgetTotal > 0;
+  const template = useMemo(() => getWizardTemplate(templateId), [templateId]);
+  useEffect(() => {
+    persistTemplateId(template.id);
+  }, [template.id]);
+
+  useEffect(() => {
+    const desired = draft.metaGovernance ? "system" : "project";
+    if (templateId !== desired) {
+      setTemplateId(desired);
+    }
+  }, [draft.metaGovernance, templateId]);
+
+  const computed = useMemo(() => {
+    return template.compute(draft, { budgetTotal });
+  }, [draft, budgetTotal, template]);
 
   const step: StepKey = desiredStep;
 
@@ -175,26 +109,39 @@ const ProposalCreation: React.FC = () => {
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((chamber) => ({ value: chamber.id, label: chamber.name }));
-  }, []);
+  }, [chambers]);
 
   const selectedChamber = useMemo(() => {
     return chambers.find((c) => c.id === draft.chamberId) ?? null;
-  }, [draft.chamberId]);
+  }, [chambers, draft.chamberId]);
 
   useEffect(() => {
-    setSearchParams({ step }, { replace: true });
-  }, [step, setSearchParams]);
+    let active = true;
+    (async () => {
+      try {
+        const res = await apiChambers();
+        if (!active) return;
+        setChambers(res.items);
+      } catch {
+        if (!active) return;
+        setChambers([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_STEP_KEY, step);
+    if (searchParams.get("step") === step) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("step", step);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, step]);
+
+  useEffect(() => {
+    persistStep(step);
   }, [step]);
-
-  const stepLabel: Record<StepKey, string> = {
-    essentials: "Essentials",
-    plan: "Plan",
-    budget: "Budget",
-    review: "Review",
-  };
 
   const textareaClassName =
     "w-full rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition " +
@@ -202,47 +149,85 @@ const ProposalCreation: React.FC = () => {
 
   const goToStep = (next: StepKey) => {
     setAttemptedNext(false);
-    setSearchParams({ step: next }, { replace: true });
+    const params = new URLSearchParams(searchParams);
+    params.set("step", next);
+    setSearchParams(params, { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const onNext = () => {
     setAttemptedNext(true);
-    if (step === "essentials" && essentialsValid) return goToStep("plan");
-    if (step === "plan" && planValid) return goToStep("budget");
-    if (step === "budget" && budgetValid) return goToStep("review");
+    const next = template.getNextStep(step, computed);
+    if (next) return goToStep(next);
   };
 
   const onBack = () => {
     setAttemptedNext(false);
-    if (step === "review") return goToStep("budget");
-    if (step === "budget") return goToStep("plan");
-    if (step === "plan") return goToStep("essentials");
+    const prev = template.getPrevStep(step);
+    if (prev) return goToStep(prev);
     navigate("/app/proposals");
   };
 
+  useEffect(() => {
+    if (template.stepOrder.includes(step)) return;
+    const fallback = template.stepOrder[0] ?? "essentials";
+    const params = new URLSearchParams(searchParams);
+    params.set("step", fallback);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams, step, template.id, template.stepOrder]);
+
   const resetDraft = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(STORAGE_STEP_KEY);
+    clearDraftStorage();
     setDraft(DEFAULT_DRAFT);
-    setSubmitted(false);
+    setTemplateId("project");
     setAttemptedNext(false);
     setSavedAt(null);
-    setSearchParams({ step: "essentials" }, { replace: true });
+    setSaveError(null);
+    setSubmitError(null);
+    const idToDelete = serverDraftId;
+    setServerDraftId(null);
+    const params = new URLSearchParams(searchParams);
+    params.set("step", "essentials");
+    setSearchParams(params, { replace: true });
+
+    if (
+      idToDelete &&
+      (!SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible))
+    ) {
+      void apiProposalDraftDelete({ draftId: idToDelete }).catch(() => null);
+    }
   };
 
-  const saveDraftNow = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-    localStorage.setItem(STORAGE_STEP_KEY, step);
+  const saveDraftNow = async () => {
+    persistDraft(draft);
+    persistStep(step);
     setSavedAt(Date.now());
+    setSaveError(null);
+
+    const canWrite = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
+    if (!canWrite) {
+      setSaveError("Saved locally. Connect and verify to sync drafts.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await apiProposalDraftSave({
+        ...(serverDraftId ? { draftId: serverDraftId } : {}),
+        form: draftToApiForm(draft, { templateId: template.id }),
+      });
+      setServerDraftId(res.draftId);
+      persistServerDraftId(res.draftId);
+      setSavedAt(Date.parse(res.updatedAt) || Date.now());
+    } catch (error) {
+      setSaveError((error as Error).message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const canSubmit =
-    essentialsValid &&
-    planValid &&
-    budgetValid &&
-    draft.agreeRules &&
-    draft.confirmBudget;
+  const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
+  const submitDisabled = !computed.canSubmit || !canAct;
 
   return (
     <div className="flex flex-col gap-6">
@@ -252,8 +237,13 @@ const ProposalCreation: React.FC = () => {
           <Button asChild variant="outline" size="sm">
             <Link to="/app/proposals">Back to proposals</Link>
           </Button>
-          <Button variant="outline" size="sm" onClick={saveDraftNow}>
-            Save draft
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={saveDraftNow}
+            disabled={saving || submitting}
+          >
+            {saving ? "Saving…" : "Save draft"}
           </Button>
           <Button variant="ghost" size="sm" onClick={resetDraft}>
             Reset draft
@@ -263,6 +253,13 @@ const ProposalCreation: React.FC = () => {
               Saved {new Date(savedAt).toLocaleTimeString()}
             </span>
           ) : null}
+          {serverDraftId ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link to={`/app/proposals/drafts/${serverDraftId}`}>
+                View draft
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         <Tabs
@@ -271,12 +268,10 @@ const ProposalCreation: React.FC = () => {
             if (!isStepKey(value) && value !== "review") return;
             goToStep(value as StepKey);
           }}
-          options={[
-            { value: "essentials", label: "1 · Essentials" },
-            { value: "plan", label: "2 · Plan" },
-            { value: "budget", label: "3 · Budget" },
-            { value: "review", label: "4 · Review" },
-          ]}
+          options={template.stepOrder.map((key) => ({
+            value: key,
+            label: template.stepTabLabels[key],
+          }))}
           className="w-full max-w-xl justify-between"
         />
       </div>
@@ -284,645 +279,127 @@ const ProposalCreation: React.FC = () => {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-2xl font-semibold text-text">
-            Create proposal · {stepLabel[step]}
+            Create proposal · {template.stepTitles[step]}
           </CardTitle>
           <p className="text-sm text-muted">
-            This is a UI mockup. Changes autosave locally.
+            Changes autosave locally. Eligible human nodes can save drafts to
+            the simulation backend (see Drafts).
           </p>
         </CardHeader>
 
-        {submitted ? (
-          <CardContent className="space-y-4 text-sm text-text">
-            <div className="rounded-xl border border-border bg-panel-alt p-4">
-              <p className="text-base font-semibold text-text">
-                Submitted (mock)
-              </p>
-              <p className="mt-1 text-sm text-muted">
-                No backend yet — this just confirms the flow and the required
-                fields.
-              </p>
+        <CardContent className="space-y-5 text-sm text-text">
+          {saveError ? (
+            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-muted">
+              {saveError}
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button variant="outline" onClick={resetDraft}>
-                Create another
-              </Button>
-              <Button asChild>
-                <Link to="/app/proposals">Back to proposals</Link>
-              </Button>
+          ) : null}
+          {submitError ? (
+            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
+              Submit failed: {submitError}
             </div>
-          </CardContent>
-        ) : (
-          <CardContent className="space-y-5 text-sm text-text">
-            {step === "essentials" ? (
-              <div className="space-y-5">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="title">Title *</Label>
-                    <Input
-                      id="title"
-                      value={draft.title}
-                      onChange={(e) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          title: e.target.value,
-                        }))
-                      }
-                      placeholder="Proposal title"
-                    />
-                    {attemptedNext && draft.title.trim().length === 0 ? (
-                      <p className="text-xs text-[var(--destructive)]">
-                        Title is required.
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="chamber">Chamber (optional)</Label>
-                    <Select
-                      id="chamber"
-                      value={draft.chamberId}
-                      onChange={(e) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          chamberId: e.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">Select a chamber…</option>
-                      {chamberOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                </div>
+          ) : null}
 
-                <div className="space-y-1">
-                  <Label htmlFor="summary">Summary (optional)</Label>
-                  <Input
-                    id="summary"
-                    value={draft.summary}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, summary: e.target.value }))
+          {step === "essentials" ? (
+            <EssentialsStep
+              attemptedNext={attemptedNext}
+              chamberOptions={chamberOptions}
+              draft={draft}
+              setDraft={setDraft}
+              templateId={template.id}
+              setTemplateId={setTemplateId}
+              textareaClassName={textareaClassName}
+            />
+          ) : null}
+
+          {step === "plan" ? (
+            <PlanStep
+              attemptedNext={attemptedNext}
+              draft={draft}
+              setDraft={setDraft}
+              mode={template.id}
+              textareaClassName={textareaClassName}
+            />
+          ) : null}
+
+          {step === "budget" ? (
+            <BudgetStep
+              attemptedNext={attemptedNext}
+              budgetTotal={budgetTotal}
+              budgetValid={computed.budgetValid}
+              draft={draft}
+              setDraft={setDraft}
+            />
+          ) : null}
+
+          {step === "review" ? (
+            <ReviewStep
+              budgetTotal={budgetTotal}
+              canAct={canAct}
+              canSubmit={computed.canSubmit}
+              draft={draft}
+              mode={template.id}
+              selectedChamber={selectedChamber}
+              setDraft={setDraft}
+              textareaClassName={textareaClassName}
+            />
+          ) : null}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <Button variant="ghost" onClick={onBack} disabled={submitting}>
+              {step === "essentials" ? "Cancel" : "Back"}
+            </Button>
+            <div className="flex items-center gap-2">
+              {step === "review" ? (
+                <Button
+                  disabled={submitDisabled || submitting}
+                  title={
+                    SIM_AUTH_ENABLED && !canAct
+                      ? "Connect and verify as an eligible human node to submit."
+                      : undefined
+                  }
+                  onClick={async () => {
+                    if (!canAct || submitting) return;
+                    setSubmitError(null);
+                    setSaving(false);
+                    setSaveError(null);
+                    setSubmitting(true);
+                    try {
+                      let draftId = serverDraftId;
+                      if (!draftId) {
+                        const saved = await apiProposalDraftSave({
+                          form: draftToApiForm(draft, {
+                            templateId: template.id,
+                          }),
+                        });
+                        draftId = saved.draftId;
+                        setServerDraftId(draftId);
+                        persistServerDraftId(draftId);
+                      } else {
+                        await apiProposalDraftSave({
+                          draftId,
+                          form: draftToApiForm(draft, {
+                            templateId: template.id,
+                          }),
+                        });
+                      }
+                      const res = await apiProposalSubmitToPool({ draftId });
+                      clearDraftStorage();
+                      navigate(`/app/proposals/${res.proposalId}/pp`);
+                    } catch (error) {
+                      setSubmitError((error as Error).message);
+                    } finally {
+                      setSubmitting(false);
                     }
-                    placeholder="One line used in lists/cards"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="what">What *</Label>
-                  <textarea
-                    id="what"
-                    rows={5}
-                    className={textareaClassName}
-                    value={draft.what}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, what: e.target.value }))
-                    }
-                    placeholder="Describe the project/task you want to execute."
-                  />
-                  {attemptedNext && draft.what.trim().length === 0 ? (
-                    <p className="text-xs text-[var(--destructive)]">
-                      “What” is required.
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="why">Why *</Label>
-                  <textarea
-                    id="why"
-                    rows={5}
-                    className={textareaClassName}
-                    value={draft.why}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, why: e.target.value }))
-                    }
-                    placeholder="Explain the expected contribution to Humanode."
-                  />
-                  {attemptedNext && draft.why.trim().length === 0 ? (
-                    <p className="text-xs text-[var(--destructive)]">
-                      “Why” is required.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            {step === "plan" ? (
-              <div className="space-y-5">
-                <div className="space-y-1">
-                  <Label htmlFor="how">How (execution plan) *</Label>
-                  <textarea
-                    id="how"
-                    rows={6}
-                    className={textareaClassName}
-                    value={draft.how}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, how: e.target.value }))
-                    }
-                    placeholder="Execution plan: steps, responsibilities, risks, checkpoints."
-                  />
-                  {attemptedNext && draft.how.trim().length === 0 ? (
-                    <p className="text-xs text-[var(--destructive)]">
-                      Execution plan is required.
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-text">When</p>
-                      <p className="text-xs text-muted">
-                        Timeline is recommended (milestones).
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          timeline: [
-                            ...prev.timeline,
-                            { id: newId("ms"), title: "", timeframe: "" },
-                          ],
-                        }))
-                      }
-                    >
-                      Add milestone
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {draft.timeline.map((ms) => (
-                      <div
-                        key={ms.id}
-                        className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_200px_auto]"
-                      >
-                        <Input
-                          value={ms.title}
-                          onChange={(e) =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              timeline: prev.timeline.map((item) =>
-                                item.id === ms.id
-                                  ? { ...item, title: e.target.value }
-                                  : item,
-                              ),
-                            }))
-                          }
-                          placeholder="Milestone title"
-                        />
-                        <Input
-                          value={ms.timeframe}
-                          onChange={(e) =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              timeline: prev.timeline.map((item) =>
-                                item.id === ms.id
-                                  ? { ...item, timeframe: e.target.value }
-                                  : item,
-                              ),
-                            }))
-                          }
-                          placeholder="Timeframe (e.g., 2 weeks)"
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              timeline: prev.timeline.filter(
-                                (item) => item.id !== ms.id,
-                              ),
-                            }))
-                          }
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-text">Where</p>
-                      <p className="text-xs text-muted">
-                        Links to platforms or public outcomes (optional).
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          outputs: [
-                            ...prev.outputs,
-                            { id: newId("out"), label: "", url: "" },
-                          ],
-                        }))
-                      }
-                    >
-                      Add link
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {draft.outputs.map((out) => (
-                      <div
-                        key={out.id}
-                        className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[220px_1fr_auto]"
-                      >
-                        <Input
-                          value={out.label}
-                          onChange={(e) =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              outputs: prev.outputs.map((item) =>
-                                item.id === out.id
-                                  ? { ...item, label: e.target.value }
-                                  : item,
-                              ),
-                            }))
-                          }
-                          placeholder="Label (e.g., GitHub, Notion)"
-                        />
-                        <Input
-                          value={out.url}
-                          onChange={(e) =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              outputs: prev.outputs.map((item) =>
-                                item.id === out.id
-                                  ? { ...item, url: e.target.value }
-                                  : item,
-                              ),
-                            }))
-                          }
-                          placeholder="https://…"
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setDraft((prev) => ({
-                              ...prev,
-                              outputs: prev.outputs.filter(
-                                (item) => item.id !== out.id,
-                              ),
-                            }))
-                          }
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            {step === "budget" ? (
-              <div className="space-y-5">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-text">How much</p>
-                    <p className="text-xs text-muted">
-                      Add budget line items and a realistic total.
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        budgetItems: [
-                          ...prev.budgetItems,
-                          { id: newId("b"), description: "", amount: "" },
-                        ],
-                      }))
-                    }
-                  >
-                    Add item
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  {draft.budgetItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_180px_auto]"
-                    >
-                      <Input
-                        value={item.description}
-                        onChange={(e) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            budgetItems: prev.budgetItems.map((row) =>
-                              row.id === item.id
-                                ? { ...row, description: e.target.value }
-                                : row,
-                            ),
-                          }))
-                        }
-                        placeholder="Line item description"
-                      />
-                      <Input
-                        value={item.amount}
-                        onChange={(e) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            budgetItems: prev.budgetItems.map((row) =>
-                              row.id === item.id
-                                ? { ...row, amount: e.target.value }
-                                : row,
-                            ),
-                          }))
-                        }
-                        inputMode="decimal"
-                        placeholder="Amount (HMND)"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            budgetItems: prev.budgetItems.filter(
-                              (row) => row.id !== item.id,
-                            ),
-                          }))
-                        }
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl border border-border bg-panel-alt px-4 py-3">
-                  <p className="text-sm font-semibold text-text">Total</p>
-                  <p className="text-lg font-semibold text-text">
-                    {budgetTotal.toLocaleString()} HMND
-                  </p>
-                </div>
-
-                {attemptedNext && !budgetValid ? (
-                  <p className="text-xs text-[var(--destructive)]">
-                    Add at least one budget line item with a positive amount.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-
-            {step === "review" ? (
-              <div className="space-y-5">
-                <div className="rounded-xl border border-border bg-panel-alt p-4">
-                  <p className="text-sm font-semibold text-text">
-                    Who (auto-filled)
-                  </p>
-                  <div className="mt-2 grid gap-2 text-sm text-muted sm:grid-cols-2">
-                    <div>
-                      <span className="text-text">Name</span>: Humanode Governor
-                      (mock)
-                    </div>
-                    <div>
-                      <span className="text-text">Handle</span>: @governor_42
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-1">
-                    <Label htmlFor="about">
-                      Tell about yourself (optional)
-                    </Label>
-                    <textarea
-                      id="about"
-                      rows={3}
-                      className={textareaClassName}
-                      value={draft.aboutMe}
-                      onChange={(e) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          aboutMe: e.target.value,
-                        }))
-                      }
-                      placeholder="Short intro / credentials / relevant experience."
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-panel-alt p-4">
-                  <p className="text-sm font-semibold text-text">Preview</p>
-                  <div className="mt-3 space-y-3 text-sm">
-                    <div>
-                      <p className="font-semibold text-text">{draft.title}</p>
-                      {draft.summary.trim().length > 0 ? (
-                        <p className="text-muted">{draft.summary}</p>
-                      ) : null}
-                      {selectedChamber ? (
-                        <p className="mt-1 text-xs text-muted">
-                          Chamber: {selectedChamber.name}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-xs font-semibold text-text">What</p>
-                        <p className="text-muted">{draft.what}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-text">Why</p>
-                        <p className="text-muted">{draft.why}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-text">How</p>
-                      <p className="text-muted">{draft.how}</p>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-xs font-semibold text-text">When</p>
-                        <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-                          {draft.timeline.length === 0 ? (
-                            <li>No milestones added.</li>
-                          ) : (
-                            draft.timeline.map((ms) => (
-                              <li key={ms.id}>
-                                {ms.title.trim().length > 0 ? ms.title : "—"} (
-                                {ms.timeframe.trim().length > 0
-                                  ? ms.timeframe
-                                  : "—"}
-                                )
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-text">
-                          Budget
-                        </p>
-                        <p className="text-muted">
-                          Total: {budgetTotal.toLocaleString()} HMND
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 rounded-xl border border-border bg-panel-alt p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-text">
-                      Attachments (optional, recommended)
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          attachments: [
-                            ...prev.attachments,
-                            { id: newId("att"), label: "", url: "" },
-                          ],
-                        }))
-                      }
-                    >
-                      Add link
-                    </Button>
-                  </div>
-                  {draft.attachments.length === 0 ? (
-                    <p className="text-xs text-muted">
-                      Add links to PDFs, docs, spreadsheets, or any supporting
-                      material.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {draft.attachments.map((att) => (
-                        <div
-                          key={att.id}
-                          className="grid gap-2 sm:grid-cols-[220px_1fr_auto]"
-                        >
-                          <Input
-                            value={att.label}
-                            onChange={(e) =>
-                              setDraft((prev) => ({
-                                ...prev,
-                                attachments: prev.attachments.map((item) =>
-                                  item.id === att.id
-                                    ? { ...item, label: e.target.value }
-                                    : item,
-                                ),
-                              }))
-                            }
-                            placeholder="Label"
-                          />
-                          <Input
-                            value={att.url}
-                            onChange={(e) =>
-                              setDraft((prev) => ({
-                                ...prev,
-                                attachments: prev.attachments.map((item) =>
-                                  item.id === att.id
-                                    ? { ...item, url: e.target.value }
-                                    : item,
-                                ),
-                              }))
-                            }
-                            placeholder="https://…"
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              setDraft((prev) => ({
-                                ...prev,
-                                attachments: prev.attachments.filter(
-                                  (item) => item.id !== att.id,
-                                ),
-                              }))
-                            }
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3 rounded-xl border border-border bg-panel-alt p-4">
-                  <p className="text-sm font-semibold text-text">Rules</p>
-                  <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-                    <li>Be specific about outcomes and deliverables.</li>
-                    <li>Use a realistic timeline and budget.</li>
-                    <li>No personal data; keep it governance-safe.</li>
-                    <li>Attachments are optional but recommended.</li>
-                  </ul>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-[var(--primary)]"
-                        checked={draft.agreeRules}
-                        onChange={(e) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            agreeRules: e.target.checked,
-                          }))
-                        }
-                      />
-                      I agree to the rules
-                    </label>
-                    <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 accent-[var(--primary)]"
-                        checked={draft.confirmBudget}
-                        onChange={(e) =>
-                          setDraft((prev) => ({
-                            ...prev,
-                            confirmBudget: e.target.checked,
-                          }))
-                        }
-                      />
-                      I confirm the budget is accurate
-                    </label>
-                  </div>
-                  {!canSubmit ? (
-                    <p className="text-xs text-muted">
-                      You can navigate steps freely. Submit unlocks once
-                      required fields are filled and both checkboxes are
-                      checked.
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <Button variant="ghost" onClick={onBack}>
-                {step === "essentials" ? "Cancel" : "Back"}
-              </Button>
-              <div className="flex items-center gap-2">
-                {step === "review" ? (
-                  <Button
-                    disabled={!canSubmit}
-                    onClick={() => setSubmitted(true)}
-                  >
-                    Submit proposal (mock)
-                  </Button>
-                ) : (
-                  <Button onClick={onNext}>Next</Button>
-                )}
-              </div>
+                  }}
+                >
+                  {submitting ? "Submitting…" : "Submit proposal"}
+                </Button>
+              ) : (
+                <Button onClick={onNext}>Next</Button>
+              )}
             </div>
-          </CardContent>
-        )}
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

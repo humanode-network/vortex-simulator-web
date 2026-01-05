@@ -30,6 +30,7 @@ function makeContext({ url, method, env, body, cookie }) {
 
 test("gate/status: unauthenticated vs authenticated eligible", async () => {
   const env = { SESSION_SECRET: "test-secret", DEV_BYPASS_SIGNATURE: "true" };
+  const address = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY";
 
   const unauthRes = await gateGet(
     makeContext({
@@ -48,7 +49,7 @@ test("gate/status: unauthenticated vs authenticated eligible", async () => {
       url: "https://local.test/api/auth/nonce",
       method: "POST",
       env,
-      body: { address: "0xdef" },
+      body: { address },
     }),
   );
   const nonceJson = await nonceRes.json();
@@ -59,7 +60,7 @@ test("gate/status: unauthenticated vs authenticated eligible", async () => {
       url: "https://local.test/api/auth/verify",
       method: "POST",
       env: { ...env, DEV_BYPASS_GATE: "true" },
-      body: { address: "0xdef", nonce: nonceJson.nonce, signature: "0xsig" },
+      body: { address, nonce: nonceJson.nonce, signature: "0xsig" },
       cookie: nonceCookie,
     }),
   );

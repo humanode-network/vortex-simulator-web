@@ -1,8 +1,10 @@
 // API DTO types for the off-chain Vortex simulation backend.
-// These are JSON-safe (no ReactNode), and are frozen by docs/vortex-simulation-api-contract.md.
+// These are JSON-safe (no ReactNode), and are frozen by docs/simulation/vortex-simulation-api-contract.md.
+
+import type { FeedStage } from "./stages";
 
 export type ProposalStageDto = "draft" | "pool" | "vote" | "build";
-export type FeedStageDto = "pool" | "vote" | "build" | "courts" | "thread";
+export type FeedStageDto = FeedStage;
 
 export type ToneDto = "ok" | "warn";
 
@@ -21,6 +23,29 @@ export type ChamberDto = {
   pipeline: ChamberPipelineDto;
 };
 export type GetChambersResponse = { items: ChamberDto[] };
+
+export type FactionRosterTagDto =
+  | { kind: "acm"; value: number }
+  | { kind: "mm"; value: number }
+  | { kind: "text"; value: string };
+export type FactionRosterMemberDto = {
+  humanNodeId: string;
+  role: string;
+  tag: FactionRosterTagDto;
+};
+export type FactionDto = {
+  id: string;
+  name: string;
+  description: string;
+  members: number;
+  votes: string;
+  acm: string;
+  focus: string;
+  goals: string[];
+  initiatives: string[];
+  roster: FactionRosterMemberDto[];
+};
+export type GetFactionsResponse = { items: FactionDto[] };
 
 export type ChamberProposalStageDto = "upcoming" | "live" | "ended";
 export type ChamberProposalDto = {
@@ -63,6 +88,104 @@ export type GetChamberResponse = {
   stageOptions: ChamberStageOptionDto[];
 };
 
+export type FormationMetricDto = {
+  label: string;
+  value: string;
+  dataAttr: string;
+};
+export type FormationCategoryDto =
+  | "all"
+  | "research"
+  | "development"
+  | "social";
+export type FormationStageDto = "live" | "gathering" | "completed";
+export type FormationProjectDto = {
+  id: string;
+  title: string;
+  focus: string;
+  proposer: string;
+  summary: string;
+  category: FormationCategoryDto;
+  stage: FormationStageDto;
+  budget: string;
+  milestones: string;
+  teamSlots: string;
+};
+export type GetFormationResponse = {
+  metrics: FormationMetricDto[];
+  projects: FormationProjectDto[];
+};
+
+export type InvisionGovernanceMetricDto = { label: string; value: string };
+export type InvisionGovernanceStateDto = {
+  label: string;
+  metrics: InvisionGovernanceMetricDto[];
+};
+export type InvisionEconomicIndicatorDto = {
+  label: string;
+  value: string;
+  detail: string;
+};
+export type InvisionRiskSignalDto = {
+  title: string;
+  status: string;
+  detail: string;
+};
+export type InvisionChamberProposalDto = {
+  title: string;
+  effect: string;
+  sponsors: string;
+};
+export type GetInvisionResponse = {
+  governanceState: InvisionGovernanceStateDto;
+  economicIndicators: InvisionEconomicIndicatorDto[];
+  riskSignals: InvisionRiskSignalDto[];
+  chamberProposals: InvisionChamberProposalDto[];
+};
+
+export type MyGovernanceEraActionDto = {
+  label: string;
+  done: number;
+  required: number;
+};
+export type MyGovernanceEraActivityDto = {
+  era: string;
+  required: number;
+  completed: number;
+  actions: MyGovernanceEraActionDto[];
+  timeLeft: string;
+};
+export type GetMyGovernanceResponse = {
+  eraActivity: MyGovernanceEraActivityDto;
+  myChamberIds: string[];
+  rollup?: {
+    era: number;
+    rolledAt: string;
+    status: "Ahead" | "Stable" | "Falling behind" | "At risk" | "Losing status";
+    requiredTotal: number;
+    completedTotal: number;
+    isActiveNextEra: boolean;
+    activeGovernorsNextEra: number;
+  };
+};
+
+export type GetClockResponse = {
+  currentEra: number;
+  activeGovernors: number;
+  currentEraRollup?: {
+    era: number;
+    rolledAt: string;
+    requiredTotal: number;
+    requirements: {
+      poolVotes: number;
+      chamberVotes: number;
+      courtActions: number;
+      formationActions: number;
+    };
+    activeGovernorsNextEra: number;
+  };
+};
+
 export type ProposalStageDatumDto = {
   title: string;
   description: string;
@@ -95,6 +218,64 @@ export type ProposalListItemDto = {
 export type GetProposalsResponse = { items: ProposalListItemDto[] };
 
 export type InvisionInsightDto = { role: string; bullets: string[] };
+
+export type ProposalTimelineEventTypeDto =
+  | "proposal.submitted"
+  | "proposal.stage.advanced"
+  | "proposal.vote.passed"
+  | "proposal.vote.finalized"
+  | "pool.vote"
+  | "chamber.vote"
+  | "veto.vote"
+  | "veto.applied"
+  | "formation.join"
+  | "formation.milestone.submitted"
+  | "formation.milestone.unlockRequested"
+  | "chamber.created"
+  | "chamber.dissolved";
+
+export type ProposalTimelineItemDto = {
+  id: string;
+  type: ProposalTimelineEventTypeDto;
+  title: string;
+  detail?: string;
+  actor?: string;
+  timestamp: string;
+};
+
+export type GetProposalTimelineResponse = { items: ProposalTimelineItemDto[] };
+
+export type ProposalDraftListItemDto = {
+  id: string;
+  title: string;
+  chamber: string;
+  tier: string;
+  summary: string;
+  updated: string;
+};
+export type GetProposalDraftsResponse = { items: ProposalDraftListItemDto[] };
+
+export type ProposalDraftDetailDto = {
+  title: string;
+  proposer: string;
+  chamber: string;
+  focus: string;
+  tier: string;
+  budget: string;
+  formationEligible: boolean;
+  teamSlots: string;
+  milestonesPlanned: string;
+  summary: string;
+  rationale: string;
+  budgetScope: string;
+  invisionInsight: InvisionInsightDto;
+  checklist: string[];
+  milestones: string[];
+  teamLocked: { name: string; role: string }[];
+  openSlotNeeds: { title: string; desc: string }[];
+  milestonesDetail: { title: string; desc: string }[];
+  attachments: { title: string; href: string }[];
+};
 
 export type PoolProposalPageDto = {
   title: string;
