@@ -1,4 +1,5 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
 
 import { Button } from "@/components/primitives/button";
 import {
@@ -7,20 +8,75 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/primitives/card";
-import ProposalStageBar from "@/components/ProposalStageBar";
+import { ProposalStageBar } from "@/components/ProposalStageBar";
 import { Surface } from "@/components/Surface";
 import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
-import { proposalDraftDetails as draftDetails } from "@/data/mock/proposalDraft";
 import { TierLabel } from "@/components/TierLabel";
 import { AttachmentList } from "@/components/AttachmentList";
 import { TitledSurface } from "@/components/TitledSurface";
+import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
+import { useAuth } from "@/app/auth/AuthContext";
+import { apiProposalDraft, apiProposalSubmitToPool } from "@/lib/apiClient";
+import type { ProposalDraftDetailDto } from "@/types/api";
 
 const ProposalDraft: React.FC = () => {
-  const [filledSlots, totalSlots] = draftDetails.teamSlots
+  const auth = useAuth();
+  const { id } = useParams();
+  const [draftDetails, setDraftDetails] =
+    useState<ProposalDraftDetailDto | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [filledSlots, totalSlots] = (draftDetails?.teamSlots ?? "0 / 0")
     .split("/")
     .map((v) => Number(v.trim()));
-  const openSlots = Math.max(totalSlots - filledSlots, 0);
+  const openSlots = Math.max((totalSlots || 0) - (filledSlots || 0), 0);
+  const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
+
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    (async () => {
+      try {
+        const res = await apiProposalDraft(id);
+        if (!active) return;
+        setDraftDetails(res);
+        setLoadError(null);
+      } catch (error) {
+        if (!active) return;
+        setDraftDetails(null);
+        setLoadError((error as Error).message);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (!draftDetails) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHint pageId="proposals" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/app/proposals/drafts">Back to drafts</Link>
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="ghost">
+              <Link to="/app/proposals/new">New proposal</Link>
+            </Button>
+          </div>
+        </div>
+
+        <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
+          {loadError ? `Draft unavailable: ${loadError}` : "Loading draft…"}
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,9 +91,37 @@ const ProposalDraft: React.FC = () => {
           <Button asChild size="sm" variant="ghost">
             <Link to="/app/proposals/new">New proposal</Link>
           </Button>
-          <Button size="sm">Submit to pool</Button>
+          <Button
+            size="sm"
+            disabled={!canAct}
+            title={
+              SIM_AUTH_ENABLED && !canAct
+                ? "Connect and verify as an eligible human node to submit."
+                : undefined
+            }
+            onClick={async () => {
+              if (!id || !canAct) return;
+              setSubmitError(null);
+              setSubmitting(true);
+              try {
+                const res = await apiProposalSubmitToPool({ draftId: id });
+                window.location.href = `/app/proposals/${res.proposalId}/pp`;
+              } catch (error) {
+                setSubmitError((error as Error).message);
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+          >
+            {submitting ? "Submitting…" : "Submit to pool"}
+          </Button>
         </div>
       </div>
+      {submitError ? (
+        <Card className="border-dashed px-4 py-6 text-center text-sm text-[var(--destructive)]">
+          Submit failed: {submitError}
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader className="space-y-3 pb-3">

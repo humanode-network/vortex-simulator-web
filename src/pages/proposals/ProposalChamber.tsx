@@ -1,18 +1,96 @@
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
-import ProposalStageBar from "@/components/ProposalStageBar";
 import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
+import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
 import {
   ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
+  ProposalTimelineCard,
 } from "@/components/ProposalSections";
-import { getChamberProposalPage } from "@/data/mock/proposalPages";
+import { Surface } from "@/components/Surface";
+import {
+  apiChamberVote,
+  apiProposalChamberPage,
+  apiProposalTimeline,
+} from "@/lib/apiClient";
+import type {
+  ChamberProposalPageDto,
+  ProposalTimelineItemDto,
+} from "@/types/api";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
-  const proposal = getChamberProposalPage(id);
+  const [proposal, setProposal] = useState<ChamberProposalPageDto | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
+
+  const loadPage = useCallback(async () => {
+    if (!id) return;
+    const page = await apiProposalChamberPage(id);
+    setProposal(page);
+    setLoadError(null);
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    (async () => {
+      try {
+        const [pageResult, timelineResult] = await Promise.allSettled([
+          apiProposalChamberPage(id),
+          apiProposalTimeline(id),
+        ]);
+        if (!active) return;
+        if (pageResult.status === "fulfilled") {
+          setProposal(pageResult.value);
+          setLoadError(null);
+        } else {
+          setProposal(null);
+          setLoadError(pageResult.reason?.message ?? "Failed to load proposal");
+        }
+        if (timelineResult.status === "fulfilled") {
+          setTimeline(timelineResult.value.items);
+          setTimelineError(null);
+        } else {
+          setTimeline([]);
+          setTimelineError(
+            timelineResult.reason?.message ?? "Failed to load timeline",
+          );
+        }
+      } catch (error) {
+        if (!active) return;
+        setProposal(null);
+        setLoadError((error as Error).message);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (!proposal) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHint pageId="proposals" />
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {loadError
+            ? `Proposal unavailable: ${loadError}`
+            : "Loading proposal…"}
+        </Surface>
+      </div>
+    );
+  }
 
   const yesTotal = proposal.votes.yes;
   const noTotal = proposal.votes.no;
@@ -39,42 +117,62 @@ const ProposalChamber: React.FC = () => {
     .map((v) => Number(v.trim()));
   const openSlots = Math.max(totalSlots - filledSlots, 0);
 
-  const renderStageBar = (
-    current: "draft" | "pool" | "chamber" | "formation",
-  ) => <ProposalStageBar current={current} />;
+  const handleVote = async (choice: "yes" | "no" | "abstain") => {
+    if (!id || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await apiChamberVote({ proposalId: id, choice });
+      await loadPage();
+    } catch (error) {
+      setSubmitError((error as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      <section className="space-y-4">
-        <h1 className="text-center text-2xl font-semibold text-text">
-          {proposal.title}
-        </h1>
-        {renderStageBar("chamber")}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <StatTile
-            label="Chamber"
-            value={proposal.chamber}
-            radius="2xl"
-            className="px-4 py-4"
-            labelClassName="text-[0.8rem]"
-            valueClassName="text-2xl"
-          />
-          <StatTile
-            label="Proposer"
-            value={proposal.proposer}
-            radius="2xl"
-            className="px-4 py-4"
-            labelClassName="text-[0.8rem]"
-            valueClassName="text-2xl"
-          />
-        </div>
+      <ProposalPageHeader
+        title={proposal.title}
+        stage="chamber"
+        chamber={proposal.chamber}
+        proposer={proposal.proposer}
+      >
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <VoteButton tone="accent" label="Vote yes" />
-          <VoteButton tone="destructive" label="Vote no" />
-          <VoteButton tone="neutral" label="Abstain" />
+          <VoteButton
+            tone="accent"
+            label="Vote yes"
+            disabled={submitting}
+            onClick={() => handleVote("yes")}
+          />
+          <VoteButton
+            tone="destructive"
+            label="Vote no"
+            disabled={submitting}
+            onClick={() => handleVote("no")}
+          />
+          <VoteButton
+            tone="neutral"
+            label="Abstain"
+            disabled={submitting}
+            onClick={() => handleVote("abstain")}
+          />
         </div>
+        {submitError ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {submitError}
+          </Surface>
+        ) : null}
+      </ProposalPageHeader>
 
+      <section className="space-y-4">
         <h2 className="text-lg font-semibold text-text">Voting quorum</h2>
         <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
@@ -98,13 +196,8 @@ const ProposalChamber: React.FC = () => {
             value={
               <>
                 <span className="whitespace-nowrap">
-                  <span className="text-[var(--accent)]">
-                    {yesPercentOfTotal}%
-                  </span>{" "}
-                  /{" "}
-                  <span className="text-[var(--destructive)]">
-                    {noPercentOfTotal}%
-                  </span>{" "}
+                  <span className="text-accent">{yesPercentOfTotal}%</span> /{" "}
+                  <span className="text-destructive">{noPercentOfTotal}%</span>{" "}
                   / <span className="text-muted">{abstainPercentOfTotal}%</span>
                 </span>
                 <span className="text-xs font-semibold whitespace-nowrap text-muted">
@@ -174,6 +267,19 @@ const ProposalChamber: React.FC = () => {
       />
 
       <ProposalInvisionInsightCard insight={proposal.invisionInsight} />
+
+      {timelineError ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          Timeline unavailable: {timelineError}
+        </Surface>
+      ) : (
+        <ProposalTimelineCard items={timeline} />
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { parseCookieHeader, serializeCookie } from "./cookies.ts";
-import { envBoolean, envCsv, envString } from "./env.ts";
+import { envBoolean, envString } from "./env.ts";
 import { randomHex } from "./random.ts";
 import { signToken, verifyToken } from "./tokens.ts";
 
@@ -43,7 +43,7 @@ export async function issueNonce(
   env: Env,
   requestUrl: string,
   address: string,
-): Promise<{ nonce: string }> {
+): Promise<{ nonce: string; expiresAt: number }> {
   const secret = getSessionSecret(env);
   const nonce = randomHex(16);
   const issuedAt = Date.now();
@@ -66,7 +66,7 @@ export async function issueNonce(
     }),
   );
 
-  return { nonce };
+  return { nonce, expiresAt };
 }
 
 export async function verifyNonceCookie(
@@ -82,9 +82,15 @@ export async function verifyNonceCookie(
   if (!payload) return null;
   if (typeof payload.address !== "string") return null;
   if (typeof payload.nonce !== "string") return null;
+  if (typeof payload.issuedAt !== "number") return null;
   if (typeof payload.expiresAt !== "number") return null;
   if (Date.now() > payload.expiresAt) return null;
-  return payload as unknown as NonceToken;
+  return {
+    address: payload.address,
+    nonce: payload.nonce,
+    issuedAt: payload.issuedAt,
+    expiresAt: payload.expiresAt,
+  };
 }
 
 export async function issueSession(
@@ -142,9 +148,14 @@ export async function readSession(
   const payload = await verifyToken(token, secret);
   if (!payload) return null;
   if (typeof payload.address !== "string") return null;
+  if (typeof payload.issuedAt !== "number") return null;
   if (typeof payload.expiresAt !== "number") return null;
   if (Date.now() > payload.expiresAt) return null;
-  return payload as unknown as Session;
+  return {
+    address: payload.address,
+    issuedAt: payload.issuedAt,
+    expiresAt: payload.expiresAt,
+  };
 }
 
 export type GateResult = {
@@ -152,23 +163,3 @@ export type GateResult = {
   reason?: string;
   expiresAt: string;
 };
-
-export async function checkEligibility(
-  env: Env,
-  address: string,
-): Promise<GateResult> {
-  const eligibleAddresses = new Set(
-    envCsv(env, "DEV_ELIGIBLE_ADDRESSES").map((a) => a.toLowerCase()),
-  );
-  const now = Date.now();
-  const ttlMs = 10 * 60_000;
-  const expiresAt = new Date(now + ttlMs).toISOString();
-
-  if (envBoolean(env, "DEV_BYPASS_GATE")) {
-    return { eligible: true, expiresAt };
-  }
-
-  if (eligibleAddresses.has(address.toLowerCase()))
-    return { eligible: true, expiresAt };
-  return { eligible: false, reason: "not_eligible", expiresAt };
-}

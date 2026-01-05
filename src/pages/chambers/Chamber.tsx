@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 
 import { Button } from "@/components/primitives/button";
@@ -15,45 +15,86 @@ import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { PageHeader } from "@/components/PageHeader";
 import { TierLabel } from "@/components/TierLabel";
-import { getChamberById } from "@/data/mock/chambers";
-import {
-  proposalStageOptions,
-  chamberProposals as proposals,
-  chamberGovernors as governors,
-  chamberThreads as threads,
-  chamberChatLog as chatLog,
-} from "@/data/mock/chamberDetail";
-import type { ProposalStage } from "@/data/mock/types";
+import type { ChamberProposalStageDto } from "@/types/api";
+import { apiChamber, apiChambers } from "@/lib/apiClient";
+import { NoDataYetBar } from "@/components/NoDataYetBar";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
-  const chamber = getChamberById(id);
-  const chamberTitle =
-    chamber?.name ?? (id ? id.replace(/-/g, " ") : "Chamber");
+  const [chamberTitle, setChamberTitle] = useState<string>(() =>
+    id ? id.replace(/-/g, " ") : "Chamber",
+  );
 
-  const [stageFilter, setStageFilter] = useState<ProposalStage>("upcoming");
+  const [data, setData] = useState<{
+    proposals: {
+      id: string;
+      title: string;
+      meta: string;
+      summary: string;
+      lead: string;
+      nextStep: string;
+      timing: string;
+      stage: ChamberProposalStageDto;
+    }[];
+    governors: { id: string; name: string; tier: string; focus: string }[];
+    threads: {
+      id: string;
+      title: string;
+      author: string;
+      replies: number;
+      updated: string;
+    }[];
+    chatLog: { id: string; author: string; message: string }[];
+    stageOptions: { value: ChamberProposalStageDto; label: string }[];
+  } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [stageFilter, setStageFilter] =
+    useState<ChamberProposalStageDto>("upcoming");
   const [governorSearch, setGovernorSearch] = useState("");
-  const [chatInput, setChatInput] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    (async () => {
+      try {
+        const [chamberRes, listRes] = await Promise.all([
+          apiChamber(id),
+          apiChambers(),
+        ]);
+        if (!active) return;
+        setData(chamberRes);
+        const found = listRes.items.find((c) => c.id === id);
+        setChamberTitle(found?.name ?? id.replace(/-/g, " "));
+        setLoadError(null);
+      } catch (error) {
+        if (!active) return;
+        setData(null);
+        setLoadError((error as Error).message);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   const filteredProposals = useMemo(
-    () => proposals.filter((proposal) => proposal.stage === stageFilter),
-    [stageFilter],
+    () =>
+      (data?.proposals ?? []).filter(
+        (proposal) => proposal.stage === stageFilter,
+      ),
+    [data, stageFilter],
   );
 
   const filteredGovernors = useMemo(() => {
     const term = governorSearch.toLowerCase();
-    return governors.filter(
+    return (data?.governors ?? []).filter(
       (gov) =>
         gov.name.toLowerCase().includes(term) ||
         gov.tier.toLowerCase().includes(term) ||
         gov.focus.toLowerCase().includes(term),
     );
-  }, [governorSearch]);
-
-  const handleChatSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    setChatInput("");
-  };
+  }, [data, governorSearch]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,6 +104,17 @@ const Chamber: React.FC = () => {
         title={<span className="capitalize">{chamberTitle}</span>}
         description="Proposal status, governor roster, and forum activity for this chamber."
       />
+
+      {loadError ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-destructive"
+        >
+          Chamber unavailable: {loadError}
+        </Surface>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <Card>
@@ -76,7 +128,7 @@ const Chamber: React.FC = () => {
               role="tablist"
               aria-label="Proposal stages"
             >
-              {proposalStageOptions.map((option) => {
+              {(data?.stageOptions ?? []).map((option) => {
                 const isSelected = stageFilter === option.value;
                 return (
                   <Button
@@ -89,8 +141,8 @@ const Chamber: React.FC = () => {
                     onClick={() => setStageFilter(option.value)}
                     className={
                       isSelected
-                        ? "border-[color:var(--glass-border-strong)] bg-[color:var(--btn-primary-active-bg)] text-[var(--primary-foreground)] shadow-[var(--shadow-primary)] [filter:saturate(1.35)]"
-                        : "border-border bg-[var(--panel)] text-muted hover:text-[var(--primary)]"
+                        ? "border-(--glass-border-strong) bg-(--btn-primary-active-bg) text-primary-foreground shadow-(--shadow-primary) filter-[saturate(1.35)]"
+                        : "border-border bg-panel text-muted hover:text-primary"
                     }
                   >
                     {option.label}
@@ -164,7 +216,7 @@ const Chamber: React.FC = () => {
               <CardTitle>Chamber roster</CardTitle>
             </div>
             <span className="rounded-full border border-border bg-panel-alt px-3 py-1 text-sm font-semibold">
-              {governors.length}
+              {data?.governors.length ?? 0}
             </span>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -222,26 +274,27 @@ const Chamber: React.FC = () => {
             <Kicker>Chamber forum</Kicker>
             <h2 className="text-lg font-semibold text-text">Threads & chat</h2>
           </div>
-          <Button variant="ghost" size="sm" className="self-center">
-            New thread
-          </Button>
         </header>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
           <div className="space-y-3">
-            {threads.map((thread) => (
-              <article key={thread.id} className="contents">
-                <Surface variant="panelAlt" className="px-4 py-3">
-                  <h3 className="text-base font-semibold text-text">
-                    {thread.title}
-                  </h3>
-                  <p className="text-sm text-muted">
-                    {thread.author} · {thread.replies} replies · Updated{" "}
-                    {thread.updated}
-                  </p>
-                </Surface>
-              </article>
-            ))}
+            {(data?.threads ?? []).length === 0 ? (
+              <NoDataYetBar label="threads" />
+            ) : (
+              (data?.threads ?? []).map((thread) => (
+                <article key={thread.id} className="contents">
+                  <Surface variant="panelAlt" className="px-4 py-3">
+                    <h3 className="text-base font-semibold text-text">
+                      {thread.title}
+                    </h3>
+                    <p className="text-sm text-muted">
+                      {thread.author} · {thread.replies} replies · Updated{" "}
+                      {thread.updated}
+                    </p>
+                  </Surface>
+                </article>
+              ))
+            )}
           </div>
 
           <Surface variant="panelAlt" className="p-4">
@@ -249,22 +302,16 @@ const Chamber: React.FC = () => {
               Chamber chat
             </header>
             <div className="my-3 max-h-64 space-y-2 overflow-auto pr-2 text-sm">
-              {chatLog.map((entry) => (
-                <p key={entry.id}>
-                  <strong>{entry.author}:</strong> {entry.message}
-                </p>
-              ))}
+              {(data?.chatLog ?? []).length === 0 ? (
+                <p className="text-muted">No chat messages yet.</p>
+              ) : (
+                (data?.chatLog ?? []).map((entry) => (
+                  <p key={entry.id}>
+                    <strong>{entry.author}:</strong> {entry.message}
+                  </p>
+                ))
+              )}
             </div>
-            <form className="flex gap-2" onSubmit={handleChatSubmit}>
-              <Input
-                value={chatInput}
-                onChange={(event) => setChatInput(event.target.value)}
-                placeholder="Send a message"
-              />
-              <Button type="submit" size="sm">
-                Send
-              </Button>
-            </form>
           </Surface>
         </div>
       </Surface>
