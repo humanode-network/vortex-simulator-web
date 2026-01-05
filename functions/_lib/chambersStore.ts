@@ -37,14 +37,7 @@ const DEFAULT_GENESIS_CHAMBERS: {
   id: string;
   title: string;
   multiplier: number;
-}[] = [
-  { id: "general", title: "General", multiplier: 1.2 },
-  { id: "design", title: "Design", multiplier: 1.4 },
-  { id: "engineering", title: "Engineering", multiplier: 1.5 },
-  { id: "economics", title: "Economics", multiplier: 1.3 },
-  { id: "marketing", title: "Marketing", multiplier: 1.1 },
-  { id: "product", title: "Product", multiplier: 1.2 },
-];
+}[] = [{ id: "general", title: "General", multiplier: 1.2 }];
 
 function normalizeId(value: string): string {
   return value.trim().toLowerCase();

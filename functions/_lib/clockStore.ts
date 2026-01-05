@@ -26,7 +26,8 @@ async function ensureClockRow(): Promise<ClockSnapshot> {
 export function createClockStore(env: Env): ClockStore {
   if (
     env.READ_MODELS_INLINE === "true" ||
-    env.READ_MODELS_INLINE_EMPTY === "true"
+    env.READ_MODELS_INLINE_EMPTY === "true" ||
+    !env.DATABASE_URL
   ) {
     return {
       get: async () => ensureClockRow(),

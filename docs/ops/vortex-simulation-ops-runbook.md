@@ -9,6 +9,13 @@ This document is the operational reference for running the simulation backend as
 
 Local dev details: `docs/simulation/vortex-simulation-local-dev.md`.
 
+## Persistence vs ephemeral mode
+
+- With `DATABASE_URL` configured, the simulation persists state in Postgres (recommended for public demos).
+- Without `DATABASE_URL`, the API runs in an in-memory fallback mode:
+  - reads return clean defaults
+  - writes are accepted but are not durable across deploys/worker restarts
+
 ## Admin auth
 
 Admin endpoints require an `x-admin-secret` header with `ADMIN_SECRET`, unless `DEV_BYPASS_ADMIN=true` is set for local dev.

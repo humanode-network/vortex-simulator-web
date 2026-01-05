@@ -56,6 +56,13 @@ const baseEnv = {
   SIM_ENABLE_STAGE_WINDOWS: "true",
   SIM_POOL_WINDOW_SECONDS: "1",
   SIM_VOTE_WINDOW_SECONDS: "1",
+  SIM_CONFIG_JSON: JSON.stringify({
+    genesisChambers: [
+      { id: "general", title: "General", multiplier: 1.2 },
+      { id: "engineering", title: "Engineering", multiplier: 1.5 },
+    ],
+    genesisChamberMembers: {},
+  }),
 };
 
 function makeDraftForm() {

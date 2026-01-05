@@ -28,6 +28,8 @@ Important: because the API runtime is Cloudflare Workers/Pages Functions (edge),
 
 - Recommended: **Neon Postgres** (works with `@neondatabase/serverless` + Drizzle).
 
+If `DATABASE_URL` is not configured, the API falls back to an **ephemeral in-memory mode** for read models + clock. This keeps the UI usable for quick demos, but it is not durable.
+
 ### Libraries / tools
 
 - **Drizzle ORM** (Postgres).

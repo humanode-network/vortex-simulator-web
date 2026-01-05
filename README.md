@@ -39,6 +39,10 @@ The UI reads from `/api/*` (Cloudflare Pages Functions). For local dev, run the 
 
 If only `yarn dev` runs, `/api/*` is not available and auth/gating/read pages will show an “API is not available” error.
 
+### Production note (Pages env)
+
+In production, Pages Functions use runtime env vars. If `DATABASE_URL` is not configured, the API falls back to an **ephemeral in-memory mode** (useful for quick demos, not durable). For a persistent public demo, set `DATABASE_URL` and run `yarn db:migrate` against that database.
+
 ### Backend docs
 
 - Start here: `docs/README.md`

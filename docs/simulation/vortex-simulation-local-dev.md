@@ -45,7 +45,7 @@ Production deploys the API as **Cloudflare Pages Functions** under `functions/`.
 These env vars are read by the API runtime (Pages Functions in production, Node runner locally).
 
 - `SESSION_SECRET` (required): used to sign `vortex_nonce` and `vortex_session` cookies.
-- `DATABASE_URL` (required for Phase 2c+): Postgres connection string (v1 expects Neon-compatible serverless Postgres).
+- `DATABASE_URL` (required for persistence): Postgres connection string (v1 expects Neon-compatible serverless Postgres).
 - `ADMIN_SECRET` (required for admin endpoints): must be provided via `x-admin-secret` header (unless `DEV_BYPASS_ADMIN=true`).
 - Humanode mainnet RPC URL can be configured in either place:
   - `HUMANODE_RPC_URL` (recommended for deployments), or
@@ -64,6 +64,7 @@ Local dev note:
 - Chambers bootstrap (recommended):
   - `public/sim-config.json` → `genesisChambers` defines the initial chamber set (id/title/multiplier).
   - The backend auto-seeds these into the canonical `chambers` table when the table is empty.
+  - Default in this repo: only the **General** chamber is seeded; specialization chambers are expected to be created via proposals.
 
 - `SIM_ACTIVE_GOVERNORS` (optional): active governors baseline used for quorum math (defaults to `150`).
 - `SIM_REQUIRED_POOL_VOTES` (optional): per-era required pool actions (defaults to `1`).
@@ -137,6 +138,20 @@ Notes:
 - The Node API runner defaults to **empty read models** when `DATABASE_URL` is not set (the UI should show “No … yet” on content pages).
 - To use the seeded fixtures locally (no DB), run with `READ_MODELS_INLINE=true`.
 - To force empty reads even if something is seeding locally, run with `READ_MODELS_INLINE_EMPTY=true`.
+
+## Production deploy notes (Cloudflare Pages)
+
+Pages Functions read environment variables at runtime. If `DATABASE_URL` is not set, the API runs in an **ephemeral in-memory mode** (useful for quick demos, not durable).
+
+For a persistent public demo:
+
+1. Provision a serverless Postgres database (Neon is the v1 target).
+2. Set Pages project environment variables:
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+   - `ADMIN_SECRET` (if admin endpoints are used)
+3. Run migrations against the DB:
+   - `yarn db:migrate`
 
 ### Wrangler-based dev (optional)
 

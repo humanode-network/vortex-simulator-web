@@ -47,6 +47,14 @@ function baseEnv(overrides = {}) {
     READ_MODELS_INLINE: "true",
     DEV_BYPASS_ADMIN: "true",
     SIM_ACTIVE_GOVERNORS: "3",
+    SIM_CONFIG_JSON: JSON.stringify({
+      genesisChambers: [
+        { id: "general", title: "General", multiplier: 1.2 },
+        { id: "engineering", title: "Engineering", multiplier: 1.5 },
+        { id: "economics", title: "Economics", multiplier: 1.3 },
+      ],
+      genesisChamberMembers: {},
+    }),
     ...overrides,
   };
 }
@@ -223,6 +231,10 @@ test("genesis chamber memberships from SIM_CONFIG_JSON allow initial chamber vot
   const genesisVoter = "5GenesisEng";
   const env = baseEnv({
     SIM_CONFIG_JSON: JSON.stringify({
+      genesisChambers: [
+        { id: "general", title: "General", multiplier: 1.2 },
+        { id: "engineering", title: "Engineering", multiplier: 1.5 },
+      ],
       genesisChamberMembers: { engineering: [genesisVoter] },
     }),
   });

@@ -56,6 +56,13 @@ const baseEnv = {
   DEV_INSECURE_COOKIES: "true",
   READ_MODELS_INLINE_EMPTY: "true",
   DEV_BYPASS_ADMIN: "true",
+  SIM_CONFIG_JSON: JSON.stringify({
+    genesisChambers: [
+      { id: "general", title: "General", multiplier: 1.2 },
+      { id: "engineering", title: "Engineering", multiplier: 1.5 },
+    ],
+    genesisChamberMembers: {},
+  }),
 };
 
 function makeDraftForm() {

@@ -32,6 +32,19 @@ export async function createReadModelsStore(
     };
   }
 
+  // Default to an in-memory empty store when DATABASE_URL is not configured.
+  // This keeps Pages deployments functional (ephemeral persistence) while still
+  // allowing full persistence when DATABASE_URL is present.
+  if (!env.DATABASE_URL) {
+    const map = await getEmptyReadModelsMap();
+    return {
+      get: async (key) => map.get(key) ?? null,
+      set: async (key, payload) => {
+        map.set(key, payload);
+      },
+    };
+  }
+
   const db = createDb(env);
   return {
     get: async (key) => {
