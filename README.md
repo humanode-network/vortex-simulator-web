@@ -59,7 +59,6 @@ In production, Pages Functions use runtime env vars. If `DATABASE_URL` is not co
 - `yarn dev` – start the dev server
 - `yarn dev:api` – run the Pages Functions API locally (Node runner)
 - `yarn dev:full` – run UI + API together (recommended)
-- `yarn dev:api:wrangler` – run the API via `wrangler pages dev` against `./dist`
 - `yarn build` – build the app
 - `yarn test` – run API/unit tests
 - `yarn prettier:check` / `yarn prettier:fix`
