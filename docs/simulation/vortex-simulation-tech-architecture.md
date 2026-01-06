@@ -35,7 +35,6 @@ If `DATABASE_URL` is not configured, the API falls back to an **ephemeral in-mem
 - **Drizzle ORM** (Postgres).
 - **zod** (request validation; used as needed).
 - **@polkadot/util-crypto** (+ **@polkadot/keyring** in tests) for Substrate signature verification and SS58 address handling.
-- **wrangler** for Workers deployment (already in repo).
 
 ### External reads (gating)
 

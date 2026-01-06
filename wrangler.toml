@@ -1,3 +1,0 @@
-name = "humanode-vortex-experimental-mockups"
-pages_build_output_dir = "./dist"
-send_metrics = false
