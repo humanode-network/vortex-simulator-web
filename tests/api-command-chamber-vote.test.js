@@ -1,20 +1,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as proposalsGet } from "../functions/api/proposals/index.ts";
-import { onRequestGet as chamberPageGet } from "../functions/api/proposals/[id]/chamber.ts";
-import { onRequestGet as formationPageGet } from "../functions/api/proposals/[id]/formation.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
-import { clearCmAwardsForTests } from "../functions/_lib/cmAwardsStore.ts";
-import { onRequestGet as humansGet } from "../functions/api/humans/index.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as proposalsGet } from "../api/routes/proposals/index.ts";
+import { onRequestGet as chamberPageGet } from "../api/routes/proposals/[id]/chamber.ts";
+import { onRequestGet as formationPageGet } from "../api/routes/proposals/[id]/formation.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
+import { clearCmAwardsForTests } from "../api/_lib/cmAwardsStore.ts";
+import { onRequestGet as humansGet } from "../api/routes/humans/index.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

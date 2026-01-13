@@ -5,7 +5,7 @@ import {
   castChamberVote,
   clearChamberVotesForTests,
   getChamberYesScoreAverage,
-} from "../functions/_lib/chamberVotesStore.ts";
+} from "../api/_lib/chamberVotesStore.ts";
 
 const env = {};
 

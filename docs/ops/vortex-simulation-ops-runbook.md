@@ -4,7 +4,15 @@ This document is the operational reference for running the simulation backend as
 
 ## Local vs production runtime
 
+<<<<<<< HEAD
 - Production: API handlers (`functions/`)
+=======
+<<<<<<< Updated upstream
+- Production: Cloudflare Pages Functions (`functions/`)
+=======
+- Production: API handlers (`api/`)
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 - Local: Node runner (`yarn dev:api`) with the UI proxy (`yarn dev` / `yarn dev:full`)
 
 Local dev details: `docs/simulation/vortex-simulation-local-dev.md`.

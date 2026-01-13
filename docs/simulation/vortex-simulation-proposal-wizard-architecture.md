@@ -38,7 +38,7 @@ For `kind: "system"`, the `systemAction` (or similar) further specifies the exac
 The draft payload becomes a discriminated union in both places:
 
 - Frontend draft state (wizard)
-- Backend validation (`functions/_lib/proposalDraftsStore.ts`)
+- Backend validation (`api/_lib/proposalDraftsStore.ts`)
 
 ## Template Registry (Wizard Definition)
 
@@ -105,7 +105,7 @@ Those are meaningful for projects, not for creating the chamber entity itself. P
 
 On acceptance (General chamber, vote → build), the backend already finalizes system actions:
 
-- `functions/_lib/proposalFinalizer.ts`
+- `api/_lib/proposalFinalizer.ts`
   - `createChamberFromAcceptedGeneralProposal(...)`
   - membership seeding from `metaGovernance.genesisMembers` + proposer
 
@@ -148,9 +148,9 @@ This is the “general” proposal creation flow used for proposals that represe
 
 Project proposals are submitted from drafts via:
 
-- `functions/api/command.ts` (`proposal.submitToPool`)
+- `api/routes/command.ts` (`proposal.submitToPool`)
 - draft storage + validation:
-  - `functions/_lib/proposalDraftsStore.ts` (`proposalDraftFormSchema`, `draftIsSubmittable`)
+  - `api/_lib/proposalDraftsStore.ts` (`proposalDraftFormSchema`, `draftIsSubmittable`)
 
 ## Address Handling (HMND)
 
@@ -163,7 +163,7 @@ Rules:
 
 Implementation helpers:
 
-- `functions/_lib/address.ts`
+- `api/_lib/address.ts`
   - `HUMANODE_SS58_FORMAT = 5234`
   - `canonicalizeHmndAddress(address)`
   - `addressesReferToSameKey(a, b)`
@@ -210,7 +210,7 @@ Tests:
 
 Current status:
 
-- Implemented in `functions/_lib/proposalDraftsStore.ts`:
+- Implemented in `api/_lib/proposalDraftsStore.ts`:
   - `templateId` discriminant with preprocessing + defaults
   - system drafts can omit project-only fields
 
@@ -251,7 +251,7 @@ Current status:
 
 ## Migration Notes (from current shape)
 
-Current state uses a “single big form” with `metaGovernance` optional (see `functions/_lib/proposalDraftsStore.ts`).
+Current state uses a “single big form” with `metaGovernance` optional (see `api/_lib/proposalDraftsStore.ts`).
 
 To migrate cleanly:
 

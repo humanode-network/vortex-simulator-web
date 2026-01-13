@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as proposalsGet } from "../functions/api/proposals/index.ts";
-import { onRequestGet as proposalPoolGet } from "../functions/api/proposals/[id]/pool.ts";
+import { onRequestGet as proposalsGet } from "../api/routes/proposals/index.ts";
+import { onRequestGet as proposalPoolGet } from "../api/routes/proposals/[id]/pool.ts";
 import {
   clearProposalsForTests,
   createProposal,
-} from "../functions/_lib/proposalsStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
+} from "../api/_lib/proposalsStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
 
 function makeContext({ url, env, params, method = "GET", headers }) {
   return {

@@ -5,8 +5,8 @@ import { Keyring } from "@polkadot/keyring";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { u8aToHex } from "@polkadot/util";
 
-import { onRequestPost as noncePost } from "../functions/api/auth/nonce.ts";
-import { onRequestPost as verifyPost } from "../functions/api/auth/verify.ts";
+import { onRequestPost as noncePost } from "../api/routes/auth/nonce.ts";
+import { onRequestPost as verifyPost } from "../api/routes/auth/verify.ts";
 
 function getSetCookies(response) {
   const maybe = response.headers.getSetCookie?.bind(response.headers);

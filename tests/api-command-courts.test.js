@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as courtsGet } from "../functions/api/courts/index.ts";
-import { onRequestGet as courtGet } from "../functions/api/courts/[id].ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearCourtsForTests } from "../functions/_lib/courtsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as courtsGet } from "../api/routes/courts/index.ts";
+import { onRequestGet as courtGet } from "../api/routes/courts/[id].ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearCourtsForTests } from "../api/_lib/courtsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

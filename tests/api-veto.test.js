@@ -1,26 +1,26 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestPost as tickPost } from "../functions/api/clock/tick.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestPost as tickPost } from "../api/routes/clock/tick.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
 import {
   awardCmOnce,
   clearCmAwardsForTests,
-} from "../functions/_lib/cmAwardsStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/cmAwardsStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 import {
   clearProposalsForTests,
   createProposal,
   getProposal,
-} from "../functions/_lib/proposalsStore.ts";
-import { clearVetoVotesForTests } from "../functions/_lib/vetoVotesStore.ts";
+} from "../api/_lib/proposalsStore.ts";
+import { clearVetoVotesForTests } from "../api/_lib/vetoVotesStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

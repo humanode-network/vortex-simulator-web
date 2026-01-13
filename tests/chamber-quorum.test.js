@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { evaluateChamberQuorum } from "../functions/_lib/chamberQuorum.ts";
+import { evaluateChamberQuorum } from "../api/_lib/chamberQuorum.ts";
 
 test("evaluateChamberQuorum requires quorum + passing", () => {
   const inputs = {

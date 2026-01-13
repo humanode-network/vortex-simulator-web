@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { projectFeedPageFromEvents } from "../functions/_lib/feedEventProjector.ts";
+import { projectFeedPageFromEvents } from "../api/_lib/feedEventProjector.ts";
 
 function makeItem(id, stage) {
   return {

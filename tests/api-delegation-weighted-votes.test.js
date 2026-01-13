@@ -1,17 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as chamberPageGet } from "../functions/api/proposals/[id]/chamber.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as chamberPageGet } from "../api/routes/proposals/[id]/chamber.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
-import { clearDelegationsForTests } from "../functions/_lib/delegationsStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
+import { clearDelegationsForTests } from "../api/_lib/delegationsStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

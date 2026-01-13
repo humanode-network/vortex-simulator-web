@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as tickPost } from "../functions/api/clock/tick.ts";
-import { clearClockForTests } from "../functions/_lib/clockStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
-import { clearEraRollupsForTests } from "../functions/_lib/eraRollupStore.ts";
+import { onRequestPost as tickPost } from "../api/routes/clock/tick.ts";
+import { clearClockForTests } from "../api/_lib/clockStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
+import { clearEraRollupsForTests } from "../api/_lib/eraRollupStore.ts";
 import {
   clearProposalsForTests,
   createProposal,
-} from "../functions/_lib/proposalsStore.ts";
+} from "../api/_lib/proposalsStore.ts";
 import {
   clearFeedEventsForTests,
   listFeedEventsPage,
-} from "../functions/_lib/eventsStore.ts";
+} from "../api/_lib/eventsStore.ts";
 
 function makeContext({ url, env, method = "POST", headers, body }) {
   return {

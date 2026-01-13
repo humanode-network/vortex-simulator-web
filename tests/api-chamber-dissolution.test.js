@@ -1,22 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestPost as tickPost } from "../functions/api/clock/tick.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
-import { clearChamberMembershipsForTests } from "../functions/_lib/chamberMembershipsStore.ts";
-import { clearChambersForTests } from "../functions/_lib/chambersStore.ts";
-import { clearCmAwardsForTests } from "../functions/_lib/cmAwardsStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearProposalDraftsForTests } from "../functions/_lib/proposalDraftsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestPost as tickPost } from "../api/routes/clock/tick.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
+import { clearChamberMembershipsForTests } from "../api/_lib/chamberMembershipsStore.ts";
+import { clearChambersForTests } from "../api/_lib/chambersStore.ts";
+import { clearCmAwardsForTests } from "../api/_lib/cmAwardsStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearProposalDraftsForTests } from "../api/_lib/proposalDraftsStore.ts";
 import {
   clearProposalsForTests,
   createProposal,
   getProposal,
-} from "../functions/_lib/proposalsStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { getChamber } from "../functions/_lib/chambersStore.ts";
+} from "../api/_lib/proposalsStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { getChamber } from "../api/_lib/chambersStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

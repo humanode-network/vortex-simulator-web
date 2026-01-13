@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as gateGet } from "../functions/api/gate/status.ts";
-import { onRequestPost as noncePost } from "../functions/api/auth/nonce.ts";
-import { onRequestPost as verifyPost } from "../functions/api/auth/verify.ts";
+import { onRequestGet as gateGet } from "../api/routes/gate/status.ts";
+import { onRequestPost as noncePost } from "../api/routes/auth/nonce.ts";
+import { onRequestPost as verifyPost } from "../api/routes/auth/verify.ts";
 
 function getSetCookies(response) {
   const maybe = response.headers.getSetCookie?.bind(response.headers);

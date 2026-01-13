@@ -5,25 +5,25 @@ import { Keyring } from "@polkadot/keyring";
 import { cryptoWaitReady, xxhashAsHex } from "@polkadot/util-crypto";
 import { u8aToHex } from "@polkadot/util";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as clockGet } from "../functions/api/clock/index.ts";
-import { onRequestPost as rollupEraPost } from "../functions/api/clock/rollup-era.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
-import { clearCourtsForTests } from "../functions/_lib/courtsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as clockGet } from "../api/routes/clock/index.ts";
+import { onRequestPost as rollupEraPost } from "../api/routes/clock/rollup-era.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
+import { clearCourtsForTests } from "../api/_lib/courtsStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 import {
   clearEraRollupsForTests,
   getEraUserStatus,
-} from "../functions/_lib/eraRollupStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
-import { clearFormationForTests } from "../functions/_lib/formationStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
+} from "../api/_lib/eraRollupStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
+import { clearFormationForTests } from "../api/_lib/formationStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

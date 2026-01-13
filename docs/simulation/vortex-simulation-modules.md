@@ -4,7 +4,7 @@ This document defines the major modules we are building, based on:
 
 - the Vortex 1.0 paper reference (`docs/paper/vortex-1.0-paper.md`)
 - the simulation domain docs (`docs/simulation/vortex-simulation-processes.md`, `docs/simulation/vortex-simulation-state-machines.md`)
-- the current repo implementation (frontend under `src/`, backend under `functions/`, DB in `db/`).
+- the current repo implementation (frontend under `src/`, backend under `api/`, DB in `db/`).
 
 Goal: keep a stable long-term architecture where each module has:
 
@@ -35,7 +35,7 @@ Goal: keep a stable long-term architecture where each module has:
 18. Chamber Multiplier Voting (outside-of-chamber aggregation)
 19. Meritocratic Measure (MM) (Formation delivery merit)
 
-Where possible we keep “domain logic” in pure helpers under `functions/_lib/*` so it can later be extracted into a shared domain package.
+Where possible we keep “domain logic” in pure helpers under `api/_lib/*` so it can later be extracted into a shared domain package.
 
 ---
 
@@ -53,9 +53,9 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `POST /api/auth/logout`
   - `GET /api/me`
 - Core files:
-  - `functions/_lib/auth.ts`, `functions/_lib/nonceStore.ts`
-  - `functions/_lib/signatures.ts`, `functions/_lib/tokens.ts`, `functions/_lib/cookies.ts`
-  - `functions/api/auth/*.ts`, `functions/api/me.ts`
+  - `api/_lib/auth.ts`, `api/_lib/nonceStore.ts`
+  - `api/_lib/signatures.ts`, `api/_lib/tokens.ts`, `api/_lib/cookies.ts`
+  - `api/routes/auth/*.ts`, `api/routes/me.ts`
 - State:
   - cookie-backed nonce + session
 
@@ -90,8 +90,8 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 - Endpoint:
   - `GET /api/gate/status`
 - Core files:
-  - `functions/_lib/gate.ts`, `functions/_lib/humanodeRpc.ts`, `functions/_lib/simConfig.ts`
-  - `functions/api/gate/status.ts`
+  - `api/_lib/gate.ts`, `api/_lib/humanodeRpc.ts`, `api/_lib/simConfig.ts`
+  - `api/routes/gate/status.ts`
 - State:
   - cached eligibility (DB mode) + TTL; falls back to memory in non-DB mode
 
@@ -117,7 +117,7 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 - Source:
   - `/sim-config.json` (`public/sim-config.json`)
 - Core files:
-  - `functions/_lib/simConfig.ts`
+  - `api/_lib/simConfig.ts`
 - Responsibilities:
   - provide a runtime Humanode RPC URL fallback
   - seed the initial chamber set (when empty)
@@ -143,9 +143,9 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `POST /api/clock/advance-era`
   - `POST /api/clock/rollup-era`
 - Core files:
-  - `functions/_lib/clockStore.ts`, `functions/_lib/eraStore.ts`, `functions/_lib/eraRollupStore.ts`
-  - `functions/_lib/eraQuotas.ts`, `functions/_lib/stageWindows.ts`, `functions/_lib/v1Constants.ts`
-  - `functions/api/clock/*.ts`
+  - `api/_lib/clockStore.ts`, `api/_lib/eraStore.ts`, `api/_lib/eraRollupStore.ts`
+  - `api/_lib/eraQuotas.ts`, `api/_lib/stageWindows.ts`, `api/_lib/v1Constants.ts`
+  - `api/routes/clock/*.ts`
 - State:
   - current era, per-era activity counters, era rollup results, next-era baselines
 
@@ -176,10 +176,10 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 **Backend**
 
 - Core files:
-  - `functions/_lib/poolQuorum.ts`
-  - `functions/_lib/chamberQuorum.ts`
-  - `functions/_lib/proposalStateMachine.ts`
-  - `functions/_lib/v1Constants.ts`
+  - `api/_lib/poolQuorum.ts`
+  - `api/_lib/chamberQuorum.ts`
+  - `api/_lib/proposalStateMachine.ts`
+  - `api/_lib/v1Constants.ts`
 - Note:
   - The quorum engine is driven by an era-specific “active governors baseline”, then filtered to the proposal’s chamber eligibility set (General = any governor; specialization = members eligible for that chamber).
 
@@ -215,11 +215,11 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
     - `pool.vote`
     - `chamber.vote`
 - Core files:
-  - `functions/api/proposals/*`
-  - `functions/api/command.ts`
-  - `functions/_lib/proposalDraftsStore.ts`, `functions/_lib/proposalsStore.ts`
-  - `functions/_lib/poolVotesStore.ts`, `functions/_lib/chamberVotesStore.ts`
-  - `functions/_lib/proposalProjector.ts`, `functions/_lib/proposalTimelineStore.ts`
+  - `api/routes/proposals/*`
+  - `api/routes/command.ts`
+  - `api/_lib/proposalDraftsStore.ts`, `api/_lib/proposalsStore.ts`
+  - `api/_lib/poolVotesStore.ts`, `api/_lib/chamberVotesStore.ts`
+  - `api/_lib/proposalProjector.ts`, `api/_lib/proposalTimelineStore.ts`
 - State:
   - canonical `proposals` + `proposal_drafts`
   - votes tables
@@ -273,10 +273,10 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `GET /api/chambers`
   - `GET /api/chambers/:id`
 - Core files:
-  - `functions/_lib/chambersStore.ts`
-  - `functions/_lib/chamberMembershipsStore.ts`
-  - `functions/api/chambers/*`
-  - `functions/api/command.ts` (meta-governance side-effects)
+  - `api/_lib/chambersStore.ts`
+  - `api/_lib/chamberMembershipsStore.ts`
+  - `api/routes/chambers/*`
+  - `api/routes/command.ts` (meta-governance side-effects)
 - State:
   - `chambers` (canonical)
   - `chamber_memberships` (eligibility)
@@ -312,8 +312,8 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 **Backend**
 
 - Core files:
-  - `functions/_lib/cmAwardsStore.ts`
-  - `functions/api/command.ts` (award on pass)
+  - `api/_lib/cmAwardsStore.ts`
+  - `api/routes/command.ts` (award on pass)
 
 **Tests**
 
@@ -341,8 +341,8 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `formation.milestone.submit`
   - `formation.milestone.requestUnlock`
 - Core files:
-  - `functions/_lib/formationStore.ts`
-  - `functions/api/formation/index.ts`
+  - `api/_lib/formationStore.ts`
+  - `api/routes/formation/index.ts`
 
 **Frontend**
 
@@ -371,8 +371,8 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `court.case.report`
   - `court.case.verdict`
 - Core files:
-  - `functions/_lib/courtsStore.ts`
-  - `functions/api/courts/*`
+  - `api/_lib/courtsStore.ts`
+  - `api/routes/courts/*`
 
 **Frontend**
 
@@ -397,9 +397,9 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 - Endpoint:
   - `GET /api/feed`
 - Core files:
-  - `functions/_lib/eventsStore.ts`, `functions/_lib/eventSchemas.ts`
-  - `functions/_lib/feedEventProjector.ts`
-  - `functions/_lib/appendEvents.ts`
+  - `api/_lib/eventsStore.ts`, `api/_lib/eventSchemas.ts`
+  - `api/_lib/feedEventProjector.ts`
+  - `api/_lib/appendEvents.ts`
 - State:
   - append-only `events` table
 
@@ -427,7 +427,7 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
 - Endpoint:
   - `GET /api/invision`
 - Core files:
-  - `functions/api/invision/index.ts`
+  - `api/routes/invision/index.ts`
 
 **Frontend**
 
@@ -445,9 +445,9 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `GET /api/humans/:id`
   - `GET /api/my-governance`
 - Core files:
-  - `functions/api/humans/*`
-  - `functions/api/my-governance/index.ts`
-  - `functions/_lib/userStore.ts`
+  - `api/routes/humans/*`
+  - `api/routes/my-governance/index.ts`
+  - `api/_lib/userStore.ts`
 
 **Frontend**
 
@@ -471,11 +471,11 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `POST /api/admin/users/unlock`
   - `POST /api/admin/writes/freeze`
 - Core files:
-  - `functions/_lib/apiRateLimitStore.ts`
-  - `functions/_lib/idempotencyStore.ts`
-  - `functions/_lib/actionLocksStore.ts`
-  - `functions/_lib/adminAuditStore.ts`
-  - `functions/_lib/adminStateStore.ts`
+  - `api/_lib/apiRateLimitStore.ts`
+  - `api/_lib/idempotencyStore.ts`
+  - `api/_lib/actionLocksStore.ts`
+  - `api/_lib/adminAuditStore.ts`
+  - `api/_lib/adminStateStore.ts`
 
 **Tests**
 
@@ -505,9 +505,9 @@ Where possible we keep “domain logic” in pure helpers under `functions/_lib/
   - `GET /api/my-governance`
   - `POST /api/clock/rollup-era`
 - Core files:
-  - `functions/_lib/eraRollupStore.ts`
-  - `functions/_lib/eraQuotas.ts`
-  - `functions/api/my-governance/index.ts`
+  - `api/_lib/eraRollupStore.ts`
+  - `api/_lib/eraQuotas.ts`
+  - `api/routes/my-governance/index.ts`
 
 **Frontend**
 

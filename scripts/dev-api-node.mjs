@@ -12,7 +12,7 @@ function setDefaultEnv() {
 
   // Ensure the backend always has access to sim config (RPC URL, genesis members)
   // even when requests come through a proxy and `request.url` origin isn't the API server.
-  // `functions/_lib/simConfig.ts` prefers `SIM_CONFIG_JSON` over fetching `/sim-config.json`.
+  // `api/_lib/simConfig.ts` prefers `SIM_CONFIG_JSON` over fetching `/sim-config.json`.
   if (!process.env.SIM_CONFIG_JSON) {
     try {
       const filepath = resolve(process.cwd(), "public", "sim-config.json");
@@ -49,125 +49,117 @@ function readBody(req) {
 
 function resolveRoute(pathname) {
   const patterns = [
-    ["GET", /^\/api\/health$/, () => import("../functions/api/health.ts")],
-    ["GET", /^\/api\/me$/, () => import("../functions/api/me.ts")],
+    ["GET", /^\/api\/health$/, () => import("../api/routes/health.ts")],
+    ["GET", /^\/api\/me$/, () => import("../api/routes/me.ts")],
     [
       "GET",
       /^\/api\/gate\/status$/,
-      () => import("../functions/api/gate/status.ts"),
+      () => import("../api/routes/gate/status.ts"),
     ],
     [
       "POST",
       /^\/api\/auth\/nonce$/,
-      () => import("../functions/api/auth/nonce.ts"),
+      () => import("../api/routes/auth/nonce.ts"),
     ],
     [
       "POST",
       /^\/api\/auth\/verify$/,
-      () => import("../functions/api/auth/verify.ts"),
+      () => import("../api/routes/auth/verify.ts"),
     ],
     [
       "POST",
       /^\/api\/auth\/logout$/,
-      () => import("../functions/api/auth/logout.ts"),
+      () => import("../api/routes/auth/logout.ts"),
     ],
-    ["POST", /^\/api\/command$/, () => import("../functions/api/command.ts")],
-    ["GET", /^\/api\/clock$/, () => import("../functions/api/clock/index.ts")],
+    ["POST", /^\/api\/command$/, () => import("../api/routes/command.ts")],
+    ["GET", /^\/api\/clock$/, () => import("../api/routes/clock/index.ts")],
     [
       "POST",
       /^\/api\/clock\/advance-era$/,
-      () => import("../functions/api/clock/advance-era.ts"),
+      () => import("../api/routes/clock/advance-era.ts"),
     ],
     [
       "POST",
       /^\/api\/clock\/rollup-era$/,
-      () => import("../functions/api/clock/rollup-era.ts"),
+      () => import("../api/routes/clock/rollup-era.ts"),
     ],
     [
       "GET",
       /^\/api\/chambers$/,
-      () => import("../functions/api/chambers/index.ts"),
+      () => import("../api/routes/chambers/index.ts"),
     ],
     [
       "GET",
       /^\/api\/chambers\/([^/]+)$/,
-      () => import("../functions/api/chambers/[id].ts"),
+      () => import("../api/routes/chambers/[id].ts"),
     ],
     [
       "GET",
       /^\/api\/proposals$/,
-      () => import("../functions/api/proposals/index.ts"),
+      () => import("../api/routes/proposals/index.ts"),
     ],
     [
       "GET",
       /^\/api\/proposals\/drafts$/,
-      () => import("../functions/api/proposals/drafts/index.ts"),
+      () => import("../api/routes/proposals/drafts/index.ts"),
     ],
     [
       "GET",
       /^\/api\/proposals\/drafts\/([^/]+)$/,
-      () => import("../functions/api/proposals/drafts/[id].ts"),
+      () => import("../api/routes/proposals/drafts/[id].ts"),
     ],
-    ["GET", /^\/api\/feed$/, () => import("../functions/api/feed/index.ts")],
+    ["GET", /^\/api\/feed$/, () => import("../api/routes/feed/index.ts")],
     [
       "GET",
       /^\/api\/proposals\/([^/]+)\/pool$/,
-      () => import("../functions/api/proposals/[id]/pool.ts"),
+      () => import("../api/routes/proposals/[id]/pool.ts"),
     ],
     [
       "GET",
       /^\/api\/proposals\/([^/]+)\/chamber$/,
-      () => import("../functions/api/proposals/[id]/chamber.ts"),
+      () => import("../api/routes/proposals/[id]/chamber.ts"),
     ],
     [
       "GET",
       /^\/api\/proposals\/([^/]+)\/formation$/,
-      () => import("../functions/api/proposals/[id]/formation.ts"),
+      () => import("../api/routes/proposals/[id]/formation.ts"),
     ],
-    [
-      "GET",
-      /^\/api\/courts$/,
-      () => import("../functions/api/courts/index.ts"),
-    ],
+    ["GET", /^\/api\/courts$/, () => import("../api/routes/courts/index.ts")],
     [
       "GET",
       /^\/api\/courts\/([^/]+)$/,
-      () => import("../functions/api/courts/[id].ts"),
+      () => import("../api/routes/courts/[id].ts"),
     ],
-    [
-      "GET",
-      /^\/api\/humans$/,
-      () => import("../functions/api/humans/index.ts"),
-    ],
+    ["GET", /^\/api\/humans$/, () => import("../api/routes/humans/index.ts")],
     [
       "GET",
       /^\/api\/humans\/([^/]+)$/,
-      () => import("../functions/api/humans/[id].ts"),
+      () => import("../api/routes/humans/[id].ts"),
     ],
     [
       "GET",
       /^\/api\/factions$/,
-      () => import("../functions/api/factions/index.ts"),
+      () => import("../api/routes/factions/index.ts"),
     ],
     [
       "GET",
       /^\/api\/factions\/([^/]+)$/,
-      () => import("../functions/api/factions/[id].ts"),
+      () => import("../api/routes/factions/[id].ts"),
     ],
     [
       "GET",
       /^\/api\/formation$/,
-      () => import("../functions/api/formation/index.ts"),
+      () => import("../api/routes/formation/index.ts"),
     ],
     [
       "GET",
       /^\/api\/invision$/,
-      () => import("../functions/api/invision/index.ts"),
+      () => import("../api/routes/invision/index.ts"),
     ],
     [
       "GET",
       /^\/api\/my-governance$/,
-      () => import("../functions/api/my-governance/index.ts"),
+      () => import("../api/routes/my-governance/index.ts"),
     ],
   ];
 

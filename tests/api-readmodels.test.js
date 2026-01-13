@@ -1,24 +1,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as chambersGet } from "../functions/api/chambers/index.ts";
-import { onRequestGet as chamberGet } from "../functions/api/chambers/[id].ts";
-import { onRequestGet as feedGet } from "../functions/api/feed/index.ts";
-import { onRequestGet as proposalsGet } from "../functions/api/proposals/index.ts";
-import { onRequestGet as proposalPoolGet } from "../functions/api/proposals/[id]/pool.ts";
-import { onRequestGet as courtsGet } from "../functions/api/courts/index.ts";
-import { onRequestGet as courtGet } from "../functions/api/courts/[id].ts";
-import { onRequestGet as humansGet } from "../functions/api/humans/index.ts";
-import { onRequestGet as humanGet } from "../functions/api/humans/[id].ts";
-import { onRequestGet as factionsGet } from "../functions/api/factions/index.ts";
-import { onRequestGet as factionGet } from "../functions/api/factions/[id].ts";
-import { onRequestGet as formationGet } from "../functions/api/formation/index.ts";
-import { onRequestGet as invisionGet } from "../functions/api/invision/index.ts";
-import { onRequestGet as myGovGet } from "../functions/api/my-governance/index.ts";
-import { onRequestGet as draftListGet } from "../functions/api/proposals/drafts/index.ts";
-import { onRequestGet as draftGet } from "../functions/api/proposals/drafts/[id].ts";
-import { onRequestGet as clockGet } from "../functions/api/clock/index.ts";
-import { onRequestPost as clockAdvancePost } from "../functions/api/clock/advance-era.ts";
+import { onRequestGet as chambersGet } from "../api/routes/chambers/index.ts";
+import { onRequestGet as chamberGet } from "../api/routes/chambers/[id].ts";
+import { onRequestGet as feedGet } from "../api/routes/feed/index.ts";
+import { onRequestGet as proposalsGet } from "../api/routes/proposals/index.ts";
+import { onRequestGet as proposalPoolGet } from "../api/routes/proposals/[id]/pool.ts";
+import { onRequestGet as courtsGet } from "../api/routes/courts/index.ts";
+import { onRequestGet as courtGet } from "../api/routes/courts/[id].ts";
+import { onRequestGet as humansGet } from "../api/routes/humans/index.ts";
+import { onRequestGet as humanGet } from "../api/routes/humans/[id].ts";
+import { onRequestGet as factionsGet } from "../api/routes/factions/index.ts";
+import { onRequestGet as factionGet } from "../api/routes/factions/[id].ts";
+import { onRequestGet as formationGet } from "../api/routes/formation/index.ts";
+import { onRequestGet as invisionGet } from "../api/routes/invision/index.ts";
+import { onRequestGet as myGovGet } from "../api/routes/my-governance/index.ts";
+import { onRequestGet as draftListGet } from "../api/routes/proposals/drafts/index.ts";
+import { onRequestGet as draftGet } from "../api/routes/proposals/drafts/[id].ts";
+import { onRequestGet as clockGet } from "../api/routes/clock/index.ts";
+import { onRequestPost as clockAdvancePost } from "../api/routes/clock/advance-era.ts";
 
 function makeContext({ url, env, params, method = "GET", headers }) {
   return {

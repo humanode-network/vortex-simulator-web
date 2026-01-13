@@ -23,7 +23,7 @@ This file records the v1 decisions used by the simulation backend so implementat
 
 ## Current v1 progress checkpoints
 
-- Backend exists in the repo (`functions/`, DB schema/migrations under `db/`, seed script under `scripts/`).
+- Backend exists in the repo (`api/`, DB schema/migrations under `db/`, seed script under `scripts/`).
 - Read endpoints exist and are wired to either:
   - Postgres-backed reads from `read_models` (requires `DATABASE_URL` + `yarn db:migrate && yarn db:seed`), or
   - Inline seed reads via `READ_MODELS_INLINE=true` (no DB required).

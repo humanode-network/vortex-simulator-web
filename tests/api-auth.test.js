@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as meGet } from "../functions/api/me.ts";
-import { onRequestPost as noncePost } from "../functions/api/auth/nonce.ts";
-import { onRequestPost as logoutPost } from "../functions/api/auth/logout.ts";
-import { onRequestPost as verifyPost } from "../functions/api/auth/verify.ts";
-import { canonicalizeHmndAddress } from "../functions/_lib/address.ts";
+import { onRequestGet as meGet } from "../api/routes/me.ts";
+import { onRequestPost as noncePost } from "../api/routes/auth/nonce.ts";
+import { onRequestPost as logoutPost } from "../api/routes/auth/logout.ts";
+import { onRequestPost as verifyPost } from "../api/routes/auth/verify.ts";
+import { canonicalizeHmndAddress } from "../api/_lib/address.ts";
 
 function getSetCookies(response) {
   // Node fetch supports getSetCookie(), but runtime-specific headers may not.

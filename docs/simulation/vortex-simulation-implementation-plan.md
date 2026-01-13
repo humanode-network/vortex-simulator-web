@@ -8,7 +8,15 @@ For a paper-aligned module map (paper → docs → code), see `docs/simulation/v
 
 Implemented (v1 simulation backend):
 
+<<<<<<< HEAD
 - API handlers under `functions/`
+=======
+<<<<<<< Updated upstream
+- Cloudflare Pages Functions under `functions/`
+=======
+- API handlers under `api/`
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 - Auth + gate (wallet signature + mainnet eligibility):
   - `GET /api/health`
   - `POST /api/auth/nonce` (sets `vortex_nonce` cookie)
@@ -36,7 +44,7 @@ Implemented (v1 simulation backend):
   - Clear script: `yarn db:clear` (wipe data, keep schema)
   - Seed tests: `tests/db-seed.test.js`, `tests/migrations.test.js`
 - Read endpoints for all pages (Phase 4 read-model bridge):
-  - `functions/api/*` serves Chambers, Proposals, Feed, Courts, Humans, Factions, Formation, Invision, My Governance
+  - `api/routes/*` serves Chambers, Proposals, Feed, Courts, Humans, Factions, Formation, Invision, My Governance
   - Clean-by-default mode supported (`READ_MODELS_INLINE_EMPTY=true`), with a shared UI empty state bar (`src/components/NoDataYetBar.tsx`)
 - Event log backbone:
   - `events` table + schemas + projector; Feed can be served from DB events in DB mode
@@ -268,7 +276,7 @@ Implemented so far:
    - `tests/migrations.test.js` asserts core tables are present in the migration.
    - `tests/db-seed.test.js` asserts the seed is deterministic, unique-keyed, and JSON-safe.
 4. Transitional read endpoints (Phase 2c/4 bridge):
-   - Read-model store: `functions/_lib/readModelsStore.ts` (DB mode via `DATABASE_URL` + inline mode via `READ_MODELS_INLINE=true`)
+   - Read-model store: `api/_lib/readModelsStore.ts` (DB mode via `DATABASE_URL` + inline mode via `READ_MODELS_INLINE=true`)
    - Endpoints: `GET /api/chambers`, `GET /api/proposals`, `GET /api/courts`, `GET /api/humans` (+ per-entity detail routes)
 5. Simulation clock (admin-only for advancement):
    - `GET /api/clock`
@@ -760,7 +768,7 @@ Tests:
 
 Current status:
 
-- A v1 state machine module exists (`functions/_lib/proposalStateMachine.ts`) with the core quorum-based advance rules.
+- A v1 state machine module exists (`api/_lib/proposalStateMachine.ts`) with the core quorum-based advance rules.
 - Commands validate stage against canonical proposals first (falling back to `read_models` for legacy seeded proposals).
 - `pool.vote` and `chamber.vote` can auto-advance proposals even when `read_models` are missing, by using canonical proposal state as the source of truth.
 - Canonical stage transitions are enforced via `transitionProposalStage(...)` (compare-and-set + transition validation), with coverage in tests.
@@ -837,7 +845,7 @@ Current status:
 - Chamber membership table added:
   - schema: `db/schema.ts` (`chamber_memberships`)
   - migration: `db/migrations/0016_chamber_memberships.sql`
-  - store: `functions/_lib/chamberMembershipsStore.ts`
+  - store: `api/_lib/chamberMembershipsStore.ts`
 - Eligibility is enforced in writes:
   - `POST /api/command` → `chamber.vote` rejects HTTP `403` when the voter is not eligible for the proposal’s lead chamber.
   - Dev bypass: `DEV_BYPASS_CHAMBER_ELIGIBILITY=true` (local/testing only).
@@ -937,7 +945,7 @@ Tests:
 
 Current status:
 
-- Enforcement is implemented in `functions/api/command.ts`:
+- Enforcement is implemented in `api/routes/command.ts`:
   - `proposal.submitToPool` returns:
     - `400` `invalid_chamber` when `draft.chamberId` is unknown
     - `409` `chamber_dissolved` when the chamber exists but is not active
@@ -964,8 +972,8 @@ Tests:
 
 Current status:
 
-- `functions/api/chambers/index.ts` supports `includeDissolved=true`.
-- Projections are implemented in `functions/_lib/chambersStore.ts` for both DB and inline mode.
+- `api/routes/chambers/index.ts` supports `includeDissolved=true`.
+- Projections are implemented in `api/_lib/chambersStore.ts` for both DB and inline mode.
 - Tests:
   - `tests/api-chambers-index-projection.test.js`
 
@@ -994,8 +1002,8 @@ Tests:
 
 Current status:
 
-- Draft schema supports `metaGovernance` in `functions/_lib/proposalDraftsStore.ts`.
-- `proposal.submitToPool` validates meta-governance payloads in `functions/api/command.ts`.
+- Draft schema supports `metaGovernance` in `api/_lib/proposalDraftsStore.ts`.
+- `proposal.submitToPool` validates meta-governance payloads in `api/routes/command.ts`.
 - On acceptance, the backend seeds `chamber_memberships` for proposer + genesis members.
 - Tests:
   - `tests/api-command-chamber-create-members.test.js`
@@ -1095,10 +1103,10 @@ Tests:
 Current status:
 
 - Timeline events are stored in the append-only `events` table as `proposal.timeline.v1` entries keyed by proposal ID:
-  - `functions/_lib/proposalTimelineStore.ts`
-  - `functions/api/proposals/[id]/timeline.ts`
+  - `api/_lib/proposalTimelineStore.ts`
+  - `api/routes/proposals/[id]/timeline.ts`
 - Commands append timeline events for proposal lifecycle actions (submission, votes, stage advancement, formation actions, and chamber create/dissolve side-effects):
-  - `functions/api/command.ts`
+  - `api/routes/command.ts`
 - Proposal pages render the timeline consistently:
   - `src/components/ProposalSections.tsx` → `ProposalTimelineCard`
   - `src/pages/proposals/ProposalPP.tsx`
@@ -1131,19 +1139,19 @@ Tests:
 Current status:
 
 - Era activity counters are stored per era (in-memory or Postgres):
-  - `functions/_lib/eraStore.ts`
+  - `api/_lib/eraStore.ts`
 - `rollupEra` computes per-address status and the next-era active denominator, and persists both:
-  - `functions/_lib/eraRollupStore.ts` writes:
+  - `api/_lib/eraRollupStore.ts` writes:
     - `era_rollups.active_governors_next_era`
     - `era_user_status.is_active_next_era`
 - “Active next era” is computed as:
   - meets the configured activity requirements for the rolled-up era, AND
   - is a Humanode validator (membership in `Session::Validators`) unless explicitly bypassed for local dev.
 - The Humanode validator set is read via RPC:
-  - `functions/_lib/humanodeRpc.ts` (`state_getStorage` for `Session::Validators`)
+  - `api/_lib/humanodeRpc.ts` (`state_getStorage` for `Session::Validators`)
 - The rollup endpoint also updates the next era’s snapshot baseline so proposal/quorum reads stay consistent:
-  - `functions/api/clock/rollup-era.ts`
-  - `functions/api/clock/tick.ts`
+  - `api/routes/clock/rollup-era.ts`
+  - `api/routes/clock/tick.ts`
 - Address handling is case-sensitive:
   - SS58 addresses are not lowercased anywhere; addresses are treated as opaque identifiers and only `trim()` is applied.
 
@@ -1177,9 +1185,9 @@ Tests:
 Implemented:
 
 - `db/schema.ts` + migration: `proposal_stage_denominators`
-- `functions/_lib/proposalStageDenominatorsStore.ts` (DB-backed, with memory fallback when `DATABASE_URL` is not set)
-- `functions/api/command.ts` captures denominators at stage entry and uses them for advancement checks
-- `functions/api/proposals/*` reads prefer stage denominators for pool/vote pages and list items
+- `api/_lib/proposalStageDenominatorsStore.ts` (DB-backed, with memory fallback when `DATABASE_URL` is not set)
+- `api/routes/command.ts` captures denominators at stage entry and uses them for advancement checks
+- `api/routes/proposals/*` reads prefer stage denominators for pool/vote pages and list items
 - Test: `tests/api-quorum-stage-denominators.test.js`
 
 ## Phase 29 — Delegation v1 (graph + history + chamber vote weighting) (DONE)
@@ -1212,11 +1220,11 @@ Implemented:
   - `db/schema.ts`: `delegations`, `delegation_events`
   - `db/migrations/0019_delegations.sql`
 - Store:
-  - `functions/_lib/delegationsStore.ts`
+  - `api/_lib/delegationsStore.ts`
 - Commands:
   - `POST /api/command`: `delegation.set`, `delegation.clear`
 - Weighted chamber vote counts:
-  - `functions/_lib/chamberVotesStore.ts` uses `delegations` to compute weighted `{ yes, no, abstain }` when `chamberId` is known.
+  - `api/_lib/chamberVotesStore.ts` uses `delegations` to compute weighted `{ yes, no, abstain }` when `chamberId` is known.
 - Tests:
   - `tests/delegations-cycle.test.js`
   - `tests/api-delegation-weighted-votes.test.js`
@@ -1244,10 +1252,10 @@ Implemented:
   - Migration: `db/migrations/0020_veto.sql`
   - Tables/columns: `db/schema.ts` (`proposals` veto fields + `veto_votes`)
 - Veto council derivation (paper intent: top LCM holders):
-  - `functions/_lib/vetoCouncilStore.ts` computes one holder per chamber (highest accumulated LCM from `cm_awards`).
+  - `api/_lib/vetoCouncilStore.ts` computes one holder per chamber (highest accumulated LCM from `cm_awards`).
   - Threshold is computed as `floor(2/3*n) + 1` and snapshotted onto the proposal.
 - Veto voting:
-  - `functions/_lib/vetoVotesStore.ts` stores votes in `veto_votes` (DB mode) with a safe in-memory fallback.
+  - `api/_lib/vetoVotesStore.ts` stores votes in `veto_votes` (DB mode) with a safe in-memory fallback.
   - `POST /api/command`: `veto.vote` records votes, emits timeline events, and applies veto when threshold is reached.
 - Stage behavior:
   - When chamber vote passes, the proposal can enter a pending-veto window (`vote_passed_at` / `vote_finalizes_at`).
@@ -1278,7 +1286,7 @@ Implemented:
   - Migration: `db/migrations/0021_chamber_multiplier_submissions.sql`
   - Table: `chamber_multiplier_submissions` (one submission per `(chamber_id, voter_address)`)
 - Store:
-  - `functions/_lib/chamberMultiplierSubmissionsStore.ts`
+  - `api/_lib/chamberMultiplierSubmissionsStore.ts`
 - Command:
   - `POST /api/command`: `chamber.multiplier.submit`
   - outsiders-only enforcement (LCM history blocks submissions)

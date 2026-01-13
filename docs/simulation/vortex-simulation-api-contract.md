@@ -21,7 +21,7 @@ Notes:
 
 ## Auth + gating
 
-Already implemented in `functions/api/*`:
+Already implemented in `api/routes/*`:
 
 - `GET /api/health` → `{ ok: true, service: string, time: string }`
 - `POST /api/auth/nonce` → `{ address }` → `{ nonce }` (+ `vortex_nonce` cookie)
@@ -561,7 +561,7 @@ Notes:
 
 ## Read endpoints
 
-These endpoints are implemented under `functions/api/*`.
+These endpoints are implemented under `api/routes/*`.
 
 In v1, most reads start from `read_models` (DB mode) or the inline seed (inline mode), then apply overlays from normalized state (votes, formation, courts, era) and canonical tables where needed.
 

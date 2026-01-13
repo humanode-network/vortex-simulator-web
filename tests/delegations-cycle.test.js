@@ -4,7 +4,7 @@ import { test } from "node:test";
 import {
   clearDelegationsForTests,
   setDelegation,
-} from "../functions/_lib/delegationsStore.ts";
+} from "../api/_lib/delegationsStore.ts";
 
 const env = {};
 

@@ -261,8 +261,8 @@ Chambers are now **canonical** (Phase 18):
   - `public/sim-config.json` → `genesisChambers`
   - the backend auto-seeds these into `chambers` if the table is empty
 - API:
-  - `functions/api/chambers/index.ts` returns the canonical list (with derived stats/pipeline where possible)
-  - `functions/api/chambers/[id].ts` returns a minimal canonical detail model (proposals/governors/threads/chat can be empty in v1)
+  - `api/routes/chambers/index.ts` returns the canonical list (with derived stats/pipeline where possible)
+  - `api/routes/chambers/[id].ts` returns a minimal canonical detail model (proposals/governors/threads/chat can be empty in v1)
 - UI:
   - `src/pages/chambers/Chambers.tsx` renders the directory from `GET /api/chambers`
   - `src/pages/chambers/Chamber.tsx` renders the detail page from `GET /api/chambers/:id`

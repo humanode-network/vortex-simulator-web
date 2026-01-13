@@ -1,25 +1,25 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as clockGet } from "../functions/api/clock/index.ts";
-import { onRequestPost as advanceEraPost } from "../functions/api/clock/advance-era.ts";
-import { onRequestPost as rollupEraPost } from "../functions/api/clock/rollup-era.ts";
-import { onRequestGet as poolPageGet } from "../functions/api/proposals/[id]/pool.ts";
-import { onRequestGet as chamberPageGet } from "../functions/api/proposals/[id]/chamber.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as clockGet } from "../api/routes/clock/index.ts";
+import { onRequestPost as advanceEraPost } from "../api/routes/clock/advance-era.ts";
+import { onRequestPost as rollupEraPost } from "../api/routes/clock/rollup-era.ts";
+import { onRequestGet as poolPageGet } from "../api/routes/proposals/[id]/pool.ts";
+import { onRequestGet as chamberPageGet } from "../api/routes/proposals/[id]/chamber.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
-import { clearClockForTests } from "../functions/_lib/clockStore.ts";
-import { clearEraRollupsForTests } from "../functions/_lib/eraRollupStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearProposalStageDenominatorsForTests } from "../functions/_lib/proposalStageDenominatorsStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
+import { clearClockForTests } from "../api/_lib/clockStore.ts";
+import { clearEraRollupsForTests } from "../api/_lib/eraRollupStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearProposalStageDenominatorsForTests } from "../api/_lib/proposalStageDenominatorsStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

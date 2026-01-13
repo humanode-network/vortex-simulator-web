@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as formationPageGet } from "../functions/api/proposals/[id]/formation.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearFormationForTests } from "../functions/_lib/formationStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as formationPageGet } from "../api/routes/proposals/[id]/formation.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearFormationForTests } from "../api/_lib/formationStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

@@ -1,24 +1,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearProposalDraftsForTests } from "../functions/_lib/proposalDraftsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearProposalDraftsForTests } from "../api/_lib/proposalDraftsStore.ts";
 import {
   clearProposalsForTests,
   createProposal,
   getProposal,
   transitionProposalStage,
-} from "../functions/_lib/proposalsStore.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/proposalsStore.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
   hasChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

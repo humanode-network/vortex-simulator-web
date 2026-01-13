@@ -102,8 +102,17 @@ Basic moderation/ops endpoints were added for the simulator:
 
 ## How to try it (quick)
 
+<<<<<<< Updated upstream
 - Local full-stack (UI + Functions): run `yarn dev:full`.
+<<<<<<< HEAD
 - If `/api/*` is missing: use the API handlers flow described in `docs/vortex-simulation-local-dev.md`.
+=======
+- If `/api/*` is missing: use the Pages Functions flow described in `docs/vortex-simulation-local-dev.md`.
+=======
+- Local full-stack (UI + API): run `yarn dev:full`.
+- If `/api/*` is missing: use the API handlers flow described in `docs/simulation/vortex-simulation-local-dev.md`.
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 
 ## What’s next
 

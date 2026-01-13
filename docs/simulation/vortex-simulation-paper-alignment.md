@@ -4,7 +4,7 @@ This document compares:
 
 - `docs/paper/vortex-1.0-paper.md` (working reference copy) and
 - the simulation docs (`docs/simulation/vortex-simulation-*.md`) and
-- the current implementation (`functions/`, `db/schema.ts`, `src/`).
+- the current implementation (`api/`, `db/schema.ts`, `src/`).
 
 Goal: make it explicit what is **paper-aligned**, what is **deliberately simplified in v1**, and what is **not implemented yet**.
 
@@ -33,7 +33,7 @@ Goal: make it explicit what is **paper-aligned**, what is **deliberately simplif
 - Canonical chambers exist in `db/schema.ts` as `chambers` with `status = active | dissolved`.
 - Chambers are seeded from `/sim-config.json` (`public/sim-config.json`) when the DB table is empty.
 - Chamber create/dissolve exists as a **meta-governance proposal** action and is enforced as **General-only**:
-  - `functions/api/command.ts` rejects meta-governance proposals unless `chamberId === "general"`.
+  - `api/routes/command.ts` rejects meta-governance proposals unless `chamberId === "general"`.
 - Dissolution is **General-only** (v1 rule) and does not delete history.
 
 **Not yet modeled (paper)**
@@ -52,7 +52,7 @@ Goal: make it explicit what is **paper-aligned**, what is **deliberately simplif
 
 **Simulation v1**
 
-- Quorum math is implemented in `functions/_lib/poolQuorum.ts`:
+- Quorum math is implemented in `api/_lib/poolQuorum.ts`:
   - `V1_POOL_ATTENTION_QUORUM_FRACTION = 0.22` (22%)
   - `V1_POOL_UPVOTE_FLOOR_FRACTION = 0.1` (10%)
 - Pool voting is restricted to governors (addresses with at least one accepted proposal in any chamber).
@@ -71,7 +71,7 @@ Goal: make it explicit what is **paper-aligned**, what is **deliberately simplif
 
 **Simulation v1**
 
-- Quorum math is implemented in `functions/_lib/chamberQuorum.ts`:
+- Quorum math is implemented in `api/_lib/chamberQuorum.ts`:
   - `V1_CHAMBER_QUORUM_FRACTION = 0.33`
   - `V1_CHAMBER_PASSING_FRACTION = 2/3` (66.6%), applied as a strict “66.6% + 1 yes vote” rule
 - Delegation is implemented and affects chamber vote aggregation:
@@ -129,7 +129,7 @@ Goal: make it explicit what is **paper-aligned**, what is **deliberately simplif
 **Simulation v1**
 
 - Yes-vote scoring exists, and CM awards are computed on pass:
-  - `functions/api/command.ts` computes `avgScore` and awards a CM event once per proposal.
+  - `api/routes/command.ts` computes `avgScore` and awards a CM event once per proposal.
   - `lcmPoints = round(avgScore * 10)`, `mcmPoints = lcmPoints * multiplier`.
 - Multipliers are stored on the canonical chamber record (`multiplierTimes10`) and can be updated via outsider submissions:
   - `chamber_multiplier_submissions` stores one submission per `(chamber, voter)`.

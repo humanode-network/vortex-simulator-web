@@ -1,17 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as chamberGet } from "../functions/api/chambers/[id].ts";
+import { onRequestGet as chamberGet } from "../api/routes/chambers/[id].ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
-import { clearChambersForTests } from "../functions/_lib/chambersStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
+import { clearChambersForTests } from "../api/_lib/chambersStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 import {
   clearProposalsForTests,
   createProposal,
-} from "../functions/_lib/proposalsStore.ts";
+} from "../api/_lib/proposalsStore.ts";
 
 function makeContext({ url, env, params, method = "GET", headers, body }) {
   return {

@@ -5,7 +5,7 @@ import {
   clearProposalDraftsForTests,
   listDrafts,
   seedLegacyDraftForTests,
-} from "../functions/_lib/proposalDraftsStore.ts";
+} from "../api/_lib/proposalDraftsStore.ts";
 
 test("proposal drafts: legacy project payloads infer templateId", async () => {
   clearProposalDraftsForTests();

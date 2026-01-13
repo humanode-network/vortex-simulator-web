@@ -1,25 +1,25 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as draftsGet } from "../functions/api/proposals/drafts/index.ts";
-import { onRequestGet as draftGet } from "../functions/api/proposals/drafts/[id].ts";
-import { onRequestGet as proposalsGet } from "../functions/api/proposals/index.ts";
-import { onRequestGet as proposalPoolGet } from "../functions/api/proposals/[id]/pool.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearProposalDraftsForTests } from "../functions/_lib/proposalDraftsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as draftsGet } from "../api/routes/proposals/drafts/index.ts";
+import { onRequestGet as draftGet } from "../api/routes/proposals/drafts/[id].ts";
+import { onRequestGet as proposalsGet } from "../api/routes/proposals/index.ts";
+import { onRequestGet as proposalPoolGet } from "../api/routes/proposals/[id]/pool.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearProposalDraftsForTests } from "../api/_lib/proposalDraftsStore.ts";
 import {
   clearProposalsForTests,
   getProposal,
-} from "../functions/_lib/proposalsStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
+} from "../api/_lib/proposalsStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

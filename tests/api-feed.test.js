@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as feedGet } from "../functions/api/feed/index.ts";
+import { onRequestGet as feedGet } from "../api/routes/feed/index.ts";
 
 function makeContext({ url, env, params, method = "GET", headers }) {
   return {

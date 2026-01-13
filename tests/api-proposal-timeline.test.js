@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as timelineGet } from "../functions/api/proposals/[id]/timeline.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearProposalDraftsForTests } from "../functions/_lib/proposalDraftsStore.ts";
-import { clearProposalsForTests } from "../functions/_lib/proposalsStore.ts";
-import { clearProposalTimelineForTests } from "../functions/_lib/proposalTimelineStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as timelineGet } from "../api/routes/proposals/[id]/timeline.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearProposalDraftsForTests } from "../api/_lib/proposalDraftsStore.ts";
+import { clearProposalsForTests } from "../api/_lib/proposalsStore.ts";
+import { clearProposalTimelineForTests } from "../api/_lib/proposalTimelineStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

@@ -6,7 +6,7 @@ import {
   createProposal,
   getProposal,
   transitionProposalStage,
-} from "../functions/_lib/proposalsStore.ts";
+} from "../api/_lib/proposalsStore.ts";
 
 const env = {};
 

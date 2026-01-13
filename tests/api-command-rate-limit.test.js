@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearApiRateLimitsForTests } from "../functions/_lib/apiRateLimitStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearApiRateLimitsForTests } from "../api/_lib/apiRateLimitStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

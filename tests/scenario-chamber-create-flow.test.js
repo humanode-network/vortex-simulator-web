@@ -1,24 +1,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as chambersGet } from "../functions/api/chambers/index.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearApiRateLimitsForTests } from "../functions/_lib/apiRateLimitStore.ts";
-import { clearChamberVotesForTests } from "../functions/_lib/chamberVotesStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as chambersGet } from "../api/routes/chambers/index.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearApiRateLimitsForTests } from "../api/_lib/apiRateLimitStore.ts";
+import { clearChamberVotesForTests } from "../api/_lib/chamberVotesStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
-import { clearChambersForTests } from "../functions/_lib/chambersStore.ts";
-import { clearCmAwardsForTests } from "../functions/_lib/cmAwardsStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearProposalsForTests } from "../functions/_lib/proposalsStore.ts";
-import { clearProposalDraftsForTests } from "../functions/_lib/proposalDraftsStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
-import { clearVetoVotesForTests } from "../functions/_lib/vetoVotesStore.ts";
-import { getProposal } from "../functions/_lib/proposalsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
+import { clearChambersForTests } from "../api/_lib/chambersStore.ts";
+import { clearCmAwardsForTests } from "../api/_lib/cmAwardsStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearProposalsForTests } from "../api/_lib/proposalsStore.ts";
+import { clearProposalDraftsForTests } from "../api/_lib/proposalDraftsStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
+import { clearVetoVotesForTests } from "../api/_lib/vetoVotesStore.ts";
+import { getProposal } from "../api/_lib/proposalsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

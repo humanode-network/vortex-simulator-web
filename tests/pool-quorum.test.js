@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { evaluatePoolQuorum } from "../functions/_lib/poolQuorum.ts";
+import { evaluatePoolQuorum } from "../api/_lib/poolQuorum.ts";
 
 test("evaluatePoolQuorum uses ceil for engagedNeeded", () => {
   const result = evaluatePoolQuorum(

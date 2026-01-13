@@ -154,7 +154,15 @@ For a persistent public demo:
 ## Type checking
 
 - UI + client types: `yarn exec tsc -p tsconfig.json --noEmit`
+<<<<<<< HEAD
 - API handlers: `yarn exec tsc -p functions/tsconfig.json --noEmit`
+=======
+<<<<<<< Updated upstream
+- Pages Functions API: `yarn exec tsc -p functions/tsconfig.json --noEmit`
+=======
+- API handlers: `yarn exec tsc -p api/tsconfig.json --noEmit`
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 
 ## DB (Phase 2c)
 

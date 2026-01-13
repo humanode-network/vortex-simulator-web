@@ -13,7 +13,15 @@ Humanode mainnet is used only as a read-only eligibility gate; all simulated gov
 - Rsbuild
 - Tailwind v4 (via PostCSS) + token-driven CSS (`src/styles/base.css`)
 - Yarn (Node version: `.node-version`)
+<<<<<<< HEAD
 - API handlers in `functions/` + Postgres via Drizzle
+=======
+<<<<<<< Updated upstream
+- Pages Functions API in `functions/` + Postgres via Drizzle
+=======
+- API handlers in `api/` + Postgres via Drizzle
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 
 ## Getting Started
 
@@ -74,7 +82,15 @@ In production, API handlers use runtime env vars. If `DATABASE_URL` is not confi
 - `src/data` – glossary (vortexopedia), page hints/tutorial content
 - `src/pages` – feature pages (proposals, human-nodes, formations, chambers, factions, courts, feed, profile, invision, etc.)
 - `src/styles` – base/global styles
+<<<<<<< HEAD
 - `functions/` – API handlers (`/api/*`) + shared server helpers
+=======
+<<<<<<< Updated upstream
+- `functions/` – Pages Functions API (`/api/*`) + shared server helpers
+=======
+- `api/` – API handlers (`/api/*`) + shared server helpers
+>>>>>>> Stashed changes
+>>>>>>> 5e32f02 (Eliminated functions (getting ready for migration))
 - `db/` – Drizzle schema + migrations + seed builders
 - `scripts/` – DB seed/clear + local API runner
 - `prolog/vortexopedia.pl` – Prolog glossary mirror

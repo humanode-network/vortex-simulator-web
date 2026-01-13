@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { onRequestGet as humanGet } from "../functions/api/humans/[id].ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearChambersForTests } from "../functions/_lib/chambersStore.ts";
-import { clearChamberMultiplierSubmissionsForTests } from "../functions/_lib/chamberMultiplierSubmissionsStore.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { onRequestGet as humanGet } from "../api/routes/humans/[id].ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearChambersForTests } from "../api/_lib/chambersStore.ts";
+import { clearChamberMultiplierSubmissionsForTests } from "../api/_lib/chamberMultiplierSubmissionsStore.ts";
 import {
   awardCmOnce,
   clearCmAwardsForTests,
-} from "../functions/_lib/cmAwardsStore.ts";
+} from "../api/_lib/cmAwardsStore.ts";
 import {
   clearInlineReadModelsForTests,
   createReadModelsStore,
-} from "../functions/_lib/readModelsStore.ts";
+} from "../api/_lib/readModelsStore.ts";
 
 function makeContext({ url, env, params, method = "POST", headers, body }) {
   return {

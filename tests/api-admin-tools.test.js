@@ -1,25 +1,25 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { onRequestGet as auditGet } from "../functions/api/admin/audit/index.ts";
-import { onRequestGet as statsGet } from "../functions/api/admin/stats.ts";
-import { onRequestGet as adminUserGet } from "../functions/api/admin/users/[address].ts";
-import { onRequestGet as adminLocksGet } from "../functions/api/admin/users/locks.ts";
-import { onRequestPost as adminLockPost } from "../functions/api/admin/users/lock.ts";
-import { onRequestPost as adminUnlockPost } from "../functions/api/admin/users/unlock.ts";
-import { onRequestPost as commandPost } from "../functions/api/command.ts";
-import { getSessionCookieName, issueSession } from "../functions/_lib/auth.ts";
-import { clearActionLocksForTests } from "../functions/_lib/actionLocksStore.ts";
-import { clearAdminAuditForTests } from "../functions/_lib/adminAuditStore.ts";
-import { clearApiRateLimitsForTests } from "../functions/_lib/apiRateLimitStore.ts";
-import { clearEraForTests } from "../functions/_lib/eraStore.ts";
-import { clearIdempotencyForTests } from "../functions/_lib/idempotencyStore.ts";
-import { clearPoolVotesForTests } from "../functions/_lib/poolVotesStore.ts";
-import { clearInlineReadModelsForTests } from "../functions/_lib/readModelsStore.ts";
+import { onRequestGet as auditGet } from "../api/routes/admin/audit/index.ts";
+import { onRequestGet as statsGet } from "../api/routes/admin/stats.ts";
+import { onRequestGet as adminUserGet } from "../api/routes/admin/users/[address].ts";
+import { onRequestGet as adminLocksGet } from "../api/routes/admin/users/locks.ts";
+import { onRequestPost as adminLockPost } from "../api/routes/admin/users/lock.ts";
+import { onRequestPost as adminUnlockPost } from "../api/routes/admin/users/unlock.ts";
+import { onRequestPost as commandPost } from "../api/routes/command.ts";
+import { getSessionCookieName, issueSession } from "../api/_lib/auth.ts";
+import { clearActionLocksForTests } from "../api/_lib/actionLocksStore.ts";
+import { clearAdminAuditForTests } from "../api/_lib/adminAuditStore.ts";
+import { clearApiRateLimitsForTests } from "../api/_lib/apiRateLimitStore.ts";
+import { clearEraForTests } from "../api/_lib/eraStore.ts";
+import { clearIdempotencyForTests } from "../api/_lib/idempotencyStore.ts";
+import { clearPoolVotesForTests } from "../api/_lib/poolVotesStore.ts";
+import { clearInlineReadModelsForTests } from "../api/_lib/readModelsStore.ts";
 import {
   clearChamberMembershipsForTests,
   ensureChamberMembership,
-} from "../functions/_lib/chamberMembershipsStore.ts";
+} from "../api/_lib/chamberMembershipsStore.ts";
 
 function makeContext({ url, env, params, method = "GET", headers, body }) {
   return {
