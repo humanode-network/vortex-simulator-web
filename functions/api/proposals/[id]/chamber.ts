@@ -17,7 +17,7 @@ function normalizeChamberId(chamberLabel: string): string {
   return (match?.[1] ?? chamberLabel).toLowerCase();
 }
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const id = context.params?.id;
     if (!id) return errorResponse(400, "Missing proposal id");

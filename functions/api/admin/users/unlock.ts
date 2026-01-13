@@ -9,7 +9,7 @@ const schema = z.object({
   address: z.string().min(1),
 });
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
   } catch (error) {

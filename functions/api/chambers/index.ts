@@ -5,7 +5,7 @@ import {
   projectChamberStats,
 } from "../../_lib/chambersStore.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     if (context.env.READ_MODELS_INLINE_EMPTY === "true") {
       return jsonResponse({ items: [] });

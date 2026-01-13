@@ -20,7 +20,7 @@ function envInt(
   return Math.floor(n);
 }
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const store = await createReadModelsStore(context.env);
     const payload = await store.get("my-governance:summary");

@@ -2,7 +2,7 @@ import { createReadModelsStore } from "../../_lib/readModelsStore.ts";
 import { errorResponse, jsonResponse } from "../../_lib/http.ts";
 import { getAcmDelta } from "../../_lib/cmAwardsStore.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const id = context.params?.id;
     if (!id) return errorResponse(400, "Missing human id");

@@ -36,7 +36,7 @@ function encodeCursor(input: { ts: string; id: string } | { seq: number }) {
   return base64UrlEncode(bytes);
 }
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const url = new URL(context.request.url);
     const stage = url.searchParams.get("stage");

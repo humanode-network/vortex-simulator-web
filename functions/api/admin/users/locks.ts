@@ -2,7 +2,7 @@ import { assertAdmin } from "../../../_lib/clockStore.ts";
 import { createActionLocksStore } from "../../../_lib/actionLocksStore.ts";
 import { errorResponse, jsonResponse } from "../../../_lib/http.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
   } catch (error) {

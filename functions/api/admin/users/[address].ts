@@ -4,7 +4,7 @@ import { getEraQuotaConfig } from "../../../_lib/eraQuotas.ts";
 import { getUserEraActivity } from "../../../_lib/eraStore.ts";
 import { errorResponse, jsonResponse } from "../../../_lib/http.ts";
 
-export const onRequestGet: PagesFunction<{ address: string }> = async (
+export const onRequestGet: ApiHandler<{ address: string }> = async (
   context,
 ) => {
   try {

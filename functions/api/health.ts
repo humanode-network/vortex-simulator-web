@@ -1,6 +1,6 @@
 import { jsonResponse } from "../_lib/http.ts";
 
-export const onRequest: PagesFunction = async () => {
+export const onRequest: ApiHandler = async () => {
   return jsonResponse({
     ok: true,
     service: "vortex-simulation-api",

@@ -11,7 +11,7 @@ const schema = z.object({
   reason: z.string().min(1).optional(),
 });
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
   } catch (error) {

@@ -7,7 +7,7 @@ import {
 } from "../../../_lib/proposalDraftsStore.ts";
 import { getUserTier } from "../../../_lib/userTier.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const id = context.params?.id;
     if (!id) return errorResponse(400, "Missing draft id");

@@ -15,7 +15,7 @@ type Body = {
   signature?: string;
 };
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   let body: Body;
   try {
     body = await readJson<Body>(context.request);

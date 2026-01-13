@@ -4,7 +4,7 @@ import { errorResponse, jsonResponse } from "../../../_lib/http.ts";
 
 const DEFAULT_LIMIT = 50;
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
   } catch (error) {

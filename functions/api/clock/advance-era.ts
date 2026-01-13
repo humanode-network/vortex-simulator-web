@@ -2,7 +2,7 @@ import { assertAdmin, createClockStore } from "../../_lib/clockStore.ts";
 import { ensureEraSnapshot } from "../../_lib/eraStore.ts";
 import { errorResponse, jsonResponse } from "../../_lib/http.ts";
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
     const clock = createClockStore(context.env);

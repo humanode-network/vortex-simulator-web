@@ -19,7 +19,7 @@ import {
   stageWindowsEnabled,
 } from "../../_lib/stageWindows.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const store = await createReadModelsStore(context.env);
     const now = getSimNow(context.env);

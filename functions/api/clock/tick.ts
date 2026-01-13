@@ -29,7 +29,7 @@ function getEraSeconds(env: Env): number {
   return V1_ERA_SECONDS_DEFAULT;
 }
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
 

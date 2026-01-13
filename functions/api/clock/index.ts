@@ -3,7 +3,7 @@ import { getActiveGovernorsForCurrentEra } from "../../_lib/eraStore.ts";
 import { getEraRollupMeta } from "../../_lib/eraRollupStore.ts";
 import { errorResponse, jsonResponse } from "../../_lib/http.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const clock = createClockStore(context.env);
     const snapshot = await clock.get();

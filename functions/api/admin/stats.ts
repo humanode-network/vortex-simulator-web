@@ -59,7 +59,7 @@ async function getWritesFrozen(env: Env): Promise<boolean> {
   return rows[0]?.writesFrozen ?? false;
 }
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     assertAdmin(context);
   } catch (error) {

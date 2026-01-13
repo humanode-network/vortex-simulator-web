@@ -274,7 +274,7 @@ const commandSchema = z.discriminatedUnion("type", [
 
 type CommandInput = z.infer<typeof commandSchema>;
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost: ApiHandler = async (context) => {
   let body: unknown;
   try {
     body = await readJson(context.request);

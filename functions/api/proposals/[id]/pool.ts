@@ -9,7 +9,7 @@ import { V1_ACTIVE_GOVERNORS_FALLBACK } from "../../../_lib/v1Constants.ts";
 import { getSimConfig } from "../../../_lib/simConfig.ts";
 import { resolveUserTierFromSimConfig } from "../../../_lib/userTier.ts";
 
-export const onRequestGet: PagesFunction = async (context) => {
+export const onRequestGet: ApiHandler = async (context) => {
   try {
     const id = context.params?.id;
     if (!id) return errorResponse(400, "Missing proposal id");
