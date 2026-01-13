@@ -8,7 +8,7 @@ For a paper-aligned module map (paper → docs → code), see `docs/simulation/v
 
 Implemented (v1 simulation backend):
 
-- Cloudflare Pages Functions under `functions/`
+- API handlers under `functions/`
 - Auth + gate (wallet signature + mainnet eligibility):
   - `GET /api/health`
   - `POST /api/auth/nonce` (sets `vortex_nonce` cookie)
@@ -83,7 +83,7 @@ Each phase is considered “done” only when tests are added and run.
 Testing layers:
 
 1. **Unit tests** (pure TS): state machines, invariants, calculations (quorums, passing rules, tier rules).
-2. **API integration tests**: call Pages Functions handlers with `Request` objects and assert status/JSON/cookies.
+2. **API integration tests**: call API handlers with `Request` objects and assert status/JSON/cookies.
 3. **DB integration tests** (once DB exists): migrations apply, basic queries work, constraints enforced.
 
 Test execution policy:
@@ -91,7 +91,7 @@ Test execution policy:
 - Add a `yarn test` script and run it after each feature batch.
 - Keep CI in sync (extend `.github/workflows/code.yml` to run `yarn test` and `yarn build` once tests exist).
 
-Tooling note: Pages Functions handlers are tested directly via `Request` objects (no browser/manual flow needed for API testing).
+Tooling note: API handlers are tested directly via `Request` objects (no browser/manual flow needed for API testing).
 
 ## Execution sequence (phases in order)
 
@@ -230,7 +230,7 @@ Tests:
 
 Delivered in this repo:
 
-- Pages Functions routes: `health`, `auth`, `me`, `gate`
+- API handlers routes: `health`, `auth`, `me`, `gate`
 - Cookie-signed nonce/session (requires `SESSION_SECRET`)
 - Dev bypass knobs while we build real auth/gate
 
@@ -249,7 +249,7 @@ Tests (implemented):
 Implementation:
 
 - `tests/` folder + `yarn test` script are in place.
-- Tests import Pages Functions handlers directly and exercise them with synthetic `Request` objects.
+- Tests import API handlers directly and exercise them with synthetic `Request` objects.
 - CI runs `yarn test` (see `.github/workflows/code.yml`).
 
 ## Phase 2c — DB skeleton (1–3 days)

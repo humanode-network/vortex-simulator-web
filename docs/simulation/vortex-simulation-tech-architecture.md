@@ -1,6 +1,6 @@
 # Vortex Simulation Backend — Tech Architecture
 
-This document maps `docs/simulation/vortex-simulation-processes.md` onto a technical architecture that fits this repo (React app + Cloudflare Pages Functions in production, with a Node runner for local dev).
+This document maps `docs/simulation/vortex-simulation-processes.md` onto a technical architecture that fits this repo (React app + API handlers in production, with a Node runner for local dev).
 
 For a paper-aligned “module map” that links product concepts to concrete code, start with `docs/simulation/vortex-simulation-modules.md`.
 
@@ -15,16 +15,16 @@ For the DB table inventory, see `docs/simulation/vortex-simulation-data-model.md
 
 ### Runtime + hosting
 
-- **Cloudflare Pages**: existing frontend hosting.
-- **Cloudflare Workers**: API runtime (REST + optional SSE).
+- **static hosting**: existing frontend hosting.
+- **serverless runtime**: API runtime (REST + optional SSE).
 - **Cron Triggers**: era rollups / scheduled jobs (implemented as an explicit `/api/clock/tick` endpoint that a scheduler calls).
-- **Durable Objects (optional but recommended)**: race-free state transitions for voting/pool/court actions.
+- **single-writer coordinator (optional but recommended)**: race-free state transitions for voting/pool/court actions.
 
 ### Database
 
 - **Chosen for v1: Postgres** (Neon-compatible serverless Postgres) for user history, analytics, and relational integrity.
 
-Important: because the API runtime is Cloudflare Workers/Pages Functions (edge), v1 should use a Postgres provider that supports **serverless/HTTP connectivity** from edge runtimes.
+Important: because the API runtime is serverless runtime/API handlers (edge), v1 should use a Postgres provider that supports **serverless/HTTP connectivity** from edge runtimes.
 
 - Recommended: **Neon Postgres** (works with `@neondatabase/serverless` + Drizzle).
 
@@ -74,7 +74,7 @@ All state-changing actions go through the API and are validated against:
 
 This repo is currently a single frontend app. The backend can live alongside it as:
 
-- `functions/api/*` (Pages Functions routes)
+- `functions/api/*` (API handlers routes)
 - `functions/_lib/*` (shared server helpers)
 - `functions/cloudflare.d.ts` (local typing for `PagesFunction` in editors)
 - `functions/tsconfig.json` (separate TS project for `functions/`)
@@ -420,7 +420,7 @@ Current repo:
 - **Tables:** derived from `events`, proposals/courts/milestones; optionally `invision_snapshots`
 - **Events:** `invision.updated` (optional)
 
-## 7) Concurrency + integrity (why Durable Objects may be needed)
+## 7) Concurrency + integrity (why single-writer coordinator may be needed)
 
 If multiple users vote at once, race conditions must be prevented:
 

@@ -18,7 +18,7 @@ This update turns Vortex from a **UI-only mock** into a **stateful governance si
 
 ### 1) A real backend exists now
 
-Previous master was mostly front-end mock data. This release adds a working simulation backend (Pages Functions) that the UI talks to via `/api/*`, including:
+Previous master was mostly front-end mock data. This release adds a working simulation backend (API handlers) that the UI talks to via `/api/*`, including:
 
 - Command API for actions (`pool.vote`, `chamber.vote`, `formation.join`, court actions, admin actions)
 - Read endpoints for every page model (proposals, chambers, courts, humans, factions, formation, invision, my-governance)
@@ -103,7 +103,7 @@ Basic moderation/ops endpoints were added for the simulator:
 ## How to try it (quick)
 
 - Local full-stack (UI + Functions): run `yarn dev:full`.
-- If `/api/*` is missing: use the Pages Functions flow described in `docs/vortex-simulation-local-dev.md`.
+- If `/api/*` is missing: use the API handlers flow described in `docs/vortex-simulation-local-dev.md`.
 
 ## What’s next
 

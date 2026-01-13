@@ -1,7 +1,5 @@
 # Vortex Simulation Backend — Local Dev (Node API runner + UI proxy)
 
-Production deploys the API as **Cloudflare Pages Functions** under `functions/`. Local development runs the same handlers in Node via `scripts/dev-api-node.mjs` so the UI can call `/api/*` without relying on `wrangler pages dev`.
-
 ## Endpoints (current skeleton)
 
 - `GET /api/health`
@@ -42,7 +40,7 @@ Production deploys the API as **Cloudflare Pages Functions** under `functions/`.
 
 ## Required env vars
 
-These env vars are read by the API runtime (Pages Functions in production, Node runner locally).
+These env vars are read by the API runtime (API handlers in production, Node runner locally).
 
 - `SESSION_SECRET` (required): used to sign `vortex_nonce` and `vortex_session` cookies.
 - `DATABASE_URL` (required for persistence): Postgres connection string (v1 expects Neon-compatible serverless Postgres).
@@ -139,9 +137,9 @@ Notes:
 - To use the seeded fixtures locally (no DB), run with `READ_MODELS_INLINE=true`.
 - To force empty reads even if something is seeding locally, run with `READ_MODELS_INLINE_EMPTY=true`.
 
-## Production deploy notes (Cloudflare Pages)
+## Production deploy notes
 
-Pages Functions read environment variables at runtime. If `DATABASE_URL` is not set, the API runs in an **ephemeral in-memory mode** (useful for quick demos, not durable).
+API handlers read environment variables at runtime. If `DATABASE_URL` is not set, the API runs in an **ephemeral in-memory mode** (useful for quick demos, not durable).
 
 For a persistent public demo:
 
@@ -153,14 +151,10 @@ For a persistent public demo:
 3. Run migrations against the DB:
    - `yarn db:migrate`
 
-### Wrangler-based dev (optional)
-
-`yarn dev:api:wrangler` runs `wrangler pages dev` against `./dist` and serves the same `/api/*` routes.
-
 ## Type checking
 
 - UI + client types: `yarn exec tsc -p tsconfig.json --noEmit`
-- Pages Functions API: `yarn exec tsc -p functions/tsconfig.json --noEmit`
+- API handlers: `yarn exec tsc -p functions/tsconfig.json --noEmit`
 
 ## DB (Phase 2c)
 

@@ -138,8 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isHttp = window.location.protocol === "http:";
         setLastError(
           isHttp
-            ? "Connected, but the auth cookie was not stored (HTTP). Use `wrangler pages dev ... --local-protocol=https` or set `DEV_INSECURE_COOKIES=true` for local dev."
-            : "Connected, but the auth cookie was not stored. Check that Pages Functions are running and cookies are allowed.",
+            ? "Connected, but the auth cookie was not stored (HTTP). Use set `DEV_INSECURE_COOKIES=true` for local dev."
+            : "Connected, but the auth cookie was not stored. Check that the backend is running and cookies are allowed.",
         );
       }
     } catch (error) {

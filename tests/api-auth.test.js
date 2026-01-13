@@ -8,7 +8,7 @@ import { onRequestPost as verifyPost } from "../functions/api/auth/verify.ts";
 import { canonicalizeHmndAddress } from "../functions/_lib/address.ts";
 
 function getSetCookies(response) {
-  // Node fetch supports getSetCookie(), but Cloudflare-style headers may not.
+  // Node fetch supports getSetCookie(), but runtime-specific headers may not.
   const maybe = response.headers.getSetCookie?.bind(response.headers);
   if (maybe) return maybe();
   const single = response.headers.get("set-cookie");
