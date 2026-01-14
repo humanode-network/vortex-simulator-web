@@ -1,11 +1,10 @@
-# Vortex Experimental Mockups
+# Vortex Simulator — Web
 
-This repo ships:
+This repo contains the **frontend UI only** for the Vortex Simulator.
 
-1. A React UI mockup of Vortex (Humanode governance hub)
-2. An off-chain “simulation backend” served from `/api/*` (API handlers)
+Backend API lives separately in `humanode-network/vortex-simulator-server`.
 
-Humanode mainnet is used only as a read-only eligibility gate; all simulated governance state lives off-chain.
+Docs live separately in `humanode-network/vortex-simulator-docs`.
 
 ## Stack
 
@@ -13,10 +12,6 @@ Humanode mainnet is used only as a read-only eligibility gate; all simulated gov
 - Rsbuild
 - Tailwind v4 (via PostCSS) + token-driven CSS (`src/styles/base.css`)
 - Yarn (Node version: `.node-version`)
-- API handlers in `api/` + Postgres via Drizzle
-- `db/` – Drizzle schema + migrations + seed builders
-- `scripts/` – DB seed/clear + local API runner
-- `prolog/vortexopedia.pl` – Prolog glossary mirror
 - `public/landing/` – landing page assets (see `public/landing/README.md`)
 
 ## Shared Patterns
@@ -28,5 +23,4 @@ Humanode mainnet is used only as a read-only eligibility gate; all simulated gov
 ## Notes
 
 - `dist/` is generated build output.
-- Keep glossary entries in sync between `src/data/vortexopedia.ts` and `prolog/vortexopedia.pl` if you edit definitions.
-- DB-backed dev requires `DATABASE_URL` + `yarn db:migrate && yarn db:seed` (see `docs/simulation/vortex-simulation-local-dev.md`).
+- UI expects the API at `/api/*`. During local dev, Rsbuild proxies `/api/*` to `http://127.0.0.1:8788` by default (override with `API_PROXY_TARGET`).

@@ -2,7 +2,7 @@ export function formatAuthConnectError(input: { message: string }): string {
   const message = input.message;
 
   if (message.includes("HTTP 404")) {
-    return "API is not available at `/api/*`. Start the backend with `yarn dev:api` (after `yarn build`) or run `yarn dev:full`. If you only run `yarn dev`, there is no API.";
+    return "API is not available at `/api/*`. Start `vortex-simulator-server` (default `http://127.0.0.1:8788`) and ensure the web dev proxy targets it (override with `API_PROXY_TARGET`).";
   }
 
   if (
@@ -12,7 +12,7 @@ export function formatAuthConnectError(input: { message: string }): string {
     message.includes("ECONNREFUSED") ||
     message.includes("ECONNRESET")
   ) {
-    return "API is not reachable at `/api/*`. If you are running locally, start the backend with `yarn dev:api` (after `yarn build`) or run `yarn dev:full`. If you are on a deployed site, check that the backend is deployed and `/api/health` responds.";
+    return "API is not reachable at `/api/*`. If you are running locally, start `vortex-simulator-server` and verify `/api/health` responds. If deployed, check the API service and reverse proxy.";
   }
 
   return message;
