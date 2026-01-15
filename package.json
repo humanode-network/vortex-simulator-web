@@ -8,7 +8,8 @@
     "build": "rsbuild build",
     "preview": "rsbuild preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "yarn typecheck && yarn build",
+    "test": "yarn typecheck",
+    "verify": "yarn typecheck && yarn build",
     "prettier:check": "prettier --list-different .",
     "prettier:fix": "prettier --write ."
   },
