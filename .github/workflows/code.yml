@@ -20,7 +20,9 @@ jobs:
         mode:
           - command: prettier:check
             skip-build: true
-          - command: test
+          - command: typecheck
+            skip-build: true
+          - command: build
             skip-build: true
 
       fail-fast: false
