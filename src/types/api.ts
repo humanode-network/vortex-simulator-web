@@ -86,10 +86,40 @@ export type ChamberThreadDto = {
   replies: number;
   updated: string;
 };
+export type ChamberThreadMessageDto = {
+  id: string;
+  author: string;
+  message: string;
+  createdAt: string;
+};
+export type ChamberThreadDetailDto = {
+  thread: {
+    id: string;
+    title: string;
+    author: string;
+    body: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  messages: ChamberThreadMessageDto[];
+};
 export type ChamberChatMessageDto = {
   id: string;
   author: string;
   message: string;
+};
+export type ChamberChatSignalDto = {
+  id: string;
+  chamberId: string;
+  fromPeerId: string;
+  toPeerId: string | null;
+  kind: "offer" | "answer" | "candidate";
+  payload: Record<string, unknown>;
+  createdAt: string;
+};
+export type ChamberChatPeerDto = {
+  peerId: string;
+  lastSeenAt: string;
 };
 export type ChamberStageOptionDto = {
   value: ChamberProposalStageDto;
