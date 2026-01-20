@@ -7,6 +7,7 @@
     "dev": "rsbuild dev --open",
     "build": "rsbuild build",
     "preview": "rsbuild preview",
+    "test": "RSTEST=1 rstest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prettier:check": "prettier --list-different .",
     "prettier:fix": "prettier --write ."
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@rsbuild/core": "^1.6.6",
     "@rsbuild/plugin-react": "^1.4.2",
+    "@rstest/core": "^0.7.9",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

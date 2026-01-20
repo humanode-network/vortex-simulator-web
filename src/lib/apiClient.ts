@@ -1,5 +1,11 @@
 import type {
   ChamberProposalPageDto,
+  ChamberChatPeerDto,
+  ChamberChatSignalDto,
+  ChamberThreadDetailDto,
+  ChamberThreadDto,
+  ChamberThreadMessageDto,
+  ChamberChatMessageDto,
   CourtCaseDetailDto,
   FactionDto,
   FormationProposalPageDto,
@@ -114,6 +120,60 @@ export async function apiChamber(id: string): Promise<GetChamberResponse> {
   return await apiGet<GetChamberResponse>(`/api/chambers/${id}`);
 }
 
+export async function apiChamberThreads(
+  id: string,
+): Promise<{ items: ChamberThreadDto[] }> {
+  return await apiGet<{ items: ChamberThreadDto[] }>(
+    `/api/chambers/${id}/threads`,
+  );
+}
+
+export async function apiChamberThreadDetail(
+  chamberId: string,
+  threadId: string,
+): Promise<ChamberThreadDetailDto> {
+  return await apiGet<ChamberThreadDetailDto>(
+    `/api/chambers/${chamberId}/threads/${threadId}`,
+  );
+}
+
+export async function apiChamberChatSignalPost(
+  chamberId: string,
+  input: {
+    peerId: string;
+    kind: "offer" | "answer" | "candidate";
+    targetPeerId?: string;
+    payload: Record<string, unknown>;
+  },
+): Promise<{ ok: true }> {
+  return await apiPost<{ ok: true }>(`/api/chambers/${chamberId}/chat/signal`, {
+    peerId: input.peerId,
+    kind: input.kind,
+    targetPeerId: input.targetPeerId,
+    payload: input.payload,
+  });
+}
+
+export async function apiChamberChatSignalPoll(
+  chamberId: string,
+  peerId: string,
+): Promise<{ messages: ChamberChatSignalDto[] }> {
+  const qs = new URLSearchParams({ peerId });
+  return await apiGet<{ messages: ChamberChatSignalDto[] }>(
+    `/api/chambers/${chamberId}/chat/signal?${qs.toString()}`,
+  );
+}
+
+export async function apiChamberChatPresence(
+  chamberId: string,
+  peerId: string,
+): Promise<{ peers: ChamberChatPeerDto[] }> {
+  const qs = new URLSearchParams({ peerId });
+  return await apiGet<{ peers: ChamberChatPeerDto[] }>(
+    `/api/chambers/${chamberId}/chat/presence?${qs.toString()}`,
+  );
+}
+
 export async function apiProposals(input?: {
   stage?: string;
 }): Promise<GetProposalsResponse> {
@@ -181,6 +241,87 @@ export async function apiChamberVote(input: {
     {
       type: "chamber.vote",
       payload: { proposalId: input.proposalId, choice: input.choice },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiChamberThreadCreate(input: {
+  chamberId: string;
+  title: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "chamber.thread.create";
+  thread: ChamberThreadDto;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "chamber.thread.create",
+      payload: {
+        chamberId: input.chamberId,
+        title: input.title,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiChamberThreadReply(input: {
+  chamberId: string;
+  threadId: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "chamber.thread.reply";
+  threadId: string;
+  message: ChamberThreadMessageDto;
+  replies: number;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "chamber.thread.reply",
+      payload: {
+        chamberId: input.chamberId,
+        threadId: input.threadId,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiChamberChatPost(input: {
+  chamberId: string;
+  message: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "chamber.chat.post";
+  message: ChamberChatMessageDto;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "chamber.chat.post",
+      payload: {
+        chamberId: input.chamberId,
+        message: input.message,
+      },
       idempotencyKey: input.idempotencyKey,
     },
     input.idempotencyKey

@@ -9,6 +9,16 @@ export type FeedStageDto = FeedStage;
 export type ToneDto = "ok" | "warn";
 
 export type ChamberPipelineDto = { pool: number; vote: number; build: number };
+export type ChamberMetaDto = {
+  id: string;
+  title: string;
+  status: "active" | "dissolved";
+  multiplier: number;
+  createdAt: string;
+  dissolvedAt: string | null;
+  createdByProposalId: string | null;
+  dissolvedByProposalId: string | null;
+};
 export type ChamberStatsDto = {
   governors: string;
   acm: string;
@@ -57,12 +67,17 @@ export type ChamberProposalDto = {
   nextStep: string;
   timing: string;
   stage: ChamberProposalStageDto;
+  activeGovernors?: number;
 };
 export type ChamberGovernorDto = {
   id: string;
   name: string;
   tier: string;
   focus: string;
+  acm: number;
+  lcm: number;
+  mcm: number;
+  delegatedWeight: number;
 };
 export type ChamberThreadDto = {
   id: string;
@@ -71,16 +86,48 @@ export type ChamberThreadDto = {
   replies: number;
   updated: string;
 };
+export type ChamberThreadMessageDto = {
+  id: string;
+  author: string;
+  message: string;
+  createdAt: string;
+};
+export type ChamberThreadDetailDto = {
+  thread: {
+    id: string;
+    title: string;
+    author: string;
+    body: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  messages: ChamberThreadMessageDto[];
+};
 export type ChamberChatMessageDto = {
   id: string;
   author: string;
   message: string;
+};
+export type ChamberChatSignalDto = {
+  id: string;
+  chamberId: string;
+  fromPeerId: string;
+  toPeerId: string | null;
+  kind: "offer" | "answer" | "candidate";
+  payload: Record<string, unknown>;
+  createdAt: string;
+};
+export type ChamberChatPeerDto = {
+  peerId: string;
+  lastSeenAt: string;
 };
 export type ChamberStageOptionDto = {
   value: ChamberProposalStageDto;
   label: string;
 };
 export type GetChamberResponse = {
+  chamber: ChamberMetaDto;
+  pipeline: ChamberPipelineDto;
   proposals: ChamberProposalDto[];
   governors: ChamberGovernorDto[];
   threads: ChamberThreadDto[];
