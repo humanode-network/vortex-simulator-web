@@ -78,9 +78,7 @@ const Chamber: React.FC = () => {
   const [peerId] = useState(
     () => `peer_${Math.random().toString(16).slice(2, 10)}`,
   );
-  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(
-    new Map(),
-  );
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const dataChannelsRef = useRef<Map<string, RTCDataChannel>>(new Map());
   const chatMessageIdsRef = useRef<Set<string>>(new Set());
 
@@ -108,9 +106,7 @@ const Chamber: React.FC = () => {
         setThreadMessages([]);
         const found = listRes.items.find((c) => c.id === id);
         const fallbackTitle = chamberRes.chamber?.title;
-        setChamberTitle(
-          found?.name ?? fallbackTitle ?? id.replace(/-/g, " "),
-        );
+        setChamberTitle(found?.name ?? fallbackTitle ?? id.replace(/-/g, " "));
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -194,10 +190,16 @@ const Chamber: React.FC = () => {
       { label: "Origin", value: chamber.createdByProposalId ?? "Genesis" },
     ];
     if (chamber.dissolvedAt) {
-      items.push({ label: "Dissolved", value: chamber.dissolvedAt.slice(0, 10) });
+      items.push({
+        label: "Dissolved",
+        value: chamber.dissolvedAt.slice(0, 10),
+      });
     }
     if (chamber.dissolvedByProposalId) {
-      items.push({ label: "Dissolved by", value: chamber.dissolvedByProposalId });
+      items.push({
+        label: "Dissolved by",
+        value: chamber.dissolvedByProposalId,
+      });
     }
     return items;
   }, [data]);
@@ -272,7 +274,7 @@ const Chamber: React.FC = () => {
         void sendSignal({
           kind: "candidate",
           targetPeerId: remotePeerId,
-          payload: event.candidate.toJSON(),
+          payload: event.candidate.toJSON() as Record<string, unknown>,
         });
       };
       pc.onconnectionstatechange = () => {
@@ -320,7 +322,10 @@ const Chamber: React.FC = () => {
           await sendSignal({
             kind: "answer",
             targetPeerId: remotePeerId,
-            payload: pc.localDescription.toJSON(),
+            payload: pc.localDescription.toJSON() as unknown as Record<
+              string,
+              unknown
+            >,
           });
         }
         return;
@@ -400,7 +405,10 @@ const Chamber: React.FC = () => {
               await sendSignal({
                 kind: "offer",
                 targetPeerId: peer.peerId,
-                payload: pc.localDescription.toJSON(),
+                payload: pc.localDescription.toJSON() as unknown as Record<
+                  string,
+                  unknown
+                >,
               });
             }
           }
@@ -435,7 +443,9 @@ const Chamber: React.FC = () => {
       event.preventDefault();
       if (!id) return;
       if (!canWrite) {
-        setThreadError("You are not eligible to start a thread in this chamber.");
+        setThreadError(
+          "You are not eligible to start a thread in this chamber.",
+        );
         return;
       }
       if (!threadTitle.trim() || !threadBody.trim()) {
@@ -703,9 +713,13 @@ const Chamber: React.FC = () => {
                       });
                     }
                     const columns =
-                      metaTiles.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+                      metaTiles.length === 3
+                        ? "sm:grid-cols-3"
+                        : "sm:grid-cols-2";
                     return (
-                      <div className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}>
+                      <div
+                        className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}
+                      >
                         {metaTiles.map((tile) => (
                           <Surface
                             key={tile.label}
@@ -822,13 +836,17 @@ const Chamber: React.FC = () => {
                   onChange={(event) => setThreadBody(event.target.value)}
                   placeholder="Write the opening post"
                   disabled={!canWrite || threadBusy}
-                  className="min-h-[110px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)]"
+                  className="min-h-[110px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
                 />
                 {threadError ? (
                   <p className="text-sm text-destructive">{threadError}</p>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button type="submit" size="sm" disabled={!canWrite || threadBusy}>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!canWrite || threadBusy}
+                  >
                     {threadBusy ? "Posting..." : "Post thread"}
                   </Button>
                   {!canWrite ? (
@@ -896,7 +914,11 @@ const Chamber: React.FC = () => {
                     <p className="text-muted">No replies yet.</p>
                   ) : (
                     threadMessages.map((message) => (
-                      <Surface key={message.id} variant="panel" className="px-3 py-2">
+                      <Surface
+                        key={message.id}
+                        variant="panel"
+                        className="px-3 py-2"
+                      >
                         <p className="text-xs text-muted">
                           {message.author} · {message.createdAt.slice(0, 10)}
                         </p>
@@ -911,10 +933,12 @@ const Chamber: React.FC = () => {
                     onChange={(event) => setThreadReplyBody(event.target.value)}
                     placeholder="Write a reply"
                     disabled={!canWrite || threadReplyBusy}
-                    className="min-h-[90px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)]"
+                    className="min-h-[90px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
                   />
                   {threadReplyError ? (
-                    <p className="text-sm text-destructive">{threadReplyError}</p>
+                    <p className="text-sm text-destructive">
+                      {threadReplyError}
+                    </p>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
