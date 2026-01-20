@@ -193,8 +193,6 @@ const Proposals: React.FC = () => {
               { value: "pool", label: "Proposal pool" },
               { value: "vote", label: "Chamber vote" },
               { value: "build", label: "Formation" },
-              { value: "final", label: "Final vote" },
-              { value: "archived", label: "Archived" },
             ],
           },
           {
