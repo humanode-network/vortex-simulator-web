@@ -124,7 +124,7 @@ const ProposalFormation: React.FC = () => {
       <PageHint pageId="proposals" />
       <ProposalPageHeader
         title={project.title}
-        stage="formation"
+        stage="build"
         chamber={project.chamber}
         proposer={project.proposer}
       />

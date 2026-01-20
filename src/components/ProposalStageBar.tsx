@@ -1,7 +1,7 @@
 import React from "react";
 import { HintLabel } from "@/components/Hint";
 
-export type ProposalStage = "draft" | "pool" | "chamber" | "formation";
+export type ProposalStage = "draft" | "pool" | "vote" | "build";
 
 type ProposalStageBarProps = {
   current: ProposalStage;
@@ -24,12 +24,12 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
       render: <HintLabel termId="proposal_pools">Proposal pool</HintLabel>,
     },
     {
-      key: "chamber",
+      key: "vote",
       label: "Chamber vote",
       render: <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
     },
     {
-      key: "formation",
+      key: "build",
       label: "Formation",
       render: <HintLabel termId="formation">Formation</HintLabel>,
     },
@@ -44,7 +44,7 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
             ? "bg-panel text-text border border-border shadow-[var(--shadow-control)] ring-1 ring-inset ring-[color:var(--glass-border)]"
             : stage.key === "pool"
               ? "bg-primary text-[var(--primary-foreground)]"
-              : stage.key === "chamber"
+              : stage.key === "vote"
                 ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
                 : "bg-[var(--accent-warm)] text-[var(--text)]";
         return (

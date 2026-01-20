@@ -3,7 +3,7 @@
 
 import type { FeedStage } from "./stages";
 
-export type ProposalStageDto = "draft" | "pool" | "vote" | "build";
+export type ProposalStageDto = "pool" | "vote" | "build";
 export type FeedStageDto = FeedStage;
 
 export type ToneDto = "ok" | "warn";
@@ -219,20 +219,7 @@ export type GetProposalsResponse = { items: ProposalListItemDto[] };
 
 export type InvisionInsightDto = { role: string; bullets: string[] };
 
-export type ProposalTimelineEventTypeDto =
-  | "proposal.submitted"
-  | "proposal.stage.advanced"
-  | "proposal.vote.passed"
-  | "proposal.vote.finalized"
-  | "pool.vote"
-  | "chamber.vote"
-  | "veto.vote"
-  | "veto.applied"
-  | "formation.join"
-  | "formation.milestone.submitted"
-  | "formation.milestone.unlockRequested"
-  | "chamber.created"
-  | "chamber.dissolved";
+export type ProposalTimelineEventTypeDto = string;
 
 export type ProposalTimelineItemDto = {
   id: string;

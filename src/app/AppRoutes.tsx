@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+import { Navigate, Outlet, Route, Routes } from "react-router";
 import AppShell from "./AppShell";
 import HumanNodes from "../pages/human-nodes/HumanNodes";
 import Proposals from "../pages/proposals/Proposals";
@@ -27,18 +27,6 @@ import FullHistory from "../pages/human-nodes/FullHistory";
 import Landing from "../pages/Landing";
 import Paper from "../pages/Paper";
 import Guide from "../pages/Guide";
-
-// Backwards-compat redirects for old app URLs (pre `/app` split).
-// Safe to delete once you no longer need to support old bookmarks/links.
-const LegacyToAppRedirect: React.FC = () => {
-  const location = useLocation();
-  return (
-    <Navigate
-      to={`/app${location.pathname}${location.search}${location.hash}`}
-      replace
-    />
-  );
-};
 
 const AppRoutes: React.FC = () => {
   return (
@@ -80,38 +68,6 @@ const AppRoutes: React.FC = () => {
         <Route path="settings" element={<General />} />
         <Route path="my-governance" element={<MyGovernance />} />
       </Route>
-
-      {/* Legacy redirects (old app URLs -> /app/*). */}
-      <Route path="/feed" element={<LegacyToAppRedirect />} />
-      <Route path="/profile" element={<LegacyToAppRedirect />} />
-      <Route path="/factions" element={<LegacyToAppRedirect />} />
-      <Route path="/factions/:id" element={<LegacyToAppRedirect />} />
-      <Route path="/human-nodes" element={<LegacyToAppRedirect />} />
-      <Route path="/human-nodes/:id" element={<LegacyToAppRedirect />} />
-      <Route
-        path="/human-nodes/:id/history"
-        element={<LegacyToAppRedirect />}
-      />
-      <Route path="/courts" element={<LegacyToAppRedirect />} />
-      <Route path="/courts/:id" element={<LegacyToAppRedirect />} />
-      <Route path="/cm" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals/drafts" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals/drafts/:id" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals/new" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals/:id/pp" element={<LegacyToAppRedirect />} />
-      <Route path="/proposals/:id/chamber" element={<LegacyToAppRedirect />} />
-      <Route
-        path="/proposals/:id/formation"
-        element={<LegacyToAppRedirect />}
-      />
-      <Route path="/chambers" element={<LegacyToAppRedirect />} />
-      <Route path="/chambers/:id" element={<LegacyToAppRedirect />} />
-      <Route path="/formation" element={<LegacyToAppRedirect />} />
-      <Route path="/invision" element={<LegacyToAppRedirect />} />
-      <Route path="/vortexopedia" element={<LegacyToAppRedirect />} />
-      <Route path="/settings" element={<LegacyToAppRedirect />} />
-      <Route path="/my-governance" element={<LegacyToAppRedirect />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

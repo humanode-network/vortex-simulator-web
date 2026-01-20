@@ -136,7 +136,7 @@ const ProposalChamber: React.FC = () => {
       <PageHint pageId="proposals" />
       <ProposalPageHeader
         title={proposal.title}
-        stage="chamber"
+        stage="vote"
         chamber={proposal.chamber}
         proposer={proposal.proposer}
       >
