@@ -15,7 +15,9 @@ import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { PageHeader } from "@/components/PageHeader";
 import { TierLabel } from "@/components/TierLabel";
-import type { ChamberProposalStageDto } from "@/types/api";
+import { PipelineList } from "@/components/PipelineList";
+import { StatGrid, makeChamberStats } from "@/components/StatGrid";
+import type { ChamberProposalStageDto, GetChamberResponse } from "@/types/api";
 import { apiChamber, apiChambers } from "@/lib/apiClient";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 
@@ -25,28 +27,7 @@ const Chamber: React.FC = () => {
     id ? id.replace(/-/g, " ") : "Chamber",
   );
 
-  const [data, setData] = useState<{
-    proposals: {
-      id: string;
-      title: string;
-      meta: string;
-      summary: string;
-      lead: string;
-      nextStep: string;
-      timing: string;
-      stage: ChamberProposalStageDto;
-    }[];
-    governors: { id: string; name: string; tier: string; focus: string }[];
-    threads: {
-      id: string;
-      title: string;
-      author: string;
-      replies: number;
-      updated: string;
-    }[];
-    chatLog: { id: string; author: string; message: string }[];
-    stageOptions: { value: ChamberProposalStageDto; label: string }[];
-  } | null>(null);
+  const [data, setData] = useState<GetChamberResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [stageFilter, setStageFilter] =
@@ -65,7 +46,10 @@ const Chamber: React.FC = () => {
         if (!active) return;
         setData(chamberRes);
         const found = listRes.items.find((c) => c.id === id);
-        setChamberTitle(found?.name ?? id.replace(/-/g, " "));
+        const fallbackTitle = chamberRes.chamber?.title;
+        setChamberTitle(
+          found?.name ?? fallbackTitle ?? id.replace(/-/g, " "),
+        );
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -92,9 +76,49 @@ const Chamber: React.FC = () => {
       (gov) =>
         gov.name.toLowerCase().includes(term) ||
         gov.tier.toLowerCase().includes(term) ||
-        gov.focus.toLowerCase().includes(term),
+        gov.focus.toLowerCase().includes(term) ||
+        String(gov.acm).includes(term) ||
+        String(gov.lcm).includes(term) ||
+        String(gov.mcm).includes(term) ||
+        String(gov.delegatedWeight).includes(term),
     );
   }, [data, governorSearch]);
+
+  const chamberStats = useMemo(() => {
+    const governors = data?.governors ?? [];
+    const totals = governors.reduce(
+      (acc, gov) => ({
+        acm: acc.acm + (Number.isFinite(gov.acm) ? gov.acm : 0),
+        lcm: acc.lcm + (Number.isFinite(gov.lcm) ? gov.lcm : 0),
+        mcm: acc.mcm + (Number.isFinite(gov.mcm) ? gov.mcm : 0),
+      }),
+      { acm: 0, lcm: 0, mcm: 0 },
+    );
+    return {
+      governors: String(governors.length),
+      acm: totals.acm.toLocaleString(),
+      lcm: totals.lcm.toLocaleString(),
+      mcm: totals.mcm.toLocaleString(),
+    };
+  }, [data]);
+
+  const chamberMetaItems = useMemo(() => {
+    const chamber = data?.chamber;
+    if (!chamber) return [];
+    const items = [
+      { label: "Status", value: chamber.status },
+      { label: "Multiplier", value: chamber.multiplier.toFixed(1) },
+      { label: "Created", value: chamber.createdAt.slice(0, 10) },
+      { label: "Origin", value: chamber.createdByProposalId ?? "Genesis" },
+    ];
+    if (chamber.dissolvedAt) {
+      items.push({ label: "Dissolved", value: chamber.dissolvedAt.slice(0, 10) });
+    }
+    if (chamber.dissolvedByProposalId) {
+      items.push({ label: "Dissolved by", value: chamber.dissolvedByProposalId });
+    }
+    return items;
+  }, [data]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,6 +138,64 @@ const Chamber: React.FC = () => {
         >
           Chamber unavailable: {loadError}
         </Surface>
+      ) : null}
+
+      {data ? (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <Kicker>Chamber profile</Kicker>
+              <CardTitle>Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+              {chamberMetaItems.map((item) => (
+                <Surface
+                  key={item.label}
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="tile"
+                  className="px-3 py-2"
+                >
+                  <Kicker className="text-text">{item.label}</Kicker>
+                  <p className="text-base font-semibold text-text">
+                    {item.value}
+                  </p>
+                </Surface>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <Kicker>Chamber stats</Kicker>
+              <CardTitle>Governance metrics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StatGrid items={makeChamberStats(chamberStats)} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <Kicker>Pipeline</Kicker>
+              <CardTitle>Proposal flow</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {data.pipeline ? (
+                <PipelineList pipeline={data.pipeline} />
+              ) : (
+                <Surface
+                  variant="panelAlt"
+                  radius="xl"
+                  borderStyle="dashed"
+                  className="px-3 py-4 text-center text-sm text-muted"
+                >
+                  No pipeline data yet.
+                </Surface>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
@@ -179,30 +261,38 @@ const Chamber: React.FC = () => {
                     </Badge>
                   </div>
                   <p className="mt-2 text-sm text-text">{proposal.summary}</p>
-                  <div className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="control"
-                      className="px-3 py-2"
-                    >
-                      <Kicker className="text-text">Next step</Kicker>
-                      <p className="text-sm font-semibold text-text">
-                        {proposal.nextStep}
-                      </p>
-                    </Surface>
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="control"
-                      className="px-3 py-2"
-                    >
-                      <Kicker className="text-text">Timing</Kicker>
-                      <p className="text-sm font-semibold text-text">
-                        {proposal.timing}
-                      </p>
-                    </Surface>
-                  </div>
+                  {(() => {
+                    const metaTiles = [
+                      { label: "Next step", value: proposal.nextStep },
+                      { label: "Timing", value: proposal.timing },
+                    ];
+                    if (typeof proposal.activeGovernors === "number") {
+                      metaTiles.push({
+                        label: "Active governors",
+                        value: proposal.activeGovernors.toLocaleString(),
+                      });
+                    }
+                    const columns =
+                      metaTiles.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+                    return (
+                      <div className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}>
+                        {metaTiles.map((tile) => (
+                          <Surface
+                            key={tile.label}
+                            variant="panel"
+                            radius="xl"
+                            shadow="control"
+                            className="px-3 py-2"
+                          >
+                            <Kicker className="text-text">{tile.label}</Kicker>
+                            <p className="text-sm font-semibold text-text">
+                              {tile.value}
+                            </p>
+                          </Surface>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </Surface>
               ))
             )}
@@ -239,6 +329,14 @@ const Chamber: React.FC = () => {
                     <p className="font-semibold">{gov.name}</p>
                     <p className="text-xs text-muted">
                       <TierLabel tier={gov.tier} /> · {gov.focus}
+                    </p>
+                    <p className="text-xs text-muted">
+                      ACM {gov.acm.toLocaleString()} · LCM{" "}
+                      {gov.lcm.toLocaleString()} · MCM{" "}
+                      {gov.mcm.toLocaleString()}
+                      {gov.delegatedWeight > 0
+                        ? ` · Delegated +${gov.delegatedWeight}`
+                        : ""}
                     </p>
                   </div>
                   <Button asChild size="sm" variant="ghost">
