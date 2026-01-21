@@ -201,7 +201,7 @@ const CMPanel: React.FC = () => {
                 <div className="flex items-center justify-between text-xs text-muted">
                   <span>{chamber.submissions} submissions</span>
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="ghost"
                     disabled={chamber.member || submittingId === chamber.id}
                     onClick={() => handleSubmit(chamber.id)}
