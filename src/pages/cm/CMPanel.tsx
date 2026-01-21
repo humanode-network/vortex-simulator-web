@@ -12,7 +12,11 @@ import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiChambers } from "@/lib/apiClient";
+import {
+  apiChambers,
+  apiChamberMultiplierSubmit,
+  apiMyGovernance,
+} from "@/lib/apiClient";
 import type { ChamberDto } from "@/types/api";
 
 const CMPanel: React.FC = () => {
@@ -21,24 +25,44 @@ const CMPanel: React.FC = () => {
       current: number;
       suggested: number;
       member: boolean;
+      submissions: number;
     }
   > | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [submittingAll, setSubmittingAll] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const res = await apiChambers();
+        const [chambersRes, governanceRes] = await Promise.allSettled([
+          apiChambers(),
+          apiMyGovernance(),
+        ]);
         if (!active) return;
+        if (chambersRes.status !== "fulfilled") {
+          setChambers([]);
+          setLoadError(
+            chambersRes.reason?.message ?? "Failed to load chamber multipliers",
+          );
+          return;
+        }
+        const myChamberIds =
+          governanceRes.status === "fulfilled"
+            ? governanceRes.value.myChamberIds
+            : [];
+        const items = chambersRes.value.items;
         setChambers(
-          res.items.map((chamber) => ({
+          items.map((chamber) => ({
             id: chamber.id,
             name: chamber.name,
             multiplier: chamber.multiplier,
             current: chamber.multiplier,
             suggested: chamber.multiplier,
-            member: chamber.id === "engineering" || chamber.id === "product",
+            member: myChamberIds.includes(chamber.id),
+            submissions: 0,
           })),
         );
         setLoadError(null);
@@ -61,7 +85,50 @@ const CMPanel: React.FC = () => {
     );
   };
 
+  const handleSubmit = async (chamberId: string) => {
+    if (!chambers) return;
+    const target = chambers.find((chamber) => chamber.id === chamberId);
+    if (!target) return;
+    if (target.member) return;
+    setSubmittingId(chamberId);
+    setSubmitError(null);
+    try {
+      const result = await apiChamberMultiplierSubmit({
+        chamberId,
+        multiplierTimes10: Math.round(target.suggested * 10),
+      });
+      setChambers((prev) =>
+        prev
+          ? prev.map((chamber) => {
+              if (chamber.id !== chamberId) return chamber;
+              const nextTimes10 =
+                result.applied?.nextMultiplierTimes10 ??
+                result.aggregate.avgTimes10 ??
+                Math.round(chamber.suggested * 10);
+              return {
+                ...chamber,
+                current: nextTimes10 / 10,
+                submissions: result.aggregate.submissions,
+              };
+            })
+          : prev,
+      );
+    } catch (error) {
+      setSubmitError((error as Error).message);
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
   const nonMemberSuggestions = (chambers ?? []).filter((c) => !c.member);
+  const handleSubmitAll = async () => {
+    if (!chambers || nonMemberSuggestions.length === 0) return;
+    setSubmittingAll(true);
+    for (const chamber of nonMemberSuggestions) {
+      await handleSubmit(chamber.id);
+    }
+    setSubmittingAll(false);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,6 +145,11 @@ const CMPanel: React.FC = () => {
       ) : null}
       {chambers !== null && chambers.length === 0 && !loadError ? (
         <NoDataYetBar label="chambers" />
+      ) : null}
+      {submitError ? (
+        <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
+          CM submission failed: {submitError}
+        </Card>
       ) : null}
       <Card>
         <CardHeader className="pb-2">
@@ -126,6 +198,17 @@ const CMPanel: React.FC = () => {
                     className="w-full"
                   />
                 </div>
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <span>{chamber.submissions} submissions</span>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    disabled={chamber.member || submittingId === chamber.id}
+                    onClick={() => handleSubmit(chamber.id)}
+                  >
+                    {submittingId === chamber.id ? "Submitting…" : "Submit"}
+                  </Button>
+                </div>
                 {chamber.member && (
                   <p className="text-xs text-muted">
                     You cannot set M for chambers you belong to.
@@ -138,8 +221,12 @@ const CMPanel: React.FC = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button size="sm" disabled={nonMemberSuggestions.length === 0}>
-          Submit suggestions
+        <Button
+          size="sm"
+          disabled={nonMemberSuggestions.length === 0 || submittingAll}
+          onClick={handleSubmitAll}
+        >
+          {submittingAll ? "Submitting…" : "Submit suggestions"}
         </Button>
       </div>
     </div>
