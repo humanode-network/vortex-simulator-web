@@ -4,6 +4,7 @@ import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
+import { Input } from "@/components/primitives/input";
 import {
   ProposalInvisionInsightCard,
   ProposalSummaryCard,
@@ -29,6 +30,7 @@ const ProposalChamber: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
+  const [yesScore, setYesScore] = useState(5);
 
   const loadPage = useCallback(async () => {
     if (!id) return;
@@ -117,12 +119,19 @@ const ProposalChamber: React.FC = () => {
     .map((v) => Number(v.trim()));
   const openSlots = Math.max(totalSlots - filledSlots, 0);
 
-  const handleVote = async (choice: "yes" | "no" | "abstain") => {
+  const handleVote = async (
+    choice: "yes" | "no" | "abstain",
+    score?: number,
+  ) => {
     if (!id || submitting) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await apiChamberVote({ proposalId: id, choice });
+      await apiChamberVote({
+        proposalId: id,
+        choice,
+        score: choice === "yes" ? score : undefined,
+      });
       await loadPage();
     } catch (error) {
       setSubmitError((error as Error).message);
@@ -145,8 +154,27 @@ const ProposalChamber: React.FC = () => {
             tone="accent"
             label="Vote yes"
             disabled={submitting}
-            onClick={() => handleVote("yes")}
+            onClick={() => handleVote("yes", yesScore)}
           />
+          <div className="flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-2 text-sm text-text">
+            <span className="text-xs font-semibold text-muted uppercase">
+              CM score
+            </span>
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              step={1}
+              value={yesScore}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (Number.isFinite(next)) {
+                  setYesScore(Math.min(Math.max(Math.round(next), 1), 10));
+                }
+              }}
+              className="h-8 w-16"
+            />
+          </div>
           <VoteButton
             tone="destructive"
             label="Vote no"
