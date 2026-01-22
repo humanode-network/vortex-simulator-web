@@ -202,9 +202,26 @@ export type MyGovernanceEraActivityDto = {
   actions: MyGovernanceEraActionDto[];
   timeLeft: string;
 };
+export type TierProgressDto = {
+  tier: string;
+  nextTier: string | null;
+  metrics: {
+    governorEras: number;
+    activeEras: number;
+    acceptedProposals: number;
+    formationParticipation: number;
+  };
+  requirements: {
+    governorEras?: number;
+    activeEras?: number;
+    acceptedProposals?: number;
+    formationParticipation?: number;
+  } | null;
+};
 export type GetMyGovernanceResponse = {
   eraActivity: MyGovernanceEraActivityDto;
   myChamberIds: string[];
+  tier?: TierProgressDto;
   rollup?: {
     era: number;
     rolledAt: string;

@@ -25,6 +25,13 @@ export type ProposalDraftForm = {
   what: string;
   why: string;
   how: string;
+  proposalType:
+    | "basic"
+    | "fee"
+    | "monetary"
+    | "core"
+    | "administrative"
+    | "dao-core";
   metaGovernance?: {
     action: "chamber.create" | "chamber.dissolve";
     chamberId: string;
@@ -48,6 +55,7 @@ export const DEFAULT_DRAFT: ProposalDraftForm = {
   what: "",
   why: "",
   how: "",
+  proposalType: "basic",
   metaGovernance: undefined,
   timeline: [
     { id: "ms-1", title: "Milestone 1", timeframe: "2 weeks" },

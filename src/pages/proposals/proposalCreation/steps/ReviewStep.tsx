@@ -7,6 +7,15 @@ import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
 import type { ChamberDto } from "@/types/api";
 
+const proposalTypeLabel: Record<ProposalDraftForm["proposalType"], string> = {
+  basic: "Basic",
+  fee: "Fee distribution",
+  monetary: "Monetary system",
+  core: "Core infrastructure",
+  administrative: "Administrative",
+  "dao-core": "DAO core",
+};
+
 export function ReviewStep(props: {
   budgetTotal: number;
   canAct: boolean;
@@ -71,6 +80,9 @@ export function ReviewStep(props: {
                 Chamber: {selectedChamber.name}
               </p>
             ) : null}
+            <p className="mt-1 text-xs text-muted">
+              Proposal type: {proposalTypeLabel[draft.proposalType]}
+            </p>
           </div>
           {mode === "system" ? (
             <>
