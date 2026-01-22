@@ -44,7 +44,9 @@ const formatSubmitError = (error: unknown): string => {
   const code = typeof details.code === "string" ? details.code : "";
   if (code === "proposal_type_ineligible" || code === "tier_ineligible") {
     const requiredTier =
-      typeof details.requiredTier === "string" ? details.requiredTier : "a higher tier";
+      typeof details.requiredTier === "string"
+        ? details.requiredTier
+        : "a higher tier";
     const proposalType =
       typeof details.proposalType === "string"
         ? formatProposalType(details.proposalType)
@@ -53,7 +55,8 @@ const formatSubmitError = (error: unknown): string => {
   }
 
   if (code === "proposal_submit_ineligible") {
-    const chamberId = typeof details.chamberId === "string" ? details.chamberId : "";
+    const chamberId =
+      typeof details.chamberId === "string" ? details.chamberId : "";
     if (chamberId === "general") {
       return "General chamber proposals require voting rights in any chamber.";
     }

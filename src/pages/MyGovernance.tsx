@@ -30,17 +30,17 @@ type GoverningStatus =
 
 type TierProgress = NonNullable<GetMyGovernanceResponse["tier"]>;
 
-type TierKey =
-  | "Nominee"
-  | "Ecclesiast"
-  | "Legate"
-  | "Consul"
-  | "Citizen";
+type TierKey = "Nominee" | "Ecclesiast" | "Legate" | "Consul" | "Citizen";
 
 const proposalRightsByTier: Record<TierKey, string[]> = {
   Nominee: ["Basic proposals"],
   Ecclesiast: ["Basic proposals", "Fee distribution", "Monetary system"],
-  Legate: ["Basic proposals", "Fee distribution", "Monetary system", "Core infrastructure"],
+  Legate: [
+    "Basic proposals",
+    "Fee distribution",
+    "Monetary system",
+    "Core infrastructure",
+  ],
   Consul: [
     "Basic proposals",
     "Fee distribution",
@@ -63,7 +63,10 @@ const labelForTier = (tier: TierKey): string => {
 };
 
 const requirementLabel: Record<
-  "governorEras" | "activeEras" | "acceptedProposals" | "formationParticipation",
+  | "governorEras"
+  | "activeEras"
+  | "acceptedProposals"
+  | "formationParticipation",
   string
 > = {
   governorEras: "Run a node as a governor (eras)",
@@ -80,7 +83,11 @@ const getRequirementProgress = (
   const required = Number(requirements?.[key] ?? 0);
   const done = Number(metrics[key] ?? 0);
   if (required <= 0) return { done, required, percent: 100 };
-  return { done, required, percent: Math.min(100, Math.round((done / required) * 100)) };
+  return {
+    done,
+    required,
+    percent: Math.min(100, Math.round((done / required) * 100)),
+  };
 };
 
 const governingStatusForProgress = (
@@ -179,15 +186,15 @@ const MyGovernance: React.FC = () => {
     formationParticipation: 0,
   };
   const requirementKeys = requirements
-    ? (Object.keys(requirements) as Array<
-        keyof typeof requirementLabel
-      >)
+    ? (Object.keys(requirements) as Array<keyof typeof requirementLabel>)
     : [];
   const overallPercent =
     requirements && requirementKeys.length > 0
       ? Math.round(
           requirementKeys.reduce((sum, key) => {
-            return sum + getRequirementProgress(key, metrics, requirements).percent;
+            return (
+              sum + getRequirementProgress(key, metrics, requirements).percent
+            );
           }, 0) / requirementKeys.length,
         )
       : 100;
@@ -392,7 +399,9 @@ const MyGovernance: React.FC = () => {
                       metrics,
                       requirements,
                     );
-                    const ok = progress.required === 0 || progress.done >= progress.required;
+                    const ok =
+                      progress.required === 0 ||
+                      progress.done >= progress.required;
                     return (
                       <div
                         key={key}
