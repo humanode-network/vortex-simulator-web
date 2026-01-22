@@ -245,6 +245,7 @@ export type ChamberVoteChoice = "yes" | "no" | "abstain";
 export async function apiChamberVote(input: {
   proposalId: string;
   choice: ChamberVoteChoice;
+  score?: number;
   idempotencyKey?: string;
 }): Promise<{
   ok: true;
@@ -257,7 +258,45 @@ export async function apiChamberVote(input: {
     "/api/command",
     {
       type: "chamber.vote",
-      payload: { proposalId: input.proposalId, choice: input.choice },
+      payload: {
+        proposalId: input.proposalId,
+        choice: input.choice,
+        ...(input.choice === "yes" && typeof input.score === "number"
+          ? { score: input.score }
+          : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiChamberMultiplierSubmit(input: {
+  chamberId: string;
+  multiplierTimes10: number;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "chamber.multiplier.submit";
+  chamberId: string;
+  submission: { multiplierTimes10: number };
+  aggregate: { submissions: number; avgTimes10: number | null };
+  applied: {
+    updated: boolean;
+    prevMultiplierTimes10: number;
+    nextMultiplierTimes10: number;
+  } | null;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "chamber.multiplier.submit",
+      payload: {
+        chamberId: input.chamberId,
+        multiplierTimes10: input.multiplierTimes10,
+      },
       idempotencyKey: input.idempotencyKey,
     },
     input.idempotencyKey
