@@ -27,23 +27,40 @@ import type {
   PoolProposalPageDto,
 } from "@/types/api";
 
-type ApiError = {
-  error: {
-    message: string;
+export type ApiErrorPayload = {
+  error?: {
+    message?: string;
+    code?: string;
     [key: string]: unknown;
   };
 };
+
+export type ApiError = Error & {
+  data?: ApiErrorPayload;
+  status?: number;
+};
+
+export function getApiErrorPayload(error: unknown): ApiErrorPayload | null {
+  if (!error || typeof error !== "object") return null;
+  const data = (error as ApiError).data;
+  if (!data || typeof data !== "object") return null;
+  return data as ApiErrorPayload;
+}
 
 async function readJsonResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
   const isJson = contentType.toLowerCase().includes("application/json");
   const body = isJson ? ((await res.json()) as unknown) : null;
   if (!res.ok) {
+    const payload = (body as ApiErrorPayload | null) ?? null;
     const message =
-      (body as ApiError | null)?.error?.message ??
+      payload?.error?.message ??
       (typeof body === "string" ? body : null) ??
       `HTTP ${res.status}`;
-    throw new Error(message);
+    const error = new Error(message) as ApiError;
+    if (payload) error.data = payload;
+    error.status = res.status;
+    throw error;
   }
   return body as T;
 }
@@ -571,6 +588,13 @@ export type ProposalDraftFormPayload = {
   what: string;
   why: string;
   how: string;
+  proposalType?:
+    | "basic"
+    | "fee"
+    | "monetary"
+    | "core"
+    | "administrative"
+    | "dao-core";
   metaGovernance?: {
     action: "chamber.create" | "chamber.dissolve";
     chamberId: string;

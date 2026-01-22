@@ -13,6 +13,7 @@ export function draftToApiForm(
     what: draft.what,
     why: draft.why,
     how: draft.how,
+    proposalType: draft.proposalType,
     ...(draft.metaGovernance ? { metaGovernance: draft.metaGovernance } : {}),
     timeline: draft.timeline,
     outputs: draft.outputs,

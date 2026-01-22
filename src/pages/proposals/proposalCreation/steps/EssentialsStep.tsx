@@ -11,6 +11,43 @@ import {
 
 type MetaGovernanceDraft = NonNullable<ProposalDraftForm["metaGovernance"]>;
 
+const PROPOSAL_TYPE_OPTIONS: Array<{
+  value: ProposalDraftForm["proposalType"];
+  label: string;
+  helper: string;
+}> = [
+  {
+    value: "basic",
+    label: "Basic",
+    helper: "Routine proposals that do not change core system parameters.",
+  },
+  {
+    value: "fee",
+    label: "Fee distribution",
+    helper: "Adjust fee/treasury allocation rules.",
+  },
+  {
+    value: "monetary",
+    label: "Monetary system",
+    helper: "Token issuance, emission, or monetary policy changes.",
+  },
+  {
+    value: "core",
+    label: "Core infrastructure",
+    helper: "Protocol and infrastructure-level changes.",
+  },
+  {
+    value: "administrative",
+    label: "Administrative",
+    helper: "Governance operations (e.g., chamber lifecycle).",
+  },
+  {
+    value: "dao-core",
+    label: "DAO core",
+    helper: "Changes to the governance protocol itself.",
+  },
+];
+
 export function EssentialsStep(props: {
   attemptedNext: boolean;
   chamberOptions: { value: string; label: string }[];
@@ -61,10 +98,18 @@ export function EssentialsStep(props: {
                 return {
                   ...prev,
                   chamberId: "general",
+                  proposalType: "administrative",
                   metaGovernance: nextMeta,
                 };
               }
-              return { ...prev, metaGovernance: undefined };
+              return {
+                ...prev,
+                proposalType:
+                  prev.proposalType === "administrative"
+                    ? "basic"
+                    : (prev.proposalType ?? "basic"),
+                metaGovernance: undefined,
+              };
             });
           }}
         >
@@ -74,6 +119,34 @@ export function EssentialsStep(props: {
         <p className="text-xs text-muted">
           System changes affect simulation variables directly (e.g., chamber
           creation). Project proposals describe work outside the system.
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="proposal-type">Proposal type</Label>
+        <Select
+          id="proposal-type"
+          value={isSystemProposal ? "administrative" : draft.proposalType}
+          disabled={isSystemProposal}
+          onChange={(e) =>
+            setDraft((prev) => ({
+              ...prev,
+              proposalType: e.target.value as ProposalDraftForm["proposalType"],
+            }))
+          }
+        >
+          {PROPOSAL_TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+        <p className="text-xs text-muted">
+          {isSystemProposal
+            ? "System proposals are administrative by definition."
+            : PROPOSAL_TYPE_OPTIONS.find(
+                (option) => option.value === draft.proposalType,
+              )?.helper}
         </p>
       </div>
 
