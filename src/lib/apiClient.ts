@@ -27,6 +27,18 @@ import type {
   PoolProposalPageDto,
 } from "@/types/api";
 
+type ApiClientRuntimeConfig = {
+  apiBaseUrl?: string;
+  apiHeaders?: Record<string, string>;
+  apiCredentials?: RequestCredentials;
+};
+
+declare global {
+  interface Window {
+    __VORTEX_CONFIG__?: ApiClientRuntimeConfig;
+  }
+}
+
 export type ApiErrorPayload = {
   error?: {
     message?: string;
@@ -47,16 +59,51 @@ export function getApiErrorPayload(error: unknown): ApiErrorPayload | null {
   return data as ApiErrorPayload;
 }
 
+const envApiBaseUrl =
+  import.meta.env.RSBUILD_PUBLIC_API_BASE_URL ??
+  import.meta.env.VITE_API_BASE_URL ??
+  "";
+
+function getRuntimeConfig(): ApiClientRuntimeConfig | undefined {
+  if (typeof window === "undefined") return undefined;
+  return window.__VORTEX_CONFIG__;
+}
+
+function getApiBaseUrl(): string {
+  const runtimeConfig = getRuntimeConfig();
+  return runtimeConfig?.apiBaseUrl ?? envApiBaseUrl ?? "";
+}
+
+function getApiCredentials(): RequestCredentials {
+  const runtimeConfig = getRuntimeConfig();
+  return runtimeConfig?.apiCredentials ?? "include";
+}
+
+function getApiHeaders(): Record<string, string> {
+  const runtimeConfig = getRuntimeConfig();
+  return runtimeConfig?.apiHeaders ?? {};
+}
+
+function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) return path;
+  const base = apiBaseUrl.replace(/\/$/, "");
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${suffix}`;
+}
+
 async function readJsonResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") ?? "";
   const isJson = contentType.toLowerCase().includes("application/json");
-  const body = isJson ? ((await res.json()) as unknown) : null;
+  const body = isJson ? ((await res.json()) as unknown) : await res.text();
   if (!res.ok) {
     const payload = (body as ApiErrorPayload | null) ?? null;
-    const message =
+    const rawMessage =
       payload?.error?.message ??
-      (typeof body === "string" ? body : null) ??
-      `HTTP ${res.status}`;
+      (typeof body === "string" && body.trim() ? body : null) ??
+      res.statusText;
+    const message = `HTTP ${res.status}${rawMessage ? `: ${rawMessage}` : ""}`;
     const error = new Error(message) as ApiError;
     if (payload) error.data = payload;
     error.status = res.status;
@@ -66,7 +113,10 @@ async function readJsonResponse<T>(res: Response): Promise<T> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(path, { credentials: "include" });
+  const res = await fetch(resolveApiUrl(path), {
+    credentials: getApiCredentials(),
+    headers: getApiHeaders(),
+  });
   return await readJsonResponse<T>(res);
 }
 
@@ -75,10 +125,11 @@ export async function apiPost<T>(
   body: unknown,
   init?: { headers?: HeadersInit },
 ): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(resolveApiUrl(path), {
     method: "POST",
-    credentials: "include",
+    credentials: getApiCredentials(),
     headers: {
+      ...getApiHeaders(),
       "content-type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -159,14 +210,14 @@ export async function apiChamberChatSignalPost(
   input: {
     peerId: string;
     kind: "offer" | "answer" | "candidate";
-    targetPeerId?: string;
+    toPeerId?: string;
     payload: Record<string, unknown>;
   },
 ): Promise<{ ok: true }> {
   return await apiPost<{ ok: true }>(`/api/chambers/${chamberId}/chat/signal`, {
     peerId: input.peerId,
     kind: input.kind,
-    targetPeerId: input.targetPeerId,
+    toPeerId: input.toPeerId,
     payload: input.payload,
   });
 }

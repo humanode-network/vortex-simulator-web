@@ -24,3 +24,4 @@ Docs live separately in `humanode-network/vortex-simulator-docs`.
 
 - `dist/` is generated build output.
 - UI expects the API at `/api/*`. During local dev, Rsbuild proxies `/api/*` to `http://127.0.0.1:8788` by default (override with `API_PROXY_TARGET`).
+- To point the UI at a different API host, set `RSBUILD_PUBLIC_API_BASE_URL` at build time or serve `public/vortex-config.json` with `{"apiBaseUrl":"https://api.example.com"}`.

@@ -249,14 +249,14 @@ const Chamber: React.FC = () => {
   const sendSignal = useCallback(
     async (input: {
       kind: "offer" | "answer" | "candidate";
-      targetPeerId: string;
+      toPeerId: string;
       payload: Record<string, unknown>;
     }) => {
       if (!id) return;
       await apiChamberChatSignalPost(id, {
         peerId,
         kind: input.kind,
-        targetPeerId: input.targetPeerId,
+        toPeerId: input.toPeerId,
         payload: input.payload,
       });
     },
@@ -273,7 +273,7 @@ const Chamber: React.FC = () => {
         if (!event.candidate) return;
         void sendSignal({
           kind: "candidate",
-          targetPeerId: remotePeerId,
+          toPeerId: remotePeerId,
           payload: event.candidate.toJSON() as Record<string, unknown>,
         });
       };
@@ -321,7 +321,7 @@ const Chamber: React.FC = () => {
         if (pc.localDescription) {
           await sendSignal({
             kind: "answer",
-            targetPeerId: remotePeerId,
+            toPeerId: remotePeerId,
             payload: pc.localDescription.toJSON() as unknown as Record<
               string,
               unknown
@@ -404,7 +404,7 @@ const Chamber: React.FC = () => {
             if (pc.localDescription) {
               await sendSignal({
                 kind: "offer",
-                targetPeerId: peer.peerId,
+                toPeerId: peer.peerId,
                 payload: pc.localDescription.toJSON() as unknown as Record<
                   string,
                   unknown
