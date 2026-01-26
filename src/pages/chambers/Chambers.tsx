@@ -13,6 +13,10 @@ import { Link } from "react-router";
 import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiChambers } from "@/lib/apiClient";
+import {
+  computeChamberMetrics,
+  getChamberNumericStats,
+} from "@/lib/dtoParsers";
 import type { ChamberDto } from "@/types/api";
 import { Surface } from "@/components/Surface";
 
@@ -77,32 +81,21 @@ const Chambers: React.FC = () => {
       })
       .sort((a, b) => {
         if (sortBy === "name") return a.name.localeCompare(b.name);
-        if (sortBy === "governors")
-          return (
-            parseInt(b.stats.governors, 10) - parseInt(a.stats.governors, 10)
-          );
-        return (
-          parseInt(b.stats.acm.replace(/[,]/g, ""), 10) -
-          parseInt(a.stats.acm.replace(/[,]/g, ""), 10)
-        );
+        const statsA = getChamberNumericStats(a);
+        const statsB = getChamberNumericStats(b);
+        if (sortBy === "governors") return statsB.governors - statsA.governors;
+        return statsB.acm - statsA.acm;
       });
   }, [chambers, search, pipelineFilter, sortBy]);
 
   const computedMetrics = useMemo((): Metric[] => {
     if (!chambers) return metricCards;
-    const totalAcm = chambers.reduce((sum, chamber) => {
-      const parsed = Number(chamber.stats.acm.replace(/,/g, ""));
-      return sum + (Number.isFinite(parsed) ? parsed : 0);
-    }, 0);
-    const live = chambers.reduce(
-      (sum, chamber) => sum + (chamber.pipeline.vote ?? 0),
-      0,
-    );
+    const { totalAcm, liveProposals } = computeChamberMetrics(chambers);
     return [
       { label: "Total chambers", value: String(chambers.length) },
       { label: "Active governors", value: "150" },
       { label: "Total ACM", value: totalAcm.toLocaleString() },
-      { label: "Live proposals", value: String(live) },
+      { label: "Live proposals", value: String(liveProposals) },
     ];
   }, [chambers]);
 
