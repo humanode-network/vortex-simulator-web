@@ -14,6 +14,7 @@ import type { ProposalStage } from "@/types/stages";
 import { CardActionsRow } from "@/components/CardActionsRow";
 import { Surface } from "@/components/Surface";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { getFormationProgress } from "@/lib/dtoParsers";
 import {
   apiProposalChamberPage,
   apiProposalFormationPage,
@@ -373,33 +374,7 @@ const Proposals: React.FC = () => {
 
             const formationStats =
               proposal.stage === "build" && formationPage
-                ? (() => {
-                    const progressRaw = Number.parseInt(
-                      formationPage.progress.replace("%", ""),
-                      10,
-                    );
-                    const progressValue = Number.isFinite(progressRaw)
-                      ? progressRaw
-                      : 0;
-
-                    const parsePair = (value: string) => {
-                      const parts = value
-                        .split("/")
-                        .map((v) => Number(v.trim()));
-                      if (parts.length !== 2) return { a: 0, b: 0 };
-                      const [a, b] = parts;
-                      return {
-                        a: Number.isFinite(a) ? a : 0,
-                        b: Number.isFinite(b) ? b : 0,
-                      };
-                    };
-
-                    return {
-                      progressValue,
-                      team: parsePair(formationPage.teamSlots),
-                      milestones: parsePair(formationPage.milestones),
-                    };
-                  })()
+                ? getFormationProgress(formationPage)
                 : null;
 
             return (

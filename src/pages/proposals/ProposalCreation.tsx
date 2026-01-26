@@ -11,12 +11,12 @@ import { Tabs } from "@/components/primitives/tabs";
 import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
+import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
 import {
   apiChambers,
   apiProposalDraftDelete,
   apiProposalDraftSave,
   apiProposalSubmitToPool,
-  getApiErrorPayload,
 } from "@/lib/apiClient";
 import type { ChamberDto } from "@/types/api";
 import { BudgetStep } from "./proposalCreation/steps/BudgetStep";
@@ -42,54 +42,6 @@ import {
   type StepKey,
 } from "./proposalCreation/types";
 import { getWizardTemplate } from "./proposalCreation/templates/registry";
-
-const proposalTypeLabel: Record<string, string> = {
-  basic: "Basic",
-  fee: "Fee distribution",
-  monetary: "Monetary system",
-  core: "Core infrastructure",
-  administrative: "Administrative",
-  "dao-core": "DAO core",
-};
-
-const formatProposalType = (value: string): string =>
-  proposalTypeLabel[value] ?? value.replace(/-/g, " ");
-
-const formatSubmitError = (error: unknown): string => {
-  const payload = getApiErrorPayload(error);
-  const details = payload?.error ?? null;
-  if (!details) return (error as Error).message ?? "Submit failed.";
-
-  const code = typeof details.code === "string" ? details.code : "";
-  if (code === "proposal_type_ineligible" || code === "tier_ineligible") {
-    const requiredTier =
-      typeof details.requiredTier === "string"
-        ? details.requiredTier
-        : "a higher tier";
-    const proposalType =
-      typeof details.proposalType === "string"
-        ? formatProposalType(details.proposalType)
-        : "this";
-    return `Not eligible for ${proposalType} proposals. Required tier: ${requiredTier}.`;
-  }
-
-  if (code === "proposal_submit_ineligible") {
-    const chamberId =
-      typeof details.chamberId === "string" ? details.chamberId : "";
-    if (chamberId === "general") {
-      return "General chamber proposals require voting rights in any chamber.";
-    }
-    if (chamberId) {
-      return `Only chamber members can submit to ${formatProposalType(chamberId)}.`;
-    }
-  }
-
-  if (code === "draft_not_submittable") {
-    return "Draft is incomplete. Fill required fields before submitting.";
-  }
-
-  return details.message ?? (error as Error).message ?? "Submit failed.";
-};
 
 const ProposalCreation: React.FC = () => {
   const auth = useAuth();
@@ -435,7 +387,7 @@ const ProposalCreation: React.FC = () => {
                       clearDraftStorage();
                       navigate(`/app/proposals/${res.proposalId}/pp`);
                     } catch (error) {
-                      setSubmitError(formatSubmitError(error));
+                      setSubmitError(formatProposalSubmitError(error));
                     } finally {
                       setSubmitting(false);
                     }
