@@ -2,6 +2,7 @@ import type React from "react";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
 import { Select } from "@/components/primitives/select";
+import { TierLabel } from "@/components/TierLabel";
 import type { ProposalDraftForm } from "../types";
 import {
   SYSTEM_ACTIONS,
@@ -56,6 +57,9 @@ export function EssentialsStep(props: {
   templateId: "project" | "system";
   setTemplateId: (templateId: "project" | "system") => void;
   textareaClassName: string;
+  requiredTier: string;
+  currentTier: string | null;
+  tierEligible: boolean;
 }) {
   const {
     attemptedNext,
@@ -65,6 +69,9 @@ export function EssentialsStep(props: {
     templateId,
     setTemplateId,
     textareaClassName,
+    requiredTier,
+    currentTier,
+    tierEligible,
   } = props;
 
   const isSystemProposal = templateId === "system";
@@ -147,6 +154,19 @@ export function EssentialsStep(props: {
             : PROPOSAL_TYPE_OPTIONS.find(
                 (option) => option.value === draft.proposalType,
               )?.helper}
+          <span className="mt-1 block">
+            Required tier: <TierLabel tier={requiredTier} />.
+            {currentTier ? (
+              <span
+                className={tierEligible ? "text-muted" : "text-destructive"}
+              >
+                {" "}
+                Your tier: <TierLabel tier={currentTier} />.
+              </span>
+            ) : (
+              <span> Connect a wallet to verify eligibility.</span>
+            )}
+          </span>
         </p>
       </div>
 

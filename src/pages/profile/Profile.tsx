@@ -17,6 +17,7 @@ import { ToggleGroup } from "@/components/ToggleGroup";
 import { apiHuman, apiHumans } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
+import { buildTierRequirementItems } from "@/lib/tierProgress";
 
 const Profile: React.FC = () => {
   const auth = useAuth();
@@ -91,6 +92,9 @@ const Profile: React.FC = () => {
 
   const activeSection =
     profile && activeProof ? profile.proofSections[activeProof] : null;
+
+  const tierProgress = profile?.tierProgress ?? null;
+  const requirementItems = buildTierRequirementItems(tierProgress);
 
   return (
     <div className="flex flex-col gap-6">
@@ -252,6 +256,65 @@ const Profile: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-4">
+          {tierProgress ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Tier progress</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Surface
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
+                  >
+                    <Kicker align="center">Current tier</Kicker>
+                    <p className="text-xl font-semibold text-text">
+                      <TierLabel tier={tierProgress.tier} />
+                    </p>
+                  </Surface>
+                  <Surface
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
+                  >
+                    <Kicker align="center">Next tier</Kicker>
+                    <p className="text-xl font-semibold text-text">
+                      {tierProgress.nextTier ? (
+                        <TierLabel tier={tierProgress.nextTier} />
+                      ) : (
+                        "Max tier"
+                      )}
+                    </p>
+                  </Surface>
+                </div>
+                {requirementItems.length > 0 ? (
+                  <div className="grid gap-3 text-center sm:grid-cols-2">
+                    {requirementItems.map((item) => (
+                      <div
+                        key={item.key}
+                        className="flex h-24 flex-col items-center justify-between rounded-xl border border-border px-3 py-3"
+                      >
+                        <Kicker align="center">{item.label}</Kicker>
+                        <p className="text-base font-semibold text-text">
+                          {item.done} / {item.required}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {item.percent}% complete
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">
+                    You have reached the highest available tier.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>Details</CardTitle>
