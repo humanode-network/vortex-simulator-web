@@ -1,5 +1,5 @@
 {
-  "humanodeRpcUrl": "https://explorer-rpc.mainnet.stages.humanode.io",
+  "humanodeRpcUrl": "https://explorer-rpc-http.mainnet.stages.humanode.io",
   "genesisChambers": [
     { "id": "general", "title": "General", "multiplier": 1.2 }
   ],

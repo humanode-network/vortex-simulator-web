@@ -33,7 +33,7 @@ export type ProposalDraftForm = {
     | "administrative"
     | "dao-core";
   metaGovernance?: {
-    action: "chamber.create" | "chamber.dissolve";
+    action: "chamber.create" | "chamber.dissolve" | "chamber.censure";
     chamberId: string;
     title?: string;
     multiplier?: number;

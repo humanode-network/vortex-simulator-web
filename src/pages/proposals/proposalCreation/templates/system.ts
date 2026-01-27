@@ -10,13 +10,20 @@ function computeSystemWizard(
   const planValid = draft.how.trim().length > 0;
 
   const meta = draft.metaGovernance;
+  const chamberId = draft.chamberId.toLowerCase();
+  const targetId = (meta?.chamberId ?? "").trim().toLowerCase();
+  const isDissolve = meta?.action === "chamber.dissolve";
+  const isCensure = meta?.action === "chamber.censure";
+  const chamberScopeValid =
+    isDissolve && targetId
+      ? chamberId === "general" || chamberId === targetId
+      : chamberId === "general";
+
   const systemValid = Boolean(
     meta &&
-      draft.chamberId.toLowerCase() === "general" &&
-      meta.chamberId.trim().length > 0 &&
-      (meta.action === "chamber.dissolve"
-        ? true
-        : (meta.title ?? "").trim().length > 0),
+      chamberScopeValid &&
+      targetId.length > 0 &&
+      (isDissolve || isCensure ? true : (meta.title ?? "").trim().length > 0),
   );
 
   const canSubmit =

@@ -92,7 +92,9 @@ export function ReviewStep(props: {
                   <p className="text-muted">
                     {draft.metaGovernance?.action === "chamber.dissolve"
                       ? "Dissolve chamber"
-                      : "Create chamber"}
+                      : draft.metaGovernance?.action === "chamber.censure"
+                        ? "Censure chamber"
+                        : "Create chamber"}
                   </p>
                 </div>
                 <div>

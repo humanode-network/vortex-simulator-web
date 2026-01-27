@@ -1,4 +1,7 @@
-export type SystemActionId = "chamber.create" | "chamber.dissolve";
+export type SystemActionId =
+  | "chamber.create"
+  | "chamber.dissolve"
+  | "chamber.censure";
 
 export const SYSTEM_ACTIONS: Record<
   SystemActionId,
@@ -20,6 +23,13 @@ export const SYSTEM_ACTIONS: Record<
   "chamber.dissolve": {
     label: "Dissolve chamber",
     description: "Remove an existing chamber via General-chamber approval.",
+    requiresTitle: false,
+    showMultiplier: false,
+    showGenesisMembers: false,
+  },
+  "chamber.censure": {
+    label: "Censure chamber",
+    description: "Apply a General-chamber censure to a specialization chamber.",
     requiresTitle: false,
     showMultiplier: false,
     showGenesisMembers: false,

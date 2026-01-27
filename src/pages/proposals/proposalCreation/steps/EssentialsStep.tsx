@@ -1,9 +1,12 @@
 import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
 import { Select } from "@/components/primitives/select";
+import { Button } from "@/components/primitives/button";
 import { TierLabel } from "@/components/TierLabel";
 import type { ProposalDraftForm } from "../types";
+import { apiActiveHumans } from "@/lib/apiClient";
 import {
   SYSTEM_ACTIONS,
   getSystemActionMeta,
@@ -78,10 +81,52 @@ export function EssentialsStep(props: {
   const hasGeneralOption = chamberOptions.some(
     (opt) => opt.value === "general",
   );
+  const systemChamberOptions = chamberOptions.filter(
+    (opt) => opt.value !== "general",
+  );
   const systemAction = draft.metaGovernance?.action as
     | SystemActionId
     | undefined;
   const systemActionMeta = getSystemActionMeta(systemAction);
+  const allowSystemChamberSelect =
+    isSystemProposal && systemAction === "chamber.dissolve";
+  const [activeHumanOptions, setActiveHumanOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
+  const [activeHumanError, setActiveHumanError] = useState<string | null>(null);
+  const [selectedGenesisMember, setSelectedGenesisMember] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!systemActionMeta.showGenesisMembers) {
+      return () => {
+        cancelled = true;
+      };
+    }
+    apiActiveHumans()
+      .then((res) => {
+        if (cancelled) return;
+        setActiveHumanError(null);
+        const items = res.items
+          .map((item) => item.address)
+          .filter(Boolean)
+          .map((address) => ({ value: address, label: address }));
+        setActiveHumanOptions(items);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setActiveHumanError((error as Error).message);
+        setActiveHumanOptions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [systemActionMeta.showGenesisMembers]);
+
+  const availableGenesisOptions = useMemo(() => {
+    const selected = new Set(draft.metaGovernance?.genesisMembers ?? []);
+    return activeHumanOptions.filter((opt) => !selected.has(opt.value));
+  }, [activeHumanOptions, draft.metaGovernance?.genesisMembers]);
 
   return (
     <div className="space-y-5">
@@ -194,8 +239,14 @@ export function EssentialsStep(props: {
           </Label>
           <Select
             id="chamber"
-            value={isSystemProposal ? "general" : draft.chamberId}
-            disabled={isSystemProposal}
+            value={
+              allowSystemChamberSelect
+                ? draft.chamberId
+                : isSystemProposal
+                  ? "general"
+                  : draft.chamberId
+            }
+            disabled={isSystemProposal && !allowSystemChamberSelect}
             onChange={(e) =>
               setDraft((prev) => ({
                 ...prev,
@@ -215,7 +266,9 @@ export function EssentialsStep(props: {
           </Select>
           {isSystemProposal ? (
             <p className="text-xs text-muted">
-              System proposals must target General chamber.
+              {allowSystemChamberSelect
+                ? "Dissolution can be submitted in General or the target chamber."
+                : "System proposals must target General chamber."}
             </p>
           ) : null}
         </div>
@@ -233,19 +286,33 @@ export function EssentialsStep(props: {
                 onChange={(e) => {
                   const action = e.target
                     .value as MetaGovernanceDraft["action"];
-                  setDraft((prev) => ({
-                    ...prev,
-                    metaGovernance: {
-                      ...(prev.metaGovernance ?? {
-                        action,
-                        chamberId: "",
-                        title: "",
-                        genesisMembers: [],
-                      }),
+                  setDraft((prev) => {
+                    const nextChamberId =
+                      action === "chamber.dissolve"
+                        ? prev.chamberId
+                        : "general";
+                    const nextMeta: MetaGovernanceDraft = {
                       action,
-                    },
-                    chamberId: "general",
-                  }));
+                      chamberId: prev.metaGovernance?.chamberId ?? "",
+                      title:
+                        action === "chamber.create"
+                          ? (prev.metaGovernance?.title ?? "")
+                          : "",
+                      multiplier:
+                        action === "chamber.create"
+                          ? prev.metaGovernance?.multiplier
+                          : undefined,
+                      genesisMembers:
+                        action === "chamber.create"
+                          ? (prev.metaGovernance?.genesisMembers ?? [])
+                          : [],
+                    };
+                    return {
+                      ...prev,
+                      metaGovernance: nextMeta,
+                      chamberId: nextChamberId,
+                    };
+                  });
                 }}
               >
                 {Object.entries(SYSTEM_ACTIONS).map(([value, meta]) => (
@@ -260,27 +327,61 @@ export function EssentialsStep(props: {
             </div>
             <div className="space-y-1">
               <Label htmlFor="target-chamber-id">Target chamber id *</Label>
-              <Input
-                id="target-chamber-id"
-                value={draft.metaGovernance?.chamberId ?? ""}
-                onChange={(e) => {
-                  const chamberId = e.target.value;
-                  setDraft((prev) => ({
-                    ...prev,
-                    metaGovernance: {
-                      ...(prev.metaGovernance ?? {
-                        action: "chamber.create",
-                        chamberId: "",
-                        title: "",
-                        genesisMembers: [],
-                      }),
-                      chamberId,
-                    },
-                    chamberId: "general",
-                  }));
-                }}
-                placeholder="e.g., engineering"
-              />
+              {systemActionMeta.requiresTitle ? (
+                <Input
+                  id="target-chamber-id"
+                  value={draft.metaGovernance?.chamberId ?? ""}
+                  onChange={(e) => {
+                    const chamberId = e.target.value;
+                    setDraft((prev) => ({
+                      ...prev,
+                      metaGovernance: {
+                        ...(prev.metaGovernance ?? {
+                          action: "chamber.create",
+                          chamberId: "",
+                          title: "",
+                          genesisMembers: [],
+                        }),
+                        chamberId,
+                      },
+                      chamberId: "general",
+                    }));
+                  }}
+                  placeholder="e.g., engineering"
+                />
+              ) : (
+                <Select
+                  id="target-chamber-id"
+                  value={draft.metaGovernance?.chamberId ?? ""}
+                  onChange={(e) => {
+                    const chamberId = e.target.value;
+                    setDraft((prev) => ({
+                      ...prev,
+                      metaGovernance: {
+                        ...(prev.metaGovernance ?? {
+                          action: "chamber.create",
+                          chamberId: "",
+                          title: "",
+                          genesisMembers: [],
+                        }),
+                        chamberId,
+                      },
+                      chamberId:
+                        systemAction === "chamber.dissolve" &&
+                        prev.chamberId !== "general"
+                          ? chamberId
+                          : prev.chamberId,
+                    }));
+                  }}
+                >
+                  <option value="">Select a chamber…</option>
+                  {systemChamberOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
               {attemptedNext &&
               (draft.metaGovernance?.chamberId ?? "").trim().length === 0 ? (
                 <p className="text-xs text-destructive">
@@ -371,36 +472,96 @@ export function EssentialsStep(props: {
               {systemActionMeta.showGenesisMembers ? (
                 <div className="space-y-1">
                   <Label htmlFor="genesis-members">
-                    Genesis members (optional, one address per line)
+                    Genesis members (optional, choose active human nodes)
                   </Label>
-                  <textarea
-                    id="genesis-members"
-                    rows={4}
-                    className={textareaClassName}
-                    value={(draft.metaGovernance?.genesisMembers ?? []).join(
-                      "\n",
-                    )}
-                    onChange={(e) => {
-                      const genesisMembers = e.target.value
-                        .split("\n")
-                        .map((v) => v.trim())
-                        .filter(Boolean);
-                      setDraft((prev) => ({
-                        ...prev,
-                        metaGovernance: {
-                          ...(prev.metaGovernance ?? {
-                            action: "chamber.create",
-                            chamberId: "",
-                            title: "",
-                            genesisMembers: [],
-                          }),
-                          genesisMembers,
-                        },
-                        chamberId: "general",
-                      }));
-                    }}
-                    placeholder={"5F...Alice\n5F...Bob"}
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Select
+                      id="genesis-members"
+                      value={selectedGenesisMember}
+                      onChange={(e) => setSelectedGenesisMember(e.target.value)}
+                    >
+                      <option value="">
+                        {activeHumanOptions.length === 0
+                          ? "No active human nodes available"
+                          : "Select a human node…"}
+                      </option>
+                      {availableGenesisOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!selectedGenesisMember}
+                      onClick={() => {
+                        if (!selectedGenesisMember) return;
+                        setDraft((prev) => ({
+                          ...prev,
+                          metaGovernance: {
+                            ...(prev.metaGovernance ?? {
+                              action: "chamber.create",
+                              chamberId: "",
+                              title: "",
+                              genesisMembers: [],
+                            }),
+                            genesisMembers: Array.from(
+                              new Set([
+                                ...(prev.metaGovernance?.genesisMembers ?? []),
+                                selectedGenesisMember,
+                              ]),
+                            ),
+                          },
+                          chamberId: "general",
+                        }));
+                        setSelectedGenesisMember("");
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {activeHumanError ? (
+                    <p className="text-xs text-destructive">
+                      {activeHumanError}
+                    </p>
+                  ) : null}
+                  {(draft.metaGovernance?.genesisMembers ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {(draft.metaGovernance?.genesisMembers ?? []).map(
+                        (member) => (
+                          <button
+                            key={member}
+                            type="button"
+                            className="hover:border-border-strong rounded-full border border-border bg-panel px-3 py-1 text-xs text-text"
+                            onClick={() => {
+                              setDraft((prev) => ({
+                                ...prev,
+                                metaGovernance: {
+                                  ...(prev.metaGovernance ?? {
+                                    action: "chamber.create",
+                                    chamberId: "",
+                                    title: "",
+                                    genesisMembers: [],
+                                  }),
+                                  genesisMembers: (
+                                    prev.metaGovernance?.genesisMembers ?? []
+                                  ).filter((value) => value !== member),
+                                },
+                                chamberId: "general",
+                              }));
+                            }}
+                          >
+                            {member} · remove
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted">
+                      Leave empty to auto-include only the proposer.
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>

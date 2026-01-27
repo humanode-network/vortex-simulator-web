@@ -593,6 +593,13 @@ export async function apiHumans(): Promise<GetHumansResponse> {
   return await apiGet<GetHumansResponse>("/api/humans");
 }
 
+export type ActiveHumanDto = { address: string };
+export type GetActiveHumansResponse = { items: ActiveHumanDto[] };
+
+export async function apiActiveHumans(): Promise<GetActiveHumansResponse> {
+  return await apiGet<GetActiveHumansResponse>("/api/humans/active");
+}
+
 export async function apiHuman(id: string): Promise<HumanNodeProfileDto> {
   return await apiGet<HumanNodeProfileDto>(`/api/humans/${id}`);
 }
@@ -647,7 +654,7 @@ export type ProposalDraftFormPayload = {
     | "administrative"
     | "dao-core";
   metaGovernance?: {
-    action: "chamber.create" | "chamber.dissolve";
+    action: "chamber.create" | "chamber.dissolve" | "chamber.censure";
     chamberId: string;
     title?: string;
     multiplier?: number;
