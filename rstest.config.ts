@@ -1,5 +1,6 @@
 import { defineConfig } from "@rstest/core";
 import type { RsbuildPlugin } from "@rsbuild/core";
+import { pluginReact } from "@rsbuild/plugin-react";
 
 const rstestServerPlugin = (): RsbuildPlugin => ({
   name: "rstest:server-host",
@@ -21,5 +22,5 @@ export default defineConfig({
   testMatch: ["tests/**/*.test.js"],
   environment: "node",
   browser: { enabled: false },
-  plugins: [rstestServerPlugin()],
+  plugins: [pluginReact(), rstestServerPlugin()],
 });

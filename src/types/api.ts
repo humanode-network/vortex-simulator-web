@@ -485,6 +485,7 @@ export type HumanNodeProfileDto = {
   projects: ProjectCardDto[];
   activity: HistoryItemDto[];
   history: string[];
+  tierProgress?: TierProgressDto;
 };
 
 export type FeedStageDatumDto = {

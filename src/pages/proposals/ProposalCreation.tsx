@@ -13,12 +13,17 @@ import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
 import {
+  requiredTierForProposalType,
+  isTierEligible,
+} from "@/lib/proposalTypes";
+import {
   apiChambers,
+  apiMyGovernance,
   apiProposalDraftDelete,
   apiProposalDraftSave,
   apiProposalSubmitToPool,
 } from "@/lib/apiClient";
-import type { ChamberDto } from "@/types/api";
+import type { ChamberDto, TierProgressDto } from "@/types/api";
 import { BudgetStep } from "./proposalCreation/steps/BudgetStep";
 import { EssentialsStep } from "./proposalCreation/steps/EssentialsStep";
 import { PlanStep } from "./proposalCreation/steps/PlanStep";
@@ -63,6 +68,9 @@ const ProposalCreation: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [chambers, setChambers] = useState<ChamberDto[]>([]);
+  const [tierProgress, setTierProgress] = useState<TierProgressDto | null>(
+    null,
+  );
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -132,6 +140,27 @@ const ProposalCreation: React.FC = () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!auth.enabled || !auth.authenticated) {
+      setTierProgress(null);
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const res = await apiMyGovernance();
+        if (!active) return;
+        setTierProgress(res.tier ?? null);
+      } catch {
+        if (!active) return;
+        setTierProgress(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [auth.authenticated, auth.enabled]);
 
   useEffect(() => {
     if (searchParams.get("step") === step) return;
@@ -230,6 +259,11 @@ const ProposalCreation: React.FC = () => {
   const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
   const submitDisabled = !computed.canSubmit || !canAct;
 
+  const requiredTier = requiredTierForProposalType(draft.proposalType);
+  const currentTier = tierProgress?.tier ?? null;
+  const tierEligible =
+    currentTier && isTierEligible(currentTier, requiredTier) ? true : false;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
@@ -309,6 +343,9 @@ const ProposalCreation: React.FC = () => {
               templateId={template.id}
               setTemplateId={setTemplateId}
               textareaClassName={textareaClassName}
+              requiredTier={requiredTier}
+              currentTier={currentTier}
+              tierEligible={tierEligible}
             />
           ) : null}
 
