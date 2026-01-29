@@ -741,7 +741,7 @@ const Chamber: React.FC = () => {
                             key={`${entry.address}-${entry.submittedAt}`}
                             className="flex flex-col gap-1"
                           >
-                            <span className="font-semibold truncate">
+                            <span className="truncate font-semibold">
                               {entry.address}
                             </span>
                             <span className="text-xs text-muted">
@@ -772,9 +772,7 @@ const Chamber: React.FC = () => {
                             key={`${entry.proposalId}-${entry.awardedAt}`}
                             className="flex flex-col gap-1"
                           >
-                            <span className="font-semibold">
-                              {entry.title}
-                            </span>
+                            <span className="font-semibold">{entry.title}</span>
                             <span className="text-xs text-muted">
                               M × {entry.multiplier} · LCM {entry.lcm} · MCM{" "}
                               {entry.mcm}

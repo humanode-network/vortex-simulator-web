@@ -591,7 +591,9 @@ const MyGovernance: React.FC = () => {
                         <p className="text-sm font-semibold text-text">
                           {chamber.chamberTitle}
                         </p>
-                        <Badge variant="outline">M × {chamber.multiplier}</Badge>
+                        <Badge variant="outline">
+                          M × {chamber.multiplier}
+                        </Badge>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-xs text-muted">
                         <span>LCM {chamber.lcm}</span>

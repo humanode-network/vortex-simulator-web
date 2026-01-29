@@ -174,8 +174,17 @@ export type ChamberCmDto = {
   multiplier: number;
   avgMultiplier: number | null;
   totals: CmTotalsDto;
-  topContributors: Array<{ address: string; lcm: number; mcm: number; acm: number }>;
-  submissions: Array<{ address: string; multiplier: number; submittedAt: string }>;
+  topContributors: Array<{
+    address: string;
+    lcm: number;
+    mcm: number;
+    acm: number;
+  }>;
+  submissions: Array<{
+    address: string;
+    multiplier: number;
+    submittedAt: string;
+  }>;
   history: CmHistoryItemDto[];
 };
 

@@ -15,7 +15,11 @@ import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { apiCmMe, apiHuman, apiHumans } from "@/lib/apiClient";
-import type { CmSummaryDto, HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
+import type {
+  CmSummaryDto,
+  HumanNodeProfileDto,
+  ProofKeyDto,
+} from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 import { buildTierRequirementItems } from "@/lib/tierProgress";
 
