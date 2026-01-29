@@ -135,6 +135,59 @@ export type GetChamberResponse = {
   stageOptions: ChamberStageOptionDto[];
 };
 
+export type CmTotalsDto = {
+  lcm: number;
+  mcm: number;
+  acm: number;
+};
+
+export type CmHistoryItemDto = {
+  proposalId: string;
+  title: string;
+  chamberId: string;
+  avgScore: number | null;
+  lcm: number;
+  mcm: number;
+  multiplier: number;
+  awardedAt: string;
+};
+
+export type CmChamberBreakdownDto = {
+  chamberId: string;
+  chamberTitle: string;
+  multiplier: number;
+  lcm: number;
+  mcm: number;
+  acm: number;
+};
+
+export type CmSummaryDto = {
+  address: string;
+  totals: CmTotalsDto;
+  chambers: CmChamberBreakdownDto[];
+  history: CmHistoryItemDto[];
+};
+
+export type ChamberCmDto = {
+  chamberId: string;
+  title: string;
+  multiplier: number;
+  avgMultiplier: number | null;
+  totals: CmTotalsDto;
+  topContributors: Array<{
+    address: string;
+    lcm: number;
+    mcm: number;
+    acm: number;
+  }>;
+  submissions: Array<{
+    address: string;
+    multiplier: number;
+    submittedAt: string;
+  }>;
+  history: CmHistoryItemDto[];
+};
+
 export type FormationMetricDto = {
   label: string;
   value: string;
