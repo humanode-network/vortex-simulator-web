@@ -14,8 +14,8 @@ import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
-import { apiHuman, apiHumans } from "@/lib/apiClient";
-import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
+import { apiCmMe, apiHuman, apiHumans } from "@/lib/apiClient";
+import type { CmSummaryDto, HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 import { buildTierRequirementItems } from "@/lib/tierProgress";
 
@@ -23,11 +23,13 @@ const Profile: React.FC = () => {
   const auth = useAuth();
   const [activeProof, setActiveProof] = useState<ProofKeyDto | "">("");
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);
+  const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.enabled || !auth.authenticated || !auth.address) {
       setProfile(null);
+      setCmSummary(null);
       setLoadError(null);
       return;
     }
@@ -57,12 +59,15 @@ const Profile: React.FC = () => {
         );
         const selected = list[hash % list.length];
         const res = await apiHuman(selected.id);
+        const cm = await apiCmMe().catch(() => null);
         if (!active) return;
         setProfile(res);
+        setCmSummary(cm);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setProfile(null);
+        setCmSummary(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -166,6 +171,85 @@ const Profile: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>CM economy</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!cmSummary ? (
+            <Surface
+              variant="panelAlt"
+              radius="xl"
+              shadow="tile"
+              className="px-4 py-3 text-sm text-muted"
+            >
+              CM summary unavailable.
+            </Surface>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "LCM", value: cmSummary.totals.lcm },
+                  { label: "MCM", value: cmSummary.totals.mcm },
+                  { label: "ACM", value: cmSummary.totals.acm },
+                ].map((tile) => (
+                  <Surface
+                    key={tile.label}
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3 text-center"
+                  >
+                    <Kicker align="center">{tile.label}</Kicker>
+                    <p className="text-xl font-semibold text-text">
+                      {tile.value.toLocaleString()}
+                    </p>
+                  </Surface>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <Kicker>Recent CM awards</Kicker>
+                {cmSummary.history.slice(0, 5).length === 0 ? (
+                  <Surface
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3 text-sm text-muted"
+                  >
+                    No CM awards yet.
+                  </Surface>
+                ) : (
+                  <div className="grid gap-2">
+                    {cmSummary.history.slice(0, 5).map((item) => (
+                      <Surface
+                        key={`${item.proposalId}-${item.awardedAt}`}
+                        variant="panelAlt"
+                        radius="xl"
+                        shadow="tile"
+                        className="flex items-center justify-between px-4 py-3 text-sm"
+                      >
+                        <div>
+                          <p className="font-semibold text-text">
+                            {item.title}
+                          </p>
+                          <p className="text-xs text-muted">
+                            {item.chamberId} · M × {item.multiplier}
+                          </p>
+                        </div>
+                        <div className="text-right text-xs text-muted">
+                          <p>LCM {item.lcm}</p>
+                          <p>MCM {item.mcm}</p>
+                        </div>
+                      </Surface>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">

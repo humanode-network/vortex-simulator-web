@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "@rstest/core";
 
-import { apiChamber } from "../../src/lib/apiClient.ts";
+import {
+  apiChamber,
+  apiChamberCm,
+  apiCmAddress,
+  apiCmMe,
+} from "../../src/lib/apiClient.ts";
 
 test("apiChamber requests the chamber endpoint with credentials", async () => {
   const originalFetch = global.fetch;
@@ -39,6 +44,92 @@ test("apiChamber requests the chamber endpoint with credentials", async () => {
   assert.equal(res.chamber.id, "engineering");
   assert.equal(calls[0].input, "/api/chambers/engineering");
   assert.equal(calls[0].init.credentials, "include");
+
+  global.fetch = originalFetch;
+});
+
+test("apiChamberCm requests the chamber CM endpoint", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response(
+      JSON.stringify({
+        chamberId: "engineering",
+        title: "Engineering",
+        multiplier: 1.4,
+        avgMultiplier: 1.3,
+        totals: { lcm: 10, mcm: 20, acm: 20 },
+        topContributors: [],
+        submissions: [],
+        history: [],
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  };
+
+  const res = await apiChamberCm("engineering");
+  assert.equal(res.chamberId, "engineering");
+  assert.equal(calls[0].input, "/api/chambers/engineering/cm");
+
+  global.fetch = originalFetch;
+});
+
+test("apiCmMe requests the cm/me endpoint", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response(
+      JSON.stringify({
+        address: "0xme",
+        totals: { lcm: 1, mcm: 2, acm: 2 },
+        chambers: [],
+        history: [],
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  };
+
+  const res = await apiCmMe();
+  assert.equal(res.address, "0xme");
+  assert.equal(calls[0].input, "/api/cm/me");
+  assert.equal(calls[0].init.credentials, "include");
+
+  global.fetch = originalFetch;
+});
+
+test("apiCmAddress requests the cm/:address endpoint", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input) => {
+    calls.push({ input });
+    return new Response(
+      JSON.stringify({
+        address: "0xabc",
+        totals: { lcm: 1, mcm: 2, acm: 2 },
+        chambers: [],
+        history: [],
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  };
+
+  const res = await apiCmAddress("0xabc");
+  assert.equal(res.address, "0xabc");
+  assert.equal(calls[0].input, "/api/cm/0xabc");
 
   global.fetch = originalFetch;
 });

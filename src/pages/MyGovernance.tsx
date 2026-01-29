@@ -17,8 +17,12 @@ import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
-import { apiChambers, apiMyGovernance } from "@/lib/apiClient";
-import type { ChamberDto, GetMyGovernanceResponse } from "@/types/api";
+import { apiChambers, apiCmMe, apiMyGovernance } from "@/lib/apiClient";
+import type {
+  ChamberDto,
+  CmSummaryDto,
+  GetMyGovernanceResponse,
+} from "@/types/api";
 import { cn } from "@/lib/utils";
 
 type GoverningStatus =
@@ -133,6 +137,7 @@ const governingStatusTermId = (label: GoverningStatus): string => {
 const MyGovernance: React.FC = () => {
   const [gov, setGov] = useState<GetMyGovernanceResponse | null>(null);
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
+  const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -143,14 +148,17 @@ const MyGovernance: React.FC = () => {
           apiMyGovernance(),
           apiChambers(),
         ]);
+        const cmRes = await apiCmMe().catch(() => null);
         if (!active) return;
         setGov(govRes);
         setChambers(chambersRes.items);
+        setCmSummary(cmRes);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setGov(null);
         setChambers(null);
+        setCmSummary(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -521,6 +529,81 @@ const MyGovernance: React.FC = () => {
               </AppCard>
             ))}
           </section>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>CM economy</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!cmSummary ? (
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="px-4 py-3 text-sm text-muted"
+            >
+              CM summary unavailable.
+            </Surface>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "LCM", value: cmSummary.totals.lcm },
+                  { label: "MCM", value: cmSummary.totals.mcm },
+                  { label: "ACM", value: cmSummary.totals.acm },
+                ].map((tile) => (
+                  <Surface
+                    key={tile.label}
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3 text-center"
+                  >
+                    <Kicker align="center">{tile.label}</Kicker>
+                    <p className="text-xl font-semibold text-text">
+                      {tile.value.toLocaleString()}
+                    </p>
+                  </Surface>
+                ))}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {cmSummary.chambers.length === 0 ? (
+                  <Surface
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3 text-sm text-muted"
+                  >
+                    No CM awards yet.
+                  </Surface>
+                ) : (
+                  cmSummary.chambers.map((chamber) => (
+                    <Surface
+                      key={chamber.chamberId}
+                      variant="panelAlt"
+                      radius="xl"
+                      shadow="tile"
+                      className="space-y-2 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-text">
+                          {chamber.chamberTitle}
+                        </p>
+                        <Badge variant="outline">M × {chamber.multiplier}</Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-muted">
+                        <span>LCM {chamber.lcm}</span>
+                        <span>MCM {chamber.mcm}</span>
+                        <span>ACM {chamber.acm}</span>
+                      </div>
+                    </Surface>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
