@@ -1,26 +1,36 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card } from "@/components/primitives/card";
 import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
 import { StatusPill } from "@/components/StatusPill";
-import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
+import { CmEconomyPanel } from "@/components/CmEconomyPanel";
+import { SectionHeader } from "@/components/SectionHeader";
+import { StatTile } from "@/components/StatTile";
+import { ActivityTile } from "@/components/ActivityTile";
 import { apiHuman } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
+import { Check, Copy } from "lucide-react";
+import {
+  ACTIVITY_FILTERS,
+  DETAIL_TILE_CLASS,
+  PROOF_META,
+  PROOF_TILE_CLASS,
+  type ActivityFilter,
+  activityMatches,
+  shortAddress,
+  shouldShowDetail,
+} from "@/lib/profileUi";
 
 const HumanNode: React.FC = () => {
   const { id } = useParams();
-  const [activeProof, setActiveProof] = useState<ProofKeyDto | "">("");
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -47,7 +57,6 @@ const HumanNode: React.FC = () => {
   if (!profile) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHint pageId="human-node" />
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           {loadError
             ? `Human profile unavailable: ${loadError}`
@@ -61,32 +70,82 @@ const HumanNode: React.FC = () => {
     name,
     governorActive,
     humanNodeActive,
-    governanceSummary,
     heroStats,
     quickDetails,
     proofSections,
     governanceActions,
     projects,
+    cmHistory = [],
+    cmChambers = [],
   } = profile;
-  const activeSection = activeProof ? proofSections[activeProof] : null;
-  const proofOptions: Array<{ value: ProofKeyDto; label: ReactNode }> = [
-    {
-      value: "time",
-      label: <HintLabel termId="proof_of_time_pot">PoT</HintLabel>,
+  const isAddressName = name.toLowerCase() === profile.id.toLowerCase();
+  const headerTitle = isAddressName ? shortAddress(profile.id) : name;
+  const visibleHeroStats = (heroStats ?? []).filter((stat) => {
+    const label = stat.label.trim().toUpperCase();
+    return !["ACM", "LCM", "MCM", "MM"].includes(label);
+  });
+  const proofKeys: ProofKeyDto[] = ["time", "devotion", "governance"];
+  const proofCards = proofKeys
+    .map((key) => ({
+      key,
+      section: proofSections[key],
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        key: ProofKeyDto;
+        section: HumanNodeProfileDto["proofSections"][ProofKeyDto];
+      } => Boolean(entry.section),
+    );
+
+  const handleCopy = async (value: string) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard?.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  const cmTotals = heroStats.reduce(
+    (acc, stat) => {
+      const label = stat.label.trim().toUpperCase();
+      const numeric = Number(stat.value.replace(/[^0-9.-]/g, "")) || 0;
+      if (label === "LCM") acc.lcm = numeric;
+      if (label === "MCM") acc.mcm = numeric;
+      if (label === "ACM") acc.acm = numeric;
+      return acc;
     },
-    {
-      value: "devotion",
-      label: <HintLabel termId="proof_of_devotion_pod">PoD</HintLabel>,
-    },
-    {
-      value: "governance",
-      label: <HintLabel termId="proof_of_governance_pog">PoG</HintLabel>,
-    },
-  ];
+    { lcm: 0, mcm: 0, acm: 0 },
+  );
+  const filteredActions = governanceActions.filter((action) =>
+    activityMatches(action, activityFilter),
+  );
+  const visibleDetails = quickDetails.filter((detail) =>
+    shouldShowDetail(detail.label),
+  );
+  const proofTiles = proofCards.flatMap(({ key, section }) =>
+    section.items.map((item) => ({
+      key: `${key}-${item.label}`,
+      label: (
+        <span className="inline-flex items-center gap-1">
+          <HintLabel
+            termId={PROOF_META[key].termId}
+            termText={PROOF_META[key].label}
+          />
+          <span className="text-muted">·</span>
+          <span>{item.label}</span>
+        </span>
+      ),
+      value: item.value,
+    })),
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHint pageId="human-node" />
       <Surface
         as="section"
         variant="panel"
@@ -102,7 +161,25 @@ const HumanNode: React.FC = () => {
             />
           </div>
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-3xl font-semibold text-text">{name}</h1>
+            <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
+              {!isAddressName ? (
+                <Badge variant="muted">{shortAddress(profile.id)}</Badge>
+              ) : null}
+              <button
+                type="button"
+                className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
+                onClick={() => handleCopy(profile.id)}
+                aria-label={copied ? "Copied" : "Copy address"}
+                title={copied ? "Copied" : "Copy address"}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           <div className="flex flex-col items-center gap-2 text-sm lg:items-end">
             <StatusPill
@@ -119,10 +196,16 @@ const HumanNode: React.FC = () => {
         </div>
       </Surface>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {heroStats.map((stat) => (
-          <Card key={stat.label} className="h-full text-center">
-            <CardContent className="space-y-1 p-4 text-center">
+      {visibleHeroStats.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {visibleHeroStats.map((stat) => (
+            <Surface
+              key={stat.label}
+              variant="panelAlt"
+              radius="xl"
+              shadow="tile"
+              className="px-4 py-3 text-center"
+            >
               <Kicker align="center">
                 {stat.label.startsWith("ACM") ? (
                   <HintLabel termId="acm">{stat.label}</HintLabel>
@@ -134,146 +217,99 @@ const HumanNode: React.FC = () => {
                   stat.label
                 )}
               </Kicker>
-              <p className="text-2xl font-semibold text-text">{stat.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <p className="text-xl font-semibold text-text">{stat.value}</p>
+            </Surface>
+          ))}
+        </div>
+      ) : null}
+
+      <section className="space-y-4">
+        <SectionHeader>Details &amp; Proofs</SectionHeader>
+        <div className="grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
+          {visibleDetails.map((detail) => (
+            <StatTile
+              key={detail.label}
+              label={detail.label}
+              value={
+                detail.label === "Tier" ? (
+                  <TierLabel tier={detail.value} />
+                ) : (
+                  detail.value
+                )
+              }
+              className={DETAIL_TILE_CLASS}
+              valueClassName="text-xl"
+            />
+          ))}
+          {proofTiles.map((tile) => (
+            <StatTile
+              key={tile.key}
+              label={tile.label}
+              value={tile.value}
+              className={PROOF_TILE_CLASS}
+              valueClassName="text-xl"
+            />
+          ))}
+        </div>
+      </section>
+
+      <CmEconomyPanel
+        totals={cmTotals}
+        chambers={cmChambers}
+        history={cmHistory}
+        mmValue="—"
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 text-center sm:grid-cols-2">
-              {quickDetails.map((detail) => (
-                <div
-                  key={detail.label}
-                  className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-3 text-center"
-                >
-                  <Kicker align="center">{detail.label}</Kicker>
-                  <p className="text-center text-base font-semibold text-text">
-                    {detail.label === "Tier" ? (
-                      <TierLabel tier={detail.value} />
-                    ) : (
-                      detail.value
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-3 text-center">
-              <ToggleGroup
-                value={activeProof}
-                onValueChange={(val) => setActiveProof(val as ProofKeyDto | "")}
-                options={proofOptions}
-                allowDeselect
-              />
-              {activeSection ? (
-                <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
-                  {(activeSection.items ?? []).map(
-                    (item: { label: string; value: string }) => (
-                      <div
-                        key={item.label}
-                        className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
-                      >
-                        <Kicker
-                          align="center"
-                          className="min-h-6 leading-tight"
-                        >
-                          {item.label}
-                        </Kicker>
-                        <p className="text-base font-semibold">{item.value}</p>
-                      </div>
-                    ),
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-muted">
-                  Select PoT, PoD, or PoG to view metrics.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Governance summary</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted">
-            <p>{governanceSummary}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between gap-3">
-              <CardTitle>Governance activity</CardTitle>
-              <Link
-                to={`/app/human-nodes/${id ?? ""}/history`}
-                className="text-sm font-semibold text-primary hover:underline"
-              >
-                View full history
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <SectionHeader>Governance activity</SectionHeader>
+            <Link
+              to={`/app/human-nodes/${id ?? ""}/history`}
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              View full history
+            </Link>
+          </div>
+          <ToggleGroup
+            value={activityFilter}
+            onValueChange={(val) =>
+              setActivityFilter((val as typeof activityFilter) || "all")
+            }
+            options={ACTIVITY_FILTERS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
+          {filteredActions.length ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {governanceActions.map((action) => (
-                <div key={action.title} className="group relative">
-                  <Surface
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="space-y-1 px-3 py-3 text-center"
-                  >
-                    <p className="line-clamp-1 text-sm font-semibold text-text">
-                      {action.title}
-                    </p>
-                    <Kicker
-                      align="center"
-                      className="line-clamp-1 text-primary"
-                    >
-                      {action.action}
-                    </Kicker>
-                    <p className="line-clamp-1 text-xs text-muted">
-                      {action.context}
-                    </p>
-                  </Surface>
-                  <Surface
-                    variant="panel"
-                    radius="xl"
-                    shadow="popover"
-                    className="pointer-events-none absolute top-full left-1/2 z-10 mt-2 w-64 -translate-x-1/2 p-3 text-left text-xs text-text opacity-0 transition group-hover:opacity-100"
-                  >
-                    <p className="font-semibold">{action.title}</p>
-                    <p className="text-muted">{action.context}</p>
-                    <p className="mt-1 leading-snug">{action.detail}</p>
-                  </Surface>
-                </div>
+              {filteredActions.map((action) => (
+                <ActivityTile
+                  key={`${action.title}-${action.timestamp}`}
+                  action={action}
+                />
               ))}
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <p className="text-sm text-muted">No activity to show yet.</p>
+          )}
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Formation projects</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {projects.length === 0 ? (
-              <p className="text-sm text-muted">
-                Not participating in Formation right now.
-              </p>
-            ) : (
-              projects.map((project) => (
-                <div
+        <div className="space-y-3">
+          <SectionHeader>Formation projects</SectionHeader>
+          {projects.length === 0 ? (
+            <p className="text-sm text-muted">
+              Not participating in Formation right now.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {projects.map((project) => (
+                <Surface
                   key={project.title}
-                  className="rounded-xl border border-border px-4 py-3"
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="tile"
+                  className="px-4 py-3"
                 >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-text">
@@ -289,11 +325,11 @@ const HumanNode: React.FC = () => {
                       </Badge>
                     ))}
                   </div>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+                </Surface>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

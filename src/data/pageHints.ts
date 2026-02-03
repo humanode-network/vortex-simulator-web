@@ -55,30 +55,6 @@ export const pageHints: Record<string, PageHintEntry> = {
       },
     ],
   },
-  "human-node": {
-    id: "human-node",
-    title: "Human node profile",
-    intro:
-      "Detailed profile of a governor/human node: proofs, activity, formation projects, and governance history.",
-    sections: [
-      {
-        heading: "What you see",
-        items: [
-          "Header with avatar, name, status pills, ACM/MM, member-since.",
-          "Proof-of-Time/Devotion/Governance tiles with toggles for detailed proof data.",
-          "Governance activity grid, formation projects list, and details tiles (tier, delegation share, proposals created).",
-        ],
-      },
-      {
-        heading: "What you can do",
-        items: [
-          "Toggle PoT/PoD/PoG views to see duration, acceptance, and activity signals.",
-          "Scroll activity/formation sections and open related items if needed.",
-          "Use hints on ACM/LCM/MM/tier/era to learn terminology in-place.",
-        ],
-      },
-    ],
-  },
   proposals: {
     id: "proposals",
     title: "Proposals",

@@ -18,6 +18,7 @@ import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { DETAIL_TILE_CLASS, shortAddress } from "@/lib/profileUi";
 import {
   apiChambers,
   apiFactions,
@@ -54,8 +55,15 @@ const HumanNodes: React.FC = () => {
       | "legate"
       | "consul"
       | "citizen";
-  }>({ sortBy: "acm-desc", tierFilter: "all" });
-  const { sortBy, tierFilter } = filters;
+    statusFilter: "all" | "governor" | "human" | "inactive";
+    cmRange: "all" | "0-50" | "50-200" | "200+";
+  }>({
+    sortBy: "acm-desc",
+    tierFilter: "all",
+    statusFilter: "all",
+    cmRange: "all",
+  });
+  const { sortBy, tierFilter, statusFilter, cmRange } = filters;
   const [view, setView] = useState<"cards" | "list">("cards");
 
   useEffect(() => {
@@ -114,16 +122,44 @@ const HumanNodes: React.FC = () => {
           factionName.includes(term);
         const matchesTier =
           tierFilter === "all" ? true : node.tier === tierFilter;
-        return matchesTerm && matchesTier;
+        const matchesStatus =
+          statusFilter === "all"
+            ? true
+            : statusFilter === "governor"
+              ? node.active.governorActive
+              : statusFilter === "human"
+                ? node.active.humanNodeActive
+                : !node.active.governorActive && !node.active.humanNodeActive;
+        const acmValue = node.cmTotals?.acm ?? node.acm ?? 0;
+        const matchesRange =
+          cmRange === "all"
+            ? true
+            : cmRange === "0-50"
+              ? acmValue <= 50
+              : cmRange === "50-200"
+                ? acmValue > 50 && acmValue <= 200
+                : acmValue > 200;
+        return matchesTerm && matchesTier && matchesStatus && matchesRange;
       })
       .sort((a, b) => {
-        if (sortBy === "acm-desc") return b.acm - a.acm;
-        if (sortBy === "acm-asc") return a.acm - b.acm;
+        const acmA = a.cmTotals?.acm ?? a.acm;
+        const acmB = b.cmTotals?.acm ?? b.acm;
+        if (sortBy === "acm-desc") return acmB - acmA;
+        if (sortBy === "acm-asc") return acmA - acmB;
         if (sortBy === "name") return a.name.localeCompare(b.name);
         const order = ["nominee", "ecclesiast", "legate", "consul", "citizen"];
         return order.indexOf(a.tier) - order.indexOf(b.tier);
       });
-  }, [nodes, factionsById, chambersById, search, sortBy, tierFilter]);
+  }, [
+    nodes,
+    factionsById,
+    chambersById,
+    search,
+    sortBy,
+    tierFilter,
+    statusFilter,
+    cmRange,
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -167,6 +203,26 @@ const HumanNodes: React.FC = () => {
               { value: "legate", label: "Legate" },
               { value: "consul", label: "Consul" },
               { value: "citizen", label: "Citizen" },
+            ],
+          },
+          {
+            key: "statusFilter",
+            label: "Status",
+            options: [
+              { value: "all", label: "All statuses" },
+              { value: "governor", label: "Governor active" },
+              { value: "human", label: "Human node active" },
+              { value: "inactive", label: "Inactive" },
+            ],
+          },
+          {
+            key: "cmRange",
+            label: "ACM range",
+            options: [
+              { value: "all", label: "All ACM" },
+              { value: "0-50", label: "0–50" },
+              { value: "50-200", label: "50–200" },
+              { value: "200+", label: "200+" },
             ],
           },
         ]}
@@ -227,9 +283,15 @@ const HumanNodes: React.FC = () => {
                       : `${formationProjects[0]} + ${
                           formationProjects.length - 1
                         }`;
+                const cmTotals = node.cmTotals ?? {
+                  lcm: 0,
+                  mcm: 0,
+                  acm: node.acm,
+                };
                 const tileItems = [
-                  { label: "ACM", value: node.acm.toString() },
-                  { label: "MM", value: node.mm.toString() },
+                  { label: "LCM", value: cmTotals.lcm.toString() },
+                  { label: "MCM", value: cmTotals.mcm.toString() },
+                  { label: "ACM", value: cmTotals.acm.toString() },
                   {
                     label: "Tier",
                     value: (
@@ -241,11 +303,11 @@ const HumanNodes: React.FC = () => {
                   { label: "Faction", value: factionName },
                   {
                     label: "Governor",
-                    value: node.active ? "Active" : "Not active",
+                    value: node.active.governorActive ? "Active" : "Not active",
                   },
                   {
                     label: "Human node",
-                    value: node.active ? "Active" : "Inactive",
+                    value: node.active.humanNodeActive ? "Active" : "Inactive",
                   },
                   {
                     label: "Main chamber",
@@ -269,7 +331,12 @@ const HumanNodes: React.FC = () => {
                     <CardContent className="flex flex-col gap-4 pt-4">
                       <div>
                         <h3 className="text-lg font-semibold">{node.name}</h3>
-                        <p className="text-sm text-muted">{node.role}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+                          <span>{node.role}</span>
+                          <Badge size="sm" variant="muted" title={node.id}>
+                            {shortAddress(node.id)}
+                          </Badge>
+                        </div>
                       </div>
                       <div className="grid auto-rows-fr grid-cols-2 gap-3">
                         {tileItems.map((item) => (
@@ -289,7 +356,7 @@ const HumanNodes: React.FC = () => {
                             value={item.value}
                             radius="xl"
                             variant="panelAlt"
-                            className="px-4 py-3"
+                            className={DETAIL_TILE_CLASS}
                             labelClassName="text-[0.65rem]"
                             valueClassName="text-base"
                           />
@@ -325,16 +392,13 @@ const HumanNodes: React.FC = () => {
                           <HintLabel termId="acm" className="mr-1">
                             ACM
                           </HintLabel>{" "}
-                          {node.acm}
+                          {node.cmTotals?.acm ?? node.acm}
                         </Badge>
-                        <Badge size="sm">
-                          <HintLabel
-                            termId="meritocratic_measure"
-                            className="mr-1"
-                          >
-                            MM
-                          </HintLabel>{" "}
-                          {node.mm}
+                        <Badge size="sm" variant="outline">
+                          LCM {node.cmTotals?.lcm ?? 0}
+                        </Badge>
+                        <Badge size="sm" variant="outline">
+                          MCM {node.cmTotals?.mcm ?? 0}
                         </Badge>
                         {node.formationCapable && (
                           <Badge size="sm" variant="outline">

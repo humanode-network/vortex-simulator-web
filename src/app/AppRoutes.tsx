@@ -11,7 +11,6 @@ import Faction from "../pages/factions/Faction";
 import ProposalPP from "../pages/proposals/ProposalPP";
 import ProposalChamber from "../pages/proposals/ProposalChamber";
 import ProposalFormation from "../pages/proposals/ProposalFormation";
-import General from "../pages/General";
 import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
 import Chamber from "../pages/chambers/Chamber";
@@ -27,6 +26,7 @@ import FullHistory from "../pages/human-nodes/FullHistory";
 import Landing from "../pages/Landing";
 import Paper from "../pages/Paper";
 import Guide from "../pages/Guide";
+import Settings from "../pages/settings/Settings";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -65,7 +65,7 @@ const AppRoutes: React.FC = () => {
         <Route path="formation" element={<Formation />} />
         <Route path="invision" element={<Invision />} />
         <Route path="vortexopedia" element={<Vortexopedia />} />
-        <Route path="settings" element={<General />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="my-governance" element={<MyGovernance />} />
       </Route>
 

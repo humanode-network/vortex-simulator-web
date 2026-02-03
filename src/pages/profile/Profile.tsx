@@ -1,10 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { useEffect, useState } from "react";
+import { Card } from "@/components/primitives/card";
 import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
@@ -14,26 +9,40 @@ import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
-import { apiCmMe, apiHuman, apiHumans } from "@/lib/apiClient";
-import type {
-  CmSummaryDto,
-  HumanNodeProfileDto,
-  ProofKeyDto,
-} from "@/types/api";
+import { SectionHeader } from "@/components/SectionHeader";
+import { StatTile } from "@/components/StatTile";
+import { ActivityTile } from "@/components/ActivityTile";
+import { apiHuman } from "@/lib/apiClient";
+import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 import { buildTierRequirementItems } from "@/lib/tierProgress";
+import { CmEconomyPanel } from "@/components/CmEconomyPanel";
+import { Check, Copy } from "lucide-react";
+import {
+  ACTIVITY_FILTERS,
+  DETAIL_TILE_CLASS,
+  PROOF_META,
+  PROOF_TILE_CLASS,
+  type ActivityFilter,
+  activityMatches,
+  shortAddress,
+  shouldShowDetail,
+} from "@/lib/profileUi";
 
-const Profile: React.FC = () => {
+type ProfileProps = {
+  showHint?: boolean;
+};
+
+const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
   const auth = useAuth();
-  const [activeProof, setActiveProof] = useState<ProofKeyDto | "">("");
+  const [copied, setCopied] = useState(false);
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);
-  const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!auth.enabled || !auth.authenticated || !auth.address) {
       setProfile(null);
-      setCmSummary(null);
       setLoadError(null);
       return;
     }
@@ -41,15 +50,6 @@ const Profile: React.FC = () => {
     let active = true;
     (async () => {
       try {
-        const humans = await apiHumans();
-        const list = humans.items;
-        if (!list.length) {
-          if (!active) return;
-          setProfile(null);
-          setLoadError("No human nodes are available.");
-          return;
-        }
-
         const address = auth.address;
         if (!address) {
           if (!active) return;
@@ -57,21 +57,13 @@ const Profile: React.FC = () => {
           setLoadError("Wallet address is missing.");
           return;
         }
-        const hash = Array.from(address).reduce(
-          (acc, ch) => acc + ch.charCodeAt(0),
-          0,
-        );
-        const selected = list[hash % list.length];
-        const res = await apiHuman(selected.id);
-        const cm = await apiCmMe().catch(() => null);
+        const res = await apiHuman(address);
         if (!active) return;
         setProfile(res);
-        setCmSummary(cm);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setProfile(null);
-        setCmSummary(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -81,33 +73,83 @@ const Profile: React.FC = () => {
     };
   }, [auth.address, auth.authenticated, auth.enabled]);
 
-  const proofOptions = useMemo(
-    () => [
-      {
-        value: "time",
-        label: <HintLabel termId="proof_of_time_pot">PoT</HintLabel>,
-      },
-      {
-        value: "devotion",
-        label: <HintLabel termId="proof_of_devotion_pod">PoD</HintLabel>,
-      },
-      {
-        value: "governance",
-        label: <HintLabel termId="proof_of_governance_pog">PoG</HintLabel>,
-      },
-    ],
-    [],
-  );
+  const proofKeys: ProofKeyDto[] = ["time", "devotion", "governance"];
+  const proofCards = proofKeys
+    .map((key) =>
+      profile ? { key, section: profile.proofSections[key] } : null,
+    )
+    .filter(
+      (
+        entry,
+      ): entry is {
+        key: ProofKeyDto;
+        section: HumanNodeProfileDto["proofSections"][ProofKeyDto];
+      } => Boolean(entry?.section),
+    );
 
-  const activeSection =
-    profile && activeProof ? profile.proofSections[activeProof] : null;
+  const handleCopy = async (value: string) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard?.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   const tierProgress = profile?.tierProgress ?? null;
+  const filteredActions = (profile?.governanceActions ?? []).filter((action) =>
+    activityMatches(action, activityFilter),
+  );
   const requirementItems = buildTierRequirementItems(tierProgress);
+  const cmHistory = profile?.cmHistory ?? [];
+  const cmChambers = profile?.cmChambers ?? [];
+  const cmTotals = (profile?.heroStats ?? []).reduce(
+    (acc, stat) => {
+      const label = stat.label.trim().toUpperCase();
+      const numeric = Number(stat.value.replace(/[^0-9.-]/g, "")) || 0;
+      if (label === "LCM") acc.lcm = numeric;
+      if (label === "MCM") acc.mcm = numeric;
+      if (label === "ACM") acc.acm = numeric;
+      return acc;
+    },
+    { lcm: 0, mcm: 0, acm: 0 },
+  );
+  const visibleHeroStats = (profile?.heroStats ?? []).filter((stat) => {
+    const label = stat.label.trim().toUpperCase();
+    return !["ACM", "LCM", "MCM", "MM"].includes(label);
+  });
+  const visibleDetails = (profile?.quickDetails ?? []).filter((detail) =>
+    shouldShowDetail(detail.label),
+  );
+  const headerAddress = profile?.id ?? auth.address ?? "";
+  const isAddressName =
+    Boolean(profile?.name && headerAddress) &&
+    profile?.name.toLowerCase() === headerAddress.toLowerCase();
+  const headerTitle = isAddressName
+    ? shortAddress(headerAddress)
+    : (profile?.name ?? "—");
+  const proofTiles = proofCards.flatMap(({ key, section }) =>
+    section.items.map((item) => ({
+      key: `${key}-${item.label}`,
+      label: (
+        <span className="inline-flex items-center gap-1">
+          <HintLabel
+            termId={PROOF_META[key].termId}
+            termText={PROOF_META[key].label}
+          />
+          <span className="text-muted">·</span>
+          <span>{item.label}</span>
+        </span>
+      ),
+      value: item.value,
+    })),
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHint pageId="profile" />
+      {showHint ? <PageHint pageId="profile" /> : null}
       {!auth.enabled ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           Auth is disabled in this build.
@@ -137,10 +179,27 @@ const Profile: React.FC = () => {
             />
           </div>
           <div className="flex flex-col items-center text-center">
-            <Kicker align="center">My profile</Kicker>
-            <h1 className="text-3xl font-semibold text-text">
-              {profile?.name ?? "—"}
-            </h1>
+            <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
+            {headerAddress ? (
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
+                {!isAddressName ? (
+                  <Badge variant="muted">{shortAddress(headerAddress)}</Badge>
+                ) : null}
+                <button
+                  type="button"
+                  className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
+                  onClick={() => handleCopy(headerAddress)}
+                  aria-label={copied ? "Copied" : "Copy address"}
+                  title={copied ? "Copied" : "Copy address"}
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            ) : null}
           </div>
           <div className="flex flex-col items-center gap-2 text-sm lg:items-end">
             <StatusPill
@@ -157,10 +216,16 @@ const Profile: React.FC = () => {
         </div>
       </Surface>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {(profile?.heroStats ?? []).map((stat) => (
-          <Card key={stat.label} className="h-full">
-            <CardContent className="space-y-1 p-4 text-center">
+      {visibleHeroStats.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {visibleHeroStats.map((stat) => (
+            <Surface
+              key={stat.label}
+              variant="panelAlt"
+              radius="xl"
+              shadow="tile"
+              className="px-4 py-3 text-center"
+            >
               <Kicker align="center">
                 {stat.label === "ACM" ? (
                   <HintLabel termId="acm" termText="ACM" />
@@ -170,311 +235,192 @@ const Profile: React.FC = () => {
                   stat.label
                 )}
               </Kicker>
-              <p className="text-2xl font-semibold text-text">{stat.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>CM economy</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!cmSummary ? (
-            <Surface
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="px-4 py-3 text-sm text-muted"
-            >
-              CM summary unavailable.
+              <p className="text-xl font-semibold text-text">{stat.value}</p>
             </Surface>
-          ) : (
-            <>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[
-                  { label: "LCM", value: cmSummary.totals.lcm },
-                  { label: "MCM", value: cmSummary.totals.mcm },
-                  { label: "ACM", value: cmSummary.totals.acm },
-                ].map((tile) => (
-                  <Surface
-                    key={tile.label}
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="px-4 py-3 text-center"
-                  >
-                    <Kicker align="center">{tile.label}</Kicker>
-                    <p className="text-xl font-semibold text-text">
-                      {tile.value.toLocaleString()}
-                    </p>
-                  </Surface>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <Kicker>Recent CM awards</Kicker>
-                {cmSummary.history.slice(0, 5).length === 0 ? (
-                  <Surface
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="px-4 py-3 text-sm text-muted"
-                  >
-                    No CM awards yet.
-                  </Surface>
+          ))}
+        </div>
+      ) : null}
+
+      <section className="space-y-4">
+        <SectionHeader>Details &amp; Proofs</SectionHeader>
+        <div className="grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
+          {visibleDetails.map((detail) => (
+            <StatTile
+              key={detail.label}
+              label={detail.label}
+              value={
+                detail.label === "Tier" ? (
+                  <TierLabel tier={detail.value} />
                 ) : (
-                  <div className="grid gap-2">
-                    {cmSummary.history.slice(0, 5).map((item) => (
-                      <Surface
-                        key={`${item.proposalId}-${item.awardedAt}`}
-                        variant="panelAlt"
-                        radius="xl"
-                        shadow="tile"
-                        className="flex items-center justify-between px-4 py-3 text-sm"
-                      >
-                        <div>
-                          <p className="font-semibold text-text">
-                            {item.title}
-                          </p>
-                          <p className="text-xs text-muted">
-                            {item.chamberId} · M × {item.multiplier}
-                          </p>
-                        </div>
-                        <div className="text-right text-xs text-muted">
-                          <p>LCM {item.lcm}</p>
-                          <p>MCM {item.mcm}</p>
-                        </div>
-                      </Surface>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                  detail.value
+                )
+              }
+              className={DETAIL_TILE_CLASS}
+              valueClassName="text-xl"
+            />
+          ))}
+          {proofTiles.map((tile) => (
+            <StatTile
+              key={tile.key}
+              label={tile.label}
+              value={tile.value}
+              className={PROOF_TILE_CLASS}
+              valueClassName="text-xl"
+            />
+          ))}
+        </div>
+      </section>
+
+      <CmEconomyPanel
+        totals={cmTotals}
+        chambers={cmChambers}
+        history={cmHistory}
+        mmValue="—"
+      />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Governance summary</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted">
-              <p>{profile?.governanceSummary ?? "—"}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Governance activity</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="space-y-3">
+            <SectionHeader>Governance activity</SectionHeader>
+            <ToggleGroup
+              value={activityFilter}
+              onValueChange={(val) =>
+                setActivityFilter((val as typeof activityFilter) || "all")
+              }
+              options={ACTIVITY_FILTERS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              }))}
+            />
+            {filteredActions.length ? (
               <div className="grid max-h-72 grid-cols-1 gap-3 overflow-y-scroll pr-2 sm:grid-cols-2 xl:grid-cols-3">
-                {(profile?.governanceActions ?? []).map((action) => (
-                  <div key={action.title} className="group relative">
-                    <Surface
-                      variant="panelAlt"
-                      radius="xl"
-                      shadow="tile"
-                      className="space-y-1 px-3 py-3 text-center"
-                    >
-                      <p className="line-clamp-1 text-sm font-semibold text-text">
-                        {action.title}
-                      </p>
-                      <Kicker
-                        align="center"
-                        className="line-clamp-1 text-primary"
-                      >
-                        {action.action}
-                      </Kicker>
-                      <p className="line-clamp-1 text-xs text-muted">
-                        {action.context}
-                      </p>
-                    </Surface>
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="popover"
-                      className="pointer-events-none absolute top-full left-1/2 z-10 mt-2 w-64 -translate-x-1/2 p-3 text-left text-xs text-text opacity-0 transition group-hover:opacity-100"
-                    >
-                      <p className="font-semibold">{action.title}</p>
-                      <p className="text-muted">{action.context}</p>
-                      <p className="mt-1 leading-snug">{action.detail}</p>
-                    </Surface>
-                  </div>
+                {filteredActions.map((action) => (
+                  <ActivityTile
+                    key={`${action.title}-${action.timestamp}`}
+                    action={action}
+                  />
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <p className="text-sm text-muted">No activity to show yet.</p>
+            )}
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Formation projects</CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-96 space-y-4 overflow-y-auto pr-1">
-              {(profile?.projects ?? []).map((project) => (
-                <Surface
-                  key={project.title}
-                  variant="panelAlt"
-                  radius="xl"
-                  className="px-4 py-3"
-                >
-                  <div className="flex flex-col gap-1 text-center">
-                    <p className="text-sm font-semibold text-text">
-                      {project.title}
+          <div className="space-y-3">
+            <SectionHeader>Formation projects</SectionHeader>
+            {profile?.projects?.length ? (
+              <div className="space-y-3">
+                {profile.projects.map((project) => (
+                  <Surface
+                    key={project.title}
+                    variant="panelAlt"
+                    radius="xl"
+                    className="px-4 py-3"
+                  >
+                    <div className="flex flex-col gap-1 text-center">
+                      <p className="text-sm font-semibold text-text">
+                        {project.title}
+                      </p>
+                      <Kicker align="center">{project.status}</Kicker>
+                    </div>
+                    <p className="text-center text-sm text-muted">
+                      {project.summary}
                     </p>
-                    <Kicker align="center">{project.status}</Kicker>
-                  </div>
-                  <p className="text-center text-sm text-muted">
-                    {project.summary}
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2 pt-2">
-                    {project.chips.map((chip) => (
-                      <Badge key={chip} variant="outline">
-                        {chip}
-                      </Badge>
-                    ))}
-                  </div>
-                </Surface>
-              ))}
-            </CardContent>
-          </Card>
+                    <div className="flex flex-wrap justify-center gap-2 pt-2">
+                      {project.chips.map((chip) => (
+                        <Badge key={chip} variant="outline">
+                          {chip}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Surface>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">
+                Not participating in Formation right now.
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
           {tierProgress ? (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Tier progress</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Surface
-                    variant="panelAlt"
-                    radius="2xl"
-                    shadow="tile"
-                    className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
-                  >
-                    <Kicker align="center">Current tier</Kicker>
-                    <p className="text-xl font-semibold text-text">
-                      <TierLabel tier={tierProgress.tier} />
-                    </p>
-                  </Surface>
-                  <Surface
-                    variant="panelAlt"
-                    radius="2xl"
-                    shadow="tile"
-                    className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
-                  >
-                    <Kicker align="center">Next tier</Kicker>
-                    <p className="text-xl font-semibold text-text">
-                      {tierProgress.nextTier ? (
-                        <TierLabel tier={tierProgress.nextTier} />
-                      ) : (
-                        "Max tier"
-                      )}
-                    </p>
-                  </Surface>
-                </div>
-                {requirementItems.length > 0 ? (
-                  <div className="grid gap-3 text-center sm:grid-cols-2">
-                    {requirementItems.map((item) => (
-                      <div
-                        key={item.key}
-                        className="flex h-24 flex-col items-center justify-between rounded-xl border border-border px-3 py-3"
-                      >
-                        <Kicker align="center">{item.label}</Kicker>
-                        <p className="text-base font-semibold text-text">
-                          {item.done} / {item.required}
-                        </p>
-                        <p className="text-xs text-muted">
-                          {item.percent}% complete
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted">
-                    You have reached the highest available tier.
+            <section className="space-y-3">
+              <SectionHeader>Tier progress</SectionHeader>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Surface
+                  variant="panelAlt"
+                  radius="2xl"
+                  shadow="tile"
+                  className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
+                >
+                  <Kicker align="center">Current tier</Kicker>
+                  <p className="text-xl font-semibold text-text">
+                    <TierLabel tier={tierProgress.tier} />
                   </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 text-center sm:grid-cols-2">
-                {(profile?.quickDetails ?? []).map((detail) => (
-                  <div
-                    key={detail.label}
-                    className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-3"
-                  >
-                    <Kicker align="center">{detail.label}</Kicker>
-                    <p className="text-base font-semibold text-text">
-                      {detail.label === "Tier" ? (
-                        <TierLabel tier={detail.value} />
-                      ) : (
-                        detail.value
-                      )}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-3 text-center">
-                <ToggleGroup
-                  value={activeProof}
-                  onValueChange={(val) =>
-                    setActiveProof(val as ProofKeyDto | "")
-                  }
-                  options={proofOptions}
-                  allowDeselect
-                />
-                {activeSection ? (
-                  <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
-                    {(activeSection.items ?? []).map(
-                      (item: { label: string; value: string }) => (
-                        <div
-                          key={item.label}
-                          className="flex h-20 flex-col items-center justify-between rounded-xl border border-border px-3 py-2 text-center"
-                        >
-                          <Kicker
-                            align="center"
-                            className="min-h-6 leading-tight"
-                          >
-                            {item.label}
-                          </Kicker>
-                          <p className="min-h-5 text-sm font-semibold text-text">
-                            {item.value}
-                          </p>
-                        </div>
-                      ),
+                </Surface>
+                <Surface
+                  variant="panelAlt"
+                  radius="2xl"
+                  shadow="tile"
+                  className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
+                >
+                  <Kicker align="center">Next tier</Kicker>
+                  <p className="text-xl font-semibold text-text">
+                    {tierProgress.nextTier ? (
+                      <TierLabel tier={tierProgress.nextTier} />
+                    ) : (
+                      "Max tier"
                     )}
-                  </div>
-                ) : null}
+                  </p>
+                </Surface>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>History</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(profile?.history ?? []).map((entry) => (
-                <div
+              {requirementItems.length > 0 ? (
+                <div className="grid gap-3 text-center sm:grid-cols-2">
+                  {requirementItems.map((item) => (
+                    <Surface
+                      key={item.key}
+                      variant="panelAlt"
+                      radius="xl"
+                      shadow="tile"
+                      className="flex h-24 flex-col items-center justify-between px-3 py-3"
+                    >
+                      <Kicker align="center">{item.label}</Kicker>
+                      <p className="text-lg font-semibold text-text">
+                        {item.done} / {item.required}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {item.percent}% complete
+                      </p>
+                    </Surface>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted">
+                  You have reached the highest available tier.
+                </p>
+              )}
+            </section>
+          ) : null}
+          <section className="space-y-3">
+            <SectionHeader>History</SectionHeader>
+            {(profile?.history ?? []).length ? (
+              (profile?.history ?? []).map((entry) => (
+                <Surface
                   key={entry}
-                  className="rounded-xl border border-border px-3 py-2 text-center text-sm text-text"
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="tile"
+                  className="px-3 py-2 text-center text-sm text-text"
                 >
                   {entry}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                </Surface>
+              ))
+            ) : (
+              <p className="text-sm text-muted">No history yet.</p>
+            )}
+          </section>
         </div>
       </div>
     </div>
