@@ -6,7 +6,6 @@ import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
 import { StatusPill } from "@/components/StatusPill";
-import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
@@ -58,7 +57,6 @@ const HumanNode: React.FC = () => {
   if (!profile) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHint pageId="human-node" />
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           {loadError
             ? `Human profile unavailable: ${loadError}`
@@ -148,7 +146,6 @@ const HumanNode: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHint pageId="human-node" />
       <Surface
         as="section"
         variant="panel"

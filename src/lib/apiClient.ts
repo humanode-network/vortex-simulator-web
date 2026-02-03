@@ -6,6 +6,8 @@ import type {
   ChamberThreadDto,
   ChamberThreadMessageDto,
   ChamberChatMessageDto,
+  ChamberCmDto,
+  CmSummaryDto,
   CourtCaseDetailDto,
   FactionDto,
   FormationProposalPageDto,
@@ -186,6 +188,10 @@ export async function apiChambers(): Promise<GetChambersResponse> {
 
 export async function apiChamber(id: string): Promise<GetChamberResponse> {
   return await apiGet<GetChamberResponse>(`/api/chambers/${id}`);
+}
+
+export async function apiChamberCm(id: string): Promise<ChamberCmDto> {
+  return await apiGet<ChamberCmDto>(`/api/chambers/${id}/cm`);
 }
 
 export async function apiChamberThreads(
@@ -615,6 +621,14 @@ export async function apiInvision(): Promise<GetInvisionResponse> {
 
 export async function apiMyGovernance(): Promise<GetMyGovernanceResponse> {
   return await apiGet<GetMyGovernanceResponse>("/api/my-governance");
+}
+
+export async function apiCmMe(): Promise<CmSummaryDto> {
+  return await apiGet<CmSummaryDto>("/api/cm/me");
+}
+
+export async function apiCmAddress(address: string): Promise<CmSummaryDto> {
+  return await apiGet<CmSummaryDto>(`/api/cm/${address}`);
 }
 
 export async function apiClock(): Promise<GetClockResponse> {

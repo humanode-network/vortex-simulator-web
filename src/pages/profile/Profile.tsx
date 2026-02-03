@@ -57,7 +57,6 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
           setLoadError("Wallet address is missing.");
           return;
         }
-
         const res = await apiHuman(address);
         if (!active) return;
         setProfile(res);

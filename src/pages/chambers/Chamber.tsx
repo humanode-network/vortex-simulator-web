@@ -21,6 +21,7 @@ import type {
   ChamberChatPeerDto,
   ChamberChatSignalDto,
   ChamberChatMessageDto,
+  ChamberCmDto,
   ChamberProposalStageDto,
   ChamberThreadDetailDto,
   ChamberThreadDto,
@@ -29,6 +30,7 @@ import type {
 } from "@/types/api";
 import {
   apiChamber,
+  apiChamberCm,
   apiChamberChatPresence,
   apiChamberChatSignalPoll,
   apiChamberChatSignalPost,
@@ -51,6 +53,8 @@ const Chamber: React.FC = () => {
 
   const [data, setData] = useState<GetChamberResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [cmData, setCmData] = useState<ChamberCmDto | null>(null);
+  const [cmError, setCmError] = useState<string | null>(null);
   const [threads, setThreads] = useState<ChamberThreadDto[]>([]);
   const [chatLog, setChatLog] = useState<ChamberChatMessageDto[]>([]);
   const [threadTitle, setThreadTitle] = useState("");
@@ -95,8 +99,18 @@ const Chamber: React.FC = () => {
           apiChamber(id),
           apiChambers(),
         ]);
+        let nextCm: ChamberCmDto | null = null;
+        let nextCmError: string | null = null;
+        try {
+          nextCm = await apiChamberCm(id);
+        } catch (error) {
+          nextCm = null;
+          nextCmError = (error as Error).message;
+        }
         if (!active) return;
         setData(chamberRes);
+        setCmData(nextCm);
+        setCmError(nextCmError);
         const nextThreads = chamberRes.threads ?? [];
         const nextChat = chamberRes.chatLog ?? [];
         setThreads(nextThreads);
@@ -111,6 +125,8 @@ const Chamber: React.FC = () => {
       } catch (error) {
         if (!active) return;
         setData(null);
+        setCmData(null);
+        setCmError((error as Error).message);
         setLoadError((error as Error).message);
       }
     })();
@@ -636,6 +652,150 @@ const Chamber: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+      ) : null}
+
+      {data ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <Kicker>CM economy</Kicker>
+            <CardTitle>Chamber CM summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {cmData ? (
+              <>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  {[
+                    { label: "LCM", value: cmData.totals.lcm },
+                    { label: "MCM", value: cmData.totals.mcm },
+                    { label: "ACM", value: cmData.totals.acm },
+                    {
+                      label: "Avg multiplier",
+                      value:
+                        cmData.avgMultiplier === null
+                          ? "—"
+                          : `M × ${cmData.avgMultiplier.toFixed(2)}`,
+                    },
+                  ].map((tile) => (
+                    <Surface
+                      key={tile.label}
+                      variant="panelAlt"
+                      radius="xl"
+                      shadow="tile"
+                      className="px-3 py-3 text-center"
+                    >
+                      <Kicker align="center">{tile.label}</Kicker>
+                      <p className="text-base font-semibold text-text">
+                        {typeof tile.value === "number"
+                          ? tile.value.toLocaleString()
+                          : tile.value}
+                      </p>
+                    </Surface>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 lg:grid-cols-3">
+                  <Surface
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3"
+                  >
+                    <Kicker>Top contributors</Kicker>
+                    {cmData.topContributors.length === 0 ? (
+                      <p className="mt-2 text-sm text-muted">
+                        No CM contributions yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2 text-sm text-text">
+                        {cmData.topContributors.slice(0, 5).map((entry) => (
+                          <li
+                            key={entry.address}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="truncate">{entry.address}</span>
+                            <span className="text-xs text-muted">
+                              LCM {entry.lcm} · MCM {entry.mcm} · ACM{" "}
+                              {entry.acm}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Surface>
+
+                  <Surface
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3"
+                  >
+                    <Kicker>Multiplier submissions</Kicker>
+                    {cmData.submissions.length === 0 ? (
+                      <p className="mt-2 text-sm text-muted">
+                        No multiplier submissions yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2 text-sm text-text">
+                        {cmData.submissions.slice(0, 5).map((entry) => (
+                          <li
+                            key={`${entry.address}-${entry.submittedAt}`}
+                            className="flex flex-col gap-1"
+                          >
+                            <span className="truncate font-semibold">
+                              {entry.address}
+                            </span>
+                            <span className="text-xs text-muted">
+                              M × {entry.multiplier} ·{" "}
+                              {entry.submittedAt.slice(0, 10)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Surface>
+
+                  <Surface
+                    variant="panelAlt"
+                    radius="xl"
+                    shadow="tile"
+                    className="px-4 py-3"
+                  >
+                    <Kicker>Recent CM awards</Kicker>
+                    {cmData.history.length === 0 ? (
+                      <p className="mt-2 text-sm text-muted">
+                        No CM awards yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 space-y-2 text-sm text-text">
+                        {cmData.history.slice(0, 4).map((entry) => (
+                          <li
+                            key={`${entry.proposalId}-${entry.awardedAt}`}
+                            className="flex flex-col gap-1"
+                          >
+                            <span className="font-semibold">{entry.title}</span>
+                            <span className="text-xs text-muted">
+                              M × {entry.multiplier} · LCM {entry.lcm} · MCM{" "}
+                              {entry.mcm}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Surface>
+                </div>
+              </>
+            ) : (
+              <Surface
+                variant="panelAlt"
+                radius="xl"
+                borderStyle="dashed"
+                className="px-4 py-4 text-center text-sm text-muted"
+              >
+                {cmError ? `CM summary unavailable: ${cmError}` : "Loading CM…"}
+              </Surface>
+            )}
+          </CardContent>
+        </Card>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
