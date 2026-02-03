@@ -28,9 +28,11 @@ export const activityMatches = (
   filter: ActivityFilter,
 ) => {
   if (filter === "all") return true;
-  const text = `${action.title} ${action.context} ${action.action}`.toLowerCase();
+  const text =
+    `${action.title} ${action.context} ${action.action}`.toLowerCase();
   if (filter === "votes") return text.includes("vote");
-  if (filter === "proposals") return text.includes("proposal") || text.includes("pool");
+  if (filter === "proposals")
+    return text.includes("proposal") || text.includes("pool");
   if (filter === "chambers") return text.includes("chamber");
   if (filter === "formation") return text.includes("formation");
   return true;

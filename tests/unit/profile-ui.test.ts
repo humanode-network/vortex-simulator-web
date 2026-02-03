@@ -1,5 +1,9 @@
 import { test, expect } from "@rstest/core";
-import { activityMatches, shortAddress, shouldShowDetail } from "../../src/lib/profileUi";
+import {
+  activityMatches,
+  shortAddress,
+  shouldShowDetail,
+} from "../../src/lib/profileUi";
 import type { GovernanceActionDto } from "../../src/types/api";
 
 const baseAction: GovernanceActionDto = {

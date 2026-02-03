@@ -75,10 +75,16 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
 
   const proofKeys: ProofKeyDto[] = ["time", "devotion", "governance"];
   const proofCards = proofKeys
-    .map((key) => (profile ? { key, section: profile.proofSections[key] } : null))
+    .map((key) =>
+      profile ? { key, section: profile.proofSections[key] } : null,
+    )
     .filter(
-      (entry): entry is { key: ProofKeyDto; section: HumanNodeProfileDto["proofSections"][ProofKeyDto] } =>
-        Boolean(entry?.section),
+      (
+        entry,
+      ): entry is {
+        key: ProofKeyDto;
+        section: HumanNodeProfileDto["proofSections"][ProofKeyDto];
+      } => Boolean(entry?.section),
     );
 
   const handleCopy = async (value: string) => {
@@ -123,7 +129,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
     profile?.name.toLowerCase() === headerAddress.toLowerCase();
   const headerTitle = isAddressName
     ? shortAddress(headerAddress)
-    : profile?.name ?? "—";
+    : (profile?.name ?? "—");
   const proofTiles = proofCards.flatMap(({ key, section }) =>
     section.items.map((item) => ({
       key: `${key}-${item.label}`,
@@ -177,13 +183,11 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
             {headerAddress ? (
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
                 {!isAddressName ? (
-                  <Badge variant="muted">
-                    {shortAddress(headerAddress)}
-                  </Badge>
+                  <Badge variant="muted">{shortAddress(headerAddress)}</Badge>
                 ) : null}
                 <button
                   type="button"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:bg-surface-alt hover:text-text"
+                  className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
                   onClick={() => handleCopy(headerAddress)}
                   aria-label={copied ? "Copied" : "Copy address"}
                   title={copied ? "Copied" : "Copy address"}
@@ -281,9 +285,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
             <ToggleGroup
               value={activityFilter}
               onValueChange={(val) =>
-                setActivityFilter(
-                  (val as typeof activityFilter) || "all",
-                )
+                setActivityFilter((val as typeof activityFilter) || "all")
               }
               options={ACTIVITY_FILTERS.map((opt) => ({
                 value: opt.value,

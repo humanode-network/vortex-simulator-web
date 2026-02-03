@@ -158,32 +158,6 @@ export type GetChamberResponse = {
   stageOptions: ChamberStageOptionDto[];
 };
 
-export type CmTotalsDto = {
-  lcm: number;
-  mcm: number;
-  acm: number;
-};
-
-export type CmHistoryItemDto = {
-  proposalId: string;
-  title: string;
-  chamberId: string;
-  avgScore: number | null;
-  lcm: number;
-  mcm: number;
-  multiplier: number;
-  awardedAt: string;
-};
-
-export type CmChamberBreakdownDto = {
-  chamberId: string;
-  chamberTitle: string;
-  multiplier: number;
-  lcm: number;
-  mcm: number;
-  acm: number;
-};
-
 export type CmSummaryDto = {
   address: string;
   totals: CmTotalsDto;

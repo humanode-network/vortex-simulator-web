@@ -11,10 +11,7 @@ type ActivityTileProps = {
   className?: string;
 };
 
-export const ActivityTile: FC<ActivityTileProps> = ({
-  action,
-  className,
-}) => {
+export const ActivityTile: FC<ActivityTileProps> = ({ action, className }) => {
   const tile = (
     <Surface
       variant="panelAlt"

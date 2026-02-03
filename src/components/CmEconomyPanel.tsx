@@ -52,7 +52,12 @@ export const CmEconomyPanel: React.FC<CmEconomyPanelProps> = ({
         ))}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <Surface variant="panelAlt" radius="xl" shadow="tile" className="px-4 py-3">
+        <Surface
+          variant="panelAlt"
+          radius="xl"
+          shadow="tile"
+          className="px-4 py-3"
+        >
           <Kicker>Chamber breakdown</Kicker>
           {chambers.length === 0 ? (
             <p className="mt-2 text-sm text-muted">No CM chambers yet.</p>
@@ -61,7 +66,9 @@ export const CmEconomyPanel: React.FC<CmEconomyPanelProps> = ({
               {chambers.map((chamber) => (
                 <li key={chamber.chamberId} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{chamber.chamberTitle}</span>
+                    <span className="font-semibold">
+                      {chamber.chamberTitle}
+                    </span>
                     <Badge variant="outline">M × {chamber.multiplier}</Badge>
                   </div>
                   <span className="text-xs text-muted">
@@ -73,14 +80,22 @@ export const CmEconomyPanel: React.FC<CmEconomyPanelProps> = ({
           )}
         </Surface>
 
-        <Surface variant="panelAlt" radius="xl" shadow="tile" className="px-4 py-3">
+        <Surface
+          variant="panelAlt"
+          radius="xl"
+          shadow="tile"
+          className="px-4 py-3"
+        >
           <Kicker>Recent CM awards</Kicker>
           {history.length === 0 ? (
             <p className="mt-2 text-sm text-muted">No CM awards yet.</p>
           ) : (
             <ul className="mt-2 space-y-2 text-sm text-text">
               {history.slice(0, 5).map((item) => (
-                <li key={`${item.proposalId}-${item.awardedAt}`} className="flex flex-col gap-1">
+                <li
+                  key={`${item.proposalId}-${item.awardedAt}`}
+                  className="flex flex-col gap-1"
+                >
                   <span className="font-semibold">{item.title}</span>
                   <span className="text-xs text-muted">
                     {item.chamberId} · M × {item.multiplier} · LCM {item.lcm} ·

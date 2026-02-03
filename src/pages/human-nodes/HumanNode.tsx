@@ -168,7 +168,7 @@ const HumanNode: React.FC = () => {
               ) : null}
               <button
                 type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:bg-surface-alt hover:text-text"
+                className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
                 onClick={() => handleCopy(profile.id)}
                 aria-label={copied ? "Copied" : "Copy address"}
                 title={copied ? "Copied" : "Copy address"}
@@ -274,9 +274,7 @@ const HumanNode: React.FC = () => {
           <ToggleGroup
             value={activityFilter}
             onValueChange={(val) =>
-              setActivityFilter(
-                (val as typeof activityFilter) || "all",
-              )
+              setActivityFilter((val as typeof activityFilter) || "all")
             }
             options={ACTIVITY_FILTERS.map((opt) => ({
               value: opt.value,
