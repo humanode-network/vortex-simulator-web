@@ -25,6 +25,29 @@ export type ChamberStatsDto = {
   mcm: string;
   lcm: string;
 };
+export type CmTotalsDto = {
+  lcm: number;
+  mcm: number;
+  acm: number;
+};
+export type CmHistoryItemDto = {
+  proposalId: string;
+  title: string;
+  chamberId: string;
+  avgScore: number | null;
+  lcm: number;
+  mcm: number;
+  multiplier: number;
+  awardedAt: string;
+};
+export type CmChamberBreakdownDto = {
+  chamberId: string;
+  chamberTitle: string;
+  multiplier: number;
+  lcm: number;
+  mcm: number;
+  acm: number;
+};
 export type ChamberDto = {
   id: string;
   name: string;
@@ -440,9 +463,14 @@ export type HumanNodeDto = {
   mm: number;
   memberSince: string;
   formationCapable?: boolean;
-  active: boolean;
+  active: {
+    governorActive: boolean;
+    humanNodeActive: boolean;
+  };
   formationProjectIds?: string[];
   tags: string[];
+  cmTotals?: CmTotalsDto;
+  tierProgress?: TierProgressDto;
 };
 export type GetHumansResponse = { items: HumanNodeDto[] };
 
@@ -458,6 +486,8 @@ export type GovernanceActionDto = {
   action: string;
   context: string;
   detail: string;
+  href?: string | null;
+  timestamp: string;
 };
 export type HistoryItemDto = {
   title: string;
@@ -485,6 +515,8 @@ export type HumanNodeProfileDto = {
   projects: ProjectCardDto[];
   activity: HistoryItemDto[];
   history: string[];
+  cmHistory?: CmHistoryItemDto[];
+  cmChambers?: CmChamberBreakdownDto[];
   tierProgress?: TierProgressDto;
 };
 
