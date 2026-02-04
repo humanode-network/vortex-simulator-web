@@ -561,6 +561,7 @@ export type FeedItemDto = {
   stage: FeedStageDto;
   summaryPill: string;
   summary: string;
+  actionable?: boolean;
   stageData?: FeedStageDatumDto[];
   stats?: FeedStatDto[];
   proposer?: string;

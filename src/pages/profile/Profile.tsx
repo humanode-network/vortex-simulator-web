@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Card } from "@/components/primitives/card";
 import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
@@ -124,12 +125,22 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
     shouldShowDetail(detail.label),
   );
   const headerAddress = profile?.id ?? auth.address ?? "";
+  const historyHref = headerAddress
+    ? `/app/human-nodes/${headerAddress}/history`
+    : null;
+  const normalizedName = (profile?.name ?? "").trim().toLowerCase();
+  const isGenericName = [
+    "human node profile",
+    "human node",
+    "profile",
+  ].includes(normalizedName);
   const isAddressName =
     Boolean(profile?.name && headerAddress) &&
-    profile?.name.toLowerCase() === headerAddress.toLowerCase();
-  const headerTitle = isAddressName
-    ? shortAddress(headerAddress)
-    : (profile?.name ?? "—");
+    normalizedName === headerAddress.toLowerCase();
+  const headerTitle =
+    isAddressName || isGenericName
+      ? shortAddress(headerAddress)
+      : (profile?.name ?? "—");
   const proofTiles = proofCards.flatMap(({ key, section }) =>
     section.items.map((item) => ({
       key: `${key}-${item.label}`,
@@ -146,6 +157,8 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
       value: item.value,
     })),
   );
+
+  const showShortBadge = !isAddressName && !isGenericName;
 
   return (
     <div className="flex flex-col gap-6">
@@ -182,7 +195,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
             <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
             {headerAddress ? (
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
-                {!isAddressName ? (
+                {showShortBadge ? (
                   <Badge variant="muted">{shortAddress(headerAddress)}</Badge>
                 ) : null}
                 <button
@@ -281,7 +294,17 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           <div className="space-y-3">
-            <SectionHeader>Governance activity</SectionHeader>
+            <div className="flex items-center justify-between gap-3">
+              <SectionHeader>Governance activity</SectionHeader>
+              {historyHref ? (
+                <Link
+                  to={historyHref}
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  View full history
+                </Link>
+              ) : null}
+            </div>
             <ToggleGroup
               value={activityFilter}
               onValueChange={(val) =>

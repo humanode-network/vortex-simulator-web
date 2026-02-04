@@ -78,8 +78,15 @@ const HumanNode: React.FC = () => {
     cmHistory = [],
     cmChambers = [],
   } = profile;
-  const isAddressName = name.toLowerCase() === profile.id.toLowerCase();
-  const headerTitle = isAddressName ? shortAddress(profile.id) : name;
+  const normalizedName = name.trim().toLowerCase();
+  const isGenericName = [
+    "human node profile",
+    "human node",
+    "profile",
+  ].includes(normalizedName);
+  const isAddressName = normalizedName === profile.id.toLowerCase();
+  const headerTitle =
+    isAddressName || isGenericName ? shortAddress(profile.id) : name;
   const visibleHeroStats = (heroStats ?? []).filter((stat) => {
     const label = stat.label.trim().toUpperCase();
     return !["ACM", "LCM", "MCM", "MM"].includes(label);
@@ -144,6 +151,8 @@ const HumanNode: React.FC = () => {
     })),
   );
 
+  const showShortBadge = !isAddressName && !isGenericName;
+
   return (
     <div className="flex flex-col gap-6">
       <Surface
@@ -163,7 +172,7 @@ const HumanNode: React.FC = () => {
           <div className="flex flex-col items-center text-center">
             <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
-              {!isAddressName ? (
+              {showShortBadge ? (
                 <Badge variant="muted">{shortAddress(profile.id)}</Badge>
               ) : null}
               <button

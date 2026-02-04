@@ -34,7 +34,7 @@ test("CmEconomyPanel renders CM totals, chamber breakdown, and history", () => {
     }),
   );
 
-  assert.ok(html.includes("CM economy"));
+  assert.ok(html.includes("CM + MM"));
   assert.ok(html.includes("Alpha Chamber"));
   assert.ok(html.includes("LCM 5"));
   assert.ok(html.includes("Alpha Proposal"));
