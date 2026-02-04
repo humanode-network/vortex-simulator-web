@@ -10,6 +10,7 @@ import { Kicker } from "@/components/Kicker";
 import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import { apiHuman } from "@/lib/apiClient";
+import { formatActivityTimestamp } from "@/lib/profileUi";
 import type { HumanNodeProfileDto } from "@/types/api";
 
 const FullHistory: React.FC = () => {
@@ -39,6 +40,24 @@ const FullHistory: React.FC = () => {
 
   const name = profile?.name ?? id ?? "Human node";
   const activity = profile?.activity ?? [];
+  const governanceActions = profile?.governanceActions ?? [];
+  const historyItems = activity.length
+    ? activity.map((item) => ({
+        title: item.title,
+        action: item.action,
+        context: item.context,
+        detail: item.detail,
+        date: item.date,
+        href: undefined,
+      }))
+    : governanceActions.map((item) => ({
+        title: item.title,
+        action: item.action,
+        context: item.context,
+        detail: item.detail,
+        date: formatActivityTimestamp(item.timestamp),
+        href: item.href ?? undefined,
+      }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,24 +84,35 @@ const FullHistory: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {activity.map((item) => (
-            <div
-              key={`${item.title}-${item.date}`}
-              className="rounded-2xl border border-border px-4 py-3"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {item.title}
-                  </p>
-                  <Kicker className="text-primary">{item.action}</Kicker>
+          {historyItems.map((item) => {
+            const card = (
+              <div className="rounded-2xl border border-border px-4 py-3 transition hover:border-primary">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.title}
+                    </p>
+                    <Kicker className="text-primary">{item.action}</Kicker>
+                  </div>
+                  <p className="text-xs text-muted">{item.date}</p>
                 </div>
-                <p className="text-xs text-muted">{item.date}</p>
+                <p className="text-xs text-muted">{item.context}</p>
+                <p className="mt-1 text-sm text-foreground">{item.detail}</p>
               </div>
-              <p className="text-xs text-muted">{item.context}</p>
-              <p className="mt-1 text-sm text-foreground">{item.detail}</p>
-            </div>
-          ))}
+            );
+
+            return item.href ? (
+              <Link
+                key={`${item.title}-${item.date}`}
+                to={item.href}
+                className="block"
+              >
+                {card}
+              </Link>
+            ) : (
+              <div key={`${item.title}-${item.date}`}>{card}</div>
+            );
+          })}
         </CardContent>
       </Card>
     </div>

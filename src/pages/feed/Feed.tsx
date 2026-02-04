@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/app/auth/AuthContext";
 import { PageHint } from "@/components/PageHint";
 import { CardActionsRow } from "@/components/CardActionsRow";
 import { DashedStatItem } from "@/components/DashedStatItem";
@@ -10,9 +11,11 @@ import { StageDataTile } from "@/components/StageDataTile";
 import { Surface } from "@/components/Surface";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { ToggleGroup } from "@/components/ToggleGroup";
 import {
   apiCourt,
   apiFeed,
+  apiHuman,
   apiProposalChamberPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
@@ -28,9 +31,31 @@ const formatDate = (iso: string) => {
   return `${day}/${month}/${year} · ${time}`;
 };
 
+type FeedScope = "urgent" | "my" | "chambers" | "all";
+
+const FEED_SCOPES: { value: FeedScope; label: string }[] = [
+  { value: "urgent", label: "Urgent" },
+  { value: "my", label: "My activity" },
+  { value: "chambers", label: "Chambers and factions" },
+  { value: "all", label: "All activity" },
+];
+
+const FEED_CARD_ESTIMATE = 240;
+const FEED_MIN_PAGE_SIZE = 6;
+const FEED_MAX_PAGE_SIZE = 30;
+
 const Feed: React.FC = () => {
+  const auth = useAuth();
   const [feedItems, setFeedItems] = useState<FeedItemDto[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [feedScope, setFeedScope] = useState<FeedScope>("urgent");
+  const [chamberFilters, setChamberFilters] = useState<string[] | null>(null);
+  const [chambersLoading, setChambersLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(FEED_MIN_PAGE_SIZE);
+  const feedListRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [poolPagesById, setPoolPagesById] = useState<
     Record<string, import("@/types/api").PoolProposalPageDto | undefined>
   >({});
@@ -46,22 +71,117 @@ const Feed: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    if (feedScope !== "chambers" && feedScope !== "urgent") {
+      setChamberFilters(null);
+      setChambersLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+    const address = auth.address;
+    if (!address) {
+      setChamberFilters([]);
+      setChambersLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+    setChambersLoading(true);
     (async () => {
       try {
-        const res = await apiFeed();
+        const profile = await apiHuman(address);
         if (!active) return;
-        setFeedItems(res.items);
-        setLoadError(null);
+        const chamberIds =
+          profile.cmChambers?.map((chamber) => chamber.chamberId) ?? [];
+        const unique = Array.from(
+          new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
+        );
+        setChamberFilters(unique);
       } catch (error) {
         if (!active) return;
-        setFeedItems([]);
+        setChamberFilters([]);
         setLoadError((error as Error).message);
+      } finally {
+        if (active) setChambersLoading(false);
       }
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [auth.address, feedScope]);
+
+  useEffect(() => {
+    const updatePageSize = () => {
+      if (!feedListRef.current) return;
+      const top = feedListRef.current.getBoundingClientRect().top;
+      const available = window.innerHeight - top - 24;
+      if (available <= 0) return;
+      const estimate = Math.ceil(available / FEED_CARD_ESTIMATE) + 1;
+      const clamped = Math.min(
+        FEED_MAX_PAGE_SIZE,
+        Math.max(FEED_MIN_PAGE_SIZE, estimate),
+      );
+      setPageSize(clamped);
+    };
+    updatePageSize();
+    window.addEventListener("resize", updatePageSize);
+    return () => window.removeEventListener("resize", updatePageSize);
+  }, [feedScope, chamberFilters, auth.address]);
+
+  useEffect(() => {
+    let active = true;
+    const loadFeed = async () => {
+      if (feedScope !== "all" && !auth.address) {
+        setFeedItems([]);
+        setLoadError("Connect a wallet to view your feed.");
+        setNextCursor(null);
+        return;
+      }
+      if (
+        (feedScope === "chambers" || feedScope === "urgent") &&
+        chambersLoading
+      )
+        return;
+      if (
+        (feedScope === "chambers" || feedScope === "urgent") &&
+        chamberFilters &&
+        chamberFilters.length === 0
+      ) {
+        setFeedItems([]);
+        setLoadError(null);
+        setNextCursor(null);
+        return;
+      }
+      try {
+        const res = await apiFeed({
+          actor: feedScope === "my" ? (auth.address ?? undefined) : undefined,
+          chambers:
+            feedScope === "chambers" || feedScope === "urgent"
+              ? (chamberFilters ?? [])
+              : undefined,
+          limit: pageSize,
+        });
+        if (!active) return;
+        const items = res.items;
+        const filteredItems =
+          feedScope === "urgent"
+            ? items.filter((entry) => entry.actionable === true)
+            : items;
+        setFeedItems(filteredItems);
+        setNextCursor(res.nextCursor ?? null);
+        setLoadError(null);
+      } catch (error) {
+        if (!active) return;
+        setFeedItems([]);
+        setNextCursor(null);
+        setLoadError((error as Error).message);
+      }
+    };
+    void loadFeed();
+    return () => {
+      active = false;
+    };
+  }, [auth.address, chambersLoading, chamberFilters, feedScope, pageSize]);
 
   const sortedFeed = useMemo(() => {
     return [...(feedItems ?? [])].sort(
@@ -75,6 +195,59 @@ const Feed: React.FC = () => {
     setExpanded((curr) => (curr === id ? null : id));
   };
 
+  const handleLoadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await apiFeed({
+        cursor: nextCursor,
+        actor: feedScope === "my" ? (auth.address ?? undefined) : undefined,
+        chambers:
+          feedScope === "chambers" || feedScope === "urgent"
+            ? (chamberFilters ?? [])
+            : undefined,
+        limit: pageSize,
+      });
+      const items =
+        feedScope === "urgent"
+          ? res.items.filter((entry) => entry.actionable === true)
+          : res.items;
+      setFeedItems((curr) => {
+        const existing = new Set((curr ?? []).map((item) => item.id));
+        const nextItems = items.filter((item) => !existing.has(item.id));
+        return [...(curr ?? []), ...nextItems];
+      });
+      setNextCursor(res.nextCursor ?? null);
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    auth.address,
+    chamberFilters,
+    feedScope,
+    loadingMore,
+    nextCursor,
+    pageSize,
+  ]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !nextCursor) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          void handleLoadMore();
+        }
+      },
+      { rootMargin: "240px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [handleLoadMore, nextCursor]);
+
   const hrefFor = (href?: string) => {
     if (!href) return undefined;
     return href.startsWith("/app/") ? href : `/app${href}`;
@@ -87,24 +260,36 @@ const Feed: React.FC = () => {
     return match?.[1] ?? null;
   };
 
+  const proposalIdFromHref = (href?: string) => {
+    if (!href) return null;
+    const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
+    const match = clean.match(/^\/proposals\/([^/]+)\/(pp|chamber|formation)$/);
+    return match?.[1] ?? null;
+  };
+
   useEffect(() => {
     if (!expanded || !feedItems) return;
     const item = feedItems.find((p) => p.id === expanded);
     if (!item) return;
 
-    if (item.stage === "pool" && poolPagesById[item.id] === undefined) {
-      void apiProposalPoolPage(item.id).then((page) => {
-        setPoolPagesById((curr) => ({ ...curr, [item.id]: page }));
+    const proposalId = proposalIdFromHref(item.href) ?? item.id;
+
+    if (item.stage === "pool" && poolPagesById[proposalId] === undefined) {
+      void apiProposalPoolPage(proposalId).then((page) => {
+        setPoolPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
-    if (item.stage === "vote" && chamberPagesById[item.id] === undefined) {
-      void apiProposalChamberPage(item.id).then((page) => {
-        setChamberPagesById((curr) => ({ ...curr, [item.id]: page }));
+    if (item.stage === "vote" && chamberPagesById[proposalId] === undefined) {
+      void apiProposalChamberPage(proposalId).then((page) => {
+        setChamberPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
-    if (item.stage === "build" && formationPagesById[item.id] === undefined) {
-      void apiProposalFormationPage(item.id).then((page) => {
-        setFormationPagesById((curr) => ({ ...curr, [item.id]: page }));
+    if (
+      item.stage === "build" &&
+      formationPagesById[proposalId] === undefined
+    ) {
+      void apiProposalFormationPage(proposalId).then((page) => {
+        setFormationPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
     if (item.stage === "courts") {
@@ -128,6 +313,26 @@ const Feed: React.FC = () => {
     <div className="flex flex-col gap-4">
       <PageHint pageId="feed" />
       {/* Governing threshold moved to MyGovernance */}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <ToggleGroup
+          value={feedScope}
+          onValueChange={(value) => setFeedScope(value as FeedScope)}
+          options={FEED_SCOPES.map((scope) => ({
+            value: scope.value,
+            label: scope.label,
+          }))}
+        />
+        {(feedScope === "chambers" || feedScope === "urgent") &&
+        chambersLoading ? (
+          <span className="text-xs text-muted">Loading chambers…</span>
+        ) : feedScope === "chambers" || feedScope === "urgent" ? (
+          <span className="text-xs text-muted">
+            {(chamberFilters ?? []).length} chamber
+            {(chamberFilters ?? []).length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+      </div>
 
       {feedItems === null ? (
         <Surface
@@ -154,14 +359,19 @@ const Feed: React.FC = () => {
         <NoDataYetBar label="feed activity" />
       ) : null}
 
-      <section aria-live="polite" className="flex flex-col gap-4">
+      <section
+        ref={feedListRef}
+        aria-live="polite"
+        className="flex flex-col gap-4"
+      >
         {sortedFeed.map((item, index) => {
+          const proposalId = proposalIdFromHref(item.href) ?? item.id;
           const poolPage =
-            item.stage === "pool" ? poolPagesById[item.id] : null;
+            item.stage === "pool" ? poolPagesById[proposalId] : null;
           const chamberPage =
-            item.stage === "vote" ? chamberPagesById[item.id] : null;
+            item.stage === "vote" ? chamberPagesById[proposalId] : null;
           const formationPage =
-            item.stage === "build" ? formationPagesById[item.id] : null;
+            item.stage === "build" ? formationPagesById[proposalId] : null;
 
           const poolStats =
             item.stage === "pool" && poolPage
@@ -637,6 +847,17 @@ const Feed: React.FC = () => {
           );
         })}
       </section>
+
+      {nextCursor ? (
+        <div className="flex w-full justify-center">
+          <div ref={loadMoreRef} className="h-1 w-full" aria-hidden="true" />
+        </div>
+      ) : null}
+      {loadingMore ? (
+        <p className="text-center text-xs tracking-[0.2em] text-muted uppercase">
+          Loading more…
+        </p>
+      ) : null}
     </div>
   );
 };

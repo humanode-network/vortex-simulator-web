@@ -174,10 +174,18 @@ export async function apiVerify(input: {
 export async function apiFeed(input?: {
   stage?: string;
   cursor?: string;
+  actor?: string;
+  chambers?: string[];
+  limit?: number;
 }): Promise<GetFeedResponse> {
   const params = new URLSearchParams();
   if (input?.stage) params.set("stage", input.stage);
   if (input?.cursor) params.set("cursor", input.cursor);
+  if (input?.actor) params.set("actor", input.actor);
+  if (input?.chambers && input.chambers.length > 0) {
+    params.set("chambers", input.chambers.join(","));
+  }
+  if (input?.limit) params.set("limit", String(input.limit));
   const qs = params.size ? `?${params.toString()}` : "";
   return await apiGet<GetFeedResponse>(`/api/feed${qs}`);
 }

@@ -17,7 +17,7 @@ const baseAction: GovernanceActionDto = {
 
 test("shortAddress truncates long addresses", () => {
   const addr = "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs";
-  expect(shortAddress(addr, 6)).toBe("hmpt3f…m1xPs");
+  expect(shortAddress(addr, 6)).toBe("hmpt3f…am1xPs");
 });
 
 test("shortAddress keeps short values intact", () => {

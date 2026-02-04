@@ -30,6 +30,7 @@ export const ActivityTile: FC<ActivityTileProps> = ({ action, className }) => {
         {action.title}
       </p>
       <p className="line-clamp-2 text-xs text-muted">{action.context}</p>
+      <p className="line-clamp-2 text-xs text-muted">{action.detail}</p>
       <p className="text-[11px] text-muted">
         {formatActivityTimestamp(action.timestamp)}
       </p>
