@@ -7,6 +7,10 @@ export function draftToApiForm(
 ): ProposalDraftFormPayload {
   return {
     ...(input?.templateId ? { templateId: input.templateId } : {}),
+    ...(draft.presetId ? { presetId: draft.presetId } : {}),
+    ...(typeof draft.formationEligible === "boolean"
+      ? { formationEligible: draft.formationEligible }
+      : {}),
     title: draft.title,
     chamberId: draft.chamberId,
     summary: draft.summary,

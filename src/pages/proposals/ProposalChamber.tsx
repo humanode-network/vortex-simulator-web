@@ -99,10 +99,9 @@ const ProposalChamber: React.FC = () => {
   const abstainTotal = proposal.votes.abstain;
   const totalVotes = yesTotal + noTotal + abstainTotal;
   const engaged = proposal.engagedGovernors;
-  const quorumNeeded = Math.ceil(
-    proposal.activeGovernors * proposal.attentionQuorum,
-  );
-  const quorumPercent = Math.round((engaged / proposal.activeGovernors) * 100);
+  const activeGovernors = Math.max(1, proposal.activeGovernors);
+  const quorumNeeded = Math.ceil(activeGovernors * proposal.attentionQuorum);
+  const quorumPercent = Math.round((engaged / activeGovernors) * 100);
   const quorumNeededPercent = Math.round(proposal.attentionQuorum * 100);
   const yesPercentOfQuorum =
     engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;

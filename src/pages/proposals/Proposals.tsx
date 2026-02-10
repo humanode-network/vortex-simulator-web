@@ -267,6 +267,10 @@ const Proposals: React.FC = () => {
             const poolStats =
               proposal.stage === "pool" && poolPage
                 ? (() => {
+                    const activeGovernors = Math.max(
+                      1,
+                      poolPage.activeGovernors,
+                    );
                     const [filledSlots, totalSlots] = poolPage.teamSlots
                       .split("/")
                       .map((v) => Number(v.trim()));
@@ -274,27 +278,27 @@ const Proposals: React.FC = () => {
                     const milestonesCount = Number(poolPage.milestones);
                     const engaged = poolPage.upvotes + poolPage.downvotes;
                     const attentionPercent = Math.round(
-                      (engaged / poolPage.activeGovernors) * 100,
+                      (engaged / activeGovernors) * 100,
                     );
                     const attentionNeededPercent = Math.round(
                       poolPage.attentionQuorum * 100,
                     );
                     const upvoteFloorPercent = Math.round(
-                      (poolPage.upvoteFloor / poolPage.activeGovernors) * 100,
+                      (poolPage.upvoteFloor / activeGovernors) * 100,
                     );
                     const upvoteCurrentPercent = Math.round(
-                      (poolPage.upvotes / poolPage.activeGovernors) * 100,
+                      (poolPage.upvotes / activeGovernors) * 100,
                     );
                     const meetsAttention =
-                      engaged / poolPage.activeGovernors >=
-                      poolPage.attentionQuorum;
+                      engaged / activeGovernors >= poolPage.attentionQuorum;
                     const meetsUpvoteFloor =
                       poolPage.upvotes >= poolPage.upvoteFloor;
                     const engagedNeeded = Math.ceil(
-                      poolPage.attentionQuorum * poolPage.activeGovernors,
+                      poolPage.attentionQuorum * activeGovernors,
                     );
 
                     return {
+                      activeGovernors,
                       filledSlots,
                       openSlots,
                       milestonesCount: Number.isFinite(milestonesCount)
@@ -316,6 +320,10 @@ const Proposals: React.FC = () => {
             const chamberStats =
               proposal.stage === "vote" && chamberPage
                 ? (() => {
+                    const activeGovernors = Math.max(
+                      1,
+                      chamberPage.activeGovernors,
+                    );
                     const yesTotal = chamberPage.votes.yes;
                     const noTotal = chamberPage.votes.no;
                     const abstainTotal = chamberPage.votes.abstain;
@@ -323,10 +331,10 @@ const Proposals: React.FC = () => {
 
                     const engaged = chamberPage.engagedGovernors;
                     const quorumNeeded = Math.ceil(
-                      chamberPage.activeGovernors * chamberPage.attentionQuorum,
+                      activeGovernors * chamberPage.attentionQuorum,
                     );
                     const quorumPercent = Math.round(
-                      (engaged / chamberPage.activeGovernors) * 100,
+                      (engaged / activeGovernors) * 100,
                     );
                     const quorumNeededPercent = Math.round(
                       chamberPage.attentionQuorum * 100,
@@ -353,6 +361,7 @@ const Proposals: React.FC = () => {
                       : 0;
 
                     return {
+                      activeGovernors,
                       yesTotal,
                       noTotal,
                       abstainTotal,
@@ -438,7 +447,7 @@ const Proposals: React.FC = () => {
                         </span>
                         <span className="text-muted">·</span>
                         <span className="text-text">
-                          {poolStats.engaged} / {poolPage.activeGovernors}{" "}
+                          {poolStats.engaged} / {poolStats.activeGovernors}{" "}
                           engaged
                         </span>
                       </Surface>
@@ -519,7 +528,7 @@ const Proposals: React.FC = () => {
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         <StageDataTile
                           title="Voting quorum"
-                          description={`Governors ${chamberStats.engaged} / ${chamberPage.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
+                          description={`Governors ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
                           value={`${chamberStats.quorumPercent}% / ${chamberStats.quorumNeededPercent}%`}
                           tone={chamberStats.meetsQuorum ? "ok" : "warn"}
                         />

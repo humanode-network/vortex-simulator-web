@@ -5,18 +5,21 @@ function computeProjectWizard(
   draft: ProposalDraftForm,
   input: { budgetTotal: number },
 ): WizardComputed {
+  const formationEligible = draft.formationEligible !== false;
   const essentialsValid =
     draft.title.trim().length > 0 &&
     draft.what.trim().length > 0 &&
     draft.why.trim().length > 0;
   const planValid = draft.how.trim().length > 0;
   const budgetValid =
-    draft.budgetItems.some(
+    !formationEligible ||
+    (draft.budgetItems.some(
       (item) =>
         item.description.trim().length > 0 &&
         Number.isFinite(Number(item.amount)) &&
         Number(item.amount) > 0,
-    ) && input.budgetTotal > 0;
+    ) &&
+      input.budgetTotal > 0);
 
   const canSubmit =
     essentialsValid &&

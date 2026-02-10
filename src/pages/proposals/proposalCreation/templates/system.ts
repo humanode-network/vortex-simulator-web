@@ -10,13 +10,21 @@ function computeSystemWizard(
   const planValid = draft.how.trim().length > 0;
 
   const meta = draft.metaGovernance;
+  const action = meta?.action;
+  const isChamberAction =
+    typeof action === "string" && action.startsWith("chamber.");
+  const hasRequiredTarget = isChamberAction
+    ? (meta?.chamberId ?? "").trim().length > 0
+    : action === "governor.censure"
+      ? (meta?.targetAddress ?? "").trim().length > 0
+      : false;
   const systemValid = Boolean(
     meta &&
       draft.chamberId.toLowerCase() === "general" &&
-      meta.chamberId.trim().length > 0 &&
-      (meta.action === "chamber.dissolve"
-        ? true
-        : (meta.title ?? "").trim().length > 0),
+      hasRequiredTarget &&
+      (meta.action === "chamber.create" || meta.action === "chamber.rename"
+        ? (meta.title ?? "").trim().length > 0
+        : true),
   );
 
   const canSubmit =
