@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   Card,
@@ -31,10 +31,12 @@ import { ReviewStep } from "./proposalCreation/steps/ReviewStep";
 import {
   clearDraftStorage,
   loadDraft,
+  loadPresetId,
   loadServerDraftId,
   loadStep,
   loadTemplateId,
   persistDraft,
+  persistPresetId,
   persistServerDraftId,
   persistStep,
   persistTemplateId,
@@ -47,16 +49,49 @@ import {
   type StepKey,
 } from "./proposalCreation/types";
 import { getWizardTemplate } from "./proposalCreation/templates/registry";
+import type {
+  WizardComputed,
+  WizardTemplate,
+} from "./proposalCreation/templates/types";
+import {
+  DEFAULT_PRESET_ID,
+  PROPOSAL_PRESETS,
+  applyPresetToDraft,
+  getProposalPreset,
+  inferPresetIdFromDraft,
+} from "./proposalCreation/presets/registry";
 
 const ProposalCreation: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [draft, setDraft] = useState<ProposalDraftForm>(() => loadDraft());
-  const [templateId, setTemplateId] = useState<string>(() => {
-    return (
-      loadTemplateId() ?? (loadDraft().metaGovernance ? "system" : "project")
-    );
+  const presetInitialized = useRef(false);
+  const [presetId, setPresetId] = useState<string>(() => {
+    const storedDraft = loadDraft();
+    const inferred = inferPresetIdFromDraft(storedDraft);
+    const storedPreset = loadPresetId();
+    if (storedPreset) {
+      const knownStoredPreset = PROPOSAL_PRESETS.find(
+        (preset) => preset.id === storedPreset,
+      );
+      const inferredPreset = getProposalPreset(inferred);
+      if (
+        knownStoredPreset &&
+        knownStoredPreset.templateId === inferredPreset.templateId
+      ) {
+        return storedPreset;
+      }
+    }
+    return inferred;
+  });
+  const [templateKind, setTemplateKind] = useState<"project" | "system">(() => {
+    const storedTemplateId = loadTemplateId();
+    if (storedTemplateId === "project" || storedTemplateId === "system") {
+      return storedTemplateId;
+    }
+    const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
+    return preset?.templateId ?? "project";
   });
   const [attemptedNext, setAttemptedNext] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -71,6 +106,36 @@ const ProposalCreation: React.FC = () => {
   const [tierProgress, setTierProgress] = useState<TierProgressDto | null>(
     null,
   );
+
+  useEffect(() => {
+    const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
+    if (!preset) {
+      persistPresetId("");
+      return;
+    }
+    setDraft((prev) => {
+      const shouldSoftApply = !presetInitialized.current;
+      presetInitialized.current = true;
+      if (shouldSoftApply) {
+        const seeded = { ...prev, presetId: preset.id };
+        if (preset.templateId === "system") {
+          return {
+            ...seeded,
+            chamberId: "general",
+            metaGovernance: seeded.metaGovernance ?? preset.metaGovernance,
+          };
+        }
+        return seeded;
+      }
+
+      let next = applyPresetToDraft(prev, preset);
+      if (preset.templateId === "system") {
+        next = { ...next, chamberId: "general" };
+      }
+      return next;
+    });
+    persistPresetId(preset.id);
+  }, [presetId]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -95,17 +160,39 @@ const ProposalCreation: React.FC = () => {
     }, 0);
   }, [draft.budgetItems]);
 
-  const template = useMemo(() => getWizardTemplate(templateId), [templateId]);
+  const baseTemplate = useMemo<WizardTemplate>(
+    () => getWizardTemplate(templateKind),
+    [templateKind],
+  );
+  const template = useMemo<WizardTemplate>(() => {
+    if (baseTemplate.id !== "project" || draft.formationEligible !== false) {
+      return baseTemplate;
+    }
+    return {
+      ...baseTemplate,
+      stepOrder: ["essentials", "plan", "review"],
+      stepTabLabels: {
+        ...baseTemplate.stepTabLabels,
+        essentials: "1 · Essentials",
+        plan: "2 · Plan",
+        review: "3 · Review",
+      },
+      getNextStep(step: StepKey, computed: WizardComputed) {
+        if (step === "essentials")
+          return computed.essentialsValid ? "plan" : null;
+        if (step === "plan") return computed.planValid ? "review" : null;
+        return null;
+      },
+      getPrevStep(step: StepKey) {
+        if (step === "review") return "plan";
+        if (step === "plan") return "essentials";
+        return null;
+      },
+    };
+  }, [baseTemplate, draft.formationEligible]);
   useEffect(() => {
     persistTemplateId(template.id);
   }, [template.id]);
-
-  useEffect(() => {
-    const desired = draft.metaGovernance ? "system" : "project";
-    if (templateId !== desired) {
-      setTemplateId(desired);
-    }
-  }, [draft.metaGovernance, templateId]);
 
   const computed = useMemo(() => {
     return template.compute(draft, { budgetTotal });
@@ -209,7 +296,8 @@ const ProposalCreation: React.FC = () => {
   const resetDraft = () => {
     clearDraftStorage();
     setDraft(DEFAULT_DRAFT);
-    setTemplateId("project");
+    setPresetId(DEFAULT_PRESET_ID);
+    setTemplateKind("project");
     setAttemptedNext(false);
     setSavedAt(null);
     setSaveError(null);
@@ -340,8 +428,16 @@ const ProposalCreation: React.FC = () => {
               chamberOptions={chamberOptions}
               draft={draft}
               setDraft={setDraft}
-              templateId={template.id}
-              setTemplateId={setTemplateId}
+              templateId={templateKind}
+              onTemplateChange={(next) => {
+                setTemplateKind(next);
+                if (presetId !== "") setPresetId("");
+              }}
+              presetId={presetId}
+              presets={PROPOSAL_PRESETS}
+              onPresetChange={(nextPresetId) => {
+                setPresetId(nextPresetId);
+              }}
               textareaClassName={textareaClassName}
               requiredTier={requiredTier}
               currentTier={currentTier}
@@ -354,6 +450,7 @@ const ProposalCreation: React.FC = () => {
               attemptedNext={attemptedNext}
               draft={draft}
               setDraft={setDraft}
+              formationEligible={draft.formationEligible}
               mode={template.id}
               textareaClassName={textareaClassName}
             />
@@ -375,6 +472,7 @@ const ProposalCreation: React.FC = () => {
               canAct={canAct}
               canSubmit={computed.canSubmit}
               draft={draft}
+              formationEligible={draft.formationEligible}
               mode={template.id}
               selectedChamber={selectedChamber}
               setDraft={setDraft}

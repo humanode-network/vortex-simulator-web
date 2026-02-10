@@ -1,16 +1,20 @@
+import { useMemo, useState } from "react";
 import type React from "react";
-import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
+import { Badge } from "@/components/primitives/badge";
 import { Select } from "@/components/primitives/select";
+import { Input } from "@/components/primitives/input";
 import { TierLabel } from "@/components/TierLabel";
 import type { ProposalDraftForm } from "../types";
 import {
-  SYSTEM_ACTIONS,
   getSystemActionMeta,
   type SystemActionId,
 } from "../templates/systemActions";
-
-type MetaGovernanceDraft = NonNullable<ProposalDraftForm["metaGovernance"]>;
+import {
+  filterPresetsForEligibility,
+  getPresetCategory,
+  type ProposalPreset,
+} from "../presets/registry";
 
 const PROPOSAL_TYPE_OPTIONS: Array<{
   value: ProposalDraftForm["proposalType"];
@@ -55,7 +59,10 @@ export function EssentialsStep(props: {
   draft: ProposalDraftForm;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   templateId: "project" | "system";
-  setTemplateId: (templateId: "project" | "system") => void;
+  onTemplateChange: (templateId: "project" | "system") => void;
+  presetId: string;
+  presets: ProposalPreset[];
+  onPresetChange: (presetId: string) => void;
   textareaClassName: string;
   requiredTier: string;
   currentTier: string | null;
@@ -67,12 +74,17 @@ export function EssentialsStep(props: {
     draft,
     setDraft,
     templateId,
-    setTemplateId,
+    onTemplateChange,
+    presetId,
+    presets,
+    onPresetChange,
     textareaClassName,
     requiredTier,
     currentTier,
     tierEligible,
   } = props;
+  const [hasChosenKind, setHasChosenKind] = useState(false);
+  const [hasChosenType, setHasChosenType] = useState(false);
 
   const isSystemProposal = templateId === "system";
   const hasGeneralOption = chamberOptions.some(
@@ -81,45 +93,142 @@ export function EssentialsStep(props: {
   const systemAction = draft.metaGovernance?.action as
     | SystemActionId
     | undefined;
-  const systemActionMeta = getSystemActionMeta(systemAction);
+  const systemActionMeta = systemAction
+    ? getSystemActionMeta(systemAction)
+    : null;
+  const selectedPreset = presets.find((preset) => preset.id === presetId);
+  const selectedPresetCategory = selectedPreset
+    ? getPresetCategory(selectedPreset)
+    : null;
+  const availableChamberIds = useMemo(() => {
+    const ids = chamberOptions.map((opt) => opt.value);
+    if (!ids.some((id) => id.trim().toLowerCase() === "general")) {
+      ids.push("general");
+    }
+    return ids;
+  }, [chamberOptions]);
+  const tierAndChamberEligiblePresets = useMemo(
+    () =>
+      filterPresetsForEligibility({
+        presets,
+        currentTier,
+        availableChamberIds,
+        selectedPresetId: presetId,
+        systemProposalType:
+          hasChosenKind && hasChosenType && isSystemProposal
+            ? draft.proposalType
+            : null,
+      }),
+    [
+      availableChamberIds,
+      currentTier,
+      draft.proposalType,
+      hasChosenKind,
+      hasChosenType,
+      isSystemProposal,
+      presetId,
+      presets,
+    ],
+  );
+
+  const eligibleByKind = useMemo(
+    () =>
+      tierAndChamberEligiblePresets.filter(
+        (preset) => preset.templateId === templateId,
+      ),
+    [templateId, tierAndChamberEligiblePresets],
+  );
+
+  const selectedType = hasChosenType ? draft.proposalType : null;
+  const eligibleByType = useMemo(
+    () =>
+      selectedType
+        ? eligibleByKind.filter(
+            (preset) => preset.proposalType === selectedType,
+          )
+        : [],
+    [eligibleByKind, selectedType],
+  );
+
+  const projectTypePresets = useMemo(() => {
+    if (!hasChosenKind || !hasChosenType || isSystemProposal || !selectedType) {
+      return [];
+    }
+    return eligibleByKind.filter(
+      (preset) => preset.proposalType === selectedType,
+    );
+  }, [
+    eligibleByKind,
+    hasChosenKind,
+    hasChosenType,
+    isSystemProposal,
+    selectedType,
+  ]);
+  const hasFormationVariants = useMemo(() => {
+    if (projectTypePresets.length === 0) return false;
+    const hasWithFormation = projectTypePresets.some(
+      (preset) => preset.formationEligible,
+    );
+    const hasWithoutFormation = projectTypePresets.some(
+      (preset) => !preset.formationEligible,
+    );
+    return hasWithFormation && hasWithoutFormation;
+  }, [projectTypePresets]);
+  const formationModeValue = selectedPreset?.formationEligible
+    ? "formation"
+    : "policy";
+  const presetOptions = useMemo(() => {
+    if (!hasChosenKind || !hasChosenType) return [];
+    const base = eligibleByType;
+    if (base.length === 0 || isSystemProposal || !hasFormationVariants) {
+      return base;
+    }
+    const wantsFormation =
+      selectedPreset?.formationEligible ?? draft.formationEligible !== false;
+    const byMode = base.filter(
+      (preset) => preset.formationEligible === wantsFormation,
+    );
+    return byMode.length > 0 ? byMode : base;
+  }, [
+    draft.formationEligible,
+    eligibleByType,
+    hasChosenKind,
+    hasChosenType,
+    hasFormationVariants,
+    isSystemProposal,
+    selectedPreset?.formationEligible,
+  ]);
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1">
+      <div className="space-y-2">
         <Label htmlFor="proposal-kind">Kind</Label>
         <Select
           id="proposal-kind"
-          value={templateId}
+          value={hasChosenKind ? templateId : ""}
           onChange={(e) => {
             const next = e.target.value as "project" | "system";
-            setTemplateId(next);
-            setDraft((prev) => {
-              if (next === "system") {
-                const nextMeta: MetaGovernanceDraft = {
-                  action: "chamber.create",
-                  chamberId: "",
-                  title: "",
-                  multiplier: undefined,
-                  genesisMembers: [],
-                };
-                return {
-                  ...prev,
-                  chamberId: "general",
-                  proposalType: "administrative",
-                  metaGovernance: nextMeta,
-                };
-              }
-              return {
+            setHasChosenKind(true);
+            if (next === "system") {
+              setDraft((prev) => ({
                 ...prev,
-                proposalType:
-                  prev.proposalType === "administrative"
-                    ? "basic"
-                    : (prev.proposalType ?? "basic"),
+                proposalType: "administrative",
                 metaGovernance: undefined,
-              };
-            });
+              }));
+              setHasChosenType(false);
+            } else {
+              setDraft((prev) => ({
+                ...prev,
+                metaGovernance: undefined,
+              }));
+              setHasChosenType(false);
+            }
+            onTemplateChange(next);
           }}
         >
+          <option value="" disabled>
+            Select kind
+          </option>
           <option value="project">Project proposal</option>
           <option value="system">System change (General)</option>
         </Select>
@@ -133,27 +242,54 @@ export function EssentialsStep(props: {
         <Label htmlFor="proposal-type">Proposal type</Label>
         <Select
           id="proposal-type"
-          value={isSystemProposal ? "administrative" : draft.proposalType}
-          disabled={isSystemProposal}
-          onChange={(e) =>
+          value={hasChosenType ? draft.proposalType : ""}
+          disabled={!hasChosenKind}
+          onChange={(e) => {
+            const nextType = e.target
+              .value as ProposalDraftForm["proposalType"];
+            setHasChosenType(true);
             setDraft((prev) => ({
               ...prev,
-              proposalType: e.target.value as ProposalDraftForm["proposalType"],
-            }))
-          }
+              proposalType: nextType,
+              ...(templateId === "system"
+                ? {
+                    metaGovernance: undefined,
+                  }
+                : {}),
+            }));
+            const nextOptions = eligibleByKind.filter(
+              (preset) => preset.proposalType === nextType,
+            );
+            if (nextOptions.length > 0) {
+              const preferPolicyByDefault =
+                nextType === "administrative" || nextType === "dao-core";
+              const nextPreset = preferPolicyByDefault
+                ? (nextOptions.find((preset) => !preset.formationEligible) ??
+                  nextOptions[0])
+                : nextOptions[0];
+              onPresetChange(nextPreset.id);
+            } else {
+              onPresetChange("");
+            }
+          }}
         >
-          {PROPOSAL_TYPE_OPTIONS.map((option) => (
+          <option value="" disabled>
+            Select type
+          </option>
+          {PROPOSAL_TYPE_OPTIONS.filter((option) =>
+            isSystemProposal ? option.value !== "basic" : true,
+          ).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </Select>
         <p className="text-xs text-muted">
-          {isSystemProposal
-            ? "System proposals are administrative by definition."
-            : PROPOSAL_TYPE_OPTIONS.find(
+          {hasChosenType
+            ? PROPOSAL_TYPE_OPTIONS.find(
                 (option) => option.value === draft.proposalType,
-              )?.helper}
+              )?.helper
+            : "Choose proposal type to continue."}
           <span className="mt-1 block">
             Required tier: <TierLabel tier={requiredTier} />.
             {currentTier ? (
@@ -169,6 +305,102 @@ export function EssentialsStep(props: {
           </span>
         </p>
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="proposal-preset">Proposal preset</Label>
+        <Select
+          id="proposal-preset"
+          value={
+            hasChosenKind &&
+            hasChosenType &&
+            presetOptions.some((preset) => preset.id === presetId)
+              ? presetId
+              : ""
+          }
+          disabled={!hasChosenKind || !hasChosenType}
+          onChange={(e) => onPresetChange(e.target.value)}
+        >
+          {!hasChosenKind ? (
+            <option value="" disabled>
+              Select kind first
+            </option>
+          ) : !hasChosenType ? (
+            <option value="" disabled>
+              Select type first
+            </option>
+          ) : presetOptions.length > 0 ? (
+            presetOptions.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.label}
+              </option>
+            ))
+          ) : (
+            <option value="" disabled>
+              No presets available for this selection.
+            </option>
+          )}
+        </Select>
+        <p className="text-xs text-muted">
+          {selectedPresetCategory ? (
+            <span className="mb-1 block">
+              <Badge variant="muted" size="sm">
+                {selectedPresetCategory}
+              </Badge>
+            </span>
+          ) : null}
+          {selectedPreset?.description ??
+            "Choose kind and type first, then select a preset."}
+          {selectedPreset?.recommendedChamber ? (
+            <span className="mt-1 block">
+              Recommended chamber: {selectedPreset.recommendedChamber}.
+            </span>
+          ) : null}
+          <span className="mt-1 block">
+            Presets are filtered by kind, type, tier, and chamber access.
+          </span>
+        </p>
+      </div>
+      {!isSystemProposal ? (
+        <div className="space-y-2">
+          <Label htmlFor="proposal-formation-mode">Mode</Label>
+          <Select
+            id="proposal-formation-mode"
+            value={hasChosenKind && hasChosenType ? formationModeValue : ""}
+            disabled={!hasChosenKind || !hasChosenType || !hasFormationVariants}
+            onChange={(e) => {
+              if (!selectedType) return;
+              const wantsFormation = e.target.value === "formation";
+              const matches = projectTypePresets.filter(
+                (preset) => preset.formationEligible === wantsFormation,
+              );
+              if (matches.length === 0) return;
+              const nextPreset =
+                matches.find((preset) => preset.id === presetId) ?? matches[0];
+              onPresetChange(nextPreset.id);
+            }}
+          >
+            {!hasChosenKind || !hasChosenType ? (
+              <option value="" disabled>
+                Select kind and type first
+              </option>
+            ) : !hasFormationVariants ? (
+              <option value={formationModeValue}>
+                {formationModeValue === "formation" ? "Formation" : "Policy"}
+              </option>
+            ) : (
+              <>
+                <option value="formation">Formation</option>
+                <option value="policy">Policy</option>
+              </>
+            )}
+          </Select>
+          <p className="text-xs text-muted">
+            {hasFormationVariants
+              ? "Choose Formation (project with milestones) or Policy."
+              : "This type has a fixed mode and cannot be switched."}
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
@@ -227,75 +459,91 @@ export function EssentialsStep(props: {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="system-action">Action</Label>
-              <Select
+              <div
                 id="system-action"
-                value={draft.metaGovernance?.action ?? "chamber.create"}
-                onChange={(e) => {
-                  const action = e.target
-                    .value as MetaGovernanceDraft["action"];
-                  setDraft((prev) => ({
-                    ...prev,
-                    metaGovernance: {
-                      ...(prev.metaGovernance ?? {
-                        action,
-                        chamberId: "",
-                        title: "",
-                        genesisMembers: [],
-                      }),
-                      action,
-                    },
-                    chamberId: "general",
-                  }));
-                }}
+                className="rounded-lg border border-border bg-panel px-3 py-2 text-sm text-text"
               >
-                {Object.entries(SYSTEM_ACTIONS).map(([value, meta]) => (
-                  <option key={value} value={value}>
-                    {meta.label}
-                  </option>
-                ))}
-              </Select>
+                {systemActionMeta?.label ?? "No preset selected"}
+              </div>
               <p className="text-xs text-muted">
-                {systemActionMeta.description}
+                {systemActionMeta?.description ??
+                  "Select a system preset for this type to set an executable action."}
               </p>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="target-chamber-id">Target chamber id *</Label>
-              <Input
-                id="target-chamber-id"
-                value={draft.metaGovernance?.chamberId ?? ""}
-                onChange={(e) => {
-                  const chamberId = e.target.value;
-                  setDraft((prev) => ({
-                    ...prev,
-                    metaGovernance: {
-                      ...(prev.metaGovernance ?? {
-                        action: "chamber.create",
-                        chamberId: "",
-                        title: "",
-                        genesisMembers: [],
-                      }),
-                      chamberId,
-                    },
-                    chamberId: "general",
-                  }));
-                }}
-                placeholder="e.g., engineering"
-              />
-              {attemptedNext &&
-              (draft.metaGovernance?.chamberId ?? "").trim().length === 0 ? (
-                <p className="text-xs text-destructive">
-                  Target chamber id is required.
-                </p>
-              ) : null}
-            </div>
+            {systemActionMeta?.requiresChamberId ? (
+              <div className="space-y-1">
+                <Label htmlFor="target-chamber-id">Target chamber id *</Label>
+                <Input
+                  id="target-chamber-id"
+                  value={draft.metaGovernance?.chamberId ?? ""}
+                  onChange={(e) => {
+                    const chamberId = e.target.value;
+                    setDraft((prev) => ({
+                      ...prev,
+                      metaGovernance: {
+                        ...(prev.metaGovernance ?? {
+                          action: "chamber.create",
+                          chamberId: "",
+                          targetAddress: "",
+                          title: "",
+                          genesisMembers: [],
+                        }),
+                        chamberId,
+                      },
+                      chamberId: "general",
+                    }));
+                  }}
+                  placeholder="e.g., engineering"
+                />
+                {attemptedNext &&
+                (draft.metaGovernance?.chamberId ?? "").trim().length === 0 ? (
+                  <p className="text-xs text-destructive">
+                    Target chamber id is required.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {systemActionMeta?.requiresTargetAddress ? (
+              <div className="space-y-1">
+                <Label htmlFor="target-governor-address">
+                  Target governor address *
+                </Label>
+                <Input
+                  id="target-governor-address"
+                  value={draft.metaGovernance?.targetAddress ?? ""}
+                  onChange={(e) => {
+                    const targetAddress = e.target.value;
+                    setDraft((prev) => ({
+                      ...prev,
+                      metaGovernance: {
+                        ...(prev.metaGovernance ?? {
+                          action: "governor.censure",
+                          targetAddress: "",
+                        }),
+                        targetAddress,
+                      },
+                      chamberId: "general",
+                    }));
+                  }}
+                  placeholder="hm..."
+                />
+                {attemptedNext &&
+                (draft.metaGovernance?.targetAddress ?? "").trim().length ===
+                  0 ? (
+                  <p className="text-xs text-destructive">
+                    Target governor address is required.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
-          {systemActionMeta.requiresTitle ||
-          systemActionMeta.showMultiplier ||
-          systemActionMeta.showGenesisMembers ? (
+          {systemActionMeta?.requiresTitle ||
+          systemActionMeta?.showMultiplier ||
+          systemActionMeta?.showGenesisMembers ? (
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                {systemActionMeta.requiresTitle ? (
+                {systemActionMeta?.requiresTitle ? (
                   <div className="space-y-1">
                     <Label htmlFor="target-title">Title *</Label>
                     <Input
@@ -309,6 +557,7 @@ export function EssentialsStep(props: {
                             ...(prev.metaGovernance ?? {
                               action: "chamber.create",
                               chamberId: "",
+                              targetAddress: "",
                               title: "",
                               genesisMembers: [],
                             }),
@@ -327,7 +576,7 @@ export function EssentialsStep(props: {
                     ) : null}
                   </div>
                 ) : null}
-                {systemActionMeta.showMultiplier ? (
+                {systemActionMeta?.showMultiplier ? (
                   <div className="space-y-1">
                     <Label htmlFor="target-multiplier">
                       Multiplier (optional)
@@ -350,6 +599,7 @@ export function EssentialsStep(props: {
                             ...(prev.metaGovernance ?? {
                               action: "chamber.create",
                               chamberId: "",
+                              targetAddress: "",
                               title: "",
                               genesisMembers: [],
                             }),
@@ -368,7 +618,7 @@ export function EssentialsStep(props: {
                   </div>
                 ) : null}
               </div>
-              {systemActionMeta.showGenesisMembers ? (
+              {systemActionMeta?.showGenesisMembers ? (
                 <div className="space-y-1">
                   <Label htmlFor="genesis-members">
                     Genesis members (optional, one address per line)
@@ -391,6 +641,7 @@ export function EssentialsStep(props: {
                           ...(prev.metaGovernance ?? {
                             action: "chamber.create",
                             chamberId: "",
+                            targetAddress: "",
                             title: "",
                             genesisMembers: [],
                           }),

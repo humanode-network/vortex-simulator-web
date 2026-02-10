@@ -6,6 +6,7 @@ import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
 import type { ChamberDto } from "@/types/api";
+import { getSystemActionMeta } from "../templates/systemActions";
 
 const proposalTypeLabel: Record<ProposalDraftForm["proposalType"], string> = {
   basic: "Basic",
@@ -21,6 +22,7 @@ export function ReviewStep(props: {
   canAct: boolean;
   canSubmit: boolean;
   draft: ProposalDraftForm;
+  formationEligible?: boolean;
   mode: "project" | "system";
   selectedChamber: ChamberDto | null;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
@@ -31,11 +33,16 @@ export function ReviewStep(props: {
     canAct,
     canSubmit,
     draft,
+    formationEligible,
     mode,
     selectedChamber,
     setDraft,
     textareaClassName,
   } = props;
+  const hasFormation = formationEligible !== false;
+  const systemActionMeta = draft.metaGovernance?.action
+    ? getSystemActionMeta(draft.metaGovernance.action)
+    : null;
 
   return (
     <div className="space-y-5">
@@ -90,21 +97,31 @@ export function ReviewStep(props: {
                 <div>
                   <p className="text-xs font-semibold text-text">Action</p>
                   <p className="text-muted">
-                    {draft.metaGovernance?.action === "chamber.dissolve"
-                      ? "Dissolve chamber"
-                      : "Create chamber"}
+                    {systemActionMeta?.label ?? "No preset selected"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-text">
-                    Target chamber id
-                  </p>
-                  <p className="text-muted">
-                    {draft.metaGovernance?.chamberId ?? "—"}
-                  </p>
-                </div>
+                {systemActionMeta?.requiresChamberId ? (
+                  <div>
+                    <p className="text-xs font-semibold text-text">
+                      Target chamber id
+                    </p>
+                    <p className="text-muted">
+                      {draft.metaGovernance?.chamberId ?? "—"}
+                    </p>
+                  </div>
+                ) : null}
+                {systemActionMeta?.requiresTargetAddress ? (
+                  <div>
+                    <p className="text-xs font-semibold text-text">
+                      Target governor
+                    </p>
+                    <p className="text-muted">
+                      {draft.metaGovernance?.targetAddress ?? "—"}
+                    </p>
+                  </div>
+                ) : null}
               </div>
-              {draft.metaGovernance?.action === "chamber.create" ? (
+              {systemActionMeta?.requiresTitle ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <p className="text-xs font-semibold text-text">
@@ -114,17 +131,17 @@ export function ReviewStep(props: {
                       {draft.metaGovernance?.title ?? "—"}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-text">
-                      Multiplier
-                    </p>
-                    <p className="text-muted">
-                      {draft.metaGovernance?.multiplier ?? "—"}
-                    </p>
-                  </div>
                 </div>
               ) : null}
-              {draft.metaGovernance?.action === "chamber.create" ? (
+              {systemActionMeta?.showMultiplier ? (
+                <div>
+                  <p className="text-xs font-semibold text-text">Multiplier</p>
+                  <p className="text-muted">
+                    {draft.metaGovernance?.multiplier ?? "—"}
+                  </p>
+                </div>
+              ) : null}
+              {systemActionMeta?.showGenesisMembers ? (
                 <div>
                   <p className="text-xs font-semibold text-text">
                     Genesis members
@@ -159,29 +176,38 @@ export function ReviewStep(props: {
                 <p className="text-xs font-semibold text-text">How</p>
                 <p className="text-muted">{draft.how}</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold text-text">When</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-                    {draft.timeline.length === 0 ? (
-                      <li>No milestones added.</li>
-                    ) : (
-                      draft.timeline.map((ms) => (
-                        <li key={ms.id}>
-                          {ms.title.trim().length > 0 ? ms.title : "—"} (
-                          {ms.timeframe.trim().length > 0 ? ms.timeframe : "—"})
-                        </li>
-                      ))
-                    )}
-                  </ul>
+              {hasFormation ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold text-text">When</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+                      {draft.timeline.length === 0 ? (
+                        <li>No milestones added.</li>
+                      ) : (
+                        draft.timeline.map((ms) => (
+                          <li key={ms.id}>
+                            {ms.title.trim().length > 0 ? ms.title : "—"} (
+                            {ms.timeframe.trim().length > 0
+                              ? ms.timeframe
+                              : "—"}
+                            )
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-text">Budget</p>
+                    <p className="text-muted">
+                      Total: {budgetTotal.toLocaleString()} HMND
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-text">Budget</p>
-                  <p className="text-muted">
-                    Total: {budgetTotal.toLocaleString()} HMND
-                  </p>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border bg-panel px-3 py-2 text-xs text-muted">
+                  Formation is not required for this proposal.
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
@@ -304,7 +330,9 @@ export function ReviewStep(props: {
             />
             {mode === "system"
               ? "I confirm the proposal details are accurate"
-              : "I confirm the budget is accurate"}
+              : !hasFormation
+                ? "I confirm the proposal details are accurate"
+                : "I confirm the budget is accurate"}
           </label>
         </div>
         {!canSubmit ? (

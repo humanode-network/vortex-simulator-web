@@ -655,6 +655,8 @@ export async function apiProposalDraft(
 
 export type ProposalDraftFormPayload = {
   templateId?: "project" | "system";
+  presetId?: string;
+  formationEligible?: boolean;
   title: string;
   chamberId: string;
   summary: string;
@@ -669,8 +671,14 @@ export type ProposalDraftFormPayload = {
     | "administrative"
     | "dao-core";
   metaGovernance?: {
-    action: "chamber.create" | "chamber.dissolve";
-    chamberId: string;
+    action:
+      | "chamber.create"
+      | "chamber.rename"
+      | "chamber.dissolve"
+      | "chamber.censure"
+      | "governor.censure";
+    chamberId?: string;
+    targetAddress?: string;
     title?: string;
     multiplier?: number;
     genesisMembers?: string[];

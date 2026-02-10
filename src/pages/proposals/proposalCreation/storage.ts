@@ -4,6 +4,7 @@ import { DEFAULT_DRAFT } from "./types";
 export const STORAGE_KEY = "vortex:proposalCreation:draft";
 export const STORAGE_STEP_KEY = "vortex:proposalCreation:step";
 export const STORAGE_TEMPLATE_KEY = "vortex:proposalCreation:template";
+export const STORAGE_PRESET_KEY = "vortex:proposalCreation:preset";
 const STORAGE_SERVER_DRAFT_ID_KEY = "vortex:proposalCreation:serverDraftId";
 
 export function loadDraft(): ProposalDraftForm {
@@ -62,6 +63,19 @@ export function persistTemplateId(templateId: string) {
   localStorage.setItem(STORAGE_TEMPLATE_KEY, templateId);
 }
 
+export function loadPresetId(): string | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_PRESET_KEY);
+    return raw && raw.trim().length > 0 ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+export function persistPresetId(presetId: string) {
+  localStorage.setItem(STORAGE_PRESET_KEY, presetId);
+}
+
 export function loadServerDraftId(): string | null {
   try {
     const raw = localStorage.getItem(STORAGE_SERVER_DRAFT_ID_KEY);
@@ -79,5 +93,6 @@ export function clearDraftStorage() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(STORAGE_STEP_KEY);
   localStorage.removeItem(STORAGE_TEMPLATE_KEY);
+  localStorage.removeItem(STORAGE_PRESET_KEY);
   localStorage.removeItem(STORAGE_SERVER_DRAFT_ID_KEY);
 }

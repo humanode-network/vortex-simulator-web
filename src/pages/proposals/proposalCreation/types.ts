@@ -25,6 +25,8 @@ export type ProposalDraftForm = {
   what: string;
   why: string;
   how: string;
+  formationEligible?: boolean;
+  presetId?: string;
   proposalType:
     | "basic"
     | "fee"
@@ -33,8 +35,14 @@ export type ProposalDraftForm = {
     | "administrative"
     | "dao-core";
   metaGovernance?: {
-    action: "chamber.create" | "chamber.dissolve";
-    chamberId: string;
+    action:
+      | "chamber.create"
+      | "chamber.rename"
+      | "chamber.dissolve"
+      | "chamber.censure"
+      | "governor.censure";
+    chamberId?: string;
+    targetAddress?: string;
     title?: string;
     multiplier?: number;
     genesisMembers?: string[];
@@ -55,6 +63,8 @@ export const DEFAULT_DRAFT: ProposalDraftForm = {
   what: "",
   why: "",
   how: "",
+  formationEligible: true,
+  presetId: undefined,
   proposalType: "basic",
   metaGovernance: undefined,
   timeline: [
