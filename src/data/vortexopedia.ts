@@ -923,7 +923,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     long: [
       "Era = 168 epochs; each epoch is ~4 hours.",
       "Active if bioauthenticated and node ran 164/168 epochs and required actions met in previous era.",
-      "Required actions include voting/upvoting/downvoting proposals or chamber votes.",
+      "Required actions include proposal-pool votes and chamber votes.",
     ],
     tags: ["era", "quorum", "activity", "governance"],
     related: ["governor", "proof_of_governance_pog"],
@@ -1387,7 +1387,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are comfortably above the governing threshold pace for the current era. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "Ahead means you have already met (or are well on track to exceed) the era’s action threshold early, leaving a buffer for the rest of the era.",
-      "Staying Ahead typically requires continuing normal participation (votes/upvotes/court actions) while maintaining node uptime.",
+      "Staying Ahead typically requires continuing normal participation (pool votes and chamber votes) while maintaining node uptime.",
       "This status is based on your completed actions vs required actions for the current governing era, not on proposal outcomes.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
@@ -1457,7 +1457,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are below the desired pace for the era’s governing threshold, but can still recover by completing more actions. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "Falling behind indicates you are not yet at the target action pace for the current era, but your deficit is still manageable.",
-      "To move back toward Stable, complete additional required actions (e.g., proposal pool votes, chamber votes, court actions) before the era ends.",
+      "To move back toward Stable, complete additional required actions (proposal-pool votes and chamber votes) before the era ends.",
       "This status is meant to prompt action early enough to avoid becoming At risk.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
@@ -1492,7 +1492,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are unlikely to meet the governing threshold without immediate additional actions. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "At risk means your current action count is far enough below the era requirement that you may lose active governor status for the next era if you do not act.",
-      "To improve: complete additional required actions (pool votes, chamber votes, court actions, proposals) before the era ends and maintain node uptime.",
+      "To improve: complete additional required actions (pool votes and chamber votes) before the era ends and maintain node uptime.",
       "This status summarizes your action deficit; it does not imply slashing or permanent removal—only loss of active quorum eligibility in the next era.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],

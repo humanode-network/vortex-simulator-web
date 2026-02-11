@@ -248,6 +248,10 @@ export function EssentialsStep(props: {
             const nextType = e.target
               .value as ProposalDraftForm["proposalType"];
             setHasChosenType(true);
+            if (templateId === "system") {
+              // Keep kind stable even when this type has no system presets.
+              onTemplateChange("system");
+            }
             setDraft((prev) => ({
               ...prev,
               proposalType: nextType,

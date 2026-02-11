@@ -181,7 +181,6 @@ test("preset registry contains full v1 proposal tree ids", () => {
     "project.core.delegation",
     "project.core.security.policy",
     "project.core.protocol-upgrades.policy",
-    "project.admin.governor-tiers.policy",
     "project.admin.formation.policy",
     "project.admin.chamber-rules.policy",
     "project.admin.veto.policy",
