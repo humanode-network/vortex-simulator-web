@@ -118,35 +118,20 @@
   .app-shell > .sidebar {
     width: 100%;
   }
-}
 
-@media (max-width: 720px) {
-  .sidebar {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
+  .workspace {
+    padding: 1.25rem 1rem 2.25rem;
     gap: 1rem;
-    padding: 1.25rem 1.25rem;
-  }
-
-  .sidebar__brand {
-    justify-content: space-between;
-    padding: 0.65rem 0.9rem;
-  }
-
-  .sidebar__nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
   }
 }
 
 @media (max-width: 600px) {
   .workspace {
-    padding: 2rem 1.25rem 3rem;
+    padding: 1rem 0.75rem 2rem;
   }
 
   .app-page {
-    padding: 1.5rem;
+    padding: 1.1rem;
+    border-radius: 14px;
   }
 }

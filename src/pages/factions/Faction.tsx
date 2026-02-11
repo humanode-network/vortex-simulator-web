@@ -183,7 +183,7 @@ const Faction: React.FC = () => {
             <h1 className="text-xl font-semibold text-text">{faction.name}</h1>
             <p className="text-sm text-muted">{faction.description}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <Badge variant="outline">Members: {faction.members}</Badge>
             <Badge variant="outline">Votes: {faction.votes}</Badge>
             {viewerRole ? (
@@ -193,7 +193,7 @@ const Faction: React.FC = () => {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canJoin ? (
           <Button
             size="sm"
@@ -281,7 +281,7 @@ const Faction: React.FC = () => {
               onChange={(event) => setEditTagsText(event.target.value)}
               placeholder="Tags, comma separated"
             />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 disabled={
@@ -363,7 +363,7 @@ const Faction: React.FC = () => {
                         Joined {new Date(membership.joinedAt).toLocaleString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {canManageMembers ? (
                         <Select
                           value={membership.role}
@@ -411,7 +411,7 @@ const Faction: React.FC = () => {
                   key={channel.id}
                   className="rounded-md border border-border px-3 py-2 text-sm"
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="font-semibold text-text">{channel.title}</p>
                       <p className="text-xs text-muted">
@@ -504,7 +504,7 @@ const Faction: React.FC = () => {
                   </div>
                   <p className="text-xs text-muted">{initiative.intent}</p>
                   {isFounderAdmin ? (
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Select
                         value={initiative.status}
                         onChange={(event) =>
@@ -598,7 +598,7 @@ const Faction: React.FC = () => {
                 key={thread.id}
                 className="space-y-2 rounded-md border border-border px-3 py-2"
               >
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-text">
                       {thread.title}
@@ -635,7 +635,7 @@ const Faction: React.FC = () => {
                   </div>
                 ) : null}
                 {canPost ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Input
                       value={replyByThread[thread.id] ?? ""}
                       onChange={(event) =>

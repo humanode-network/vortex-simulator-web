@@ -387,7 +387,7 @@ const MyGovernance: React.FC = () => {
             </Surface>
             <div className="flex flex-col items-center justify-center gap-3 px-2">
               <Kicker align="center">Progress</Kicker>
-              <div className="relative h-2 w-48 overflow-hidden rounded-full bg-muted/30">
+              <div className="relative h-2 w-full max-w-48 overflow-hidden rounded-full bg-muted/30">
                 <div
                   className="h-full rounded-full bg-primary"
                   style={{ width: `${overallPercent}%` }}
@@ -565,7 +565,7 @@ const MyGovernance: React.FC = () => {
                 badge={
                   <Badge
                     size="md"
-                    className="border-none bg-(--primary-dim) px-4 py-1 text-center text-sm font-bold tracking-wide whitespace-nowrap text-primary uppercase"
+                    className="border-none bg-(--primary-dim) px-4 py-1 text-center text-sm font-bold tracking-wide text-primary uppercase"
                   >
                     M × {chamber.multiplier}
                   </Badge>
@@ -576,7 +576,7 @@ const MyGovernance: React.FC = () => {
                       asChild
                       size="md"
                       variant="primary"
-                      className="w-56"
+                      className="w-full sm:w-56"
                     >
                       <Link to={`/app/chambers/${chamber.id}`}>Enter</Link>
                     </Button>

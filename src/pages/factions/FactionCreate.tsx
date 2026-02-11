@@ -114,7 +114,7 @@ const FactionCreate: React.FC = () => {
           </Button>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {[
               { n: 1, label: "Identity" },
               { n: 2, label: "Access & goals" },

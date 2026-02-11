@@ -192,7 +192,9 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
             />
           </div>
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
+            <h1 className="text-2xl font-semibold text-text sm:text-3xl">
+              {headerTitle}
+            </h1>
             {headerAddress ? (
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
                 {showShortBadge ? (
@@ -316,7 +318,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
               }))}
             />
             {filteredActions.length ? (
-              <div className="grid max-h-72 grid-cols-1 gap-3 overflow-y-scroll pr-2 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid max-h-none grid-cols-1 gap-3 overflow-visible pr-0 sm:grid-cols-2 lg:max-h-72 lg:overflow-y-auto lg:pr-2 xl:grid-cols-3">
                 {filteredActions.map((action) => (
                   <ActivityTile
                     key={`${action.title}-${action.timestamp}`}

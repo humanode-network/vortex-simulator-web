@@ -65,6 +65,20 @@ const HumanNodes: React.FC = () => {
   });
   const { sortBy, tierFilter, statusFilter, cmRange } = filters;
   const [view, setView] = useState<"cards" | "list">("cards");
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const sync = () => {
+      const mobile = mediaQuery.matches;
+      setIsMobileViewport(mobile);
+      if (mobile) setView("list");
+    };
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -161,6 +175,8 @@ const HumanNodes: React.FC = () => {
     cmRange,
   ]);
 
+  const effectiveView = isMobileViewport ? "list" : view;
+
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="human-nodes" />
@@ -236,13 +252,13 @@ const HumanNodes: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="sort" className="font-semibold whitespace-nowrap">
+            <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <Label htmlFor="sort" className="font-semibold">
                 Sort by
               </Label>
               <Select
                 id="sort"
-                className="h-10 min-w-[180px]"
+                className="h-10 w-full sm:min-w-[180px]"
                 value={sortBy}
                 onChange={(e) =>
                   setFilters((curr) => ({
@@ -259,8 +275,11 @@ const HumanNodes: React.FC = () => {
             </div>
             <ToggleGroup
               className="ml-auto"
-              value={view}
-              onValueChange={(val) => setView(val as "cards" | "list")}
+              value={effectiveView}
+              onValueChange={(val) => {
+                if (isMobileViewport) return;
+                setView(val as "cards" | "list");
+              }}
               options={[
                 { value: "cards", label: "Cards" },
                 { value: "list", label: "List" },
@@ -268,7 +287,7 @@ const HumanNodes: React.FC = () => {
             />
           </div>
 
-          {view === "cards" ? (
+          {effectiveView === "cards" ? (
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {filtered.map((node) => {
                 const factionName = factionsById[node.factionId]?.name ?? "—";
@@ -338,7 +357,7 @@ const HumanNodes: React.FC = () => {
                           </Badge>
                         </div>
                       </div>
-                      <div className="grid auto-rows-fr grid-cols-2 gap-3">
+                      <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">
                         {tileItems.map((item) => (
                           <StatTile
                             key={item.label}
@@ -380,7 +399,7 @@ const HumanNodes: React.FC = () => {
                 <Card key={node.id}>
                   <CardContent className="pt-4 pb-3">
                     <div className="flex flex-wrap items-center gap-4">
-                      <div className="min-w-[200px] flex-1">
+                      <div className="min-w-0 flex-1">
                         <h4 className="text-base font-semibold">{node.name}</h4>
                         <p className="text-sm text-muted">{node.role}</p>
                       </div>
