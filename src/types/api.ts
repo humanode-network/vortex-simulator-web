@@ -324,7 +324,6 @@ export type GetMyGovernanceResponse = {
 export type GetClockResponse = {
   currentEra: number;
   updatedAt: string;
-  now: string;
   eraSeconds: number;
   nextEraAt: string;
   activeGovernors: number;
