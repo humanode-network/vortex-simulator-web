@@ -8,6 +8,7 @@ import Invision from "../pages/invision/Invision";
 import Vortexopedia from "../pages/Vortexopedia";
 import Factions from "../pages/factions/Factions";
 import Faction from "../pages/factions/Faction";
+import FactionCreate from "../pages/factions/FactionCreate";
 import ProposalPP from "../pages/proposals/ProposalPP";
 import ProposalChamber from "../pages/proposals/ProposalChamber";
 import ProposalFormation from "../pages/proposals/ProposalFormation";
@@ -46,6 +47,7 @@ const AppRoutes: React.FC = () => {
         <Route path="feed" element={<Feed />} />
         <Route path="profile" element={<Profile />} />
         <Route path="factions" element={<Factions />} />
+        <Route path="factions/new" element={<FactionCreate />} />
         <Route path="factions/:id" element={<Faction />} />
         <Route path="human-nodes" element={<HumanNodes />} />
         <Route path="human-nodes/:id" element={<HumanNode />} />

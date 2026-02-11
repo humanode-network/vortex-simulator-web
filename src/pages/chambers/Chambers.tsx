@@ -26,10 +26,10 @@ type Metric = {
 };
 
 const metricCards: Metric[] = [
-  { label: "Total chambers", value: "6" },
-  { label: "Active governors", value: "150" },
-  { label: "Total ACM", value: "7,600" },
-  { label: "Live proposals", value: "9" },
+  { label: "Total chambers", value: "—" },
+  { label: "Active governors", value: "—" },
+  { label: "Total ACM", value: "—" },
+  { label: "Live proposals", value: "—" },
 ];
 
 const Chambers: React.FC = () => {
@@ -90,10 +90,15 @@ const Chambers: React.FC = () => {
 
   const computedMetrics = useMemo((): Metric[] => {
     if (!chambers) return metricCards;
-    const { totalAcm, liveProposals } = computeChamberMetrics(chambers);
+    const { activeGovernors, totalAcm, liveProposals } =
+      computeChamberMetrics(chambers);
+    const governors = activeGovernors;
     return [
       { label: "Total chambers", value: String(chambers.length) },
-      { label: "Active governors", value: "150" },
+      {
+        label: "Governors / Active governors",
+        value: `${governors} / ${activeGovernors}`,
+      },
       { label: "Total ACM", value: totalAcm.toLocaleString() },
       { label: "Live proposals", value: String(liveProposals) },
     ];

@@ -17,10 +17,16 @@ import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
-import { apiChambers, apiCmMe, apiMyGovernance } from "@/lib/apiClient";
+import {
+  apiChambers,
+  apiClock,
+  apiCmMe,
+  apiMyGovernance,
+} from "@/lib/apiClient";
 import type {
   ChamberDto,
   CmSummaryDto,
+  GetClockResponse,
   GetMyGovernanceResponse,
 } from "@/types/api";
 import { cn } from "@/lib/utils";
@@ -134,30 +140,49 @@ const governingStatusTermId = (label: GoverningStatus): string => {
   return "governing_status_losing_status";
 };
 
+const formatDayHourMinute = (targetMs: number, nowMs: number): string => {
+  const deltaMs = Math.max(0, targetMs - nowMs);
+  const totalMinutes = Math.floor(deltaMs / 60_000);
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+  return `${days}d:${String(hours).padStart(2, "0")}h:${String(minutes).padStart(2, "0")}m`;
+};
+
 const MyGovernance: React.FC = () => {
   const [gov, setGov] = useState<GetMyGovernanceResponse | null>(null);
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
+  const [clock, setClock] = useState<GetClockResponse | null>(null);
   const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [govRes, chambersRes] = await Promise.all([
+        const [govRes, chambersRes, clockRes] = await Promise.all([
           apiMyGovernance(),
           apiChambers(),
+          apiClock().catch(() => null),
         ]);
         const cmRes = await apiCmMe().catch(() => null);
         if (!active) return;
         setGov(govRes);
         setChambers(chambersRes.items);
+        setClock(clockRes);
         setCmSummary(cmRes);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setGov(null);
         setChambers(null);
+        setClock(null);
         setCmSummary(null);
         setLoadError((error as Error).message);
       }
@@ -177,6 +202,16 @@ const MyGovernance: React.FC = () => {
         eraActivity?.completed ?? 0,
         eraActivity?.required ?? 0,
       );
+
+  const timeLeftValue = useMemo(() => {
+    const targetMs = clock?.nextEraAt
+      ? new Date(clock.nextEraAt).getTime()
+      : NaN;
+    if (Number.isFinite(targetMs)) {
+      return formatDayHourMinute(targetMs, nowMs);
+    }
+    return eraActivity?.timeLeft ?? "—";
+  }, [clock?.nextEraAt, eraActivity?.timeLeft, nowMs]);
 
   const myChambers = useMemo(() => {
     if (!gov || !chambers) return [];
@@ -235,7 +270,7 @@ const MyGovernance: React.FC = () => {
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               { label: "Era", value: eraActivity?.era ?? "—" },
-              { label: "Time left", value: eraActivity?.timeLeft ?? "—" },
+              { label: "Time left", value: timeLeftValue },
             ].map((tile) => (
               <Surface
                 key={tile.label}
