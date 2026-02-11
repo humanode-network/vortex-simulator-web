@@ -38,12 +38,19 @@ export function computeChamberMetrics(chambers: ChamberDto[]) {
     const { acm } = getChamberNumericStats(chamber);
     return sum + acm;
   }, 0);
+  // Governors can be members of multiple chambers; use the largest chamber roster
+  // as a stable approximation of global active governors for the summary tile.
+  const activeGovernors = chambers.reduce((max, chamber) => {
+    const { governors } = getChamberNumericStats(chamber);
+    return Math.max(max, governors);
+  }, 0);
   const liveProposals = chambers.reduce(
     (sum, chamber) => sum + (chamber.pipeline.vote ?? 0),
     0,
   );
   return {
     totalChambers: chambers.length,
+    activeGovernors,
     totalAcm,
     liveProposals,
   };

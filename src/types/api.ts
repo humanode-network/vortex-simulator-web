@@ -70,13 +70,51 @@ export type FactionDto = {
   id: string;
   name: string;
   description: string;
+  visibility: "public" | "private";
   members: number;
   votes: string;
   acm: string;
   focus: string;
   goals: string[];
+  tags: string[];
   initiatives: string[];
   roster: FactionRosterMemberDto[];
+  channels?: Array<{
+    id: string;
+    slug: string;
+    title: string;
+    writeScope: "stewards" | "members";
+    isLocked: boolean;
+    threadCount: number;
+  }>;
+  threads?: Array<{
+    id: string;
+    channelId: string;
+    channelTitle: string;
+    title: string;
+    body: string;
+    status: "open" | "resolved" | "locked";
+    authorAddress: string;
+    replies: number;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  initiativesDetailed?: Array<{
+    id: string;
+    title: string;
+    intent: string;
+    ownerAddress: string;
+    status: "draft" | "active" | "blocked" | "done" | "archived";
+    checklist: string[];
+    links: string[];
+    updatedAt: string;
+  }>;
+  memberships?: Array<{
+    address: string;
+    role: "founder" | "steward" | "member";
+    isActive: boolean;
+    joinedAt: string;
+  }>;
 };
 export type GetFactionsResponse = { items: FactionDto[] };
 
@@ -285,6 +323,9 @@ export type GetMyGovernanceResponse = {
 
 export type GetClockResponse = {
   currentEra: number;
+  updatedAt: string;
+  eraSeconds: number;
+  nextEraAt: string;
   activeGovernors: number;
   currentEraRollup?: {
     era: number;

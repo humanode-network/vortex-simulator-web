@@ -96,6 +96,11 @@ const Factions: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="factions" />
+      <div className="flex justify-end">
+        <Button asChild>
+          <Link to="/app/factions/new">Create faction</Link>
+        </Button>
+      </div>
       {factions === null ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           Loading factions…
@@ -153,41 +158,49 @@ const Factions: React.FC = () => {
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
             aria-live="polite"
           >
-            {(factions ?? []).map((faction) => (
-              <Card key={faction.id} className="h-full">
-                <CardHeader className="pb-2">
-                  <CardTitle>{faction.name}</CardTitle>
-                  <p className="line-clamp-2 min-h-10 text-sm text-muted">
-                    {faction.description}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-text">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <StatTile
-                      label="Members"
-                      value={faction.members}
-                      className="px-2 py-2"
-                      valueClassName="text-lg"
-                    />
-                    <StatTile
-                      label="Votes"
-                      value={faction.votes}
-                      className="px-2 py-2"
-                      valueClassName="text-lg"
-                    />
-                    <StatTile
-                      label={<HintLabel termId="acm" termText="ACM" />}
-                      value={faction.acm}
-                      className="px-2 py-2"
-                      valueClassName="text-lg"
-                    />
-                  </div>
-                  <Button asChild size="sm" className="w-full">
-                    <Link to={`/app/factions/${faction.id}`}>View faction</Link>
-                  </Button>
-                </CardContent>
+            {filtered.length === 0 ? (
+              <Card className="border-dashed px-4 py-6 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
+                No factions match this filter set.
               </Card>
-            ))}
+            ) : (
+              filtered.map((faction) => (
+                <Card key={faction.id} className="h-full">
+                  <CardHeader className="pb-2">
+                    <CardTitle>{faction.name}</CardTitle>
+                    <p className="line-clamp-2 min-h-10 text-sm text-muted">
+                      {faction.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm text-text">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <StatTile
+                        label="Members"
+                        value={faction.members}
+                        className="px-2 py-2"
+                        valueClassName="text-lg"
+                      />
+                      <StatTile
+                        label="Votes"
+                        value={faction.votes}
+                        className="px-2 py-2"
+                        valueClassName="text-lg"
+                      />
+                      <StatTile
+                        label={<HintLabel termId="acm" termText="ACM" />}
+                        value={faction.acm}
+                        className="px-2 py-2"
+                        valueClassName="text-lg"
+                      />
+                    </div>
+                    <Button asChild size="sm" className="w-full">
+                      <Link to={`/app/factions/${faction.id}`}>
+                        View faction
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </section>
         </>
       )}
