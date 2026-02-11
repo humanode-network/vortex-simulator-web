@@ -140,13 +140,16 @@ const governingStatusTermId = (label: GoverningStatus): string => {
   return "governing_status_losing_status";
 };
 
-const formatDayHourMinute = (targetMs: number, nowMs: number): string => {
+const formatDayHourMinuteSecond = (targetMs: number, nowMs: number): string => {
   const deltaMs = Math.max(0, targetMs - nowMs);
-  const totalMinutes = Math.floor(deltaMs / 60_000);
-  const days = Math.floor(totalMinutes / (24 * 60));
-  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-  const minutes = totalMinutes % 60;
-  return `${days}d:${String(hours).padStart(2, "0")}h:${String(minutes).padStart(2, "0")}m`;
+  const totalSeconds = Math.floor(deltaMs / 1000);
+  const days = Math.floor(totalSeconds / (24 * 60 * 60));
+  const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+  const seconds = totalSeconds % 60;
+  return `${days}d:${String(hours).padStart(2, "0")}h:${String(
+    minutes,
+  ).padStart(2, "0")}m:${String(seconds).padStart(2, "0")}s`;
 };
 
 const MyGovernance: React.FC = () => {
@@ -156,11 +159,21 @@ const MyGovernance: React.FC = () => {
   const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  const [clockBaseMs, setClockBaseMs] = useState<number | null>(null);
+  const [clockFetchedAtMs, setClockFetchedAtMs] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!clock?.now) return;
+    const parsed = new Date(clock.now).getTime();
+    if (!Number.isFinite(parsed)) return;
+    setClockBaseMs(parsed);
+    setClockFetchedAtMs(Date.now());
+  }, [clock?.now]);
 
   useEffect(() => {
     let active = true;
@@ -208,10 +221,21 @@ const MyGovernance: React.FC = () => {
       ? new Date(clock.nextEraAt).getTime()
       : NaN;
     if (Number.isFinite(targetMs)) {
-      return formatDayHourMinute(targetMs, nowMs);
+      const simNowMs =
+        Number.isFinite(clockBaseMs ?? NaN) &&
+        Number.isFinite(clockFetchedAtMs ?? NaN)
+          ? (clockBaseMs as number) + (nowMs - (clockFetchedAtMs as number))
+          : nowMs;
+      return formatDayHourMinuteSecond(targetMs, simNowMs);
     }
     return eraActivity?.timeLeft ?? "—";
-  }, [clock?.nextEraAt, eraActivity?.timeLeft, nowMs]);
+  }, [
+    clock?.nextEraAt,
+    eraActivity?.timeLeft,
+    nowMs,
+    clockBaseMs,
+    clockFetchedAtMs,
+  ]);
 
   const myChambers = useMemo(() => {
     if (!gov || !chambers) return [];
