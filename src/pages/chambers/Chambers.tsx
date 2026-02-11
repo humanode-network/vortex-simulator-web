@@ -12,12 +12,13 @@ import { Button } from "@/components/primitives/button";
 import { Link } from "react-router";
 import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiChambers } from "@/lib/apiClient";
+import { apiChambers, apiClock } from "@/lib/apiClient";
 import {
   computeChamberMetrics,
   getChamberNumericStats,
 } from "@/lib/dtoParsers";
 import type { ChamberDto } from "@/types/api";
+import type { GetClockResponse } from "@/types/api";
 import { Surface } from "@/components/Surface";
 
 type Metric = {
@@ -34,6 +35,7 @@ const metricCards: Metric[] = [
 
 const Chambers: React.FC = () => {
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
+  const [clock, setClock] = useState<GetClockResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<{
@@ -47,12 +49,15 @@ const Chambers: React.FC = () => {
     (async () => {
       try {
         const res = await apiChambers();
+        const clockRes = await apiClock().catch(() => null);
         if (!active) return;
         setChambers(res.items);
+        setClock(clockRes);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setChambers([]);
+        setClock(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -90,9 +95,12 @@ const Chambers: React.FC = () => {
 
   const computedMetrics = useMemo((): Metric[] => {
     if (!chambers) return metricCards;
-    const { activeGovernors, totalAcm, liveProposals } =
+    const { governors, totalAcm, liveProposals } =
       computeChamberMetrics(chambers);
-    const governors = activeGovernors;
+    const activeGovernors = Math.min(
+      governors,
+      Math.max(0, Math.floor(clock?.activeGovernors ?? governors)),
+    );
     return [
       { label: "Total chambers", value: String(chambers.length) },
       {
@@ -102,7 +110,7 @@ const Chambers: React.FC = () => {
       { label: "Total ACM", value: totalAcm.toLocaleString() },
       { label: "Live proposals", value: String(liveProposals) },
     ];
-  }, [chambers]);
+  }, [chambers, clock]);
 
   return (
     <div className="flex flex-col gap-6">
