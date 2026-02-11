@@ -113,6 +113,11 @@ const ProposalCreation: React.FC = () => {
       persistPresetId("");
       return;
     }
+    if (preset.templateId !== templateKind) {
+      persistPresetId("");
+      setPresetId("");
+      return;
+    }
     setDraft((prev) => {
       const shouldSoftApply = !presetInitialized.current;
       presetInitialized.current = true;
@@ -135,7 +140,7 @@ const ProposalCreation: React.FC = () => {
       return next;
     });
     persistPresetId(preset.id);
-  }, [presetId]);
+  }, [presetId, templateKind]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {

@@ -48,7 +48,6 @@ export type ProposalPresetId =
   | "project.core.delegation"
   | "project.core.security.policy"
   | "project.core.protocol-upgrades.policy"
-  | "project.admin.governor-tiers.policy"
   | "project.admin.formation.policy"
   | "project.admin.chamber-rules.policy"
   | "project.admin.veto.policy"
@@ -505,16 +504,6 @@ export const PROPOSAL_PRESETS: ProposalPreset[] = [
     recommendedChamber: "Engineering chamber",
   },
   {
-    id: "project.admin.governor-tiers.policy",
-    label: "Governor tiers",
-    description: "Update governor tiers, rights, and obligations.",
-    templateId: "project",
-    proposalType: "dao-core",
-    formationEligible: false,
-    recommendedChamber: "General chamber",
-    defaultChamberId: "general",
-  },
-  {
     id: "project.admin.formation.policy",
     label: "Formation procedures",
     description: "Formation procedures, grants, and operations.",
@@ -626,7 +615,7 @@ export const PROPOSAL_PRESETS: ProposalPreset[] = [
   },
   {
     id: "project.dao_core.new-node-types.policy",
-    label: "Human node types",
+    label: "Human nodes types",
     description: "Creation of new types of human nodes.",
     templateId: "project",
     proposalType: "dao-core",

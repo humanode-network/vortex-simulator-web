@@ -168,7 +168,7 @@ export const pageHints: Record<string, PageHintEntry> = {
       {
         heading: "Governing threshold",
         items: [
-          "Era, time left, and required vs completed actions (pool votes, chamber votes, court actions, proposals).",
+          "Era, time left, and required vs completed actions (pool votes, chamber votes).",
           "Stay above threshold to remain active in quorum for the next era.",
         ],
       },
