@@ -619,6 +619,382 @@ export async function apiFaction(id: string): Promise<FactionDto> {
   return await apiGet<FactionDto>(`/api/factions/${id}`);
 }
 
+export async function apiFactionCreate(input: {
+  name: string;
+  description: string;
+  focus?: string;
+  visibility?: "public" | "private";
+  goals?: string[];
+  tags?: string[];
+  cofounders?: string[];
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.create";
+  faction: { id: string; name: string };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.create",
+      payload: {
+        name: input.name,
+        description: input.description,
+        ...(input.focus ? { focus: input.focus } : {}),
+        ...(input.visibility ? { visibility: input.visibility } : {}),
+        ...(input.goals ? { goals: input.goals } : {}),
+        ...(input.tags ? { tags: input.tags } : {}),
+        ...(input.cofounders ? { cofounders: input.cofounders } : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionUpdate(input: {
+  factionId: string;
+  name?: string;
+  description?: string;
+  focus?: string;
+  visibility?: "public" | "private";
+  goals?: string[];
+  tags?: string[];
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.update";
+  factionId: string;
+  updated: boolean;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.update",
+      payload: {
+        factionId: input.factionId,
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.focus ? { focus: input.focus } : {}),
+        ...(input.visibility ? { visibility: input.visibility } : {}),
+        ...(input.goals ? { goals: input.goals } : {}),
+        ...(input.tags ? { tags: input.tags } : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionDelete(input: {
+  factionId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.delete";
+  factionId: string;
+  status: "archived";
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.delete",
+      payload: {
+        factionId: input.factionId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionMemberRoleSet(input: {
+  factionId: string;
+  address: string;
+  role: "founder" | "steward" | "member";
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.member.role.set";
+  factionId: string;
+  member: { address: string; role: "founder" | "steward" | "member" };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.member.role.set",
+      payload: {
+        factionId: input.factionId,
+        address: input.address,
+        role: input.role,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionJoin(input: {
+  factionId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.join";
+  factionId: string;
+  joined: boolean;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.join",
+      payload: {
+        factionId: input.factionId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionLeave(input: {
+  factionId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.leave";
+  factionId: string;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.leave",
+      payload: {
+        factionId: input.factionId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionChannelCreate(input: {
+  factionId: string;
+  title: string;
+  slug?: string;
+  writeScope?: "stewards" | "members";
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.channel.create";
+  factionId: string;
+  channel: { id: string; title: string };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.channel.create",
+      payload: {
+        factionId: input.factionId,
+        title: input.title,
+        ...(input.slug ? { slug: input.slug } : {}),
+        ...(input.writeScope ? { writeScope: input.writeScope } : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionChannelLock(input: {
+  factionId: string;
+  channelId: string;
+  isLocked: boolean;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.channel.lock";
+  factionId: string;
+  channel: { id: string; isLocked: boolean };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.channel.lock",
+      payload: {
+        factionId: input.factionId,
+        channelId: input.channelId,
+        isLocked: input.isLocked,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadCreate(input: {
+  factionId: string;
+  channelId: string;
+  title: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.create";
+  factionId: string;
+  thread: { id: string; title: string };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.create",
+      payload: {
+        factionId: input.factionId,
+        channelId: input.channelId,
+        title: input.title,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadReply(input: {
+  factionId: string;
+  threadId: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.reply";
+  factionId: string;
+  threadId: string;
+  messageId: string;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.reply",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadTransition(input: {
+  factionId: string;
+  threadId: string;
+  status: "open" | "resolved" | "locked";
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.transition";
+  factionId: string;
+  thread: { id: string; status: "open" | "resolved" | "locked" };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.transition",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+        status: input.status,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionInitiativeCreate(input: {
+  factionId: string;
+  title: string;
+  intent?: string;
+  checklist?: string[];
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.initiative.create";
+  factionId: string;
+  initiative: { id: string; title: string };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.initiative.create",
+      payload: {
+        factionId: input.factionId,
+        title: input.title,
+        ...(input.intent ? { intent: input.intent } : {}),
+        ...(input.checklist ? { checklist: input.checklist } : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionInitiativeTransition(input: {
+  factionId: string;
+  initiativeId: string;
+  status: "draft" | "active" | "blocked" | "done" | "archived";
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.initiative.transition";
+  factionId: string;
+  initiative: {
+    id: string;
+    status: "draft" | "active" | "blocked" | "done" | "archived";
+  };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.initiative.transition",
+      payload: {
+        factionId: input.factionId,
+        initiativeId: input.initiativeId,
+        status: input.status,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
 export async function apiFormation(): Promise<GetFormationResponse> {
   return await apiGet<GetFormationResponse>("/api/formation");
 }

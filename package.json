@@ -5,6 +5,7 @@
   "packageManager": "yarn@4.11.0",
   "scripts": {
     "dev": "rsbuild dev --open",
+    "dev:local": "node scripts/dev-local.mjs",
     "build": "rsbuild build",
     "preview": "rsbuild preview",
     "test": "RSTEST=1 rstest",

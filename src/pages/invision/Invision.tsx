@@ -69,185 +69,194 @@ const Invision: React.FC = () => {
   }, [factions, search, factionSort]);
 
   return (
-    <div className="flex flex-col gap-5">
-      <PageHint pageId="invision" />
-      {invision === null ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          Loading Invision…
-        </Card>
-      ) : null}
-      {loadError ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Invision unavailable: {loadError}
-        </Card>
-      ) : null}
-      {invision !== null &&
-      factions !== null &&
-      factions.length === 0 &&
-      !loadError ? (
-        <NoDataYetBar label="Invision data" />
-      ) : null}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Surface
-          variant="panelAlt"
-          className="px-6 py-5 text-center sm:col-span-2 lg:col-span-3"
-        >
-          <Kicker align="center">Governance model</Kicker>
-          <h1 className="text-2xl font-semibold text-text">
-            {invision?.governanceState.label ?? "—"}
-          </h1>
-        </Surface>
-        {(invision?.governanceState.metrics ?? []).map((metric) => (
+    <div className="relative">
+      <div className="pointer-events-none flex flex-col gap-5 opacity-35 blur-[6px] select-none">
+        <PageHint pageId="invision" />
+        {invision === null ? (
+          <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
+            Loading Invision…
+          </Card>
+        ) : null}
+        {loadError ? (
+          <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
+            Invision unavailable: {loadError}
+          </Card>
+        ) : null}
+        {invision !== null &&
+        factions !== null &&
+        factions.length === 0 &&
+        !loadError ? (
+          <NoDataYetBar label="Invision data" />
+        ) : null}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Surface
-            key={metric.label}
-            variant="panel"
-            className="px-3 py-3 text-center"
+            variant="panelAlt"
+            className="px-6 py-5 text-center sm:col-span-2 lg:col-span-3"
           >
-            <Kicker align="center">{metric.label}</Kicker>
-            <p className="text-2xl font-semibold text-text">{metric.value}</p>
+            <Kicker align="center">Governance model</Kicker>
+            <h1 className="text-2xl font-semibold text-text">
+              {invision?.governanceState.label ?? "—"}
+            </h1>
           </Surface>
-        ))}
-      </div>
+          {(invision?.governanceState.metrics ?? []).map((metric) => (
+            <Surface
+              key={metric.label}
+              variant="panel"
+              className="px-3 py-3 text-center"
+            >
+              <Kicker align="center">{metric.label}</Kicker>
+              <p className="text-2xl font-semibold text-text">{metric.value}</p>
+            </Surface>
+          ))}
+        </div>
 
-      <SearchBar
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search factions, blocs, proposals…"
-        ariaLabel="Search invision"
-        filtersConfig={[
-          {
-            key: "factionSort",
-            label: "Sort factions",
-            options: [
-              { value: "members", label: "Members (desc)" },
-              { value: "votes", label: "Votes (desc)" },
-              { value: "acm", label: "ACM (desc)" },
-            ],
-          },
-        ]}
-        filtersState={filters}
-        onFiltersChange={setFilters}
-      />
+        <SearchBar
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search factions, blocs, proposals…"
+          ariaLabel="Search invision"
+          filtersConfig={[
+            {
+              key: "factionSort",
+              label: "Sort factions",
+              options: [
+                { value: "members", label: "Members (desc)" },
+                { value: "votes", label: "Votes (desc)" },
+                { value: "acm", label: "ACM (desc)" },
+              ],
+            },
+          ]}
+          filtersState={filters}
+          onFiltersChange={setFilters}
+        />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle>Largest factions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 text-sm text-text sm:grid-cols-2">
-            {filteredFactions.map((faction) => (
-              <div key={faction.name} className="contents">
-                <Surface variant="panelAlt" className="px-5 py-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Largest factions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 text-sm text-text sm:grid-cols-2">
+              {filteredFactions.map((faction) => (
+                <div key={faction.name} className="contents">
+                  <Surface variant="panelAlt" className="px-5 py-4">
+                    <p className="text-lg font-semibold text-text">
+                      {faction.name}
+                    </p>
+                    <Kicker className="text-primary">
+                      {faction.description}
+                    </Kicker>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <Surface
+                        variant="panel"
+                        radius="xl"
+                        shadow="control"
+                        className="px-2 py-2"
+                      >
+                        <Kicker align="center" className="text-[0.7rem]">
+                          Members
+                        </Kicker>
+                        <p className="text-lg font-semibold">
+                          {faction.members}
+                        </p>
+                      </Surface>
+                      <Surface
+                        variant="panel"
+                        radius="xl"
+                        shadow="control"
+                        className="px-2 py-2"
+                      >
+                        <Kicker align="center" className="text-[0.7rem]">
+                          Votes, %
+                        </Kicker>
+                        <p className="text-lg font-semibold">{faction.votes}</p>
+                      </Surface>
+                      <Surface
+                        variant="panel"
+                        radius="xl"
+                        shadow="control"
+                        className="px-2 py-2"
+                      >
+                        <Kicker align="center" className="text-[0.7rem]">
+                          <HintLabel termId="acm">ACM</HintLabel>
+                        </Kicker>
+                        <p className="text-lg font-semibold capitalize">
+                          {faction.acm}
+                        </p>
+                      </Surface>
+                    </div>
+                  </Surface>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Treasury & economy</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-text">
+              {(invision?.economicIndicators ?? []).map((indicator) => (
+                <div
+                  key={indicator.label}
+                  className="rounded-xl border border-border px-3 py-2"
+                >
+                  <Kicker>{indicator.label}</Kicker>
                   <p className="text-lg font-semibold text-text">
-                    {faction.name}
+                    {indicator.value}
                   </p>
-                  <Kicker className="text-primary">
-                    {faction.description}
-                  </Kicker>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="control"
-                      className="px-2 py-2"
-                    >
-                      <Kicker align="center" className="text-[0.7rem]">
-                        Members
-                      </Kicker>
-                      <p className="text-lg font-semibold">{faction.members}</p>
-                    </Surface>
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="control"
-                      className="px-2 py-2"
-                    >
-                      <Kicker align="center" className="text-[0.7rem]">
-                        Votes, %
-                      </Kicker>
-                      <p className="text-lg font-semibold">{faction.votes}</p>
-                    </Surface>
-                    <Surface
-                      variant="panel"
-                      radius="xl"
-                      shadow="control"
-                      className="px-2 py-2"
-                    >
-                      <Kicker align="center" className="text-[0.7rem]">
-                        <HintLabel termId="acm">ACM</HintLabel>
-                      </Kicker>
-                      <p className="text-lg font-semibold capitalize">
-                        {faction.acm}
-                      </p>
-                    </Surface>
-                  </div>
-                </Surface>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                  <p className="text-xs text-muted">{indicator.detail}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle>Treasury & economy</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-text">
-            {(invision?.economicIndicators ?? []).map((indicator) => (
-              <div
-                key={indicator.label}
-                className="rounded-xl border border-border px-3 py-2"
-              >
-                <Kicker>{indicator.label}</Kicker>
-                <p className="text-lg font-semibold text-text">
-                  {indicator.value}
-                </p>
-                <p className="text-xs text-muted">{indicator.detail}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>Risk dashboard</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2">
+              {(invision?.riskSignals ?? []).map((signal) => (
+                <div
+                  key={signal.title}
+                  className="rounded-xl border border-border px-3 py-3"
+                >
+                  <Kicker>{signal.title}</Kicker>
+                  <p className="text-base font-semibold text-primary">
+                    {signal.status}
+                  </p>
+                  <p className="text-xs text-muted">{signal.detail}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle>General chamber proposals</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-text">
+              {(invision?.chamberProposals ?? []).map((proposal) => (
+                <div
+                  key={proposal.title}
+                  className="rounded-xl border border-border px-3 py-3"
+                >
+                  <p className="text-base font-semibold text-text">
+                    {proposal.title}
+                  </p>
+                  <Kicker className="text-primary">{proposal.effect}</Kicker>
+                  <p className="text-xs text-muted">{proposal.sponsors}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle>Risk dashboard</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2">
-            {(invision?.riskSignals ?? []).map((signal) => (
-              <div
-                key={signal.title}
-                className="rounded-xl border border-border px-3 py-3"
-              >
-                <Kicker>{signal.title}</Kicker>
-                <p className="text-base font-semibold text-primary">
-                  {signal.status}
-                </p>
-                <p className="text-xs text-muted">{signal.detail}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle>General chamber proposals</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-text">
-            {(invision?.chamberProposals ?? []).map((proposal) => (
-              <div
-                key={proposal.title}
-                className="rounded-xl border border-border px-3 py-3"
-              >
-                <p className="text-base font-semibold text-text">
-                  {proposal.title}
-                </p>
-                <Kicker className="text-primary">{proposal.effect}</Kicker>
-                <p className="text-xs text-muted">{proposal.sponsors}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center p-6">
+        <h2 className="text-center text-4xl font-semibold text-text sm:text-5xl lg:text-6xl">
+          coming sooner than you think...
+        </h2>
       </div>
     </div>
   );
