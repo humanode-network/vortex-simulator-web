@@ -208,14 +208,19 @@ const Chambers: React.FC = () => {
             badge={
               <Badge
                 size="md"
-                className="border-none bg-(--primary-dim) px-4 py-1 text-center text-sm font-bold tracking-wide whitespace-nowrap text-primary uppercase"
+                className="border-none bg-(--primary-dim) px-4 py-1 text-center text-sm font-bold tracking-wide text-primary uppercase"
               >
                 M × {chamber.multiplier}
               </Badge>
             }
             footer={
               <div className="flex w-full justify-center">
-                <Button asChild size="md" variant="primary" className="w-56">
+                <Button
+                  asChild
+                  size="md"
+                  variant="primary"
+                  className="w-full sm:w-56"
+                >
                   <Link to={`/app/chambers/${chamber.id}`}>Enter</Link>
                 </Button>
               </div>

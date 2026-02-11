@@ -552,7 +552,7 @@ const Feed: React.FC = () => {
                       </span>
                     </Surface>
 
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <StageDataTile
                         title="Attention quorum"
                         description={`Engaged ${poolStats.engaged} / ${poolStats.engagedNeeded} governors`}
@@ -618,7 +618,7 @@ const Feed: React.FC = () => {
                       </div>
                     </Surface>
 
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <StageDataTile
                         title="Voting quorum"
                         description={`Governors ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
@@ -683,7 +683,7 @@ const Feed: React.FC = () => {
                       </div>
                     </Surface>
 
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       {formationPage.stageData.slice(0, 3).map((entry, idx) => (
                         <StageDataTile
                           key={`${item.id}-formation-${idx}`}
@@ -716,7 +716,7 @@ const Feed: React.FC = () => {
                       </div>
                     </Surface>
 
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <StageDataTile
                         title="Evidence"
                         description="Items submitted"
@@ -778,7 +778,7 @@ const Feed: React.FC = () => {
                       <p className="mt-1 text-sm text-muted">{item.summary}</p>
                     </Surface>
 
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <StageDataTile
                         title="Type"
                         description="Where it lives"
@@ -812,7 +812,7 @@ const Feed: React.FC = () => {
                     <p className="text-sm font-semibold text-text">
                       Stage data
                     </p>
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       {item.stageData.map((entry) => (
                         <StageDataTile
                           key={entry.title}
@@ -831,7 +831,7 @@ const Feed: React.FC = () => {
                 item.stage !== "thread" ? (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Key stats</p>
-                    <ul className="grid gap-2 text-sm text-text md:grid-cols-2">
+                    <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
                       {item.stats.map((stat) => (
                         <DashedStatItem
                           key={stat.label}

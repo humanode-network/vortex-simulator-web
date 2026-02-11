@@ -185,7 +185,7 @@ const ProposalPP: React.FC = () => {
               }
               variant="panel"
               className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-              valueClassName="text-2xl font-semibold whitespace-nowrap"
+              valueClassName="text-2xl font-semibold"
             />
             <StatTile
               label="Upvote floor (%)"
@@ -196,7 +196,7 @@ const ProposalPP: React.FC = () => {
               }
               variant="panel"
               className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-              valueClassName="text-2xl font-semibold whitespace-nowrap"
+              valueClassName="text-2xl font-semibold"
             />
           </div>
         </section>

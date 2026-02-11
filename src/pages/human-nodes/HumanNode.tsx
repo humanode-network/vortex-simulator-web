@@ -170,7 +170,9 @@ const HumanNode: React.FC = () => {
             />
           </div>
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-3xl font-semibold text-text">{headerTitle}</h1>
+            <h1 className="text-2xl font-semibold text-text sm:text-3xl">
+              {headerTitle}
+            </h1>
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
               {showShortBadge ? (
                 <Badge variant="muted">{shortAddress(profile.id)}</Badge>

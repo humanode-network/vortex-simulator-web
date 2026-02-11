@@ -1,5 +1,5 @@
-import { NavLink } from "react-router";
-import { useState } from "react";
+import { NavLink, useLocation } from "react-router";
+import { useEffect, useState } from "react";
 import "./AppSidebar.css";
 import clsx from "clsx";
 import {
@@ -17,6 +17,8 @@ import {
   User,
   Users,
   FileText,
+  Menu,
+  X,
 } from "lucide-react";
 import { AuthSidebarPanel } from "@/app/auth/AuthContext";
 
@@ -36,6 +38,12 @@ type NavItem = {
 
 const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   const navItems: NavItem[] = [
     { to: "/app/feed", label: "Feed", Icon: Activity },
@@ -52,15 +60,38 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={clsx("sidebar", mobileNavOpen && "sidebar--mobileOpen")}>
       <div className="sidebar__brand">
         <span>Vortex</span>
         <span className="sidebar__logo" aria-hidden="true"></span>
+        <button
+          type="button"
+          className="sidebar__mobileToggle"
+          onClick={() => setMobileNavOpen((open) => !open)}
+          aria-expanded={mobileNavOpen}
+          aria-controls="sidebar-nav"
+          aria-label={
+            mobileNavOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+        >
+          {mobileNavOpen ? (
+            <X className="sidebar__mobileToggleIcon" aria-hidden="true" />
+          ) : (
+            <Menu className="sidebar__mobileToggleIcon" aria-hidden="true" />
+          )}
+        </button>
       </div>
-      <AuthSidebarPanel />
-      <nav className="sidebar__nav" aria-label="Primary">
+      <div className="sidebar__mobilePanel">
+        <AuthSidebarPanel />
+      </div>
+      <nav id="sidebar-nav" className="sidebar__nav" aria-label="Primary">
         {navItems.map(({ to, label, Icon }) => (
-          <NavLink key={to} className={navClass} to={to}>
+          <NavLink
+            key={to}
+            className={navClass}
+            to={to}
+            onClick={() => setMobileNavOpen(false)}
+          >
             <Icon className="sidebar__icon" aria-hidden="true" />
             <span>{label}</span>
           </NavLink>
@@ -78,11 +109,19 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
         </button>
         {settingsOpen && (
           <div className="pt-1 pl-4">
-            <NavLink className={nestedNavClass} to="/app/settings">
+            <NavLink
+              className={nestedNavClass}
+              to="/app/settings"
+              onClick={() => setMobileNavOpen(false)}
+            >
               <SlidersHorizontal className="sidebar__icon" aria-hidden="true" />
               <span>General</span>
             </NavLink>
-            <NavLink className={nestedNavClass} to="/app/profile">
+            <NavLink
+              className={nestedNavClass}
+              to="/app/profile"
+              onClick={() => setMobileNavOpen(false)}
+            >
               <User className="sidebar__icon" aria-hidden="true" />
               <span>My profile</span>
             </NavLink>
