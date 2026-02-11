@@ -221,7 +221,7 @@ const Factions: React.FC = () => {
                   </p>
                   <p className="text-xs text-muted">{faction.description}</p>
                 </div>
-                <div className="grid min-w-[180px] grid-rows-1 justify-items-start gap-2 text-xs text-muted">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
                   <Badge variant="outline">Members: {faction.members}</Badge>
                 </div>
                 <Button asChild size="sm">

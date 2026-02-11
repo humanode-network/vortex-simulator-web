@@ -206,10 +206,10 @@ const ProposalChamber: React.FC = () => {
             label="Voting quorum (%)"
             value={
               <>
-                <span className="whitespace-nowrap">
+                <span>
                   {quorumPercent}% / {quorumNeededPercent}%
                 </span>
-                <span className="text-xs font-semibold whitespace-nowrap text-muted">
+                <span className="text-xs font-semibold text-muted">
                   {engaged} / {quorumNeeded}
                 </span>
               </>
@@ -222,19 +222,18 @@ const ProposalChamber: React.FC = () => {
             label="Vote split (%)"
             value={
               <>
-                <span className="whitespace-nowrap">
+                <span>
                   <span className="text-accent">{yesPercentOfTotal}%</span> /{" "}
                   <span className="text-destructive">{noPercentOfTotal}%</span>{" "}
                   / <span className="text-muted">{abstainPercentOfTotal}%</span>
                 </span>
-                <span className="text-xs font-semibold whitespace-nowrap text-muted">
+                <span className="text-xs font-semibold text-muted">
                   {yesTotal} / {noTotal} / {abstainTotal}
                 </span>
               </>
             }
             variant="panel"
             className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            labelClassName="whitespace-nowrap"
             valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
           />
           <StatTile
@@ -242,17 +241,16 @@ const ProposalChamber: React.FC = () => {
             value={proposal.timeLeft}
             variant="panel"
             className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            labelClassName="whitespace-nowrap"
-            valueClassName="whitespace-nowrap text-2xl font-semibold"
+            valueClassName="text-2xl font-semibold"
           />
           <StatTile
             label="Passing (%)"
             value={
               <>
-                <span className="whitespace-nowrap">
+                <span>
                   {yesPercentOfQuorum}% / {passingNeededPercent}%
                 </span>
-                <span className="text-xs font-semibold whitespace-nowrap text-muted">
+                <span className="text-xs font-semibold text-muted">
                   Yes within quorum
                 </span>
               </>

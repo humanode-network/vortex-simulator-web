@@ -403,18 +403,10 @@ const Proposals: React.FC = () => {
                           : undefined
                       }
                     />
-                    <Badge
-                      variant="muted"
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
+                    <Badge variant="muted" size="sm">
                       {proposal.chamber.replace(/\s*chamber\s*$/i, "")}
                     </Badge>
-                    <Badge
-                      variant="muted"
-                      size="sm"
-                      className="whitespace-nowrap"
-                    >
+                    <Badge variant="muted" size="sm">
                       {proposal.tier}
                     </Badge>
                   </>
@@ -525,7 +517,7 @@ const Proposals: React.FC = () => {
                         </div>
                       </Surface>
 
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         <StageDataTile
                           title="Voting quorum"
                           description={`Governors ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
@@ -595,7 +587,7 @@ const Proposals: React.FC = () => {
                         </div>
                       </Surface>
 
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {formationPage.stageData
                           .slice(0, 3)
                           .map((item, index) => (
@@ -613,7 +605,7 @@ const Proposals: React.FC = () => {
                       <p className="text-sm font-semibold text-text">
                         Stage data
                       </p>
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {proposal.stageData.map((item, index) => (
                           <StageDataTile
                             key={`${proposal.id}-stage-${index}`}
@@ -629,7 +621,7 @@ const Proposals: React.FC = () => {
 
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Key stats</p>
-                    <ul className="grid gap-2 text-sm text-text md:grid-cols-2">
+                    <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
                       {proposal.stage === "pool" && poolPage && poolStats ? (
                         <>
                           <DashedStatItem

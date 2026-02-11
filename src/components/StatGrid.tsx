@@ -37,7 +37,7 @@ export const StatGrid: React.FC<StatGridProps> = ({ items }) => {
           <Kicker
             as="dt"
             align="center"
-            className="text-[0.65rem] leading-tight whitespace-nowrap"
+            className="text-[0.65rem] leading-tight sm:whitespace-nowrap"
           >
             {item.label}
           </Kicker>

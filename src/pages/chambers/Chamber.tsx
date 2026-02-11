@@ -663,7 +663,7 @@ const Chamber: React.FC = () => {
           <CardContent className="space-y-4">
             {cmData ? (
               <>
-                <div className="grid gap-3 sm:grid-cols-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     { label: "LCM", value: cmData.totals.lcm },
                     { label: "MCM", value: cmData.totals.mcm },
@@ -710,7 +710,7 @@ const Chamber: React.FC = () => {
                         {cmData.topContributors.slice(0, 5).map((entry) => (
                           <li
                             key={entry.address}
-                            className="flex items-center justify-between"
+                            className="flex flex-wrap items-center justify-between gap-2"
                           >
                             <span className="truncate">{entry.address}</span>
                             <span className="text-xs text-muted">
@@ -919,7 +919,7 @@ const Chamber: React.FC = () => {
               onChange={(event) => setGovernorSearch(event.target.value)}
               placeholder="Search governors"
             />
-            <ul className="max-h-[360px] space-y-2 overflow-auto pr-1 text-sm text-text">
+            <ul className="max-h-none space-y-2 overflow-visible pr-0 text-sm text-text lg:max-h-[360px] lg:overflow-auto lg:pr-1">
               {filteredGovernors.map((gov) => (
                 <Surface
                   as="li"
@@ -927,7 +927,7 @@ const Chamber: React.FC = () => {
                   variant="panelAlt"
                   radius="xl"
                   shadow="control"
-                  className="flex items-center justify-between px-3 py-2"
+                  className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-semibold">{gov.name}</p>
@@ -1137,7 +1137,10 @@ const Chamber: React.FC = () => {
                 ))
               )}
             </div>
-            <form onSubmit={handleChatSend} className="flex gap-2">
+            <form
+              onSubmit={handleChatSend}
+              className="flex flex-col gap-2 sm:flex-row"
+            >
               <Input
                 value={chatMessage}
                 onChange={(event) => setChatMessage(event.target.value)}
