@@ -479,6 +479,14 @@ export type FormationProposalPageDto = {
   chamber: string;
   proposer: string;
   proposerId: string;
+  projectState:
+    | "active"
+    | "awaiting_milestone_vote"
+    | "suspended"
+    | "ready_to_finish"
+    | "completed";
+  pendingMilestoneIndex: number | null;
+  nextMilestoneIndex: number | null;
   budget: string;
   timeLeft: string;
   teamSlots: string;
