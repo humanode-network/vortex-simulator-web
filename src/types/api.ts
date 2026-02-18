@@ -3,7 +3,7 @@
 
 import type { FeedStage } from "./stages";
 
-export type ProposalStageDto = "pool" | "vote" | "build";
+export type ProposalStageDto = "pool" | "vote" | "build" | "failed";
 export type FeedStageDto = FeedStage;
 
 export type ToneDto = "ok" | "warn";
@@ -115,6 +115,13 @@ export type FactionDto = {
     isActive: boolean;
     joinedAt: string;
   }>;
+  cofounderInvitations?: Array<{
+    address: string;
+    invitedBy: string;
+    status: "pending" | "accepted" | "declined" | "canceled";
+    invitedAt: string;
+    respondedAt: string | null;
+  }>;
 };
 export type GetFactionsResponse = { items: FactionDto[] };
 
@@ -128,6 +135,7 @@ export type ChamberProposalDto = {
   nextStep: string;
   timing: string;
   stage: ChamberProposalStageDto;
+  href?: string;
   activeGovernors?: number;
 };
 export type ChamberGovernorDto = {
@@ -397,7 +405,53 @@ export type ProposalDraftListItemDto = {
 };
 export type GetProposalDraftsResponse = { items: ProposalDraftListItemDto[] };
 
+export type ProposalDraftEditableFormDto = {
+  templateId?: "project" | "system";
+  presetId?: string;
+  formationEligible?: boolean;
+  title: string;
+  chamberId: string;
+  summary: string;
+  what: string;
+  why: string;
+  how: string;
+  proposalType?:
+    | "basic"
+    | "fee"
+    | "monetary"
+    | "core"
+    | "administrative"
+    | "dao-core";
+  metaGovernance?: {
+    action:
+      | "chamber.create"
+      | "chamber.rename"
+      | "chamber.dissolve"
+      | "chamber.censure"
+      | "governor.censure";
+    chamberId?: string;
+    targetAddress?: string;
+    title?: string;
+    multiplier?: number;
+    genesisMembers?: string[];
+  };
+  timeline: {
+    id: string;
+    title: string;
+    timeframe: string;
+    budgetHmnd?: string;
+  }[];
+  outputs: { id: string; label: string; url: string }[];
+  openSlotNeeds: { id: string; title: string; desc: string }[];
+  budgetItems: { id: string; description: string; amount: string }[];
+  aboutMe: string;
+  attachments: { id: string; label: string; url: string }[];
+  agreeRules: boolean;
+  confirmBudget: boolean;
+};
+
 export type ProposalDraftDetailDto = {
+  id?: string;
   title: string;
   proposer: string;
   chamber: string;
@@ -417,6 +471,7 @@ export type ProposalDraftDetailDto = {
   openSlotNeeds: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
   attachments: { title: string; href: string }[];
+  editableForm?: ProposalDraftEditableFormDto;
 };
 
 export type PoolProposalPageDto = {
@@ -479,14 +534,14 @@ export type FormationProposalPageDto = {
   chamber: string;
   proposer: string;
   proposerId: string;
-  projectState:
+  projectState?:
     | "active"
     | "awaiting_milestone_vote"
     | "suspended"
     | "ready_to_finish"
     | "completed";
-  pendingMilestoneIndex: number | null;
-  nextMilestoneIndex: number | null;
+  pendingMilestoneIndex?: number | null;
+  nextMilestoneIndex?: number | null;
   budget: string;
   timeLeft: string;
   teamSlots: string;

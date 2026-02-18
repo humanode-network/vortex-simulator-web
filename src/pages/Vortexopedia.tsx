@@ -11,6 +11,7 @@ import { vortexopediaTerms } from "@/data/vortexopedia";
 import { cn } from "@/lib/utils";
 import { Pill } from "@/components/Pill";
 import { Kicker } from "@/components/Kicker";
+import { formatDateTime } from "@/lib/dateTime";
 
 const Vortexopedia: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -144,7 +145,7 @@ const Vortexopedia: React.FC = () => {
                         tone="muted"
                         className="px-2 py-1 text-xs"
                       >
-                        Updated: {item.updated}
+                        Updated: {formatDateTime(item.updated)}
                       </Pill>
                     </div>
                   </div>

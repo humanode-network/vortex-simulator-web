@@ -24,6 +24,7 @@ const CMPanel: React.FC = () => {
     Pick<ChamberDto, "id" | "name" | "multiplier"> & {
       current: number;
       suggested: number;
+      suggestedInput: string;
       member: boolean;
       submissions: number;
     }
@@ -61,6 +62,7 @@ const CMPanel: React.FC = () => {
             multiplier: chamber.multiplier,
             current: chamber.multiplier,
             suggested: chamber.multiplier,
+            suggestedInput: String(chamber.multiplier),
             member: myChamberIds.includes(chamber.id),
             submissions: 0,
           })),
@@ -77,10 +79,19 @@ const CMPanel: React.FC = () => {
     };
   }, []);
 
-  const updateSuggestion = (id: string, value: number) => {
+  const updateSuggestionInput = (id: string, value: string) => {
     setChambers((prev) =>
       prev
-        ? prev.map((c) => (c.id === id ? { ...c, suggested: value } : c))
+        ? prev.map((c) => {
+            if (c.id !== id) return c;
+            const trimmed = value.trim();
+            const parsed = Number(trimmed);
+            return {
+              ...c,
+              suggestedInput: value,
+              suggested: Number.isFinite(parsed) ? parsed : c.suggested,
+            };
+          })
         : prev,
     );
   };
@@ -90,12 +101,17 @@ const CMPanel: React.FC = () => {
     const target = chambers.find((chamber) => chamber.id === chamberId);
     if (!target) return;
     if (target.member) return;
+    const parsedSuggested = Number(target.suggestedInput.trim());
+    if (!Number.isFinite(parsedSuggested)) {
+      setSubmitError("Enter a valid numeric multiplier (e.g. 1.0).");
+      return;
+    }
     setSubmittingId(chamberId);
     setSubmitError(null);
     try {
       const result = await apiChamberMultiplierSubmit({
         chamberId,
-        multiplierTimes10: Math.round(target.suggested * 10),
+        multiplierTimes10: Math.round(parsedSuggested * 10),
       });
       setChambers((prev) =>
         prev
@@ -108,6 +124,8 @@ const CMPanel: React.FC = () => {
               return {
                 ...chamber,
                 current: nextTimes10 / 10,
+                suggested: nextTimes10 / 10,
+                suggestedInput: String(nextTimes10 / 10),
                 submissions: result.aggregate.submissions,
               };
             })
@@ -191,10 +209,17 @@ const CMPanel: React.FC = () => {
                     min="0.5"
                     max="3"
                     disabled={chamber.member}
-                    value={chamber.suggested}
+                    value={chamber.suggestedInput}
                     onChange={(e) =>
-                      updateSuggestion(chamber.id, Number(e.target.value))
+                      updateSuggestionInput(chamber.id, e.target.value)
                     }
+                    onBlur={() => {
+                      if (chamber.suggestedInput.trim().length > 0) return;
+                      updateSuggestionInput(
+                        chamber.id,
+                        String(chamber.current),
+                      );
+                    }}
                     className="w-full"
                   />
                 </div>

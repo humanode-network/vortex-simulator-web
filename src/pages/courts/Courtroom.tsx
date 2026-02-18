@@ -19,6 +19,7 @@ import {
   apiCourtVerdict,
   apiHumans,
 } from "@/lib/apiClient";
+import { formatDateTime } from "@/lib/dateTime";
 import type { CourtCaseDetailDto, HumanNodeDto } from "@/types/api";
 
 const Courtroom: React.FC = () => {
@@ -112,7 +113,7 @@ const Courtroom: React.FC = () => {
         return (
           <code
             key={`${idx}-${part}`}
-            className="rounded bg-panel px-1 font-mono text-[0.92em] text-text"
+            className="rounded bg-panel px-1 font-mono text-[0.92em] break-all text-text"
           >
             {part}
           </code>
@@ -147,7 +148,10 @@ const Courtroom: React.FC = () => {
                 <CourtStatusBadge status={courtCase.status} />
               ) : null}
               <div className="flex flex-wrap justify-end gap-2 text-xs text-muted">
-                <span>Opened {courtCase?.opened ?? "—"}</span>
+                <span>
+                  Opened{" "}
+                  {courtCase?.opened ? formatDateTime(courtCase.opened) : "—"}
+                </span>
                 <span className="text-muted">·</span>
                 <span>{courtCase?.reports ?? "—"} reports</span>
               </div>

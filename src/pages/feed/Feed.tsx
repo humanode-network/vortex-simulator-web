@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/app/auth/AuthContext";
+import { Button } from "@/components/primitives/button";
 import { PageHint } from "@/components/PageHint";
 import { CardActionsRow } from "@/components/CardActionsRow";
 import { DashedStatItem } from "@/components/DashedStatItem";
@@ -12,24 +13,18 @@ import { Surface } from "@/components/Surface";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { ToggleGroup } from "@/components/ToggleGroup";
+import { formatDateTime } from "@/lib/dateTime";
 import {
   apiCourt,
   apiFeed,
+  apiFactionCofounderInviteAccept,
+  apiFactionCofounderInviteDecline,
   apiHuman,
   apiProposalChamberPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
 } from "@/lib/apiClient";
 import type { FeedItemDto } from "@/types/api";
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return `${day}/${month}/${year} · ${time}`;
-};
 
 type FeedScope = "urgent" | "my" | "chambers" | "all";
 
@@ -44,6 +39,96 @@ const FEED_CARD_ESTIMATE = 240;
 const FEED_MIN_PAGE_SIZE = 6;
 const FEED_MAX_PAGE_SIZE = 30;
 
+const normalizeAppHref = (href?: string) => {
+  if (!href) return undefined;
+  const appHref = href.startsWith("/app/") ? href : `/app${href}`;
+
+  // Thread deep-links are currently emitted as nested paths, but the app routes
+  // open thread context on parent pages.
+  const factionThreadMatch = appHref.match(
+    /^\/app\/factions\/([^/]+)\/threads\/([^/]+)$/,
+  );
+  if (factionThreadMatch) {
+    return `/app/factions/${factionThreadMatch[1]}?thread=${encodeURIComponent(factionThreadMatch[2])}`;
+  }
+
+  const chamberThreadMatch = appHref.match(
+    /^\/app\/chambers\/([^/]+)\/threads\/[^/]+$/,
+  );
+  if (chamberThreadMatch) return `/app/chambers/${chamberThreadMatch[1]}`;
+
+  return appHref;
+};
+
+const courtCaseIdFromHref = (href?: string) => {
+  if (!href) return null;
+  const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
+  const match = clean.match(/^\/courts\/(.+)$/);
+  return match?.[1] ?? null;
+};
+
+const proposalIdFromHref = (href?: string) => {
+  if (!href) return null;
+  const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
+  const match = clean.match(/^\/proposals\/([^/]+)\/(pp|chamber|formation)$/);
+  return match?.[1] ?? null;
+};
+
+const factionIdFromHref = (href?: string) => {
+  if (!href) return null;
+  const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
+  const match = clean.match(/^\/factions\/([^/]+)$/);
+  return match?.[1] ?? null;
+};
+
+const urgentEntityKey = (item: FeedItemDto) => {
+  const proposalId = proposalIdFromHref(item.href);
+  if (proposalId) return `proposal:${proposalId}`;
+  const caseId = courtCaseIdFromHref(item.href);
+  if (caseId) return `court:${caseId}`;
+  if (item.href) return `href:${item.href}`;
+  return `id:${item.id}`;
+};
+
+const isUrgentItemInteractable = (
+  item: FeedItemDto,
+  isGovernorActive: boolean,
+) => {
+  if (item.actionable !== true) return false;
+  if ((item.stage === "pool" || item.stage === "vote") && !isGovernorActive) {
+    return false;
+  }
+  return true;
+};
+
+const toUrgentItems = (
+  items: FeedItemDto[],
+  isGovernorActive: boolean,
+): FeedItemDto[] => {
+  const filtered = items.filter((item) =>
+    isUrgentItemInteractable(item, isGovernorActive),
+  );
+  const deduped = new Map<string, FeedItemDto>();
+  for (const item of filtered) {
+    const key = urgentEntityKey(item);
+    const existing = deduped.get(key);
+    if (!existing) {
+      deduped.set(key, item);
+      continue;
+    }
+    if (
+      new Date(item.timestamp).getTime() >
+      new Date(existing.timestamp).getTime()
+    ) {
+      deduped.set(key, item);
+    }
+  }
+  return Array.from(deduped.values());
+};
+
+const feedItemKey = (item: FeedItemDto) =>
+  `${item.id}|${item.stage}|${item.timestamp}|${item.href ?? ""}`;
+
 const Feed: React.FC = () => {
   const auth = useAuth();
   const [feedItems, setFeedItems] = useState<FeedItemDto[] | null>(null);
@@ -53,6 +138,7 @@ const Feed: React.FC = () => {
   const [feedScope, setFeedScope] = useState<FeedScope>("urgent");
   const [chamberFilters, setChamberFilters] = useState<string[] | null>(null);
   const [chambersLoading, setChambersLoading] = useState(false);
+  const [viewerGovernorActive, setViewerGovernorActive] = useState(false);
   const [pageSize, setPageSize] = useState(FEED_MIN_PAGE_SIZE);
   const feedListRef = useRef<HTMLDivElement | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -97,9 +183,11 @@ const Feed: React.FC = () => {
           new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
         );
         setChamberFilters(unique);
+        setViewerGovernorActive(Boolean(profile.governorActive));
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);
+        setViewerGovernorActive(false);
         setLoadError((error as Error).message);
       } finally {
         if (active) setChambersLoading(false);
@@ -162,10 +250,19 @@ const Feed: React.FC = () => {
           limit: pageSize,
         });
         if (!active) return;
-        const items = res.items;
+        let items = res.items;
+        if (feedScope === "urgent" && auth.address) {
+          const inviteRes = await apiFeed({
+            actor: auth.address,
+            stage: "faction",
+            limit: FEED_MIN_PAGE_SIZE,
+          });
+          if (!active) return;
+          items = [...items, ...inviteRes.items];
+        }
         const filteredItems =
           feedScope === "urgent"
-            ? items.filter((entry) => entry.actionable === true)
+            ? toUrgentItems(items, viewerGovernorActive)
             : items;
         setFeedItems(filteredItems);
         setNextCursor(res.nextCursor ?? null);
@@ -181,7 +278,14 @@ const Feed: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [auth.address, chambersLoading, chamberFilters, feedScope, pageSize]);
+  }, [
+    auth.address,
+    chambersLoading,
+    chamberFilters,
+    feedScope,
+    pageSize,
+    viewerGovernorActive,
+  ]);
 
   const sortedFeed = useMemo(() => {
     return [...(feedItems ?? [])].sort(
@@ -189,11 +293,36 @@ const Feed: React.FC = () => {
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
   }, [feedItems]);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [inviteActionKey, setInviteActionKey] = useState<string | null>(null);
 
-  const toggle = (id: string) => {
-    setExpanded((curr) => (curr === id ? null : id));
+  const toggle = (key: string) => {
+    setExpandedKey((curr) => (curr === key ? null : key));
   };
+
+  const handleInviteAction = useCallback(
+    async (item: FeedItemDto, action: "accept" | "decline") => {
+      const factionId = factionIdFromHref(item.href);
+      if (!factionId) return;
+      const key = feedItemKey(item);
+      setInviteActionKey(key);
+      try {
+        if (action === "accept") {
+          await apiFactionCofounderInviteAccept({ factionId });
+        } else {
+          await apiFactionCofounderInviteDecline({ factionId });
+        }
+        setFeedItems((curr) =>
+          (curr ?? []).filter((entry) => feedItemKey(entry) !== key),
+        );
+      } catch (error) {
+        setLoadError((error as Error).message);
+      } finally {
+        setInviteActionKey(null);
+      }
+    },
+    [],
+  );
 
   const handleLoadMore = useCallback(async () => {
     if (!nextCursor || loadingMore) return;
@@ -210,11 +339,19 @@ const Feed: React.FC = () => {
       });
       const items =
         feedScope === "urgent"
-          ? res.items.filter((entry) => entry.actionable === true)
+          ? toUrgentItems(res.items, viewerGovernorActive)
           : res.items;
       setFeedItems((curr) => {
-        const existing = new Set((curr ?? []).map((item) => item.id));
-        const nextItems = items.filter((item) => !existing.has(item.id));
+        if (feedScope === "urgent") {
+          return toUrgentItems(
+            [...(curr ?? []), ...items],
+            viewerGovernorActive,
+          );
+        }
+        const existing = new Set((curr ?? []).map(feedItemKey));
+        const nextItems = items.filter(
+          (item) => !existing.has(feedItemKey(item)),
+        );
         return [...(curr ?? []), ...nextItems];
       });
       setNextCursor(res.nextCursor ?? null);
@@ -231,6 +368,7 @@ const Feed: React.FC = () => {
     loadingMore,
     nextCursor,
     pageSize,
+    viewerGovernorActive,
   ]);
 
   useEffect(() => {
@@ -248,28 +386,9 @@ const Feed: React.FC = () => {
     return () => observer.disconnect();
   }, [handleLoadMore, nextCursor]);
 
-  const hrefFor = (href?: string) => {
-    if (!href) return undefined;
-    return href.startsWith("/app/") ? href : `/app${href}`;
-  };
-
-  const courtCaseIdFromHref = (href?: string) => {
-    if (!href) return null;
-    const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
-    const match = clean.match(/^\/courts\/(.+)$/);
-    return match?.[1] ?? null;
-  };
-
-  const proposalIdFromHref = (href?: string) => {
-    if (!href) return null;
-    const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
-    const match = clean.match(/^\/proposals\/([^/]+)\/(pp|chamber|formation)$/);
-    return match?.[1] ?? null;
-  };
-
   useEffect(() => {
-    if (!expanded || !feedItems) return;
-    const item = feedItems.find((p) => p.id === expanded);
+    if (!expandedKey || !feedItems) return;
+    const item = feedItems.find((p) => feedItemKey(p) === expandedKey);
     if (!item) return;
 
     const proposalId = proposalIdFromHref(item.href) ?? item.id;
@@ -301,7 +420,7 @@ const Feed: React.FC = () => {
       }
     }
   }, [
-    expanded,
+    expandedKey,
     feedItems,
     poolPagesById,
     chamberPagesById,
@@ -365,6 +484,7 @@ const Feed: React.FC = () => {
         className="flex flex-col gap-4"
       >
         {sortedFeed.map((item, index) => {
+          const itemKey = feedItemKey(item);
           const proposalId = proposalIdFromHref(item.href) ?? item.id;
           const poolPage =
             item.stage === "pool" ? poolPagesById[proposalId] : null;
@@ -508,14 +628,17 @@ const Feed: React.FC = () => {
 
           return (
             <ExpandableCard
-              key={item.id}
-              expanded={expanded === item.id}
-              onToggle={() => toggle(item.id)}
+              key={itemKey}
+              expanded={expandedKey === itemKey}
+              onToggle={() => toggle(itemKey)}
               className={cn(index < 3 ? "border-primary" : "border-border")}
-              meta={formatDate(item.timestamp)}
+              meta={item.meta}
               title={item.title}
               right={
                 <>
+                  <span className="text-xs text-muted">
+                    {formatDateTime(item.timestamp)}
+                  </span>
                   <StageChip stage={item.stage} />
                 </>
               }
@@ -711,7 +834,10 @@ const Feed: React.FC = () => {
                           <CourtStatusBadge status={courtCase.status} />
                         ) : null}
                         <span className="text-xs text-muted">
-                          Opened {courtCase?.opened ?? "—"}
+                          Opened{" "}
+                          {courtCase?.opened
+                            ? formatDateTime(courtCase.opened)
+                            : "—"}
                         </span>
                       </div>
                     </Surface>
@@ -803,7 +929,7 @@ const Feed: React.FC = () => {
                       <StageDataTile
                         title="Updated"
                         description="Feed timestamp"
-                        value={formatDate(item.timestamp)}
+                        value={formatDateTime(item.timestamp)}
                       />
                     </div>
                   </div>
@@ -843,10 +969,32 @@ const Feed: React.FC = () => {
                   </div>
                 ) : null}
 
+                {item.stage === "faction" &&
+                item.summaryPill === "Cofounder invitation" &&
+                item.actionable ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      disabled={inviteActionKey === itemKey}
+                      onClick={() => void handleInviteAction(item, "accept")}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={inviteActionKey === itemKey}
+                      onClick={() => void handleInviteAction(item, "decline")}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                ) : null}
+
                 <CardActionsRow
                   proposer={item.proposer}
                   proposerId={item.proposerId}
-                  primaryHref={hrefFor(item.href)}
+                  primaryHref={normalizeAppHref(item.href)}
                   primaryLabel={item.ctaPrimary}
                 />
               </section>

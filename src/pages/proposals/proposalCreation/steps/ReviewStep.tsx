@@ -50,7 +50,7 @@ export function ReviewStep(props: {
         <p className="text-sm font-semibold text-text">Who (auto-filled)</p>
         <div className="mt-2 grid gap-2 text-sm text-muted sm:grid-cols-2">
           <div>
-            <span className="text-text">Name</span>: Humanode Governor (mock)
+            <span className="text-text">Name</span>: Humanode Governor
           </div>
           <div>
             <span className="text-text">Handle</span>: @governor_42
@@ -190,7 +190,11 @@ export function ReviewStep(props: {
                             {ms.timeframe.trim().length > 0
                               ? ms.timeframe
                               : "—"}
-                            )
+                            ) — Budget:{" "}
+                            {Number.isFinite(Number(ms.budgetHmnd)) &&
+                            Number(ms.budgetHmnd) > 0
+                              ? `${Number(ms.budgetHmnd).toLocaleString()} HMND`
+                              : "—"}
                           </li>
                         ))
                       )}
@@ -201,6 +205,28 @@ export function ReviewStep(props: {
                     <p className="text-muted">
                       Total: {budgetTotal.toLocaleString()} HMND
                     </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Team slots: 1 / {1 + draft.openSlotNeeds.length}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-text">
+                      Open positions
+                    </p>
+                    {draft.openSlotNeeds.length === 0 ? (
+                      <p className="text-xs text-muted">
+                        No open positions defined.
+                      </p>
+                    ) : (
+                      <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+                        {draft.openSlotNeeds.map((slot) => (
+                          <li key={slot.id}>
+                            {slot.title.trim() || "—"}
+                            {slot.desc.trim().length > 0
+                              ? ` — ${slot.desc.trim()}`
+                              : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
               ) : (

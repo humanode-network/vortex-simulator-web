@@ -101,12 +101,18 @@ const ProposalFormation: React.FC = () => {
   };
 
   const milestones = parseRatio(project.milestones);
-  const nextMilestone = project.nextMilestoneIndex ?? undefined;
+  const nextMilestone =
+    project.nextMilestoneIndex ??
+    (milestones.total > 0 ? milestones.filled + 1 : undefined);
   const pendingMilestone = project.pendingMilestoneIndex ?? undefined;
-  const isProposer =
-    Boolean(auth.address) &&
-    auth.address?.trim().toLowerCase() ===
-      project.proposer.trim().toLowerCase();
+  const viewerAddress = auth.address?.trim().toLowerCase();
+  const proposerAddress = project.proposer.trim().toLowerCase();
+  const isProposerViewer =
+    Boolean(viewerAddress) && viewerAddress === proposerAddress;
+  const canJoinProject =
+    project.projectState !== "ready_to_finish" &&
+    project.projectState !== "completed" &&
+    project.projectState !== "suspended";
   const canSubmitMilestone =
     auth.authenticated &&
     auth.eligible &&
@@ -124,7 +130,7 @@ const ProposalFormation: React.FC = () => {
     pendingMilestone > 0;
   const canFinishProject =
     auth.authenticated &&
-    isProposer &&
+    isProposerViewer &&
     !actionBusy &&
     project.projectState === "ready_to_finish";
 
@@ -166,7 +172,13 @@ const ProposalFormation: React.FC = () => {
             <Button
               type="button"
               size="lg"
-              disabled={!auth.authenticated || !auth.eligible || actionBusy}
+              disabled={
+                !auth.authenticated ||
+                !auth.eligible ||
+                actionBusy ||
+                isProposerViewer ||
+                !canJoinProject
+              }
               onClick={() =>
                 void runAction(async () => {
                   if (!id) return;
@@ -251,6 +263,10 @@ const ProposalFormation: React.FC = () => {
 
           {!auth.authenticated ? (
             <p className="text-xs text-muted">Connect a wallet to act.</p>
+          ) : isProposerViewer ? (
+            <p className="text-xs text-muted">
+              Proposer is counted in team slots by default.
+            </p>
           ) : auth.authenticated && !auth.eligible ? (
             <p className="text-xs text-muted">
               Wallet is connected, but not active (gated).

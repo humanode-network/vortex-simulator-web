@@ -18,7 +18,11 @@ import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { DETAIL_TILE_CLASS, shortAddress } from "@/lib/profileUi";
+import {
+  DETAIL_TILE_CLASS,
+  normalizeDetailValue,
+  shortAddress,
+} from "@/lib/profileUi";
 import {
   apiChambers,
   apiFactions,
@@ -341,8 +345,11 @@ const HumanNodes: React.FC = () => {
                     value: formationProjectLabel,
                   },
                   {
-                    label: "Human node since",
-                    value: node.memberSince,
+                    label: "Human node for",
+                    value: normalizeDetailValue(
+                      "Human node for",
+                      node.memberSince,
+                    ),
                   },
                 ];
                 return (

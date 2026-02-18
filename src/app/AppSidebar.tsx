@@ -40,13 +40,19 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
+  const settingsRouteActive = location.pathname.startsWith("/app/settings");
 
   useEffect(() => {
     setMobileNavOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    setSettingsOpen(settingsRouteActive);
+  }, [settingsRouteActive]);
+
   const navItems: NavItem[] = [
     { to: "/app/feed", label: "Feed", Icon: Activity },
+    { to: "/app/profile", label: "My profile", Icon: User },
     { to: "/app/my-governance", label: "My governance", Icon: Gavel },
     { to: "/app/proposals", label: "Proposals", Icon: FileText },
     { to: "/app/chambers", label: "Chambers", Icon: Lightbulb },
@@ -100,7 +106,7 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
           type="button"
           className={clsx(
             "sidebar__link",
-            settingsOpen && "sidebar__link--active",
+            settingsRouteActive && "sidebar__link--active",
           )}
           onClick={() => setSettingsOpen((open) => !open)}
         >
@@ -116,14 +122,6 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
             >
               <SlidersHorizontal className="sidebar__icon" aria-hidden="true" />
               <span>General</span>
-            </NavLink>
-            <NavLink
-              className={nestedNavClass}
-              to="/app/profile"
-              onClick={() => setMobileNavOpen(false)}
-            >
-              <User className="sidebar__icon" aria-hidden="true" />
-              <span>My profile</span>
             </NavLink>
           </div>
         )}

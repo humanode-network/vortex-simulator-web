@@ -66,6 +66,13 @@ const ProposalDraft: React.FC = () => {
             </Button>
           </div>
           <div className="flex items-center gap-2">
+            {id ? (
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/app/proposals/new?draftId=${id}&step=essentials`}>
+                  Edit draft
+                </Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm" variant="ghost">
               <Link to="/app/proposals/new">New proposal</Link>
             </Button>
@@ -89,6 +96,13 @@ const ProposalDraft: React.FC = () => {
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          {id ? (
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/proposals/new?draftId=${id}&step=essentials`}>
+                Edit draft
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild size="sm" variant="ghost">
             <Link to="/app/proposals/new">New proposal</Link>
           </Button>

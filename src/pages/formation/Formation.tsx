@@ -186,8 +186,8 @@ const Formation: React.FC = () => {
                   <p className="font-semibold">{project.teamSlots}</p>
                 </Surface>
               </div>
-              <div className="flex items-center justify-between text-sm text-muted">
-                <span>
+              <div className="flex items-center justify-between gap-3 text-sm text-muted">
+                <span className="min-w-0 [overflow-wrap:anywhere] break-words">
                   Proposer:{" "}
                   <span className="font-semibold text-text hover:text-primary">
                     {project.proposer}

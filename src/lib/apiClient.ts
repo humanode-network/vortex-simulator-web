@@ -600,7 +600,6 @@ export async function apiFormationProjectFinish(input: {
       : undefined,
   );
 }
-
 export async function apiProposalChamberPage(
   id: string,
 ): Promise<ChamberProposalPageDto> {
@@ -849,6 +848,74 @@ export async function apiFactionLeave(input: {
       payload: {
         factionId: input.factionId,
       },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionCofounderInviteAccept(input: {
+  factionId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.cofounder.invite.accept";
+  factionId: string;
+  accepted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.cofounder.invite.accept",
+      payload: { factionId: input.factionId },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionCofounderInviteDecline(input: {
+  factionId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.cofounder.invite.decline";
+  factionId: string;
+  declined: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.cofounder.invite.decline",
+      payload: { factionId: input.factionId },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionCofounderInviteCancel(input: {
+  factionId: string;
+  address: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.cofounder.invite.cancel";
+  factionId: string;
+  address: string;
+  canceled: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.cofounder.invite.cancel",
+      payload: { factionId: input.factionId, address: input.address },
       idempotencyKey: input.idempotencyKey,
     },
     input.idempotencyKey
@@ -1127,8 +1194,14 @@ export type ProposalDraftFormPayload = {
     multiplier?: number;
     genesisMembers?: string[];
   };
-  timeline: { id: string; title: string; timeframe: string }[];
+  timeline: {
+    id: string;
+    title: string;
+    timeframe: string;
+    budgetHmnd?: string;
+  }[];
   outputs: { id: string; label: string; url: string }[];
+  openSlotNeeds: { id: string; title: string; desc: string }[];
   budgetItems: { id: string; description: string; amount: string }[];
   aboutMe: string;
   attachments: { id: string; label: string; url: string }[];

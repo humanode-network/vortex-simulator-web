@@ -37,14 +37,16 @@ const Proposals: React.FC = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filters, setFilters] = useState<{
     stageFilter: ProposalStage | "any";
+    lifecycleFilter: "active" | "all";
     chamberFilter: string;
     sortBy: "Newest" | "Oldest" | "Activity" | "Votes";
   }>({
     stageFilter: "any",
+    lifecycleFilter: "active",
     chamberFilter: "All chambers",
     sortBy: "Newest",
   });
-  const { stageFilter, chamberFilter, sortBy } = filters;
+  const { stageFilter, lifecycleFilter, chamberFilter, sortBy } = filters;
 
   const [poolPagesById, setPoolPagesById] = useState<
     Record<string, PoolProposalPageDto | undefined>
@@ -124,11 +126,16 @@ const Proposals: React.FC = () => {
           : true;
         const matchesStage =
           stageFilter === "any" ? true : proposal.stage === stageFilter;
+        const ended =
+          proposal.stage === "failed" || proposal.summaryPill === "Failed";
+        const matchesLifecycle = lifecycleFilter === "all" ? true : !ended;
         const matchesChamber =
           chamberFilter === "All chambers"
             ? true
             : proposal.chamber === chamberFilter;
-        return matchesTerm && matchesStage && matchesChamber;
+        return (
+          matchesTerm && matchesStage && matchesLifecycle && matchesChamber
+        );
       })
       .sort((a, b) => {
         if (sortBy === "Newest") {
@@ -145,7 +152,14 @@ const Proposals: React.FC = () => {
         }
         return 0;
       });
-  }, [proposalData, search, stageFilter, chamberFilter, sortBy]);
+  }, [
+    proposalData,
+    search,
+    stageFilter,
+    lifecycleFilter,
+    chamberFilter,
+    sortBy,
+  ]);
 
   const chamberOptions = useMemo(() => {
     const unique = Array.from(
@@ -194,6 +208,15 @@ const Proposals: React.FC = () => {
               { value: "pool", label: "Proposal pool" },
               { value: "vote", label: "Chamber vote" },
               { value: "build", label: "Formation" },
+              { value: "failed", label: "Ended (failed)" },
+            ],
+          },
+          {
+            key: "lifecycleFilter",
+            label: "Lifecycle",
+            options: [
+              { value: "active", label: "Active only" },
+              { value: "all", label: "Include ended" },
             ],
           },
           {
@@ -263,6 +286,10 @@ const Proposals: React.FC = () => {
               proposal.stage === "build"
                 ? formationPagesById[proposal.id]
                 : null;
+            const ended =
+              proposal.stage === "failed" || proposal.summaryPill === "Failed";
+            const stageForChip: ProposalStage =
+              proposal.stage === "failed" ? "vote" : proposal.stage;
 
             const poolStats =
               proposal.stage === "pool" && poolPage
@@ -329,7 +356,9 @@ const Proposals: React.FC = () => {
                     const abstainTotal = chamberPage.votes.abstain;
                     const totalVotes = yesTotal + noTotal + abstainTotal;
 
-                    const engaged = chamberPage.engagedGovernors;
+                    // Derive engaged from chamber vote totals to avoid mixing in
+                    // any pre-vote/pool counters.
+                    const engaged = totalVotes;
                     const quorumNeeded = Math.ceil(
                       activeGovernors * chamberPage.attentionQuorum,
                     );
@@ -395,12 +424,14 @@ const Proposals: React.FC = () => {
                 right={
                   <>
                     <StageChip
-                      stage={proposal.stage}
+                      stage={stageForChip}
                       label={
-                        proposal.stage === "build" &&
-                        proposal.summaryPill === "Passed"
-                          ? "Passed"
-                          : undefined
+                        ended
+                          ? "Ended"
+                          : proposal.stage === "build" &&
+                              proposal.summaryPill === "Passed"
+                            ? "Passed"
+                            : undefined
                       }
                     />
                     <Badge variant="muted" size="sm">
@@ -600,6 +631,15 @@ const Proposals: React.FC = () => {
                           ))}
                       </div>
                     </div>
+                  ) : proposal.stage === "vote" ? (
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="px-5 py-4 text-sm text-muted"
+                    >
+                      Loading chamber vote stats…
+                    </Surface>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-text">

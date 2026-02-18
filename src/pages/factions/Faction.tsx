@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
 
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
@@ -18,6 +18,7 @@ import {
   apiFaction,
   apiFactionChannelCreate,
   apiFactionChannelLock,
+  apiFactionCofounderInviteCancel,
   apiFactionDelete,
   apiFactionInitiativeCreate,
   apiFactionInitiativeTransition,
@@ -31,6 +32,7 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
 
 function normalizeAddress(value: string): string {
@@ -39,6 +41,7 @@ function normalizeAddress(value: string): string {
 
 const Faction: React.FC = () => {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [faction, setFaction] = useState<FactionDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -54,13 +57,12 @@ const Faction: React.FC = () => {
   const [threadChannelId, setThreadChannelId] = useState("");
   const [threadTitle, setThreadTitle] = useState("");
   const [threadBody, setThreadBody] = useState("");
-  const [replyByThread, setReplyByThread] = useState<Record<string, string>>(
-    {},
-  );
+  const [threadReplyBody, setThreadReplyBody] = useState("");
 
   const [initiativeTitle, setInitiativeTitle] = useState("");
   const [initiativeIntent, setInitiativeIntent] = useState("");
   const [initiativeChecklist, setInitiativeChecklist] = useState("");
+  const openedThreadRef = useRef<HTMLDivElement | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -96,6 +98,7 @@ const Faction: React.FC = () => {
   const channels = faction?.channels ?? [];
   const threads = faction?.threads ?? [];
   const initiatives = faction?.initiativesDetailed ?? [];
+  const cofounderInvitations = faction?.cofounderInvitations ?? [];
 
   const viewerMembership = useMemo(() => {
     if (!viewerAddress) return null;
@@ -119,6 +122,35 @@ const Faction: React.FC = () => {
       setThreadChannelId(channels[0].id);
     }
   }, [channels, threadChannelId]);
+
+  const activeThreadId = searchParams.get("thread");
+  const activeThread = useMemo(
+    () => threads.find((thread) => thread.id === activeThreadId) ?? null,
+    [threads, activeThreadId],
+  );
+
+  useEffect(() => {
+    if (threads.length === 0) return;
+    if (!activeThreadId) {
+      const next = new URLSearchParams(searchParams);
+      next.set("thread", threads[0].id);
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    if (!threads.some((thread) => thread.id === activeThreadId)) {
+      const next = new URLSearchParams(searchParams);
+      next.set("thread", threads[0].id);
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeThreadId, searchParams, setSearchParams, threads]);
+
+  useEffect(() => {
+    if (!activeThread || !openedThreadRef.current) return;
+    openedThreadRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [activeThread?.id]);
 
   useEffect(() => {
     if (!faction) return;
@@ -356,11 +388,11 @@ const Faction: React.FC = () => {
                     className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-text">
+                      <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
                         {membership.address}
                       </p>
                       <p className="text-xs text-muted">
-                        Joined {new Date(membership.joinedAt).toLocaleString()}
+                        Joined {formatDateTime(membership.joinedAt)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -393,6 +425,54 @@ const Faction: React.FC = () => {
                   </div>
                 );
               })
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Cofounder invitations</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {cofounderInvitations.length === 0 ? (
+            <NoDataYetBar label="cofounder invitations" />
+          ) : (
+            cofounderInvitations.map((invite) => (
+              <div
+                key={`${invite.address}-${invite.invitedAt}`}
+                className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
+                    {invite.address}
+                  </p>
+                  <p className="text-xs text-muted">
+                    Invited by {invite.invitedBy} ·{" "}
+                    {formatDateTime(invite.invitedAt)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{invite.status}</Badge>
+                  {isFounderAdmin && invite.status === "pending" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={mutating}
+                      onClick={() =>
+                        runAction(async () => {
+                          await apiFactionCofounderInviteCancel({
+                            factionId: faction.id,
+                            address: invite.address,
+                          });
+                        })
+                      }
+                    >
+                      Cancel
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))
           )}
         </CardContent>
       </Card>
@@ -608,7 +688,22 @@ const Faction: React.FC = () => {
                       {thread.replies}
                     </p>
                   </div>
-                  <Badge variant="outline">{thread.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{thread.status}</Badge>
+                    <Button
+                      size="sm"
+                      variant={
+                        activeThread?.id === thread.id ? "outline" : "ghost"
+                      }
+                      onClick={() => {
+                        const next = new URLSearchParams(searchParams);
+                        next.set("thread", thread.id);
+                        setSearchParams(next, { replace: false });
+                      }}
+                    >
+                      Open
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm text-muted">{thread.body}</p>
                 {isFounderAdmin ? (
@@ -634,44 +729,50 @@ const Faction: React.FC = () => {
                     </Select>
                   </div>
                 ) : null}
-                {canPost ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={replyByThread[thread.id] ?? ""}
-                      onChange={(event) =>
-                        setReplyByThread((prev) => ({
-                          ...prev,
-                          [thread.id]: event.target.value,
-                        }))
-                      }
-                      placeholder="Reply"
-                    />
-                    <Button
-                      size="sm"
-                      disabled={
-                        mutating || !(replyByThread[thread.id] ?? "").trim()
-                      }
-                      onClick={() =>
-                        runAction(async () => {
-                          await apiFactionThreadReply({
-                            factionId: faction.id,
-                            threadId: thread.id,
-                            body: (replyByThread[thread.id] ?? "").trim(),
-                          });
-                          setReplyByThread((prev) => ({
-                            ...prev,
-                            [thread.id]: "",
-                          }));
-                        })
-                      }
-                    >
-                      Reply
-                    </Button>
-                  </div>
-                ) : null}
               </div>
             ))
           )}
+          {activeThread ? (
+            <div
+              ref={openedThreadRef}
+              className="space-y-3 rounded-md border border-border p-3"
+            >
+              <p className="text-xs font-semibold text-muted">Opened thread</p>
+              <p className="text-sm font-semibold text-text">
+                {activeThread.title}
+              </p>
+              <p className="text-xs text-muted">
+                {activeThread.channelTitle} · {activeThread.status} · replies{" "}
+                {activeThread.replies}
+              </p>
+              <p className="text-sm text-muted">{activeThread.body}</p>
+              {canPost ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={threadReplyBody}
+                    onChange={(event) => setThreadReplyBody(event.target.value)}
+                    placeholder="Write a reply"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={mutating || !threadReplyBody.trim()}
+                    onClick={() =>
+                      runAction(async () => {
+                        await apiFactionThreadReply({
+                          factionId: faction.id,
+                          threadId: activeThread.id,
+                          body: threadReplyBody.trim(),
+                        });
+                        setThreadReplyBody("");
+                      })
+                    }
+                  >
+                    Reply
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {canPost ? (
             <div className="space-y-2 rounded-md border border-border p-3">
               <p className="text-xs font-semibold text-muted">Start thread</p>

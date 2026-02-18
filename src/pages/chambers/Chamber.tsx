@@ -41,6 +41,7 @@ import {
   apiChamberThreadReply,
   apiMyGovernance,
 } from "@/lib/apiClient";
+import { formatDate, formatDateTime } from "@/lib/dateTime";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { useAuth } from "@/app/auth/AuthContext";
 
@@ -202,13 +203,13 @@ const Chamber: React.FC = () => {
     const items = [
       { label: "Status", value: chamber.status },
       { label: "Multiplier", value: chamber.multiplier.toFixed(1) },
-      { label: "Created", value: chamber.createdAt.slice(0, 10) },
+      { label: "Created", value: formatDate(chamber.createdAt) },
       { label: "Origin", value: chamber.createdByProposalId ?? "Genesis" },
     ];
     if (chamber.dissolvedAt) {
       items.push({
         label: "Dissolved",
-        value: chamber.dissolvedAt.slice(0, 10),
+        value: formatDate(chamber.dissolvedAt),
       });
     }
     if (chamber.dissolvedByProposalId) {
@@ -530,7 +531,7 @@ const Chamber: React.FC = () => {
               ? {
                   ...thread,
                   replies: res.replies,
-                  updated: new Date().toISOString().slice(0, 10),
+                  updated: formatDateTime(new Date()),
                 }
               : thread,
           ),
@@ -712,7 +713,9 @@ const Chamber: React.FC = () => {
                             key={entry.address}
                             className="flex flex-wrap items-center justify-between gap-2"
                           >
-                            <span className="truncate">{entry.address}</span>
+                            <span className="min-w-0 flex-1 [overflow-wrap:anywhere] break-words">
+                              {entry.address}
+                            </span>
                             <span className="text-xs text-muted">
                               LCM {entry.lcm} · MCM {entry.mcm} · ACM{" "}
                               {entry.acm}
@@ -741,12 +744,12 @@ const Chamber: React.FC = () => {
                             key={`${entry.address}-${entry.submittedAt}`}
                             className="flex flex-col gap-1"
                           >
-                            <span className="truncate font-semibold">
+                            <span className="min-w-0 font-semibold [overflow-wrap:anywhere] break-words">
                               {entry.address}
                             </span>
                             <span className="text-xs text-muted">
                               M × {entry.multiplier} ·{" "}
-                              {entry.submittedAt.slice(0, 10)}
+                              {formatDate(entry.submittedAt)}
                             </span>
                           </li>
                         ))}
@@ -843,62 +846,78 @@ const Chamber: React.FC = () => {
                 No proposals in this stage.
               </Surface>
             ) : (
-              filteredProposals.map((proposal) => (
-                <Surface key={proposal.id} variant="panelAlt" className="p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <Kicker>{proposal.meta}</Kicker>
-                      <h3 className="text-lg font-semibold text-text">
-                        {proposal.title}
-                      </h3>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      size="sm"
-                      className="font-semibold"
-                    >
-                      Lead {proposal.lead}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-text">{proposal.summary}</p>
-                  {(() => {
-                    const metaTiles = [
-                      { label: "Next step", value: proposal.nextStep },
-                      { label: "Timing", value: proposal.timing },
-                    ];
-                    if (typeof proposal.activeGovernors === "number") {
-                      metaTiles.push({
-                        label: "Active governors",
-                        value: proposal.activeGovernors.toLocaleString(),
-                      });
-                    }
-                    const columns =
-                      metaTiles.length === 3
-                        ? "sm:grid-cols-3"
-                        : "sm:grid-cols-2";
-                    return (
-                      <div
-                        className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}
-                      >
-                        {metaTiles.map((tile) => (
-                          <Surface
-                            key={tile.label}
-                            variant="panel"
-                            radius="xl"
-                            shadow="control"
-                            className="px-3 py-2"
-                          >
-                            <Kicker className="text-text">{tile.label}</Kicker>
-                            <p className="text-sm font-semibold text-text">
-                              {tile.value}
-                            </p>
-                          </Surface>
-                        ))}
+              filteredProposals.map((proposal) => {
+                const proposalHref =
+                  proposal.href ??
+                  (proposal.stage === "upcoming"
+                    ? `/app/proposals/${proposal.id}/pp`
+                    : proposal.stage === "live"
+                      ? `/app/proposals/${proposal.id}/chamber`
+                      : `/app/proposals/${proposal.id}/formation`);
+                return (
+                  <Surface key={proposal.id} variant="panelAlt" className="p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Kicker>{proposal.meta}</Kicker>
+                        <h3 className="text-lg font-semibold text-text">
+                          {proposal.title}
+                        </h3>
                       </div>
-                    );
-                  })()}
-                </Surface>
-              ))
+                      <Badge
+                        variant="outline"
+                        size="sm"
+                        className="font-semibold"
+                      >
+                        Lead {proposal.lead}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-text">{proposal.summary}</p>
+                    {(() => {
+                      const metaTiles = [
+                        { label: "Next step", value: proposal.nextStep },
+                        { label: "Timing", value: proposal.timing },
+                      ];
+                      if (typeof proposal.activeGovernors === "number") {
+                        metaTiles.push({
+                          label: "Active governors",
+                          value: proposal.activeGovernors.toLocaleString(),
+                        });
+                      }
+                      const columns =
+                        metaTiles.length === 3
+                          ? "sm:grid-cols-3"
+                          : "sm:grid-cols-2";
+                      return (
+                        <div
+                          className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}
+                        >
+                          {metaTiles.map((tile) => (
+                            <Surface
+                              key={tile.label}
+                              variant="panel"
+                              radius="xl"
+                              shadow="control"
+                              className="px-3 py-2"
+                            >
+                              <Kicker className="text-text">
+                                {tile.label}
+                              </Kicker>
+                              <p className="text-sm font-semibold text-text">
+                                {tile.value}
+                              </p>
+                            </Surface>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-3 flex justify-end">
+                      <Button asChild size="sm">
+                        <Link to={proposalHref}>Open proposal</Link>
+                      </Button>
+                    </div>
+                  </Surface>
+                );
+              })
             )}
           </CardContent>
         </Card>
@@ -1031,7 +1050,7 @@ const Chamber: React.FC = () => {
                         </h3>
                         <p className="text-sm text-muted">
                           {thread.author} · {thread.replies} replies · Updated{" "}
-                          {thread.updated}
+                          {formatDateTime(thread.updated)}
                         </p>
                       </div>
                       <Button
@@ -1064,7 +1083,7 @@ const Chamber: React.FC = () => {
                 </header>
                 <p className="text-sm text-muted">
                   {activeThread.thread.author} ·{" "}
-                  {activeThread.thread.createdAt.slice(0, 10)}
+                  {formatDateTime(activeThread.thread.createdAt)}
                 </p>
                 <p className="mt-3 text-sm text-text">
                   {activeThread.thread.body}
@@ -1080,7 +1099,7 @@ const Chamber: React.FC = () => {
                         className="px-3 py-2"
                       >
                         <p className="text-xs text-muted">
-                          {message.author} · {message.createdAt.slice(0, 10)}
+                          {message.author} · {formatDateTime(message.createdAt)}
                         </p>
                         <p className="text-sm text-text">{message.message}</p>
                       </Surface>
