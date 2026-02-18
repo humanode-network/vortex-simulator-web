@@ -253,7 +253,7 @@ export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
               <p className="text-xs text-muted">{item.detail}</p>
             ) : null}
             {item.actor ? (
-              <p className="break-words text-xs text-muted [overflow-wrap:anywhere]">
+              <p className="text-xs [overflow-wrap:anywhere] break-words text-muted">
                 Actor: {item.actor}
               </p>
             ) : null}

@@ -210,10 +210,15 @@ const CMPanel: React.FC = () => {
                     max="3"
                     disabled={chamber.member}
                     value={chamber.suggestedInput}
-                    onChange={(e) => updateSuggestionInput(chamber.id, e.target.value)}
+                    onChange={(e) =>
+                      updateSuggestionInput(chamber.id, e.target.value)
+                    }
                     onBlur={() => {
                       if (chamber.suggestedInput.trim().length > 0) return;
-                      updateSuggestionInput(chamber.id, String(chamber.current));
+                      updateSuggestionInput(
+                        chamber.id,
+                        String(chamber.current),
+                      );
                     }}
                     className="w-full"
                   />

@@ -73,7 +73,12 @@ export function PlanStep(props: {
                       ...prev,
                       timeline: [
                         ...prev.timeline,
-                        { id: newId("ms"), title: "", timeframe: "", budgetHmnd: "" },
+                        {
+                          id: newId("ms"),
+                          title: "",
+                          timeframe: "",
+                          budgetHmnd: "",
+                        },
                       ],
                     }))
                   }

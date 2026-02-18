@@ -14,12 +14,15 @@ export function draftToApiForm(
           return {
             id: item.id,
             description:
-              item.title.trim().length > 0 ? item.title : `Milestone ${idx + 1}`,
+              item.title.trim().length > 0
+                ? item.title
+                : `Milestone ${idx + 1}`,
             amount: String(Math.round(n)),
           };
         })
-        .filter((item): item is { id: string; description: string; amount: string } =>
-          Boolean(item),
+        .filter(
+          (item): item is { id: string; description: string; amount: string } =>
+            Boolean(item),
         )
     : draft.budgetItems;
 

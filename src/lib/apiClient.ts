@@ -1194,7 +1194,12 @@ export type ProposalDraftFormPayload = {
     multiplier?: number;
     genesisMembers?: string[];
   };
-  timeline: { id: string; title: string; timeframe: string; budgetHmnd?: string }[];
+  timeline: {
+    id: string;
+    title: string;
+    timeframe: string;
+    budgetHmnd?: string;
+  }[];
   outputs: { id: string; label: string; url: string }[];
   openSlotNeeds: { id: string; title: string; desc: string }[];
   budgetItems: { id: string; description: string; amount: string }[];

@@ -388,7 +388,7 @@ const Faction: React.FC = () => {
                     className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="break-words text-sm font-semibold text-text [overflow-wrap:anywhere]">
+                      <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
                         {membership.address}
                       </p>
                       <p className="text-xs text-muted">
@@ -443,11 +443,12 @@ const Faction: React.FC = () => {
                 className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
-                  <p className="break-words text-sm font-semibold text-text [overflow-wrap:anywhere]">
+                  <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
                     {invite.address}
                   </p>
                   <p className="text-xs text-muted">
-                    Invited by {invite.invitedBy} · {formatDateTime(invite.invitedAt)}
+                    Invited by {invite.invitedBy} ·{" "}
+                    {formatDateTime(invite.invitedAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -691,7 +692,9 @@ const Faction: React.FC = () => {
                     <Badge variant="outline">{thread.status}</Badge>
                     <Button
                       size="sm"
-                      variant={activeThread?.id === thread.id ? "outline" : "ghost"}
+                      variant={
+                        activeThread?.id === thread.id ? "outline" : "ghost"
+                      }
                       onClick={() => {
                         const next = new URLSearchParams(searchParams);
                         next.set("thread", thread.id);
@@ -735,7 +738,9 @@ const Faction: React.FC = () => {
               className="space-y-3 rounded-md border border-border p-3"
             >
               <p className="text-xs font-semibold text-muted">Opened thread</p>
-              <p className="text-sm font-semibold text-text">{activeThread.title}</p>
+              <p className="text-sm font-semibold text-text">
+                {activeThread.title}
+              </p>
               <p className="text-xs text-muted">
                 {activeThread.channelTitle} · {activeThread.status} · replies{" "}
                 {activeThread.replies}

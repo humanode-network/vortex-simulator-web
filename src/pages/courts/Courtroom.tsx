@@ -113,7 +113,7 @@ const Courtroom: React.FC = () => {
         return (
           <code
             key={`${idx}-${part}`}
-            className="break-all rounded bg-panel px-1 font-mono text-[0.92em] text-text"
+            className="rounded bg-panel px-1 font-mono text-[0.92em] break-all text-text"
           >
             {part}
           </code>

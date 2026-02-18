@@ -42,8 +42,12 @@ function loadFactionDraft(): { step: 1 | 2 | 3; form: FormState } | null {
       step,
       form: {
         name: typeof form.name === "string" ? form.name : "",
-        description: typeof form.description === "string" ? form.description : "",
-        focus: typeof form.focus === "string" && form.focus.trim() ? form.focus : "General",
+        description:
+          typeof form.description === "string" ? form.description : "",
+        focus:
+          typeof form.focus === "string" && form.focus.trim()
+            ? form.focus
+            : "General",
         visibility: form.visibility === "private" ? "private" : "public",
         goalsText: typeof form.goalsText === "string" ? form.goalsText : "",
         tagsText: typeof form.tagsText === "string" ? form.tagsText : "",
@@ -220,9 +224,7 @@ const FactionCreate: React.FC = () => {
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   placeholder="What this faction is for and how it contributes."
                 />
-                <p className="text-xs text-muted">
-                  Minimum 2 characters.
-                </p>
+                <p className="text-xs text-muted">Minimum 2 characters.</p>
               </label>
               <label className="block space-y-1">
                 <span className="text-sm text-muted">Focus</span>

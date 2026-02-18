@@ -128,13 +128,14 @@ const Proposals: React.FC = () => {
           stageFilter === "any" ? true : proposal.stage === stageFilter;
         const ended =
           proposal.stage === "failed" || proposal.summaryPill === "Failed";
-        const matchesLifecycle =
-          lifecycleFilter === "all" ? true : !ended;
+        const matchesLifecycle = lifecycleFilter === "all" ? true : !ended;
         const matchesChamber =
           chamberFilter === "All chambers"
             ? true
             : proposal.chamber === chamberFilter;
-        return matchesTerm && matchesStage && matchesLifecycle && matchesChamber;
+        return (
+          matchesTerm && matchesStage && matchesLifecycle && matchesChamber
+        );
       })
       .sort((a, b) => {
         if (sortBy === "Newest") {
@@ -151,7 +152,14 @@ const Proposals: React.FC = () => {
         }
         return 0;
       });
-  }, [proposalData, search, stageFilter, lifecycleFilter, chamberFilter, sortBy]);
+  }, [
+    proposalData,
+    search,
+    stageFilter,
+    lifecycleFilter,
+    chamberFilter,
+    sortBy,
+  ]);
 
   const chamberOptions = useMemo(() => {
     const unique = Array.from(
@@ -422,7 +430,7 @@ const Proposals: React.FC = () => {
                           ? "Ended"
                           : proposal.stage === "build" &&
                               proposal.summaryPill === "Passed"
-                          ? "Passed"
+                            ? "Passed"
                             : undefined
                       }
                     />

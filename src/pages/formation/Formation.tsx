@@ -187,7 +187,7 @@ const Formation: React.FC = () => {
                 </Surface>
               </div>
               <div className="flex items-center justify-between gap-3 text-sm text-muted">
-                <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+                <span className="min-w-0 [overflow-wrap:anywhere] break-words">
                   Proposer:{" "}
                   <span className="font-semibold text-text hover:text-primary">
                     {project.proposer}

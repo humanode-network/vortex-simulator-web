@@ -22,8 +22,7 @@ function normalizeDateInput(value: string): string {
 }
 
 function parseDate(value: string | number | Date): Date | null {
-  const source =
-    typeof value === "string" ? normalizeDateInput(value) : value;
+  const source = typeof value === "string" ? normalizeDateInput(value) : value;
   const parsed = value instanceof Date ? value : new Date(source);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }

@@ -25,12 +25,7 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
   if (!hint) return null;
 
   return (
-    <div
-      className={cn(
-        "pagehint-root",
-        className,
-      )}
-    >
+    <div className={cn("pagehint-root", className)}>
       <Button
         variant="ghost"
         size="sm"

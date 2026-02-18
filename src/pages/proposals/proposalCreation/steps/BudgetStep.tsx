@@ -11,7 +11,14 @@ export function BudgetStep(props: {
   formationEligible?: boolean;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
 }) {
-  const { attemptedNext, budgetTotal, budgetValid, draft, formationEligible, setDraft } = props;
+  const {
+    attemptedNext,
+    budgetTotal,
+    budgetValid,
+    draft,
+    formationEligible,
+    setDraft,
+  } = props;
   const alignedToMilestones = formationEligible !== false;
 
   return (
@@ -40,13 +47,17 @@ export function BudgetStep(props: {
                   <div className="space-y-1">
                     <Label className="text-xs text-muted">Milestone</Label>
                     <p className="text-sm text-text">
-                      {item.title.trim().length > 0 ? item.title : `Milestone ${idx + 1}`}
+                      {item.title.trim().length > 0
+                        ? item.title
+                        : `Milestone ${idx + 1}`}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs text-muted">Timeframe</Label>
                     <p className="text-sm text-text">
-                      {item.timeframe.trim().length > 0 ? item.timeframe : "Timeline TBD"}
+                      {item.timeframe.trim().length > 0
+                        ? item.timeframe
+                        : "Timeline TBD"}
                     </p>
                   </div>
                   <div className="space-y-1">
@@ -60,7 +71,9 @@ export function BudgetStep(props: {
                         setDraft((prev) => ({
                           ...prev,
                           timeline: prev.timeline.map((row) =>
-                            row.id === item.id ? { ...row, budgetHmnd: e.target.value } : row,
+                            row.id === item.id
+                              ? { ...row, budgetHmnd: e.target.value }
+                              : row,
                           ),
                         }))
                       }
@@ -86,7 +99,9 @@ export function BudgetStep(props: {
                       setDraft((prev) => ({
                         ...prev,
                         budgetItems: prev.budgetItems.map((row) =>
-                          row.id === item.id ? { ...row, description: e.target.value } : row,
+                          row.id === item.id
+                            ? { ...row, description: e.target.value }
+                            : row,
                         ),
                       }))
                     }
@@ -101,7 +116,9 @@ export function BudgetStep(props: {
                       setDraft((prev) => ({
                         ...prev,
                         budgetItems: prev.budgetItems.map((row) =>
-                          row.id === item.id ? { ...row, amount: e.target.value } : row,
+                          row.id === item.id
+                            ? { ...row, amount: e.target.value }
+                            : row,
                         ),
                       }))
                     }

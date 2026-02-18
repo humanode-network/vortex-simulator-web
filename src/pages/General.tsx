@@ -16,11 +16,11 @@ const General: React.FC = () => {
   const [theme, setThemeState] = useState<Theme>(
     () => getStoredTheme() ?? "sky",
   );
-  const [dateFormat, setDateFormat] = useState<DateFormat>(
-    () => getStoredDateFormat(),
+  const [dateFormat, setDateFormat] = useState<DateFormat>(() =>
+    getStoredDateFormat(),
   );
-  const [timeFormat, setTimeFormat] = useState<TimeFormat>(
-    () => getStoredTimeFormat(),
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(() =>
+    getStoredTimeFormat(),
   );
 
   useEffect(() => {
@@ -59,7 +59,9 @@ const General: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <p className="font-semibold text-text">Date format</p>
-              <p className="text-sm text-muted">Choose how calendar dates are shown.</p>
+              <p className="text-sm text-muted">
+                Choose how calendar dates are shown.
+              </p>
             </div>
             <ToggleGroup
               value={dateFormat}
@@ -74,7 +76,9 @@ const General: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <p className="font-semibold text-text">Time format</p>
-              <p className="text-sm text-muted">Choose 24-hour or 12-hour clock.</p>
+              <p className="text-sm text-muted">
+                Choose 24-hour or 12-hour clock.
+              </p>
             </div>
             <ToggleGroup
               value={timeFormat}

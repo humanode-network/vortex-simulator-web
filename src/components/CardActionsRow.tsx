@@ -34,7 +34,7 @@ export function CardActionsRow({
       {proposer && proposerId ? (
         <Link
           to={`/app/human-nodes/${proposerId}`}
-          className="min-w-0 break-words text-sm font-semibold text-primary [overflow-wrap:anywhere]"
+          className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere] break-words text-primary"
         >
           Proposer: {proposer}
         </Link>

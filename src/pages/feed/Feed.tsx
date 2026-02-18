@@ -52,7 +52,9 @@ const normalizeAppHref = (href?: string) => {
     return `/app/factions/${factionThreadMatch[1]}?thread=${encodeURIComponent(factionThreadMatch[2])}`;
   }
 
-  const chamberThreadMatch = appHref.match(/^\/app\/chambers\/([^/]+)\/threads\/[^/]+$/);
+  const chamberThreadMatch = appHref.match(
+    /^\/app\/chambers\/([^/]+)\/threads\/[^/]+$/,
+  );
   if (chamberThreadMatch) return `/app/chambers/${chamberThreadMatch[1]}`;
 
   return appHref;
@@ -115,7 +117,8 @@ const toUrgentItems = (
       continue;
     }
     if (
-      new Date(item.timestamp).getTime() > new Date(existing.timestamp).getTime()
+      new Date(item.timestamp).getTime() >
+      new Date(existing.timestamp).getTime()
     ) {
       deduped.set(key, item);
     }
@@ -258,7 +261,9 @@ const Feed: React.FC = () => {
           items = [...items, ...inviteRes.items];
         }
         const filteredItems =
-          feedScope === "urgent" ? toUrgentItems(items, viewerGovernorActive) : items;
+          feedScope === "urgent"
+            ? toUrgentItems(items, viewerGovernorActive)
+            : items;
         setFeedItems(filteredItems);
         setNextCursor(res.nextCursor ?? null);
         setLoadError(null);
@@ -338,10 +343,15 @@ const Feed: React.FC = () => {
           : res.items;
       setFeedItems((curr) => {
         if (feedScope === "urgent") {
-          return toUrgentItems([...(curr ?? []), ...items], viewerGovernorActive);
+          return toUrgentItems(
+            [...(curr ?? []), ...items],
+            viewerGovernorActive,
+          );
         }
         const existing = new Set((curr ?? []).map(feedItemKey));
-        const nextItems = items.filter((item) => !existing.has(feedItemKey(item)));
+        const nextItems = items.filter(
+          (item) => !existing.has(feedItemKey(item)),
+        );
         return [...(curr ?? []), ...nextItems];
       });
       setNextCursor(res.nextCursor ?? null);
@@ -473,7 +483,7 @@ const Feed: React.FC = () => {
         aria-live="polite"
         className="flex flex-col gap-4"
       >
-      {sortedFeed.map((item, index) => {
+        {sortedFeed.map((item, index) => {
           const itemKey = feedItemKey(item);
           const proposalId = proposalIdFromHref(item.href) ?? item.id;
           const poolPage =

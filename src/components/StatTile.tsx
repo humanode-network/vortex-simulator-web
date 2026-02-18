@@ -44,7 +44,7 @@ export const StatTile: React.FC<StatTileProps> = ({
       </Kicker>
       <p
         className={cn(
-          "min-w-0 break-words [overflow-wrap:anywhere] text-base font-semibold text-text",
+          "min-w-0 text-base font-semibold [overflow-wrap:anywhere] break-words text-text",
           valueClassName,
         )}
       >
