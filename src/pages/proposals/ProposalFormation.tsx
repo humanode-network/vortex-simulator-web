@@ -13,6 +13,8 @@ import {
 import {
   apiFormationJoin,
   apiFormationMilestoneSubmit,
+  apiFormationMilestoneVote,
+  apiFormationProjectFinish,
   apiProposalFormationPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
@@ -100,14 +102,37 @@ const ProposalFormation: React.FC = () => {
 
   const milestones = parseRatio(project.milestones);
   const nextMilestone =
-    milestones.total > 0 ? milestones.filled + 1 : undefined;
+    project.nextMilestoneIndex ??
+    (milestones.total > 0 ? milestones.filled + 1 : undefined);
+  const pendingMilestone = project.pendingMilestoneIndex ?? undefined;
+  const viewerAddress = auth.address?.trim().toLowerCase();
+  const proposerAddress = project.proposer.trim().toLowerCase();
   const isProposerViewer =
-    Boolean(auth.address) &&
-    auth.address!.toLowerCase() === project.proposer.toLowerCase();
+    Boolean(viewerAddress) && viewerAddress === proposerAddress;
   const canJoinProject =
     project.projectState !== "ready_to_finish" &&
     project.projectState !== "completed" &&
     project.projectState !== "suspended";
+  const canSubmitMilestone =
+    auth.authenticated &&
+    auth.eligible &&
+    !actionBusy &&
+    project.projectState === "active" &&
+    typeof nextMilestone === "number" &&
+    nextMilestone > 0 &&
+    nextMilestone <= milestones.total;
+  const canVoteMilestone =
+    auth.authenticated &&
+    auth.eligible &&
+    !actionBusy &&
+    project.projectState === "awaiting_milestone_vote" &&
+    typeof pendingMilestone === "number" &&
+    pendingMilestone > 0;
+  const canFinishProject =
+    auth.authenticated &&
+    isProposerViewer &&
+    !actionBusy &&
+    project.projectState === "ready_to_finish";
 
   const runAction = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -168,13 +193,7 @@ const ProposalFormation: React.FC = () => {
               type="button"
               size="lg"
               variant="outline"
-              disabled={
-                !auth.authenticated ||
-                !auth.eligible ||
-                actionBusy ||
-                !nextMilestone ||
-                nextMilestone > milestones.total
-              }
+              disabled={!canSubmitMilestone}
               onClick={() =>
                 void runAction(async () => {
                   if (!id || !nextMilestone) return;
@@ -188,6 +207,58 @@ const ProposalFormation: React.FC = () => {
               Submit M{nextMilestone ?? "—"}
             </Button>
 
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={!canVoteMilestone}
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id || !pendingMilestone) return;
+                  await apiFormationMilestoneVote({
+                    proposalId: id,
+                    milestoneIndex: pendingMilestone,
+                    choice: "yes",
+                  });
+                })
+              }
+            >
+              Vote Yes M{pendingMilestone ?? "—"}
+            </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={!canVoteMilestone}
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id || !pendingMilestone) return;
+                  await apiFormationMilestoneVote({
+                    proposalId: id,
+                    milestoneIndex: pendingMilestone,
+                    choice: "no",
+                  });
+                })
+              }
+            >
+              Vote No M{pendingMilestone ?? "—"}
+            </Button>
+
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={!canFinishProject}
+              onClick={() =>
+                void runAction(async () => {
+                  if (!id) return;
+                  await apiFormationProjectFinish({ proposalId: id });
+                })
+              }
+            >
+              Finish Project
+            </Button>
           </div>
 
           {!auth.authenticated ? (

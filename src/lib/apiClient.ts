@@ -506,6 +506,100 @@ export async function apiFormationMilestoneSubmit(input: {
   );
 }
 
+export async function apiFormationMilestoneRequestUnlock(input: {
+  proposalId: string;
+  milestoneIndex: number;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "formation.milestone.requestUnlock";
+  proposalId: string;
+  milestoneIndex: number;
+  milestones: { completed: number; total: number };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "formation.milestone.requestUnlock",
+      payload: {
+        proposalId: input.proposalId,
+        milestoneIndex: input.milestoneIndex,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFormationMilestoneVote(input: {
+  proposalId: string;
+  milestoneIndex: number;
+  choice: "yes" | "no" | "abstain";
+  score?: number;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "formation.milestone.vote";
+  proposalId: string;
+  milestoneIndex: number;
+  choice: "yes" | "no" | "abstain";
+  counts: { yes: number; no: number; abstain: number };
+  outcome: "pending" | "accepted" | "rejected";
+  projectState:
+    | "active"
+    | "awaiting_milestone_vote"
+    | "suspended"
+    | "ready_to_finish"
+    | "completed";
+  pendingMilestoneIndex: number | null;
+  milestones: { completed: number; total: number };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "formation.milestone.vote",
+      payload: {
+        proposalId: input.proposalId,
+        milestoneIndex: input.milestoneIndex,
+        choice: input.choice,
+        ...(input.choice === "yes" && typeof input.score === "number"
+          ? { score: input.score }
+          : {}),
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFormationProjectFinish(input: {
+  proposalId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "formation.project.finish";
+  proposalId: string;
+  projectState: "completed";
+  milestones: { completed: number; total: number };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "formation.project.finish",
+      payload: {
+        proposalId: input.proposalId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
 export async function apiProposalChamberPage(
   id: string,
 ): Promise<ChamberProposalPageDto> {
