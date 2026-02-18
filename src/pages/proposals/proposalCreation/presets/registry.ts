@@ -505,8 +505,9 @@ export const PROPOSAL_PRESETS: ProposalPreset[] = [
   },
   {
     id: "project.admin.formation.policy",
-    label: "Formation procedures",
-    description: "Formation procedures, grants, and operations.",
+    label: "Formation rules (policy-only)",
+    description:
+      "Policy-only governance for formation procedures (does not open Formation stage).",
     templateId: "project",
     proposalType: "administrative",
     formationEligible: false,

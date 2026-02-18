@@ -8,7 +8,6 @@ import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
 import { Modal } from "@/components/Modal";
 import {
-  ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
   ProposalTimelineCard,
@@ -17,6 +16,7 @@ import {
   apiPoolVote,
   apiProposalPoolPage,
   apiProposalTimeline,
+  getApiErrorPayload,
 } from "@/lib/apiClient";
 import type { PoolProposalPageDto, ProposalTimelineItemDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -35,6 +35,15 @@ const ProposalPP: React.FC = () => {
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const auth = useAuth();
+
+  const formatPoolVoteError = (error: unknown): string => {
+    const payloadMessage = getApiErrorPayload(error)?.error?.message;
+    if (payloadMessage && payloadMessage.trim().length > 0) {
+      return payloadMessage;
+    }
+    const fallback = (error as Error)?.message ?? "Vote failed.";
+    return fallback.replace(/^HTTP\s+\d{3}:\s*/i, "").trim() || "Vote failed.";
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -309,7 +318,7 @@ const ProposalPP: React.FC = () => {
                   setProposal(next);
                   setShowRules(false);
                 } catch (error) {
-                  setVoteError((error as Error).message);
+                  setVoteError(formatPoolVoteError(error));
                 } finally {
                   setVoteSubmitting(false);
                 }
@@ -329,8 +338,6 @@ const ProposalPP: React.FC = () => {
           ) : null}
         </Surface>
       </Modal>
-
-      <ProposalInvisionInsightCard insight={proposal.invisionInsight} />
 
       {timelineError ? (
         <Surface

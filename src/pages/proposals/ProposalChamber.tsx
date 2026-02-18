@@ -161,14 +161,14 @@ const ProposalChamber: React.FC = () => {
             </span>
             <Input
               type="number"
-              min={1}
+              min={0}
               max={10}
               step={1}
               value={yesScore}
               onChange={(event) => {
                 const next = Number(event.target.value);
                 if (Number.isFinite(next)) {
-                  setYesScore(Math.min(Math.max(Math.round(next), 1), 10));
+                  setYesScore(Math.min(Math.max(Math.round(next), 0), 10));
                 }
               }}
               className="h-8 w-16"

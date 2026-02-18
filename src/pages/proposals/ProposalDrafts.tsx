@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Card } from "@/components/primitives/card";
 import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/primitives/badge";
@@ -8,9 +8,11 @@ import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiProposalDrafts } from "@/lib/apiClient";
+import { formatDateTime } from "@/lib/dateTime";
 import type { ProposalDraftListItemDto } from "@/types/api";
 
 const ProposalDrafts: React.FC = () => {
+  const navigate = useNavigate();
   const [drafts, setDrafts] = useState<ProposalDraftListItemDto[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -124,7 +126,7 @@ const ProposalDrafts: React.FC = () => {
           <Card key={draft.id} className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <Kicker>Draft · {draft.updated}</Kicker>
+                <Kicker>Draft · {formatDateTime(draft.updated)}</Kicker>
                 <h2 className="text-lg font-semibold text-text">
                   {draft.title}
                 </h2>
@@ -134,9 +136,22 @@ const ProposalDrafts: React.FC = () => {
             </div>
             <div className="mt-3 flex items-center justify-between text-sm text-muted">
               <span>Tier: {draft.tier}</span>
-              <Button asChild size="sm" variant="ghost">
-                <Link to={`/app/proposals/drafts/${draft.id}`}>Open draft</Link>
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => navigate(`/app/proposals/drafts/${draft.id}`)}
+                >
+                  View
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    to={`/app/proposals/new?draftId=${draft.id}&step=essentials`}
+                  >
+                    Edit
+                  </Link>
+                </Button>
+              </div>
             </div>
           </Card>
         ))}

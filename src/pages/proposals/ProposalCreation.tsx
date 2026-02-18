@@ -12,13 +12,16 @@ import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
+import { formatTime } from "@/lib/dateTime";
 import {
   requiredTierForProposalType,
   isTierEligible,
 } from "@/lib/proposalTypes";
+import { TierLabel } from "@/components/TierLabel";
 import {
   apiChambers,
   apiMyGovernance,
+  apiProposalDraft,
   apiProposalDraftDelete,
   apiProposalDraftSave,
   apiProposalSubmitToPool,
@@ -31,6 +34,7 @@ import { ReviewStep } from "./proposalCreation/steps/ReviewStep";
 import {
   clearDraftStorage,
   loadDraft,
+  normalizeDraft,
   loadPresetId,
   loadServerDraftId,
   loadStep,
@@ -67,6 +71,7 @@ const ProposalCreation: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [draft, setDraft] = useState<ProposalDraftForm>(() => loadDraft());
   const presetInitialized = useRef(false);
+  const skipNextPresetApply = useRef(false);
   const [presetId, setPresetId] = useState<string>(() => {
     const storedDraft = loadDraft();
     const inferred = inferPresetIdFromDraft(storedDraft);
@@ -102,15 +107,23 @@ const ProposalCreation: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loadingDraftId, setLoadingDraftId] = useState<string | null>(null);
+  const [loadDraftError, setLoadDraftError] = useState<string | null>(null);
   const [chambers, setChambers] = useState<ChamberDto[]>([]);
   const [tierProgress, setTierProgress] = useState<TierProgressDto | null>(
     null,
   );
+  const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
 
   useEffect(() => {
     const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
     if (!preset) {
       persistPresetId("");
+      return;
+    }
+    if (skipNextPresetApply.current) {
+      skipNextPresetApply.current = false;
+      persistPresetId(preset.id);
       return;
     }
     if (preset.templateId !== templateKind) {
@@ -158,12 +171,19 @@ const ProposalCreation: React.FC = () => {
         : loadStep();
 
   const budgetTotal = useMemo(() => {
+    if (draft.formationEligible !== false) {
+      return draft.timeline.reduce((sum, item) => {
+        const n = Number(item.budgetHmnd);
+        if (!Number.isFinite(n) || n <= 0) return sum;
+        return sum + n;
+      }, 0);
+    }
     return draft.budgetItems.reduce((sum, item) => {
       const n = Number(item.amount);
       if (!Number.isFinite(n) || n <= 0) return sum;
       return sum + n;
     }, 0);
-  }, [draft.budgetItems]);
+  }, [draft.formationEligible, draft.timeline, draft.budgetItems]);
 
   const baseTemplate = useMemo<WizardTemplate>(
     () => getWizardTemplate(templateKind),
@@ -203,6 +223,20 @@ const ProposalCreation: React.FC = () => {
     return template.compute(draft, { budgetTotal });
   }, [draft, budgetTotal, template]);
 
+  const requiredTier = requiredTierForProposalType(draft.proposalType);
+  const currentTier = tierProgress?.tier ?? null;
+  const tierEligible =
+    currentTier && isTierEligible(currentTier, requiredTier) ? true : false;
+  const tierBlocked = Boolean(currentTier) && !tierEligible;
+  const guardedComputed = useMemo(
+    () => ({
+      ...computed,
+      essentialsValid: computed.essentialsValid && !tierBlocked,
+      canSubmit: computed.canSubmit && !tierBlocked,
+    }),
+    [computed, tierBlocked],
+  );
+
   const step: StepKey = desiredStep;
 
   const chamberOptions = useMemo(() => {
@@ -232,6 +266,56 @@ const ProposalCreation: React.FC = () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!requestedDraftId) {
+      setLoadingDraftId(null);
+      setLoadDraftError(null);
+      return;
+    }
+    let active = true;
+    setLoadingDraftId(requestedDraftId);
+    setLoadDraftError(null);
+    (async () => {
+      try {
+        const detail = await apiProposalDraft(requestedDraftId);
+        if (!active) return;
+        if (!detail.editableForm) {
+          throw new Error("Draft payload unavailable for editing.");
+        }
+
+        const normalized = normalizeDraft(detail.editableForm);
+        const nextTemplateKind =
+          detail.editableForm.templateId ??
+          (detail.editableForm.metaGovernance ? "system" : "project");
+        const nextPresetId =
+          detail.editableForm.presetId ?? inferPresetIdFromDraft(normalized);
+        const nextDraftId = detail.id ?? requestedDraftId;
+
+        skipNextPresetApply.current = true;
+        setTemplateKind(nextTemplateKind);
+        setPresetId(nextPresetId);
+        setDraft(normalized);
+        setServerDraftId(nextDraftId);
+        setSavedAt(Date.now());
+        setSaveError(null);
+        setSubmitError(null);
+        persistTemplateId(nextTemplateKind);
+        persistPresetId(nextPresetId);
+        persistDraft(normalized);
+        persistServerDraftId(nextDraftId);
+      } catch (error) {
+        if (!active) return;
+        setLoadDraftError((error as Error).message);
+      } finally {
+        if (!active) return;
+        setLoadingDraftId(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [requestedDraftId]);
 
   useEffect(() => {
     if (!auth.enabled || !auth.authenticated) {
@@ -270,6 +354,8 @@ const ProposalCreation: React.FC = () => {
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel";
 
   const goToStep = (next: StepKey) => {
+    persistDraft(draft);
+    persistStep(next);
     setAttemptedNext(false);
     const params = new URLSearchParams(searchParams);
     params.set("step", next);
@@ -279,11 +365,12 @@ const ProposalCreation: React.FC = () => {
 
   const onNext = () => {
     setAttemptedNext(true);
-    const next = template.getNextStep(step, computed);
+    const next = template.getNextStep(step, guardedComputed);
     if (next) return goToStep(next);
   };
 
   const onBack = () => {
+    persistDraft(draft);
     setAttemptedNext(false);
     const prev = template.getPrevStep(step);
     if (prev) return goToStep(prev);
@@ -298,6 +385,14 @@ const ProposalCreation: React.FC = () => {
     setSearchParams(params, { replace: true });
   }, [searchParams, setSearchParams, step, template.id, template.stepOrder]);
 
+  useEffect(() => {
+    if (!tierBlocked || step === "essentials") return;
+    const params = new URLSearchParams(searchParams);
+    params.set("step", "essentials");
+    setSearchParams(params, { replace: true });
+    setAttemptedNext(true);
+  }, [searchParams, setSearchParams, step, tierBlocked]);
+
   const resetDraft = () => {
     clearDraftStorage();
     setDraft(DEFAULT_DRAFT);
@@ -311,6 +406,7 @@ const ProposalCreation: React.FC = () => {
     setServerDraftId(null);
     const params = new URLSearchParams(searchParams);
     params.set("step", "essentials");
+    params.delete("draftId");
     setSearchParams(params, { replace: true });
 
     if (
@@ -350,12 +446,7 @@ const ProposalCreation: React.FC = () => {
   };
 
   const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
-  const submitDisabled = !computed.canSubmit || !canAct;
-
-  const requiredTier = requiredTierForProposalType(draft.proposalType);
-  const currentTier = tierProgress?.tier ?? null;
-  const tierEligible =
-    currentTier && isTierEligible(currentTier, requiredTier) ? true : false;
+  const submitDisabled = !guardedComputed.canSubmit || !canAct || tierBlocked;
 
   return (
     <div className="flex flex-col gap-6">
@@ -378,7 +469,7 @@ const ProposalCreation: React.FC = () => {
           </Button>
           {savedAt ? (
             <span className="text-xs text-muted">
-              Saved {new Date(savedAt).toLocaleTimeString()}
+              Saved {formatTime(savedAt)}
             </span>
           ) : null}
           {serverDraftId ? (
@@ -394,6 +485,7 @@ const ProposalCreation: React.FC = () => {
           value={step}
           onValueChange={(value) => {
             if (!isStepKey(value) && value !== "review") return;
+            if (tierBlocked && value !== "essentials") return;
             goToStep(value as StepKey);
           }}
           options={template.stepOrder.map((key) => ({
@@ -421,9 +513,26 @@ const ProposalCreation: React.FC = () => {
               {saveError}
             </div>
           ) : null}
+          {loadingDraftId ? (
+            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-muted">
+              Loading draft for editing…
+            </div>
+          ) : null}
+          {loadDraftError ? (
+            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
+              Draft load failed: {loadDraftError}
+            </div>
+          ) : null}
           {submitError ? (
             <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
               Submit failed: {submitError}
+            </div>
+          ) : null}
+          {tierBlocked ? (
+            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
+              Selected proposal type requires <TierLabel tier={requiredTier} />
+              . Your tier is <TierLabel tier={currentTier ?? "Nominee"} />.
+              Choose an eligible type to continue.
             </div>
           ) : null}
 
@@ -467,6 +576,7 @@ const ProposalCreation: React.FC = () => {
               budgetTotal={budgetTotal}
               budgetValid={computed.budgetValid}
               draft={draft}
+              formationEligible={draft.formationEligible}
               setDraft={setDraft}
             />
           ) : null}
@@ -475,7 +585,7 @@ const ProposalCreation: React.FC = () => {
             <ReviewStep
               budgetTotal={budgetTotal}
               canAct={canAct}
-              canSubmit={computed.canSubmit}
+              canSubmit={guardedComputed.canSubmit}
               draft={draft}
               formationEligible={draft.formationEligible}
               mode={template.id}
@@ -494,12 +604,14 @@ const ProposalCreation: React.FC = () => {
                 <Button
                   disabled={submitDisabled || submitting}
                   title={
-                    SIM_AUTH_ENABLED && !canAct
-                      ? "Connect and verify as an eligible human node to submit."
-                      : undefined
+                    tierBlocked
+                      ? `Not eligible for this proposal type. Required tier: ${requiredTier}.`
+                      : SIM_AUTH_ENABLED && !canAct
+                        ? "Connect and verify as an eligible human node to submit."
+                        : undefined
                   }
                   onClick={async () => {
-                    if (!canAct || submitting) return;
+                    if (!canAct || tierBlocked || submitting) return;
                     setSubmitError(null);
                     setSaving(false);
                     setSaveError(null);

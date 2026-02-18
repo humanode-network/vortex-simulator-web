@@ -73,7 +73,7 @@ export function PlanStep(props: {
                       ...prev,
                       timeline: [
                         ...prev.timeline,
-                        { id: newId("ms"), title: "", timeframe: "" },
+                        { id: newId("ms"), title: "", timeframe: "", budgetHmnd: "" },
                       ],
                     }))
                   }
@@ -85,7 +85,7 @@ export function PlanStep(props: {
                 {draft.timeline.map((ms) => (
                   <div
                     key={ms.id}
-                    className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_200px_auto]"
+                    className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_200px_160px_auto]"
                   >
                     <Input
                       value={ms.title}
@@ -114,6 +114,23 @@ export function PlanStep(props: {
                         }))
                       }
                       placeholder="Timeframe (e.g., 2 weeks)"
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={ms.budgetHmnd ?? ""}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          timeline: prev.timeline.map((item) =>
+                            item.id === ms.id
+                              ? { ...item, budgetHmnd: e.target.value }
+                              : item,
+                          ),
+                        }))
+                      }
+                      placeholder="Budget HMND"
                     />
                     <Button
                       size="sm"
@@ -211,6 +228,94 @@ export function PlanStep(props: {
               ))}
             </div>
           </div>
+
+          {showTimeline ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-text">
+                    Team needs (open positions)
+                  </p>
+                  <p className="text-xs text-muted">
+                    Define roles you need in Formation. Team slots are derived
+                    from this list.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      openSlotNeeds: [
+                        ...prev.openSlotNeeds,
+                        { id: newId("slot"), title: "", desc: "" },
+                      ],
+                    }))
+                  }
+                >
+                  Add role
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {draft.openSlotNeeds.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[220px_1fr_auto]"
+                  >
+                    <Input
+                      value={slot.title}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          openSlotNeeds: prev.openSlotNeeds.map((item) =>
+                            item.id === slot.id
+                              ? { ...item, title: e.target.value }
+                              : item,
+                          ),
+                        }))
+                      }
+                      placeholder="Role title (e.g., Frontend dev)"
+                    />
+                    <Input
+                      value={slot.desc}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          openSlotNeeds: prev.openSlotNeeds.map((item) =>
+                            item.id === slot.id
+                              ? { ...item, desc: e.target.value }
+                              : item,
+                          ),
+                        }))
+                      }
+                      placeholder="Why needed / scope"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          openSlotNeeds: prev.openSlotNeeds.filter(
+                            (item) => item.id !== slot.id,
+                          ),
+                        }))
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                {draft.openSlotNeeds.length === 0 ? (
+                  <p className="text-xs text-muted">
+                    No open positions defined. Team slots will stay at proposer
+                    only.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </>
       )}
     </div>

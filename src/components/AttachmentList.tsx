@@ -34,12 +34,14 @@ export function AttachmentList({
             variant="panel"
             radius="xl"
             shadow="control"
-            className="flex items-center justify-between px-3 py-2"
+            className="flex items-center justify-between gap-3 px-3 py-2"
           >
-            <span>{file.title}</span>
+            <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere]">
+              {file.title}
+            </span>
             <button
               type="button"
-              className="text-sm font-semibold text-primary"
+              className="shrink-0 text-sm font-semibold text-primary"
             >
               {file.actionLabel ?? "View"}
             </button>

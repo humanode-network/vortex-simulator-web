@@ -1,4 +1,5 @@
 import type { GovernanceActionDto, ProofKeyDto } from "@/types/api";
+import { formatDate, formatDateTime } from "@/lib/dateTime";
 
 export const DETAIL_TILE_CLASS = "h-20 flex flex-col justify-between";
 export const PROOF_TILE_CLASS = "h-20 flex flex-col justify-between";
@@ -39,9 +40,30 @@ export const activityMatches = (
 };
 
 export const formatActivityTimestamp = (value: string) => {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString();
+  return formatDateTime(value);
+};
+
+const DATE_LABEL_HINTS = [
+  "since",
+  "date",
+  "created",
+  "updated",
+  "opened",
+  "submitted",
+  "at",
+];
+
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const normalizeDetailValue = (label: string, value: string) => {
+  if (!value) return value;
+  const normalizedLabel = label.trim().toLowerCase();
+  const likelyDate = DATE_LABEL_HINTS.some((hint) =>
+    normalizedLabel.includes(hint),
+  );
+  if (!likelyDate) return value;
+  if (DATE_ONLY_RE.test(value.trim())) return formatDate(value);
+  return formatDateTime(value);
 };
 
 export const shortAddress = (value: string, size = 6) => {

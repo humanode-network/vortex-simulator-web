@@ -13,12 +13,11 @@ function computeProjectWizard(
   const planValid = draft.how.trim().length > 0;
   const budgetValid =
     !formationEligible ||
-    (draft.budgetItems.some(
-      (item) =>
-        item.description.trim().length > 0 &&
-        Number.isFinite(Number(item.amount)) &&
-        Number(item.amount) > 0,
-    ) &&
+    (draft.timeline.length > 0 &&
+      draft.timeline.every((item) => {
+        const n = Number(item.budgetHmnd);
+        return Number.isFinite(n) && n > 0;
+      }) &&
       input.budgetTotal > 0);
 
   const canSubmit =

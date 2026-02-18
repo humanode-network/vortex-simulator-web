@@ -15,6 +15,10 @@ import {
   getPresetCategory,
   type ProposalPreset,
 } from "../presets/registry";
+import {
+  isTierEligible,
+  requiredTierForProposalType,
+} from "@/lib/proposalTypes";
 
 const PROPOSAL_TYPE_OPTIONS: Array<{
   value: ProposalDraftForm["proposalType"];
@@ -198,6 +202,24 @@ export function EssentialsStep(props: {
     isSystemProposal,
     selectedPreset?.formationEligible,
   ]);
+  const proposalTypeOptions = useMemo(
+    () =>
+      PROPOSAL_TYPE_OPTIONS.filter((option) =>
+        isSystemProposal ? option.value !== "basic" : true,
+      ).map((option) => {
+        const optionRequiredTier = requiredTierForProposalType(option.value);
+        const eligible =
+          currentTier === null
+            ? true
+            : isTierEligible(currentTier, optionRequiredTier);
+        return {
+          ...option,
+          requiredTier: optionRequiredTier,
+          eligible,
+        };
+      }),
+    [currentTier, isSystemProposal],
+  );
 
   return (
     <div className="space-y-5">
@@ -247,6 +269,10 @@ export function EssentialsStep(props: {
           onChange={(e) => {
             const nextType = e.target
               .value as ProposalDraftForm["proposalType"];
+            const nextTypeOption = proposalTypeOptions.find(
+              (option) => option.value === nextType,
+            );
+            if (nextTypeOption && !nextTypeOption.eligible) return;
             setHasChosenType(true);
             if (templateId === "system") {
               // Keep kind stable even when this type has no system presets.
@@ -265,12 +291,7 @@ export function EssentialsStep(props: {
               (preset) => preset.proposalType === nextType,
             );
             if (nextOptions.length > 0) {
-              const preferPolicyByDefault =
-                nextType === "administrative" || nextType === "dao-core";
-              const nextPreset = preferPolicyByDefault
-                ? (nextOptions.find((preset) => !preset.formationEligible) ??
-                  nextOptions[0])
-                : nextOptions[0];
+              const nextPreset = nextOptions[0];
               onPresetChange(nextPreset.id);
             } else {
               onPresetChange("");
@@ -280,11 +301,14 @@ export function EssentialsStep(props: {
           <option value="" disabled>
             Select type
           </option>
-          {PROPOSAL_TYPE_OPTIONS.filter((option) =>
-            isSystemProposal ? option.value !== "basic" : true,
-          ).map((option) => (
-            <option key={option.value} value={option.value}>
+          {proposalTypeOptions.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+              disabled={!option.eligible}
+            >
               {option.label}
+              {option.eligible ? "" : ` (requires ${option.requiredTier})`}
             </option>
           ))}
         </Select>

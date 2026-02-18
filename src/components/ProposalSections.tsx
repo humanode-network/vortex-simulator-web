@@ -7,6 +7,7 @@ import {
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
+import { formatDateTime } from "@/lib/dateTime";
 
 export type ProposalSummaryStat = {
   label: string;
@@ -244,13 +245,17 @@ export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
           >
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <p className="font-semibold text-text">{item.title}</p>
-              <p className="text-xs text-muted">{item.timestamp}</p>
+              <p className="text-xs text-muted">
+                {formatDateTime(item.timestamp)}
+              </p>
             </div>
             {item.detail ? (
               <p className="text-xs text-muted">{item.detail}</p>
             ) : null}
             {item.actor ? (
-              <p className="text-xs text-muted">Actor: {item.actor}</p>
+              <p className="break-words text-xs text-muted [overflow-wrap:anywhere]">
+                Actor: {item.actor}
+              </p>
             ) : null}
           </Surface>
         ))}

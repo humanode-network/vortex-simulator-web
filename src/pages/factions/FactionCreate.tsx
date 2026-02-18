@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { Kicker } from "@/components/Kicker";
@@ -23,19 +23,65 @@ type FormState = {
   cofoundersText: string;
 };
 
+const FACTION_CREATE_DRAFT_KEY = "vortex:faction-create-draft:v1";
+
+function loadFactionDraft(): { step: 1 | 2 | 3; form: FormState } | null {
+  try {
+    const raw = localStorage.getItem(FACTION_CREATE_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<{
+      step: 1 | 2 | 3;
+      form: Partial<FormState>;
+    }>;
+    const step =
+      parsed.step === 1 || parsed.step === 2 || parsed.step === 3
+        ? parsed.step
+        : 1;
+    const form = parsed.form ?? {};
+    return {
+      step,
+      form: {
+        name: typeof form.name === "string" ? form.name : "",
+        description: typeof form.description === "string" ? form.description : "",
+        focus: typeof form.focus === "string" && form.focus.trim() ? form.focus : "General",
+        visibility: form.visibility === "private" ? "private" : "public",
+        goalsText: typeof form.goalsText === "string" ? form.goalsText : "",
+        tagsText: typeof form.tagsText === "string" ? form.tagsText : "",
+        cofoundersText:
+          typeof form.cofoundersText === "string" ? form.cofoundersText : "",
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveFactionDraft(payload: { step: 1 | 2 | 3; form: FormState }) {
+  localStorage.setItem(FACTION_CREATE_DRAFT_KEY, JSON.stringify(payload));
+}
+
+function clearFactionDraft() {
+  localStorage.removeItem(FACTION_CREATE_DRAFT_KEY);
+}
+
 const FactionCreate: React.FC = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const initialDraft = loadFactionDraft();
+  const [step, setStep] = useState<1 | 2 | 3>(initialDraft?.step ?? 1);
   const [saving, setSaving] = useState(false);
+  const [draftNotice, setDraftNotice] = useState<string | null>(
+    initialDraft ? "Loaded saved draft." : null,
+  );
   const [error, setError] = useState<string | null>(null);
+  const createIdempotencyKeyRef = useRef<string | null>(null);
   const [form, setForm] = useState<FormState>({
-    name: "",
-    description: "",
-    focus: "General",
-    visibility: "public",
-    goalsText: "",
-    tagsText: "",
-    cofoundersText: "",
+    name: initialDraft?.form.name ?? "",
+    description: initialDraft?.form.description ?? "",
+    focus: initialDraft?.form.focus ?? "General",
+    visibility: initialDraft?.form.visibility ?? "public",
+    goalsText: initialDraft?.form.goalsText ?? "",
+    tagsText: initialDraft?.form.tagsText ?? "",
+    cofoundersText: initialDraft?.form.cofoundersText ?? "",
   });
 
   const goals = useMemo(
@@ -67,7 +113,7 @@ const FactionCreate: React.FC = () => {
 
   const canGoNextStep1 =
     form.name.trim().length >= 2 &&
-    form.description.trim().length >= 10 &&
+    form.description.trim().length >= 2 &&
     form.focus.trim().length > 0;
   const canSubmit = canGoNextStep1;
 
@@ -76,6 +122,9 @@ const FactionCreate: React.FC = () => {
     setSaving(true);
     setError(null);
     try {
+      if (!createIdempotencyKeyRef.current) {
+        createIdempotencyKeyRef.current = `faction-create:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+      }
       const response = await apiFactionCreate({
         name: form.name.trim(),
         description: form.description.trim(),
@@ -84,7 +133,9 @@ const FactionCreate: React.FC = () => {
         goals,
         tags,
         cofounders,
+        idempotencyKey: createIdempotencyKeyRef.current,
       });
+      clearFactionDraft();
       navigate(`/app/factions/${response.faction.id}`);
     } catch (e) {
       const payload = getApiErrorPayload(e);
@@ -95,6 +146,16 @@ const FactionCreate: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const onSaveDraft = () => {
+    saveFactionDraft({ step, form });
+    setDraftNotice("Draft saved locally.");
+  };
+
+  const onClearDraft = () => {
+    clearFactionDraft();
+    setDraftNotice("Draft cleared.");
   };
 
   return (
@@ -159,6 +220,9 @@ const FactionCreate: React.FC = () => {
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   placeholder="What this faction is for and how it contributes."
                 />
+                <p className="text-xs text-muted">
+                  Minimum 2 characters.
+                </p>
               </label>
               <label className="block space-y-1">
                 <span className="text-sm text-muted">Focus</span>
@@ -284,6 +348,11 @@ const FactionCreate: React.FC = () => {
               {error}
             </div>
           ) : null}
+          {draftNotice ? (
+            <div className="rounded-md border border-border bg-panel-alt px-3 py-2 text-sm text-muted">
+              {draftNotice}
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between">
             <Button
@@ -297,6 +366,22 @@ const FactionCreate: React.FC = () => {
               Back
             </Button>
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSaveDraft}
+                disabled={saving}
+              >
+                Save draft
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onClearDraft}
+                disabled={saving}
+              >
+                Clear draft
+              </Button>
               {step < 3 ? (
                 <Button
                   type="button"

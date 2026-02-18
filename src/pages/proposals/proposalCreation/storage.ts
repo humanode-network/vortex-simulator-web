@@ -7,30 +7,38 @@ export const STORAGE_TEMPLATE_KEY = "vortex:proposalCreation:template";
 export const STORAGE_PRESET_KEY = "vortex:proposalCreation:preset";
 const STORAGE_SERVER_DRAFT_ID_KEY = "vortex:proposalCreation:serverDraftId";
 
+export function normalizeDraft(
+  parsed: Partial<ProposalDraftForm> | null | undefined,
+): ProposalDraftForm {
+  const chamberId =
+    typeof parsed?.chamberId === "string" ? parsed.chamberId : "";
+  return {
+    ...DEFAULT_DRAFT,
+    ...(parsed ?? {}),
+    chamberId,
+    timeline: Array.isArray(parsed?.timeline)
+      ? parsed.timeline.filter(Boolean)
+      : DEFAULT_DRAFT.timeline,
+    outputs: Array.isArray(parsed?.outputs)
+      ? parsed.outputs.filter(Boolean)
+      : DEFAULT_DRAFT.outputs,
+    openSlotNeeds: Array.isArray(parsed?.openSlotNeeds)
+      ? parsed.openSlotNeeds.filter(Boolean)
+      : DEFAULT_DRAFT.openSlotNeeds,
+    budgetItems: Array.isArray(parsed?.budgetItems)
+      ? parsed.budgetItems.filter(Boolean)
+      : DEFAULT_DRAFT.budgetItems,
+    attachments: Array.isArray(parsed?.attachments)
+      ? parsed.attachments.filter(Boolean)
+      : DEFAULT_DRAFT.attachments,
+  };
+}
+
 export function loadDraft(): ProposalDraftForm {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_DRAFT;
-    const parsed = JSON.parse(raw) as Partial<ProposalDraftForm>;
-    const chamberId =
-      typeof parsed.chamberId === "string" ? parsed.chamberId : "";
-    return {
-      ...DEFAULT_DRAFT,
-      ...parsed,
-      chamberId,
-      timeline: Array.isArray(parsed.timeline)
-        ? parsed.timeline.filter(Boolean)
-        : DEFAULT_DRAFT.timeline,
-      outputs: Array.isArray(parsed.outputs)
-        ? parsed.outputs.filter(Boolean)
-        : DEFAULT_DRAFT.outputs,
-      budgetItems: Array.isArray(parsed.budgetItems)
-        ? parsed.budgetItems.filter(Boolean)
-        : DEFAULT_DRAFT.budgetItems,
-      attachments: Array.isArray(parsed.attachments)
-        ? parsed.attachments.filter(Boolean)
-        : DEFAULT_DRAFT.attachments,
-    };
+    return normalizeDraft(JSON.parse(raw) as Partial<ProposalDraftForm>);
   } catch {
     return DEFAULT_DRAFT;
   }

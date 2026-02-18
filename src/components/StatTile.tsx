@@ -42,7 +42,12 @@ export const StatTile: React.FC<StatTileProps> = ({
       >
         {label}
       </Kicker>
-      <p className={cn("text-base font-semibold text-text", valueClassName)}>
+      <p
+        className={cn(
+          "min-w-0 break-words [overflow-wrap:anywhere] text-base font-semibold text-text",
+          valueClassName,
+        )}
+      >
         {value}
       </p>
     </Surface>

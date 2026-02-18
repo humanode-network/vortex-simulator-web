@@ -12,7 +12,6 @@ import {
 } from "@/components/ProposalSections";
 import {
   apiFormationJoin,
-  apiFormationMilestoneRequestUnlock,
   apiFormationMilestoneSubmit,
   apiProposalFormationPage,
   apiProposalTimeline,
@@ -102,6 +101,13 @@ const ProposalFormation: React.FC = () => {
   const milestones = parseRatio(project.milestones);
   const nextMilestone =
     milestones.total > 0 ? milestones.filled + 1 : undefined;
+  const isProposerViewer =
+    Boolean(auth.address) &&
+    auth.address!.toLowerCase() === project.proposer.toLowerCase();
+  const canJoinProject =
+    project.projectState !== "ready_to_finish" &&
+    project.projectState !== "completed" &&
+    project.projectState !== "suspended";
 
   const runAction = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -141,7 +147,13 @@ const ProposalFormation: React.FC = () => {
             <Button
               type="button"
               size="lg"
-              disabled={!auth.authenticated || !auth.eligible || actionBusy}
+              disabled={
+                !auth.authenticated ||
+                !auth.eligible ||
+                actionBusy ||
+                isProposerViewer ||
+                !canJoinProject
+              }
               onClick={() =>
                 void runAction(async () => {
                   if (!id) return;
@@ -176,33 +188,14 @@ const ProposalFormation: React.FC = () => {
               Submit M{nextMilestone ?? "—"}
             </Button>
 
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={
-                !auth.authenticated ||
-                !auth.eligible ||
-                actionBusy ||
-                !nextMilestone ||
-                nextMilestone > milestones.total
-              }
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id || !nextMilestone) return;
-                  await apiFormationMilestoneRequestUnlock({
-                    proposalId: id,
-                    milestoneIndex: nextMilestone,
-                  });
-                })
-              }
-            >
-              Unlock M{nextMilestone ?? "—"}
-            </Button>
           </div>
 
           {!auth.authenticated ? (
             <p className="text-xs text-muted">Connect a wallet to act.</p>
+          ) : isProposerViewer ? (
+            <p className="text-xs text-muted">
+              Proposer is counted in team slots by default.
+            </p>
           ) : auth.authenticated && !auth.eligible ? (
             <p className="text-xs text-muted">
               Wallet is connected, but not active (gated).

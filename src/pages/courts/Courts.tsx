@@ -13,6 +13,7 @@ import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiCourts } from "@/lib/apiClient";
+import { formatDateTime } from "@/lib/dateTime";
 import type { CourtCaseDto, CourtCaseStatusDto } from "@/types/api";
 
 const Courts: React.FC = () => {
@@ -156,7 +157,7 @@ const Courts: React.FC = () => {
                         <div className="flex flex-col items-end gap-2">
                           <CourtStatusBadge status={courtCase.status} />
                           <p className="text-xs text-muted">
-                            Opened {courtCase.opened}
+                            Opened {formatDateTime(courtCase.opened)}
                           </p>
                         </div>
                       </div>

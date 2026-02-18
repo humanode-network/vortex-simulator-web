@@ -23,6 +23,7 @@ import {
   PROOF_TILE_CLASS,
   type ActivityFilter,
   activityMatches,
+  normalizeDetailValue,
   shortAddress,
   shouldShowDetail,
 } from "@/lib/profileUi";
@@ -245,7 +246,7 @@ const HumanNode: React.FC = () => {
                 detail.label === "Tier" ? (
                   <TierLabel tier={detail.value} />
                 ) : (
-                  detail.value
+                  normalizeDetailValue(detail.label, detail.value)
                 )
               }
               className={DETAIL_TILE_CLASS}

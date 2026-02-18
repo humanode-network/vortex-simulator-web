@@ -11,6 +11,7 @@ import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import { apiHuman } from "@/lib/apiClient";
 import { formatActivityTimestamp } from "@/lib/profileUi";
+import { formatDateTime } from "@/lib/dateTime";
 import type { HumanNodeProfileDto } from "@/types/api";
 
 const FullHistory: React.FC = () => {
@@ -47,7 +48,7 @@ const FullHistory: React.FC = () => {
         action: item.action,
         context: item.context,
         detail: item.detail,
-        date: item.date,
+        date: formatDateTime(item.date),
         href: undefined,
       }))
     : governanceActions.map((item) => ({

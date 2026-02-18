@@ -1,0 +1,13 @@
+.pagehint-root {
+  position: fixed;
+  top: 1rem;
+  right: 0.25rem;
+  z-index: 40;
+}
+
+/* Hide page hint on tablet/mobile to keep header controls unobstructed. */
+@media (max-width: 960px) {
+  .pagehint-root {
+    display: none;
+  }
+}

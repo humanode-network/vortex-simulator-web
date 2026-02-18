@@ -4,6 +4,7 @@ export type TimelineItem = {
   id: string;
   title: string;
   timeframe: string;
+  budgetHmnd?: string;
 };
 
 export type LinkItem = {
@@ -16,6 +17,12 @@ export type BudgetItem = {
   id: string;
   description: string;
   amount: string;
+};
+
+export type OpenSlotNeedItem = {
+  id: string;
+  title: string;
+  desc: string;
 };
 
 export type ProposalDraftForm = {
@@ -49,6 +56,7 @@ export type ProposalDraftForm = {
   };
   timeline: TimelineItem[];
   outputs: LinkItem[];
+  openSlotNeeds: OpenSlotNeedItem[];
   budgetItems: BudgetItem[];
   aboutMe: string;
   attachments: LinkItem[];
@@ -68,10 +76,11 @@ export const DEFAULT_DRAFT: ProposalDraftForm = {
   proposalType: "basic",
   metaGovernance: undefined,
   timeline: [
-    { id: "ms-1", title: "Milestone 1", timeframe: "2 weeks" },
-    { id: "ms-2", title: "Milestone 2", timeframe: "1 month" },
+    { id: "ms-1", title: "Milestone 1", timeframe: "2 weeks", budgetHmnd: "" },
+    { id: "ms-2", title: "Milestone 2", timeframe: "1 month", budgetHmnd: "" },
   ],
   outputs: [{ id: "out-1", label: "Public update", url: "" }],
+  openSlotNeeds: [],
   budgetItems: [{ id: "b-1", description: "Work package", amount: "" }],
   aboutMe: "",
   attachments: [],

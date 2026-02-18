@@ -34,7 +34,7 @@ export function CardActionsRow({
       {proposer && proposerId ? (
         <Link
           to={`/app/human-nodes/${proposerId}`}
-          className="text-sm font-semibold text-primary"
+          className="min-w-0 break-words text-sm font-semibold text-primary [overflow-wrap:anywhere]"
         >
           Proposer: {proposer}
         </Link>
@@ -42,9 +42,9 @@ export function CardActionsRow({
         <span className="text-sm text-muted"> </span>
       )}
       <div className="flex flex-wrap gap-2">
-        {primaryHref && primaryLabel ? (
+        {primaryHref ? (
           <Button asChild size="sm">
-            <Link to={primaryHref}>{primaryLabel}</Link>
+            <Link to={primaryHref}>{primaryLabel ?? "Open"}</Link>
           </Button>
         ) : null}
         {secondaryLabel ? (

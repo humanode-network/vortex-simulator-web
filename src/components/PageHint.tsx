@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Kicker } from "@/components/Kicker";
 import { Modal } from "@/components/Modal";
+import "./PageHint.css";
 
 type PageHintProps = {
   pageId: string;
@@ -26,7 +27,7 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
   return (
     <div
       className={cn(
-        "fixed top-4 right-1 z-40 sm:top-6 sm:right-2 md:right-3",
+        "pagehint-root",
         className,
       )}
     >
