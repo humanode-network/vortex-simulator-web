@@ -35,7 +35,7 @@ import type {
 
 const isLikelyAddress = (value: string) => {
   const normalized = value.trim().toLowerCase();
-  if (!normalized.startsWith("hmp")) return false;
+  if (!normalized.startsWith("hm")) return false;
   if (normalized.length < 24) return false;
   return /^[a-z0-9]+$/.test(normalized);
 };
