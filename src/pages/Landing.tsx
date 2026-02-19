@@ -109,21 +109,37 @@ const Landing: React.FC = () => {
               <Link to="/guide">Guide</Link>
             </Button>
           </div>
+
+          <div className="inline-flex max-w-md flex-col items-center justify-center gap-2 rounded-xl border-2 border-red-500 bg-yellow-700/20 p-2">
+            <div className="text-sm text-white/80">
+              This is Vortex Simulator - an off-chain, centralized-server app
+              implementing the draft of the procedures we plan for the real
+              on-chain Vortex DAO in the future.
+            </div>
+            <div className="font-mono text-xs text-white/70">
+              Disclaimer: Vortex Simulator has been implemented with an
+              experimental development workflow that does not apply our usual
+              Q/A and code reviews, and relies heavily on AI assistance (i.e.
+              not really vibe-coded but not really written with our code
+              standards either). The we don't plan to use this flow to build the
+              real Vortex parts, and neither we plan to re-use any substantial
+              parts of this codebase.
+            </div>
+            <div className="text-xs text-white/70">
+              Leave your feedback{" "}
+              <a
+                href="http://link.humanode.io/chat/vortex-simulator-feedback"
+                target="_blank"
+                rel="noreferrer"
+                className="pointer-events-auto font-semibold text-(--pagehint) underline decoration-(--pagehint) underline-offset-4 hover:text-white hover:decoration-white"
+              >
+                here
+              </a>
+              . Welcome to testing.
+            </div>
+          </div>
         </div>
 
-        <div className="absolute right-0 bottom-12 left-0 px-6 text-center text-xs text-white/70">
-          These are demonstration mockups, not the final Vortex UI. It's all
-          WIP, so leave your feedback{" "}
-          <a
-            href="http://link.humanode.io/chat/vortex-experimental-mockups-feedback"
-            target="_blank"
-            rel="noreferrer"
-            className="pointer-events-auto font-semibold text-(--pagehint) underline decoration-(--pagehint) underline-offset-4 hover:text-white hover:decoration-white"
-          >
-            here
-          </a>
-          . Welcome to testing.
-        </div>
         <MarketingFooter pinned>2021 – 2026 Humanode.io</MarketingFooter>
       </div>
     </MarketingPage>
