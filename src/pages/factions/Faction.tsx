@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { PageHint } from "@/components/PageHint";
+import { AddressInline } from "@/components/AddressInline";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
 import {
@@ -388,9 +389,11 @@ const Faction: React.FC = () => {
                     className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
-                        {membership.address}
-                      </p>
+                      <AddressInline
+                        address={membership.address}
+                        className="text-text"
+                        textClassName="text-sm font-semibold [overflow-wrap:anywhere] break-words"
+                      />
                       <p className="text-xs text-muted">
                         Joined {formatDateTime(membership.joinedAt)}
                       </p>
@@ -443,13 +446,16 @@ const Faction: React.FC = () => {
                 className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
-                    {invite.address}
-                  </p>
-                  <p className="text-xs text-muted">
-                    Invited by {invite.invitedBy} ·{" "}
-                    {formatDateTime(invite.invitedAt)}
-                  </p>
+                  <AddressInline
+                    address={invite.address}
+                    className="text-text"
+                    textClassName="text-sm font-semibold [overflow-wrap:anywhere] break-words"
+                  />
+                  <div className="flex flex-wrap items-center gap-1 text-xs text-muted">
+                    <span>Invited by</span>
+                    <AddressInline address={invite.invitedBy} />
+                    <span>· {formatDateTime(invite.invitedAt)}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{invite.status}</Badge>

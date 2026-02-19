@@ -18,11 +18,8 @@ import { Kicker } from "@/components/Kicker";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import {
-  DETAIL_TILE_CLASS,
-  normalizeDetailValue,
-  shortAddress,
-} from "@/lib/profileUi";
+import { AddressInline } from "@/components/AddressInline";
+import { DETAIL_TILE_CLASS, normalizeDetailValue } from "@/lib/profileUi";
 import {
   apiChambers,
   apiFactions,
@@ -35,6 +32,13 @@ import type {
   FormationProjectDto,
   HumanNodeDto,
 } from "@/types/api";
+
+const isLikelyAddress = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized.startsWith("hmp")) return false;
+  if (normalized.length < 24) return false;
+  return /^[a-z0-9]+$/.test(normalized);
+};
 
 const HumanNodes: React.FC = () => {
   const [nodes, setNodes] = useState<HumanNodeDto[] | null>(null);
@@ -295,6 +299,7 @@ const HumanNodes: React.FC = () => {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {filtered.map((node) => {
                 const factionName = factionsById[node.factionId]?.name ?? "—";
+                const nameIsAddress = isLikelyAddress(node.name);
                 const formationProjects = (node.formationProjectIds ?? [])
                   .map((projectId) => formationProjectsById[projectId]?.title)
                   .filter((title): title is string => Boolean(title));
@@ -356,13 +361,27 @@ const HumanNodes: React.FC = () => {
                   <Card key={node.id}>
                     <CardContent className="flex flex-col gap-4 pt-4">
                       <div>
-                        <h3 className="text-lg font-semibold">{node.name}</h3>
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
-                          <span>{node.role}</span>
-                          <Badge size="sm" variant="muted" title={node.id}>
-                            {shortAddress(node.id)}
-                          </Badge>
-                        </div>
+                        {nameIsAddress ? (
+                          <AddressInline
+                            address={node.id}
+                            className="mx-auto flex w-full items-center justify-center"
+                            textClassName="text-2xl font-semibold tracking-wide sm:text-3xl"
+                          />
+                        ) : (
+                          <h3 className="text-lg font-semibold">{node.name}</h3>
+                        )}
+                        {!nameIsAddress ? (
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+                            <Badge
+                              size="sm"
+                              variant="muted"
+                              title={node.id}
+                              className="max-w-[220px] pr-1"
+                            >
+                              <AddressInline address={node.id} />
+                            </Badge>
+                          </div>
+                        ) : null}
                       </div>
                       <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">
                         {tileItems.map((item) => (
@@ -402,45 +421,63 @@ const HumanNodes: React.FC = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {filtered.map((node) => (
-                <Card key={node.id}>
-                  <CardContent className="pt-4 pb-3">
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-base font-semibold">{node.name}</h4>
-                        <p className="text-sm text-muted">{node.role}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge size="sm" variant="outline">
-                          {factionsById[node.factionId]?.name ?? "—"}
-                        </Badge>
-                        <Badge size="sm">
-                          <HintLabel termId="acm" className="mr-1">
-                            ACM
-                          </HintLabel>{" "}
-                          {node.cmTotals?.acm ?? node.acm}
-                        </Badge>
-                        <Badge size="sm" variant="outline">
-                          LCM {node.cmTotals?.lcm ?? 0}
-                        </Badge>
-                        <Badge size="sm" variant="outline">
-                          MCM {node.cmTotals?.mcm ?? 0}
-                        </Badge>
-                        {node.formationCapable && (
+              {filtered.map((node) => {
+                const nameIsAddress = isLikelyAddress(node.name);
+                return (
+                  <Card key={node.id}>
+                    <CardContent className="pt-4 pb-3">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div className="min-w-0 flex-1">
+                          {nameIsAddress ? (
+                            <AddressInline
+                              address={node.id}
+                              className="max-w-full"
+                              textClassName="text-lg font-semibold tracking-wide sm:text-xl"
+                            />
+                          ) : (
+                            <h4 className="text-base font-semibold">
+                              {node.name}
+                            </h4>
+                          )}
+                          <p className="text-sm text-muted">
+                            <TierLabel tier={node.tier}>
+                              {node.tier.charAt(0).toUpperCase() +
+                                node.tier.slice(1)}
+                            </TierLabel>
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
                           <Badge size="sm" variant="outline">
-                            Formation
+                            {factionsById[node.factionId]?.name ?? "—"}
                           </Badge>
-                        )}
+                          <Badge size="sm">
+                            <HintLabel termId="acm" className="mr-1">
+                              ACM
+                            </HintLabel>{" "}
+                            {node.cmTotals?.acm ?? node.acm}
+                          </Badge>
+                          <Badge size="sm" variant="outline">
+                            LCM {node.cmTotals?.lcm ?? 0}
+                          </Badge>
+                          <Badge size="sm" variant="outline">
+                            MCM {node.cmTotals?.mcm ?? 0}
+                          </Badge>
+                          {node.formationCapable && (
+                            <Badge size="sm" variant="outline">
+                              Formation
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="ml-auto">
+                          <Button asChild size="sm">
+                            <Link to={`/app/human-nodes/${node.id}`}>Open</Link>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="ml-auto">
-                        <Button asChild size="sm">
-                          <Link to={`/app/human-nodes/${node.id}`}>Open</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>

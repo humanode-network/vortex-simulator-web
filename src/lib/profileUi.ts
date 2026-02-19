@@ -66,7 +66,7 @@ export const normalizeDetailValue = (label: string, value: string) => {
   return formatDateTime(value);
 };
 
-export const shortAddress = (value: string, size = 6) => {
+export const shortAddress = (value: string, size = 4) => {
   if (!value) return value;
   if (value.length <= size * 2 + 3) return value;
   return `${value.slice(0, size)}…${value.slice(-size)}`;
