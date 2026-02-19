@@ -7,6 +7,7 @@
     "general": ["hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs"]
   },
   "genesisUserTiers": {
-    "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs": "Citizen"
+    "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs": "Citizen",
+    "hmspQwDydCF6eGz3bdbFQNwDZiJeKCATcB1jC82trofPRfChB": "Consul"
   }
 }

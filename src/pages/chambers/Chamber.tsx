@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { TierLabel } from "@/components/TierLabel";
 import { PipelineList } from "@/components/PipelineList";
 import { StatGrid, makeChamberStats } from "@/components/StatGrid";
+import { AddressInline } from "@/components/AddressInline";
 import type {
   ChamberChatPeerDto,
   ChamberChatSignalDto,
@@ -713,9 +714,11 @@ const Chamber: React.FC = () => {
                             key={entry.address}
                             className="flex flex-wrap items-center justify-between gap-2"
                           >
-                            <span className="min-w-0 flex-1 [overflow-wrap:anywhere] break-words">
-                              {entry.address}
-                            </span>
+                            <AddressInline
+                              address={entry.address}
+                              className="min-w-0 flex-1"
+                              textClassName="[overflow-wrap:anywhere] break-words"
+                            />
                             <span className="text-xs text-muted">
                               LCM {entry.lcm} · MCM {entry.mcm} · ACM{" "}
                               {entry.acm}
@@ -744,9 +747,11 @@ const Chamber: React.FC = () => {
                             key={`${entry.address}-${entry.submittedAt}`}
                             className="flex flex-col gap-1"
                           >
-                            <span className="min-w-0 font-semibold [overflow-wrap:anywhere] break-words">
-                              {entry.address}
-                            </span>
+                            <AddressInline
+                              address={entry.address}
+                              className="min-w-0"
+                              textClassName="font-semibold [overflow-wrap:anywhere] break-words"
+                            />
                             <span className="text-xs text-muted">
                               M × {entry.multiplier} ·{" "}
                               {formatDate(entry.submittedAt)}
