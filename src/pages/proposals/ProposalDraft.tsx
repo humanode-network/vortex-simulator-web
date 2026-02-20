@@ -13,6 +13,7 @@ import { Surface } from "@/components/Surface";
 import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { TierLabel } from "@/components/TierLabel";
+import { AddressInline } from "@/components/AddressInline";
 import { AttachmentList } from "@/components/AttachmentList";
 import { TitledSurface } from "@/components/TitledSurface";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
@@ -155,7 +156,13 @@ const ProposalDraft: React.FC = () => {
             />
             <StatTile
               label="Proposer"
-              value={draftDetails.proposer}
+              value={
+                <AddressInline
+                  address={draftDetails.proposer}
+                  className="justify-center"
+                  textClassName="text-base"
+                />
+              }
               radius="2xl"
               className="px-4 py-4"
               labelClassName="text-[0.8rem]"

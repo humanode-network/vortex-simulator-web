@@ -14,6 +14,7 @@ import type { ProposalStage } from "@/types/stages";
 import { CardActionsRow } from "@/components/CardActionsRow";
 import { Surface } from "@/components/Surface";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { HintLabel } from "@/components/Hint";
 import { getFormationProgress } from "@/lib/dtoParsers";
 import {
   apiProposalChamberPage,
@@ -310,19 +311,30 @@ const Proposals: React.FC = () => {
                     const attentionNeededPercent = Math.round(
                       poolPage.attentionQuorum * 100,
                     );
-                    const upvoteFloorPercent = Math.round(
-                      (poolPage.upvoteFloor / activeGovernors) * 100,
+                    const upvoteFloorFractionPercent = Math.round(
+                      ((poolPage.thresholdContext?.quorumThreshold
+                        ?.upvoteFloorFraction ?? 0.1) *
+                        1000) /
+                        10,
                     );
-                    const upvoteCurrentPercent = Math.round(
-                      (poolPage.upvotes / activeGovernors) * 100,
+                    const upvoteFloorProgressPercent = Math.round(
+                      Math.min(
+                        1,
+                        poolPage.upvoteFloor > 0
+                          ? poolPage.upvotes / poolPage.upvoteFloor
+                          : 0,
+                      ) * upvoteFloorFractionPercent,
                     );
-                    const meetsAttention =
-                      engaged / activeGovernors >= poolPage.attentionQuorum;
+                    const engagedNeeded = Math.min(
+                      activeGovernors,
+                      Math.max(
+                        1,
+                        Math.ceil(poolPage.attentionQuorum * activeGovernors),
+                      ),
+                    );
+                    const meetsAttention = engaged >= engagedNeeded;
                     const meetsUpvoteFloor =
                       poolPage.upvotes >= poolPage.upvoteFloor;
-                    const engagedNeeded = Math.ceil(
-                      poolPage.attentionQuorum * activeGovernors,
-                    );
 
                     return {
                       activeGovernors,
@@ -334,8 +346,8 @@ const Proposals: React.FC = () => {
                       engaged,
                       attentionPercent,
                       attentionNeededPercent,
-                      upvoteFloorPercent,
-                      upvoteCurrentPercent,
+                      upvoteFloorFractionPercent,
+                      upvoteFloorProgressPercent,
                       meetsAttention,
                       meetsUpvoteFloor,
                       engagedNeeded,
@@ -477,15 +489,25 @@ const Proposals: React.FC = () => {
 
                       <div className="grid gap-3 md:grid-cols-2">
                         <StageDataTile
-                          title="Attention quorum"
+                          title={
+                            <HintLabel
+                              termId="quorum_of_attention"
+                              termText="Attention quorum"
+                            />
+                          }
                           description={`Engaged ${poolStats.engaged} / ${poolStats.engagedNeeded} governors`}
                           value={`${poolStats.attentionPercent}% / ${poolStats.attentionNeededPercent}%`}
                           tone={poolStats.meetsAttention ? "ok" : "warn"}
                         />
                         <StageDataTile
-                          title="Upvote floor"
+                          title={
+                            <HintLabel
+                              termId="upvote_floor"
+                              termText="Upvote floor"
+                            />
+                          }
                           description={`Upvotes ${poolPage.upvotes} / ${poolStats.upvoteFloor} governors`}
-                          value={`${poolStats.upvoteCurrentPercent}% / ${poolStats.upvoteFloorPercent}%`}
+                          value={`${poolStats.upvoteFloorProgressPercent}% / ${poolStats.upvoteFloorFractionPercent}%`}
                           tone={poolStats.meetsUpvoteFloor ? "ok" : "warn"}
                         />
                       </div>

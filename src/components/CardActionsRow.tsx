@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { Button } from "@/components/primitives/button";
+import { AddressInline } from "@/components/AddressInline";
 import { cn } from "@/lib/utils";
 
 type CardActionsRowProps = {
@@ -31,13 +32,23 @@ export function CardActionsRow({
         className,
       )}
     >
-      {proposer && proposerId ? (
-        <Link
-          to={`/app/human-nodes/${proposerId}`}
-          className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere] break-words text-primary"
-        >
-          Proposer: {proposer}
-        </Link>
+      {proposer ? (
+        <span className="inline-flex min-w-0 items-center gap-2 text-sm text-muted">
+          <span>Proposer:</span>
+          <AddressInline
+            address={proposer}
+            className="min-w-0"
+            textClassName="text-sm font-semibold text-text"
+          />
+          {proposerId ? (
+            <Link
+              to={`/app/human-nodes/${proposerId}`}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Profile
+            </Link>
+          ) : null}
+        </span>
       ) : (
         <span className="text-sm text-muted"> </span>
       )}

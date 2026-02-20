@@ -4,6 +4,7 @@ import {
   ProposalStageBar,
   type ProposalStage,
 } from "@/components/ProposalStageBar";
+import { AddressInline } from "@/components/AddressInline";
 import { StatTile } from "@/components/StatTile";
 
 type ProposalPageHeaderProps = {
@@ -36,11 +37,17 @@ export function ProposalPageHeader({
         />
         <StatTile
           label="Proposer"
-          value={proposer}
+          value={
+            <AddressInline
+              address={proposer}
+              className="justify-center"
+              textClassName="text-base sm:text-lg"
+            />
+          }
           radius="2xl"
           className="px-4 py-4"
           labelClassName="text-[0.8rem]"
-          valueClassName="text-2xl"
+          valueClassName="text-lg"
         />
       </div>
       {children}

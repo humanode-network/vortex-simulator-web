@@ -12,6 +12,7 @@ import {
   ProposalTimelineCard,
 } from "@/components/ProposalSections";
 import { Surface } from "@/components/Surface";
+import { HintLabel } from "@/components/Hint";
 import {
   apiChamberVote,
   apiProposalChamberPage,
@@ -100,9 +101,13 @@ const ProposalChamber: React.FC = () => {
   const totalVotes = yesTotal + noTotal + abstainTotal;
   const engaged = proposal.engagedGovernors;
   const activeGovernors = Math.max(1, proposal.activeGovernors);
-  const quorumNeeded = Math.ceil(activeGovernors * proposal.attentionQuorum);
+  const quorumFraction =
+    proposal.thresholdContext?.quorumThreshold?.quorumFraction ??
+    proposal.attentionQuorum ??
+    0.33;
+  const quorumNeeded = proposal.quorumNeeded;
   const quorumPercent = Math.round((engaged / activeGovernors) * 100);
-  const quorumNeededPercent = Math.round(proposal.attentionQuorum * 100);
+  const quorumNeededPercent = Math.round(quorumFraction * 100);
   const yesPercentOfQuorum =
     engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;
   const yesPercentOfTotal =
@@ -203,11 +208,18 @@ const ProposalChamber: React.FC = () => {
         <h2 className="text-lg font-semibold text-text">Voting quorum</h2>
         <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
-            label="Voting quorum (%)"
+            label={
+              <HintLabel
+                termId="quorum_of_vote"
+                termText="Voting quorum"
+                suffix=" (%)"
+              />
+            }
             value={
               <>
                 <span>
                   {quorumPercent}% / {quorumNeededPercent}%
+                  <span className="text-muted"> + 1</span>
                 </span>
                 <span className="text-xs font-semibold text-muted">
                   {engaged} / {quorumNeeded}

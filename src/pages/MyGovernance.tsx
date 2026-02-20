@@ -108,7 +108,7 @@ const governingStatusForProgress = (
     return { label: "Stable", termId: "governing_status_stable" };
   }
 
-  if (completed >= required + 2) {
+  if (completed >= required + 1) {
     return { label: "Ahead", termId: "governing_status_ahead" };
   }
 

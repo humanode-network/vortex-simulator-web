@@ -4,6 +4,7 @@ import {
   AttachmentList,
   type AttachmentItem,
 } from "@/components/AttachmentList";
+import { AddressInline } from "@/components/AddressInline";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
@@ -229,6 +230,10 @@ type ProposalTimelineCardProps = {
   items: ProposalTimelineItem[];
 };
 
+function isLikelyAddress(value: string): boolean {
+  return /^[a-z0-9]{6,}$/i.test(value) && value.length >= 20;
+}
+
 export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
   return (
     <section className="space-y-3 text-sm text-text">
@@ -254,7 +259,16 @@ export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
             ) : null}
             {item.actor ? (
               <p className="text-xs [overflow-wrap:anywhere] break-words text-muted">
-                Actor: {item.actor}
+                Actor:{" "}
+                {isLikelyAddress(item.actor) ? (
+                  <AddressInline
+                    address={item.actor}
+                    className="inline-flex align-middle"
+                    textClassName="text-xs text-muted"
+                  />
+                ) : (
+                  item.actor
+                )}
               </p>
             ) : null}
           </Surface>

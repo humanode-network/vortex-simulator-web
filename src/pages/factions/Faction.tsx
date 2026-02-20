@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { PageHint } from "@/components/PageHint";
 import { AddressInline } from "@/components/AddressInline";
+import { StatTile } from "@/components/StatTile";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
 import {
@@ -21,14 +22,9 @@ import {
   apiFactionChannelLock,
   apiFactionCofounderInviteCancel,
   apiFactionDelete,
-  apiFactionInitiativeCreate,
-  apiFactionInitiativeTransition,
   apiFactionJoin,
   apiFactionLeave,
   apiFactionMemberRoleSet,
-  apiFactionThreadCreate,
-  apiFactionThreadReply,
-  apiFactionThreadTransition,
   apiFactionUpdate,
   apiMe,
   getApiErrorPayload,
@@ -42,7 +38,8 @@ function normalizeAddress(value: string): string {
 
 const Faction: React.FC = () => {
   const { id } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [faction, setFaction] = useState<FactionDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -55,15 +52,6 @@ const Faction: React.FC = () => {
     "members",
   );
 
-  const [threadChannelId, setThreadChannelId] = useState("");
-  const [threadTitle, setThreadTitle] = useState("");
-  const [threadBody, setThreadBody] = useState("");
-  const [threadReplyBody, setThreadReplyBody] = useState("");
-
-  const [initiativeTitle, setInitiativeTitle] = useState("");
-  const [initiativeIntent, setInitiativeIntent] = useState("");
-  const [initiativeChecklist, setInitiativeChecklist] = useState("");
-  const openedThreadRef = useRef<HTMLDivElement | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -115,43 +103,20 @@ const Faction: React.FC = () => {
   const canJoin = !!viewerAddress && !viewerMembership?.isActive;
   const canLeave =
     !!viewerAddress && !!viewerMembership?.isActive && viewerRole !== "founder";
-  const canPost = !!viewerAddress && !!viewerMembership?.isActive;
   const canManageMembers = isFounderAdmin;
 
   useEffect(() => {
-    if (!threadChannelId && channels.length > 0) {
-      setThreadChannelId(channels[0].id);
-    }
-  }, [channels, threadChannelId]);
-
-  const activeThreadId = searchParams.get("thread");
-  const activeThread = useMemo(
-    () => threads.find((thread) => thread.id === activeThreadId) ?? null,
-    [threads, activeThreadId],
-  );
-
-  useEffect(() => {
-    if (threads.length === 0) return;
-    if (!activeThreadId) {
-      const next = new URLSearchParams(searchParams);
-      next.set("thread", threads[0].id);
-      setSearchParams(next, { replace: true });
-      return;
-    }
-    if (!threads.some((thread) => thread.id === activeThreadId)) {
-      const next = new URLSearchParams(searchParams);
-      next.set("thread", threads[0].id);
-      setSearchParams(next, { replace: true });
-    }
-  }, [activeThreadId, searchParams, setSearchParams, threads]);
-
-  useEffect(() => {
-    if (!activeThread || !openedThreadRef.current) return;
-    openedThreadRef.current.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [activeThread?.id]);
+    const legacyThreadId = searchParams.get("thread");
+    if (!legacyThreadId || !id || threads.length === 0) return;
+    const thread = threads.find((item) => item.id === legacyThreadId);
+    if (!thread) return;
+    navigate(
+      `/app/factions/${id}/channels/${thread.channelId}/threads/${thread.id}`,
+      {
+        replace: true,
+      },
+    );
+  }, [id, navigate, searchParams, threads]);
 
   useEffect(() => {
     if (!faction) return;
@@ -210,62 +175,84 @@ const Faction: React.FC = () => {
     <div className="flex flex-col gap-6">
       <PageHint pageId="faction" />
       <Card>
-        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Kicker>{faction.focus}</Kicker>
-            <h1 className="text-xl font-semibold text-text">{faction.name}</h1>
-            <p className="text-sm text-muted">{faction.description}</p>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 space-y-3">
+              <Kicker>{faction.focus}</Kicker>
+              <h1 className="text-2xl leading-tight font-semibold text-text sm:text-3xl">
+                {faction.name}
+              </h1>
+              <p className="max-w-4xl text-sm leading-relaxed text-muted sm:text-base">
+                {faction.description}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
+              {canJoin ? (
+                <Button
+                  size="sm"
+                  disabled={mutating}
+                  onClick={() =>
+                    runAction(async () => {
+                      await apiFactionJoin({ factionId: faction.id });
+                    })
+                  }
+                >
+                  Join faction
+                </Button>
+              ) : null}
+              {canLeave ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={mutating}
+                  onClick={() =>
+                    runAction(async () => {
+                      await apiFactionLeave({ factionId: faction.id });
+                    })
+                  }
+                >
+                  Leave faction
+                </Button>
+              ) : null}
+              {isFounderAdmin ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditOpen((prev) => !prev)}
+                >
+                  {editOpen ? "Close edit" : "Edit faction"}
+                </Button>
+              ) : null}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">Members: {faction.members}</Badge>
-            <Badge variant="outline">Votes: {faction.votes}</Badge>
-            {viewerRole ? (
-              <Badge variant="outline">Role: {viewerRole}</Badge>
-            ) : null}
-          </div>
+
+          {viewerRole === "founder" ? (
+            <div className="mt-3">
+              <Badge variant="outline">
+                Founder leave disabled until transfer
+              </Badge>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-2">
-        {canJoin ? (
-          <Button
-            size="sm"
-            disabled={mutating}
-            onClick={() =>
-              runAction(async () => {
-                await apiFactionJoin({ factionId: faction.id });
-              })
-            }
-          >
-            Join faction
-          </Button>
-        ) : null}
-        {canLeave ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={mutating}
-            onClick={() =>
-              runAction(async () => {
-                await apiFactionLeave({ factionId: faction.id });
-              })
-            }
-          >
-            Leave faction
-          </Button>
-        ) : null}
-        {viewerRole === "founder" ? (
-          <Badge variant="outline">Founder leave disabled until transfer</Badge>
-        ) : null}
-        {isFounderAdmin ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setEditOpen((prev) => !prev)}
-          >
-            {editOpen ? "Close edit" : "Edit faction"}
-          </Button>
-        ) : null}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StatTile
+          label="Members"
+          value={String(faction.members)}
+          align="center"
+        />
+        <StatTile label="Votes" value={String(faction.votes)} align="center" />
+        <StatTile
+          label="Role"
+          value={
+            viewerRole
+              ? viewerRole.charAt(0).toUpperCase() + viewerRole.slice(1)
+              : "None"
+          }
+          align="center"
+        />
       </div>
 
       {isFounderAdmin && editOpen ? (
@@ -495,16 +482,21 @@ const Faction: React.FC = () => {
               channels.map((channel) => (
                 <div
                   key={channel.id}
-                  className="rounded-md border border-border px-3 py-2 text-sm"
+                  className="rounded-md border border-border text-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-text">{channel.title}</p>
+                    <Link
+                      to={`/app/factions/${faction.id}/channels/${channel.id}`}
+                      className="min-w-0 flex-1 px-3 py-2 hover:bg-panel-alt/50"
+                    >
+                      <p className="font-semibold text-text hover:underline">
+                        {channel.title}
+                      </p>
                       <p className="text-xs text-muted">
                         #{channel.slug} · {channel.writeScope} · threads{" "}
                         {channel.threadCount}
                       </p>
-                    </div>
+                    </Link>
                     {isFounderAdmin ? (
                       <Button
                         size="sm"
@@ -580,255 +572,47 @@ const Faction: React.FC = () => {
               initiatives.map((initiative) => (
                 <div
                   key={initiative.id}
-                  className="rounded-md border border-border px-3 py-2 text-sm"
+                  className="rounded-md border border-border text-sm"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-text">
-                      {initiative.title}
-                    </p>
-                    <Badge variant="outline">{initiative.status}</Badge>
-                  </div>
-                  <p className="text-xs text-muted">{initiative.intent}</p>
-                  {isFounderAdmin ? (
-                    <div className="mt-2 flex items-center gap-2">
-                      <Select
-                        value={initiative.status}
-                        onChange={(event) =>
-                          runAction(async () => {
-                            await apiFactionInitiativeTransition({
-                              factionId: faction.id,
-                              initiativeId: initiative.id,
-                              status: event.target.value as
-                                | "draft"
-                                | "active"
-                                | "blocked"
-                                | "done"
-                                | "archived",
-                            });
-                          })
-                        }
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                        <option value="blocked">Blocked</option>
-                        <option value="done">Done</option>
-                        <option value="archived">Archived</option>
-                      </Select>
+                  <Link
+                    to={`/app/factions/${faction.id}/initiatives/${initiative.id}`}
+                    className="block px-3 py-2 hover:bg-panel-alt/50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-text hover:underline">
+                          {initiative.title}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {initiative.intent}
+                        </p>
+                      </div>
+                      <Badge variant="outline">{initiative.status}</Badge>
                     </div>
-                  ) : null}
+                  </Link>
                 </div>
               ))
             )}
-            {canPost ? (
-              <div className="space-y-2 rounded-md border border-border p-3">
-                <p className="text-xs font-semibold text-muted">
-                  Create initiative
-                </p>
-                <Input
-                  value={initiativeTitle}
-                  onChange={(event) => setInitiativeTitle(event.target.value)}
-                  placeholder="Initiative title"
-                />
-                <Input
-                  value={initiativeIntent}
-                  onChange={(event) => setInitiativeIntent(event.target.value)}
-                  placeholder="Intent"
-                />
-                <textarea
-                  value={initiativeChecklist}
-                  onChange={(event) =>
-                    setInitiativeChecklist(event.target.value)
-                  }
-                  rows={3}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder={"Checklist, one item per line"}
-                />
-                <Button
-                  size="sm"
-                  disabled={mutating || initiativeTitle.trim().length < 2}
-                  onClick={() =>
-                    runAction(async () => {
-                      await apiFactionInitiativeCreate({
-                        factionId: faction.id,
-                        title: initiativeTitle.trim(),
-                        intent: initiativeIntent.trim() || undefined,
-                        checklist: initiativeChecklist
-                          .split("\n")
-                          .map((line) => line.trim())
-                          .filter(Boolean),
-                      });
-                      setInitiativeTitle("");
-                      setInitiativeIntent("");
-                      setInitiativeChecklist("");
-                    })
-                  }
-                >
-                  Create initiative
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs text-muted">
+                Open initiatives workspace to create new initiatives and manage
+                status.
+              </p>
+              <div className="mt-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/app/factions/${faction.id}/initiatives`}>
+                    Open initiatives workspace
+                  </Link>
                 </Button>
               </div>
-            ) : null}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Threads</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {threads.length === 0 ? (
-            <NoDataYetBar label="threads" />
-          ) : (
-            threads.map((thread) => (
-              <div
-                key={thread.id}
-                className="space-y-2 rounded-md border border-border px-3 py-2"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-text">
-                      {thread.title}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {thread.channelTitle} · {thread.status} · replies{" "}
-                      {thread.replies}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">{thread.status}</Badge>
-                    <Button
-                      size="sm"
-                      variant={
-                        activeThread?.id === thread.id ? "outline" : "ghost"
-                      }
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams);
-                        next.set("thread", thread.id);
-                        setSearchParams(next, { replace: false });
-                      }}
-                    >
-                      Open
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-sm text-muted">{thread.body}</p>
-                {isFounderAdmin ? (
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={thread.status}
-                      onChange={(event) =>
-                        runAction(async () => {
-                          await apiFactionThreadTransition({
-                            factionId: faction.id,
-                            threadId: thread.id,
-                            status: event.target.value as
-                              | "open"
-                              | "resolved"
-                              | "locked",
-                          });
-                        })
-                      }
-                    >
-                      <option value="open">Open</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="locked">Locked</option>
-                    </Select>
-                  </div>
-                ) : null}
-              </div>
-            ))
-          )}
-          {activeThread ? (
-            <div
-              ref={openedThreadRef}
-              className="space-y-3 rounded-md border border-border p-3"
-            >
-              <p className="text-xs font-semibold text-muted">Opened thread</p>
-              <p className="text-sm font-semibold text-text">
-                {activeThread.title}
-              </p>
-              <p className="text-xs text-muted">
-                {activeThread.channelTitle} · {activeThread.status} · replies{" "}
-                {activeThread.replies}
-              </p>
-              <p className="text-sm text-muted">{activeThread.body}</p>
-              {canPost ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={threadReplyBody}
-                    onChange={(event) => setThreadReplyBody(event.target.value)}
-                    placeholder="Write a reply"
-                  />
-                  <Button
-                    size="sm"
-                    disabled={mutating || !threadReplyBody.trim()}
-                    onClick={() =>
-                      runAction(async () => {
-                        await apiFactionThreadReply({
-                          factionId: faction.id,
-                          threadId: activeThread.id,
-                          body: threadReplyBody.trim(),
-                        });
-                        setThreadReplyBody("");
-                      })
-                    }
-                  >
-                    Reply
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          {canPost ? (
-            <div className="space-y-2 rounded-md border border-border p-3">
-              <p className="text-xs font-semibold text-muted">Start thread</p>
-              <Select
-                value={threadChannelId}
-                onChange={(event) => setThreadChannelId(event.target.value)}
-              >
-                {channels.map((channel) => (
-                  <option key={channel.id} value={channel.id}>
-                    {channel.title}
-                  </option>
-                ))}
-              </Select>
-              <Input
-                value={threadTitle}
-                onChange={(event) => setThreadTitle(event.target.value)}
-                placeholder="Thread title"
-              />
-              <textarea
-                value={threadBody}
-                onChange={(event) => setThreadBody(event.target.value)}
-                rows={3}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                placeholder="Thread body"
-              />
-              <Button
-                size="sm"
-                disabled={
-                  mutating ||
-                  threadTitle.trim().length < 2 ||
-                  threadBody.trim().length < 2 ||
-                  threadChannelId.trim().length === 0
-                }
-                onClick={() =>
-                  runAction(async () => {
-                    await apiFactionThreadCreate({
-                      factionId: faction.id,
-                      channelId: threadChannelId,
-                      title: threadTitle.trim(),
-                      body: threadBody.trim(),
-                    });
-                    setThreadTitle("");
-                    setThreadBody("");
-                  })
-                }
-              >
-                Create thread
-              </Button>
-            </div>
-          ) : null}
+        <CardContent className="p-4 text-sm text-muted">
+          Open a channel to create threads and manage discussions.
         </CardContent>
       </Card>
     </div>

@@ -12,7 +12,7 @@ import { Button } from "@/components/primitives/button";
 import { Link } from "react-router";
 import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiChambers } from "@/lib/apiClient";
+import { apiChambers, apiClock } from "@/lib/apiClient";
 import {
   computeChamberMetrics,
   getChamberNumericStats,
@@ -27,13 +27,14 @@ type Metric = {
 
 const metricCards: Metric[] = [
   { label: "Total chambers", value: "—" },
-  { label: "Active governors", value: "—" },
+  { label: "Governors / Active governors", value: "—" },
   { label: "Total ACM", value: "—" },
   { label: "Live proposals", value: "—" },
 ];
 
 const Chambers: React.FC = () => {
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
+  const [activeGovernors, setActiveGovernors] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<{
@@ -45,15 +46,24 @@ const Chambers: React.FC = () => {
   useEffect(() => {
     let active = true;
     (async () => {
-      try {
-        const res = await apiChambers();
-        if (!active) return;
-        setChambers(res.items);
+      const [chambersResult, clockResult] = await Promise.allSettled([
+        apiChambers(),
+        apiClock(),
+      ]);
+      if (!active) return;
+
+      if (chambersResult.status === "fulfilled") {
+        setChambers(chambersResult.value.items);
         setLoadError(null);
-      } catch (error) {
-        if (!active) return;
+      } else {
         setChambers([]);
-        setLoadError((error as Error).message);
+        setLoadError((chambersResult.reason as Error).message);
+      }
+
+      if (clockResult.status === "fulfilled") {
+        setActiveGovernors(clockResult.value.activeGovernors);
+      } else {
+        setActiveGovernors(null);
       }
     })();
     return () => {
@@ -90,19 +100,19 @@ const Chambers: React.FC = () => {
 
   const computedMetrics = useMemo((): Metric[] => {
     if (!chambers) return metricCards;
-    const { activeGovernors, totalAcm, liveProposals } =
+    const { governors, totalAcm, liveProposals } =
       computeChamberMetrics(chambers);
-    const governors = activeGovernors;
+    const active = typeof activeGovernors === "number" ? activeGovernors : "—";
     return [
       { label: "Total chambers", value: String(chambers.length) },
       {
         label: "Governors / Active governors",
-        value: `${governors} / ${activeGovernors}`,
+        value: `${governors} / ${active}`,
       },
       { label: "Total ACM", value: totalAcm.toLocaleString() },
       { label: "Live proposals", value: String(liveProposals) },
     ];
-  }, [chambers]);
+  }, [chambers, activeGovernors]);
 
   return (
     <div className="flex flex-col gap-6">
