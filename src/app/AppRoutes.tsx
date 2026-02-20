@@ -8,6 +8,10 @@ import Invision from "../pages/invision/Invision";
 import Vortexopedia from "../pages/Vortexopedia";
 import Factions from "../pages/factions/Factions";
 import Faction from "../pages/factions/Faction";
+import FactionChannel from "../pages/factions/FactionChannel";
+import FactionInitiative from "../pages/factions/FactionInitiative";
+import FactionThreadCreate from "../pages/factions/FactionThreadCreate";
+import FactionInitiativeCreate from "../pages/factions/FactionInitiativeCreate";
 import FactionCreate from "../pages/factions/FactionCreate";
 import ProposalPP from "../pages/proposals/ProposalPP";
 import ProposalChamber from "../pages/proposals/ProposalChamber";
@@ -49,6 +53,30 @@ const AppRoutes: React.FC = () => {
         <Route path="factions" element={<Factions />} />
         <Route path="factions/new" element={<FactionCreate />} />
         <Route path="factions/:id" element={<Faction />} />
+        <Route
+          path="factions/:id/channels/:channelId"
+          element={<FactionChannel />}
+        />
+        <Route
+          path="factions/:id/channels/:channelId/threads/:threadId"
+          element={<FactionChannel />}
+        />
+        <Route
+          path="factions/:id/channels/:channelId/threads/new"
+          element={<FactionThreadCreate />}
+        />
+        <Route
+          path="factions/:id/initiatives"
+          element={<FactionInitiative />}
+        />
+        <Route
+          path="factions/:id/initiatives/:initiativeId"
+          element={<FactionInitiative />}
+        />
+        <Route
+          path="factions/:id/initiatives/new"
+          element={<FactionInitiativeCreate />}
+        />
         <Route path="human-nodes" element={<HumanNodes />} />
         <Route path="human-nodes/:id" element={<HumanNode />} />
         <Route path="human-nodes/:id/history" element={<FullHistory />} />

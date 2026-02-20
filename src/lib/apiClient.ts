@@ -709,9 +709,13 @@ export async function apiFactionCreate(input: {
         description: input.description,
         ...(input.focus ? { focus: input.focus } : {}),
         ...(input.visibility ? { visibility: input.visibility } : {}),
-        ...(input.goals ? { goals: input.goals } : {}),
-        ...(input.tags ? { tags: input.tags } : {}),
-        ...(input.cofounders ? { cofounders: input.cofounders } : {}),
+        ...(input.goals && input.goals.length > 0
+          ? { goals: input.goals }
+          : {}),
+        ...(input.tags && input.tags.length > 0 ? { tags: input.tags } : {}),
+        ...(input.cofounders && input.cofounders.length > 0
+          ? { cofounders: input.cofounders }
+          : {}),
       },
       idempotencyKey: input.idempotencyKey,
     },
@@ -1060,6 +1064,63 @@ export async function apiFactionThreadTransition(input: {
         factionId: input.factionId,
         threadId: input.threadId,
         status: input.status,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadDelete(input: {
+  factionId: string;
+  threadId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.delete";
+  factionId: string;
+  threadId: string;
+  deleted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.delete",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadReplyDelete(input: {
+  factionId: string;
+  threadId: string;
+  messageId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.reply.delete";
+  factionId: string;
+  threadId: string;
+  messageId: string;
+  deleted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.reply.delete",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+        messageId: input.messageId,
       },
       idempotencyKey: input.idempotencyKey,
     },

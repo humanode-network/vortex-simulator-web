@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Check, Copy } from "lucide-react";
 import { shortAddress } from "@/lib/profileUi";
 
@@ -38,12 +39,22 @@ export const AddressInline: React.FC<AddressInlineProps> = ({
     <span
       className={`inline-flex min-w-0 items-center gap-1 ${className ?? ""}`.trim()}
     >
-      <span
-        title={address}
-        className={`min-w-0 truncate font-mono text-xs ${textClassName ?? ""}`.trim()}
-      >
-        {shortAddress(address, size)}
-      </span>
+      {address.trim().length > 0 ? (
+        <Link
+          to={`/app/human-nodes/${encodeURIComponent(address)}`}
+          title={address}
+          className={`min-w-0 truncate font-mono text-xs text-text hover:underline ${textClassName ?? ""}`.trim()}
+        >
+          {shortAddress(address, size)}
+        </Link>
+      ) : (
+        <span
+          title={address}
+          className={`min-w-0 truncate font-mono text-xs ${textClassName ?? ""}`.trim()}
+        >
+          {shortAddress(address, size)}
+        </span>
+      )}
       {showCopy ? (
         <button
           type="button"

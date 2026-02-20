@@ -10,6 +10,7 @@ import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { AddressInline } from "@/components/AddressInline";
 import { apiFormation } from "@/lib/apiClient";
 import type {
   FormationCategoryDto as Category,
@@ -187,11 +188,13 @@ const Formation: React.FC = () => {
                 </Surface>
               </div>
               <div className="flex items-center justify-between gap-3 text-sm text-muted">
-                <span className="min-w-0 [overflow-wrap:anywhere] break-words">
-                  Proposer:{" "}
-                  <span className="font-semibold text-text hover:text-primary">
-                    {project.proposer}
-                  </span>
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <span>Proposer:</span>
+                  <AddressInline
+                    address={project.proposer}
+                    className="min-w-0"
+                    textClassName="text-sm font-semibold text-text"
+                  />
                 </span>
                 <Button asChild size="sm">
                   <Link

@@ -614,6 +614,33 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     updated: "2025-12-04",
   },
   {
+    ref: 22.1,
+    id: "upvote_floor",
+    name: "Upvote floor",
+    category: "governance",
+    short:
+      "Proposal-pool requirement: at least 10% of active governors must upvote for a proposal to advance to chamber vote.",
+    long: [
+      "Applied in every proposal pool, alongside the quorum of attention.",
+      "A proposal advances only if both are true: (1) ≥22% engagement (upvotes + downvotes) and (2) ≥10% upvotes.",
+      "Upvote floor prevents proposals from advancing with only downvotes/negative attention.",
+    ],
+    tags: ["pool", "quorum", "upvote", "governance"],
+    related: ["quorum_of_attention", "proposal_pools"],
+    examples: [
+      "With 100 active governors, a proposal needs at least 10 upvotes to move to chamber vote.",
+    ],
+    stages: ["pool"],
+    links: [
+      {
+        label: "Docs",
+        url: "https://gitbook.humanode.io/vortex-1.0",
+      },
+    ],
+    source: "Voting, Delegation and Quorum",
+    updated: "2026-02-20",
+  },
+  {
     ref: 23,
     id: "quorum_of_vote",
     name: "Quorum of vote",

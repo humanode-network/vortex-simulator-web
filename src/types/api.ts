@@ -98,6 +98,13 @@ export type FactionDto = {
     replies: number;
     createdAt: string;
     updatedAt: string;
+    messages?: Array<{
+      id: string;
+      authorAddress: string;
+      body: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
   }>;
   initiativesDetailed?: Array<{
     id: string;
@@ -501,6 +508,22 @@ export type PoolProposalPageDto = {
   executionPlan: string[];
   budgetScope: string;
   invisionInsight: InvisionInsightDto;
+  thresholdContext?: {
+    activityThreshold: {
+      categories: string[];
+      qualificationEra: number | null;
+      activationEra: number | null;
+    };
+    quorumThreshold: {
+      stage: "pool";
+      denominator: number;
+      source: "snapshot" | "fallback";
+      snapshotEra: number | null;
+      snapshotCapturedAt: string | null;
+      attentionQuorumFraction: number;
+      upvoteFloorFraction: number;
+    };
+  };
 };
 
 export type ChamberProposalPageDto = {
@@ -515,6 +538,7 @@ export type ChamberProposalPageDto = {
   timeLeft: string;
   votes: { yes: number; no: number; abstain: number };
   attentionQuorum: number;
+  quorumNeeded: number;
   passingRule: string;
   engagedGovernors: number;
   activeGovernors: number;
@@ -527,6 +551,22 @@ export type ChamberProposalPageDto = {
   executionPlan: string[];
   budgetScope: string;
   invisionInsight: InvisionInsightDto;
+  thresholdContext?: {
+    activityThreshold: {
+      categories: string[];
+      qualificationEra: number | null;
+      activationEra: number | null;
+    };
+    quorumThreshold: {
+      stage: "vote";
+      denominator: number;
+      source: "snapshot" | "fallback";
+      snapshotEra: number | null;
+      snapshotCapturedAt: string | null;
+      quorumFraction: number;
+      passingFraction: number;
+    };
+  };
 };
 
 export type FormationProposalPageDto = {

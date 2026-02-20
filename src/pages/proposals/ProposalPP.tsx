@@ -12,6 +12,7 @@ import {
   ProposalTeamMilestonesCard,
   ProposalTimelineCard,
 } from "@/components/ProposalSections";
+import { HintLabel } from "@/components/Hint";
 import {
   apiPoolVote,
   apiProposalPoolPage,
@@ -112,11 +113,16 @@ const ProposalPP: React.FC = () => {
   const engaged = proposal.upvotes + proposal.downvotes;
   const attentionPercent = Math.round((engaged / activeGovernors) * 100);
   const attentionNeededPercent = Math.round(proposal.attentionQuorum * 100);
-  const upvoteFloorPercent = Math.round(
-    (proposal.upvoteFloor / activeGovernors) * 100,
+  const upvoteFloorFractionPercent = Math.round(
+    ((proposal.thresholdContext?.quorumThreshold.upvoteFloorFraction ?? 0.1) *
+      1000) /
+      10,
   );
-  const upvoteCurrentPercent = Math.round(
-    (proposal.upvotes / activeGovernors) * 100,
+  const upvoteFloorProgressPercent = Math.round(
+    Math.min(
+      1,
+      proposal.upvoteFloor > 0 ? proposal.upvotes / proposal.upvoteFloor : 0,
+    ) * upvoteFloorFractionPercent,
   );
 
   return (
@@ -186,7 +192,13 @@ const ProposalPP: React.FC = () => {
           </h2>
           <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-2">
             <StatTile
-              label="Attention quorum (%)"
+              label={
+                <HintLabel
+                  termId="quorum_of_attention"
+                  termText="Attention quorum"
+                  suffix=" (%)"
+                />
+              }
               value={
                 <>
                   {attentionPercent}% / {attentionNeededPercent}%
@@ -197,10 +209,16 @@ const ProposalPP: React.FC = () => {
               valueClassName="text-2xl font-semibold"
             />
             <StatTile
-              label="Upvote floor (%)"
+              label={
+                <HintLabel
+                  termId="upvote_floor"
+                  termText="Upvote floor"
+                  suffix=" (%)"
+                />
+              }
               value={
                 <>
-                  {upvoteCurrentPercent}% / {upvoteFloorPercent}%
+                  {upvoteFloorProgressPercent}% / {upvoteFloorFractionPercent}%
                 </>
               }
               variant="panel"

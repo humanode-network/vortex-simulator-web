@@ -115,11 +115,30 @@ const FactionCreate: React.FC = () => {
     [form.cofoundersText],
   );
 
-  const canGoNextStep1 =
-    form.name.trim().length >= 2 &&
-    form.description.trim().length >= 2 &&
-    form.focus.trim().length > 0;
-  const canSubmit = canGoNextStep1;
+  const validationError = useMemo(() => {
+    const name = form.name.trim();
+    const description = form.description.trim();
+    const focus = form.focus.trim();
+    if (name.length < 2) return "Name must be at least 2 characters.";
+    if (name.length > 80) return "Name must be 80 characters or less.";
+    if (description.length < 1) return "Description is required.";
+    if (description.length > 280)
+      return "Description must be 280 characters or less.";
+    if (focus.length < 1) return "Focus is required.";
+    if (focus.length > 80) return "Focus must be 80 characters or less.";
+    if (goals.length > 12) return "Goals must contain at most 12 items.";
+    if (goals.some((goal) => goal.length > 300))
+      return "Each goal must be 300 characters or less.";
+    if (tags.length > 12) return "Tags must contain at most 12 items.";
+    if (tags.some((tag) => tag.length > 40))
+      return "Each tag must be 40 characters or less.";
+    if (cofounders.length > 16)
+      return "Cofounders must contain at most 16 addresses.";
+    return null;
+  }, [cofounders.length, form.description, form.focus, form.name, goals, tags]);
+
+  const canGoNextStep1 = !validationError;
+  const canSubmit = !validationError;
 
   const onCreate = async () => {
     if (!canSubmit || saving) return;
@@ -143,7 +162,25 @@ const FactionCreate: React.FC = () => {
       navigate(`/app/factions/${response.faction.id}`);
     } catch (e) {
       const payload = getApiErrorPayload(e);
+      const issues = Array.isArray(
+        (payload as { error?: { issues?: unknown[] } } | null)?.error?.issues,
+      )
+        ? ((payload as { error?: { issues?: unknown[] } }).error?.issues ?? [])
+        : [];
+      const issue = (issues[0] ?? null) as {
+        path?: unknown;
+        message?: unknown;
+      } | null;
+      const issuePath =
+        issue && Array.isArray(issue.path) && issue.path.length > 0
+          ? issue.path.join(".")
+          : null;
+      const issueMessage =
+        issuePath && typeof issue?.message === "string"
+          ? `${issuePath}: ${issue.message}`
+          : null;
       const message =
+        issueMessage ??
         payload?.error?.message ??
         (e instanceof Error ? e.message : "Failed to create faction");
       setError(message);
@@ -203,6 +240,7 @@ const FactionCreate: React.FC = () => {
               <label className="block space-y-1">
                 <span className="text-sm text-muted">Name</span>
                 <Input
+                  maxLength={80}
                   value={form.name}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, name: event.target.value }))
@@ -213,6 +251,7 @@ const FactionCreate: React.FC = () => {
               <label className="block space-y-1">
                 <span className="text-sm text-muted">Description</span>
                 <textarea
+                  maxLength={280}
                   value={form.description}
                   onChange={(event) =>
                     setForm((prev) => ({
@@ -229,6 +268,7 @@ const FactionCreate: React.FC = () => {
               <label className="block space-y-1">
                 <span className="text-sm text-muted">Focus</span>
                 <Input
+                  maxLength={80}
                   value={form.focus}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, focus: event.target.value }))
@@ -348,6 +388,11 @@ const FactionCreate: React.FC = () => {
           {error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
+            </div>
+          ) : null}
+          {!error && validationError ? (
+            <div className="rounded-md border border-border bg-panel-alt px-3 py-2 text-sm text-muted">
+              {validationError}
             </div>
           ) : null}
           {draftNotice ? (
