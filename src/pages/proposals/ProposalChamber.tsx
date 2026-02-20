@@ -219,7 +219,6 @@ const ProposalChamber: React.FC = () => {
               <>
                 <span>
                   {quorumPercent}% / {quorumNeededPercent}%
-                  <span className="text-muted"> + 1</span>
                 </span>
                 <span className="text-xs font-semibold text-muted">
                   {engaged} / {quorumNeeded}
