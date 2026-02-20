@@ -121,7 +121,7 @@ const Landing: React.FC = () => {
               experimental development workflow that does not apply our usual
               Q/A and code reviews, and relies heavily on AI assistance (i.e.
               not really vibe-coded but not really written with our code
-              standards either). The we don't plan to use this flow to build the
+              standards either). We don't plan to use this flow to build the
               real Vortex parts, and neither we plan to re-use any substantial
               parts of this codebase.
             </div>
