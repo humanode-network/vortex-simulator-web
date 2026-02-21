@@ -10,6 +10,7 @@ import { StatTile } from "@/components/StatTile";
 type ProposalPageHeaderProps = {
   title: string;
   stage: ProposalStage;
+  showFormationStage?: boolean;
   chamber: string;
   proposer: string;
   children?: ReactNode;
@@ -18,6 +19,7 @@ type ProposalPageHeaderProps = {
 export function ProposalPageHeader({
   title,
   stage,
+  showFormationStage = true,
   chamber,
   proposer,
   children,
@@ -25,7 +27,7 @@ export function ProposalPageHeader({
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
-      <ProposalStageBar current={stage} />
+      <ProposalStageBar current={stage} showFormationStage={showFormationStage} />
       <div className="grid gap-3 sm:grid-cols-2">
         <StatTile
           label="Chamber"

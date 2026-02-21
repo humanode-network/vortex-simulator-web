@@ -21,13 +21,10 @@ export function formatProposalSubmitError(error: unknown): string {
 
   if (code === "proposal_submit_ineligible") {
     const chamberId =
-      typeof details.chamberId === "string" ? details.chamberId : "";
-    if (chamberId === "general") {
-      return "General chamber proposals require voting rights in any chamber.";
-    }
-    if (chamberId) {
-      return `Only chamber members can submit to ${formatProposalType(chamberId)}.`;
-    }
+      typeof details.chamberId === "string"
+        ? details.chamberId
+        : "this chamber";
+    return `Submission to ${formatProposalType(chamberId)} was blocked by outdated chamber-membership gating. Any eligible human node can submit to any chamber; refresh and retry.`;
   }
 
   if (code === "draft_not_submittable") {

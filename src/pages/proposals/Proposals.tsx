@@ -209,6 +209,7 @@ const Proposals: React.FC = () => {
               { value: "pool", label: "Proposal pool" },
               { value: "vote", label: "Chamber vote" },
               { value: "build", label: "Formation" },
+              { value: "passed", label: "Passed" },
               { value: "failed", label: "Ended (failed)" },
             ],
           },
@@ -438,11 +439,13 @@ const Proposals: React.FC = () => {
                     <StageChip
                       stage={stageForChip}
                       label={
-                        ended
+                        proposal.summaryPill === "Finished"
+                          ? "Finished"
+                          : ended
                           ? "Ended"
                           : proposal.stage === "build" &&
-                              proposal.summaryPill === "Passed"
-                            ? "Passed"
+                              proposal.summaryPill === "Finished"
+                            ? "Finished"
                             : undefined
                       }
                     />
@@ -782,9 +785,11 @@ const Proposals: React.FC = () => {
                         ? `/app/proposals/${proposal.id}/pp`
                         : proposal.stage === "vote"
                           ? `/app/proposals/${proposal.id}/chamber`
+                          : proposal.stage === "passed"
+                            ? `/app/proposals/${proposal.id}/chamber`
                           : proposal.stage === "build"
-                            ? proposal.summaryPill === "Passed"
-                              ? `/app/proposals/${proposal.id}/chamber`
+                            ? proposal.summaryPill === "Finished"
+                              ? `/app/proposals/${proposal.id}/finished`
                               : `/app/proposals/${proposal.id}/formation`
                             : `/app/proposals/${proposal.id}/pp`
                     }

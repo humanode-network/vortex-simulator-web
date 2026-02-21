@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
@@ -13,7 +13,6 @@ import {
 import {
   apiFormationJoin,
   apiFormationMilestoneSubmit,
-  apiFormationMilestoneVote,
   apiFormationProjectFinish,
   apiProposalFormationPage,
   apiProposalTimeline,
@@ -26,6 +25,7 @@ import type {
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState<FormationProposalPageDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -112,7 +112,7 @@ const ProposalFormation: React.FC = () => {
   const canJoinProject =
     project.projectState !== "ready_to_finish" &&
     project.projectState !== "completed" &&
-    project.projectState !== "suspended";
+    project.projectState !== "canceled";
   const canSubmitMilestone =
     auth.authenticated &&
     auth.eligible &&
@@ -121,10 +121,7 @@ const ProposalFormation: React.FC = () => {
     typeof nextMilestone === "number" &&
     nextMilestone > 0 &&
     nextMilestone <= milestones.total;
-  const canVoteMilestone =
-    auth.authenticated &&
-    auth.eligible &&
-    !actionBusy &&
+  const canOpenMilestoneVote =
     project.projectState === "awaiting_milestone_vote" &&
     typeof pendingMilestone === "number" &&
     pendingMilestone > 0;
@@ -133,6 +130,8 @@ const ProposalFormation: React.FC = () => {
     isProposerViewer &&
     !actionBusy &&
     project.projectState === "ready_to_finish";
+  const stageForHeader =
+    project.projectState === "awaiting_milestone_vote" ? "vote" : "build";
 
   const runAction = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -155,7 +154,7 @@ const ProposalFormation: React.FC = () => {
       <PageHint pageId="proposals" />
       <ProposalPageHeader
         title={project.title}
-        stage="build"
+        stage={stageForHeader}
         chamber={project.chamber}
         proposer={project.proposer}
       />
@@ -211,38 +210,13 @@ const ProposalFormation: React.FC = () => {
               type="button"
               size="lg"
               variant="outline"
-              disabled={!canVoteMilestone}
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id || !pendingMilestone) return;
-                  await apiFormationMilestoneVote({
-                    proposalId: id,
-                    milestoneIndex: pendingMilestone,
-                    choice: "yes",
-                  });
-                })
-              }
+              disabled={!canOpenMilestoneVote}
+              onClick={() => {
+                if (!id) return;
+                navigate(`/app/proposals/${id}/chamber`);
+              }}
             >
-              Vote Yes M{pendingMilestone ?? "—"}
-            </Button>
-
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={!canVoteMilestone}
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id || !pendingMilestone) return;
-                  await apiFormationMilestoneVote({
-                    proposalId: id,
-                    milestoneIndex: pendingMilestone,
-                    choice: "no",
-                  });
-                })
-              }
-            >
-              Vote No M{pendingMilestone ?? "—"}
+              Vote in chamber M{pendingMilestone ?? "—"}
             </Button>
 
             <Button
@@ -270,6 +244,13 @@ const ProposalFormation: React.FC = () => {
           ) : auth.authenticated && !auth.eligible ? (
             <p className="text-xs text-muted">
               Wallet is connected, but not active (gated).
+            </p>
+          ) : null}
+
+          {canOpenMilestoneVote ? (
+            <p className="text-xs text-muted">
+              Milestone continuation/release voting is done in the Chamber vote
+              stage.
             </p>
           ) : null}
 
