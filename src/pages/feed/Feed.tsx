@@ -15,11 +15,13 @@ import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { formatDateTime } from "@/lib/dateTime";
 import {
+  apiClock,
   apiCourt,
   apiFeed,
   apiFactionCofounderInviteAccept,
   apiFactionCofounderInviteDecline,
   apiHuman,
+  apiMyGovernance,
   apiProposalChamberPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
@@ -93,8 +95,16 @@ const urgentEntityKey = (item: FeedItemDto) => {
 const isUrgentItemInteractable = (
   item: FeedItemDto,
   isGovernorActive: boolean,
+  viewerAddress?: string,
 ) => {
   if (item.actionable !== true) return false;
+  if (item.stage === "build") {
+    const viewer = viewerAddress?.trim().toLowerCase();
+    const proposer = (item.proposerId ?? item.proposer ?? "")
+      .trim()
+      .toLowerCase();
+    return Boolean(viewer && proposer && viewer === proposer);
+  }
   if ((item.stage === "pool" || item.stage === "vote") && !isGovernorActive) {
     return false;
   }
@@ -104,9 +114,10 @@ const isUrgentItemInteractable = (
 const toUrgentItems = (
   items: FeedItemDto[],
   isGovernorActive: boolean,
+  viewerAddress?: string,
 ): FeedItemDto[] => {
   const filtered = items.filter((item) =>
-    isUrgentItemInteractable(item, isGovernorActive),
+    isUrgentItemInteractable(item, isGovernorActive, viewerAddress),
   );
   const deduped = new Map<string, FeedItemDto>();
   for (const item of filtered) {
@@ -175,15 +186,23 @@ const Feed: React.FC = () => {
     setChambersLoading(true);
     (async () => {
       try {
-        const profile = await apiHuman(address);
+        const [governance, profile, clock] = await Promise.all([
+          apiMyGovernance(),
+          apiHuman(address),
+          apiClock(),
+        ]);
         if (!active) return;
-        const chamberIds =
-          profile.cmChambers?.map((chamber) => chamber.chamberId) ?? [];
+        const tier = profile.tierProgress?.tier?.trim().toLowerCase() ?? "";
+        const bootstrapGovernor =
+          clock.currentEra === 0 && tier !== "" && tier !== "nominee";
+        const chamberIds = governance.myChamberIds ?? [];
         const unique = Array.from(
           new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
         );
         setChamberFilters(unique);
-        setViewerGovernorActive(Boolean(profile.governorActive));
+        setViewerGovernorActive(
+          Boolean(profile.governorActive) || bootstrapGovernor,
+        );
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);
@@ -262,7 +281,11 @@ const Feed: React.FC = () => {
         }
         const filteredItems =
           feedScope === "urgent"
-            ? toUrgentItems(items, viewerGovernorActive)
+            ? toUrgentItems(
+                items,
+                viewerGovernorActive,
+                auth.address ?? undefined,
+              )
             : items;
         setFeedItems(filteredItems);
         setNextCursor(res.nextCursor ?? null);
@@ -339,13 +362,18 @@ const Feed: React.FC = () => {
       });
       const items =
         feedScope === "urgent"
-          ? toUrgentItems(res.items, viewerGovernorActive)
+          ? toUrgentItems(
+              res.items,
+              viewerGovernorActive,
+              auth.address ?? undefined,
+            )
           : res.items;
       setFeedItems((curr) => {
         if (feedScope === "urgent") {
           return toUrgentItems(
             [...(curr ?? []), ...items],
             viewerGovernorActive,
+            auth.address ?? undefined,
           );
         }
         const existing = new Set((curr ?? []).map(feedItemKey));

@@ -23,7 +23,7 @@ test("parsePercent and parseRatio normalize values", () => {
   expect(parseRatio("bad")).toEqual({ a: 0, b: 0 });
 });
 
-test("chamber numeric stats and metrics aggregate", () => {
+test("chamber numeric stats and metrics aggregate without double-counting ACM", () => {
   const chambers: ChamberDto[] = [
     {
       id: "general",
@@ -60,7 +60,9 @@ test("chamber numeric stats and metrics aggregate", () => {
 
   const metrics = computeChamberMetrics(chambers);
   expect(metrics.totalChambers).toBe(2);
-  expect(metrics.totalAcm).toBe(2000);
+  // ACM is absolute for a governor set (not chamber-local), so summing across
+  // chambers would double-count governors who belong to multiple chambers.
+  expect(metrics.totalAcm).toBe(1200);
   expect(metrics.liveProposals).toBe(2);
 });
 

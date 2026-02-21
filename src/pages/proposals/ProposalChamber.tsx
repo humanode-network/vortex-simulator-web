@@ -117,6 +117,16 @@ const ProposalChamber: React.FC = () => {
   const abstainPercentOfTotal =
     totalVotes > 0 ? Math.round((abstainTotal / totalVotes) * 100) : 0;
   const passingNeededPercent = 66.6;
+  const milestoneVoteIndex =
+    typeof proposal.milestoneIndex === "number" && proposal.milestoneIndex > 0
+      ? proposal.milestoneIndex
+      : null;
+  const scoreLabel =
+    proposal.scoreLabel === "MM" || milestoneVoteIndex !== null ? "MM" : "CM";
+  const chamberTitle =
+    milestoneVoteIndex !== null
+      ? `${proposal.title} — Milestone vote (M${milestoneVoteIndex})`
+      : proposal.title;
 
   const [filledSlots, totalSlots] = proposal.teamSlots
     .split("/")
@@ -148,11 +158,22 @@ const ProposalChamber: React.FC = () => {
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
       <ProposalPageHeader
-        title={proposal.title}
+        title={chamberTitle}
         stage="vote"
+        showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
       >
+        {milestoneVoteIndex !== null ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="mx-auto px-4 py-2 text-xs font-semibold text-muted"
+          >
+            Milestone vote: M{milestoneVoteIndex}
+          </Surface>
+        ) : null}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <VoteButton
             tone="accent"
@@ -162,7 +183,7 @@ const ProposalChamber: React.FC = () => {
           />
           <div className="flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-2 text-sm text-text">
             <span className="text-xs font-semibold text-muted uppercase">
-              CM score
+              {scoreLabel} score
             </span>
             <Input
               type="number"
@@ -219,7 +240,6 @@ const ProposalChamber: React.FC = () => {
               <>
                 <span>
                   {quorumPercent}% / {quorumNeededPercent}%
-                  <span className="text-muted"> + 1</span>
                 </span>
                 <span className="text-xs font-semibold text-muted">
                   {engaged} / {quorumNeeded}

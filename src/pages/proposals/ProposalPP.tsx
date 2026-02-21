@@ -132,6 +132,7 @@ const ProposalPP: React.FC = () => {
         <ProposalPageHeader
           title={proposal.title}
           stage="pool"
+          showFormationStage={proposal.formationEligible}
           chamber={proposal.chamber}
           proposer={proposal.proposer}
         >

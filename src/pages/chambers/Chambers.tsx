@@ -12,11 +12,8 @@ import { Button } from "@/components/primitives/button";
 import { Link } from "react-router";
 import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiChambers, apiClock } from "@/lib/apiClient";
-import {
-  computeChamberMetrics,
-  getChamberNumericStats,
-} from "@/lib/dtoParsers";
+import { apiChambers, apiClock, apiHumans } from "@/lib/apiClient";
+import { getChamberNumericStats } from "@/lib/dtoParsers";
 import type { ChamberDto } from "@/types/api";
 import { Surface } from "@/components/Surface";
 
@@ -34,7 +31,12 @@ const metricCards: Metric[] = [
 
 const Chambers: React.FC = () => {
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
-  const [activeGovernors, setActiveGovernors] = useState<number | null>(null);
+  const [globalMetrics, setGlobalMetrics] = useState<{
+    governors: number;
+    activeGovernors: number;
+    totalAcm: number;
+  } | null>(null);
+  const [currentEra, setCurrentEra] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<{
@@ -46,10 +48,8 @@ const Chambers: React.FC = () => {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [chambersResult, clockResult] = await Promise.allSettled([
-        apiChambers(),
-        apiClock(),
-      ]);
+      const [chambersResult, humansResult, clockResult] =
+        await Promise.allSettled([apiChambers(), apiHumans(), apiClock()]);
       if (!active) return;
 
       if (chambersResult.status === "fulfilled") {
@@ -60,10 +60,27 @@ const Chambers: React.FC = () => {
         setLoadError((chambersResult.reason as Error).message);
       }
 
-      if (clockResult.status === "fulfilled") {
-        setActiveGovernors(clockResult.value.activeGovernors);
+      if (humansResult.status === "fulfilled") {
+        const governorItems = humansResult.value.items.filter(
+          (item) => item.tier !== "nominee",
+        );
+        const governors = governorItems.length;
+        const activeGovernors = governorItems.filter(
+          (item) => item.active.governorActive,
+        ).length;
+        const totalAcm = governorItems.reduce(
+          (sum, item) => sum + (item.cmTotals?.acm ?? item.acm ?? 0),
+          0,
+        );
+        setGlobalMetrics({ governors, activeGovernors, totalAcm });
       } else {
-        setActiveGovernors(null);
+        setGlobalMetrics(null);
+      }
+
+      if (clockResult.status === "fulfilled") {
+        setCurrentEra(clockResult.value.currentEra);
+      } else {
+        setCurrentEra(null);
       }
     })();
     return () => {
@@ -100,19 +117,33 @@ const Chambers: React.FC = () => {
 
   const computedMetrics = useMemo((): Metric[] => {
     if (!chambers) return metricCards;
-    const { governors, totalAcm, liveProposals } =
-      computeChamberMetrics(chambers);
-    const active = typeof activeGovernors === "number" ? activeGovernors : "—";
+    const liveProposals = chambers.reduce(
+      (sum, chamber) => sum + (chamber.pipeline.vote ?? 0),
+      0,
+    );
+    const governorsCount = globalMetrics?.governors;
+    const activeCount =
+      typeof governorsCount === "number"
+        ? currentEra === 0
+          ? governorsCount
+          : (globalMetrics?.activeGovernors ?? governorsCount)
+        : null;
+    const governors = typeof governorsCount === "number" ? governorsCount : "—";
+    const active = typeof activeCount === "number" ? activeCount : "—";
+    const totalAcm = globalMetrics?.totalAcm;
     return [
       { label: "Total chambers", value: String(chambers.length) },
       {
         label: "Governors / Active governors",
         value: `${governors} / ${active}`,
       },
-      { label: "Total ACM", value: totalAcm.toLocaleString() },
+      {
+        label: "Total ACM",
+        value: typeof totalAcm === "number" ? totalAcm.toLocaleString() : "—",
+      },
       { label: "Live proposals", value: String(liveProposals) },
     ];
-  }, [chambers, activeGovernors]);
+  }, [chambers, currentEra, globalMetrics]);
 
   return (
     <div className="flex flex-col gap-6">

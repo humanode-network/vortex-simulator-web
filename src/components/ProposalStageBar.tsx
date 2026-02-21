@@ -1,18 +1,20 @@
 import React from "react";
 import { HintLabel } from "@/components/Hint";
 
-export type ProposalStage = "draft" | "pool" | "vote" | "build";
+export type ProposalStage = "draft" | "pool" | "vote" | "build" | "passed";
 
 type ProposalStageBarProps = {
   current: ProposalStage;
+  showFormationStage?: boolean;
   className?: string;
 };
 
 export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
   current,
+  showFormationStage = true,
   className,
 }) => {
-  const stages: {
+  const allStages: {
     key: ProposalStage;
     label: string;
     render?: React.ReactNode;
@@ -33,7 +35,12 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
       label: "Formation",
       render: <HintLabel termId="formation">Formation</HintLabel>,
     },
+    { key: "passed", label: "Passed" },
   ];
+  const stages = allStages.filter(
+    (stage) =>
+      stage.key !== "build" || showFormationStage || current === "build",
+  );
 
   return (
     <div className={["flex gap-2", className].filter(Boolean).join(" ")}>
@@ -46,7 +53,9 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
               ? "bg-primary text-[var(--primary-foreground)]"
               : stage.key === "vote"
                 ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                : "bg-[var(--accent-warm)] text-[var(--text)]";
+                : stage.key === "build"
+                  ? "bg-[var(--accent-warm)] text-[var(--text)]"
+                  : "bg-[color:var(--ok)]/20 text-[color:var(--ok)]";
         return (
           <div
             key={stage.key}

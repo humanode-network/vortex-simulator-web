@@ -34,9 +34,15 @@ export function getChamberNumericStats(chamber: ChamberDto) {
 }
 
 export function computeChamberMetrics(chambers: ChamberDto[]) {
-  const totalAcm = chambers.reduce((sum, chamber) => {
+  // Governors can be members of multiple chambers, and `stats.acm` for a chamber
+  // is an absolute total for that chamber's governor set (not a chamber-local slice).
+  // Summing across chambers would double-count governors who are members of more than one chamber.
+  //
+  // The General chamber includes the full governor set, so the largest ACM total is a stable
+  // approximation for "Total ACM" across unique governors.
+  const totalAcm = chambers.reduce((max, chamber) => {
     const { acm } = getChamberNumericStats(chamber);
-    return sum + acm;
+    return Math.max(max, acm);
   }, 0);
   // Governors can be members of multiple chambers; use the largest chamber roster
   // as a stable approximation of global governors for the summary tile.

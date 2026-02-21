@@ -550,7 +550,7 @@ export async function apiFormationMilestoneVote(input: {
   projectState:
     | "active"
     | "awaiting_milestone_vote"
-    | "suspended"
+    | "canceled"
     | "ready_to_finish"
     | "completed";
   pendingMilestoneIndex: number | null;
@@ -611,6 +611,14 @@ export async function apiProposalFormationPage(
 ): Promise<FormationProposalPageDto> {
   return await apiGet<FormationProposalPageDto>(
     `/api/proposals/${id}/formation`,
+  );
+}
+
+export async function apiProposalFinishedPage(
+  id: string,
+): Promise<FormationProposalPageDto> {
+  return await apiGet<FormationProposalPageDto>(
+    `/api/proposals/${id}/finished`,
   );
 }
 

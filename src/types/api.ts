@@ -3,7 +3,7 @@
 
 import type { FeedStage } from "./stages";
 
-export type ProposalStageDto = "pool" | "vote" | "build" | "failed";
+export type ProposalStageDto = "pool" | "vote" | "build" | "passed" | "failed";
 export type FeedStageDto = FeedStage;
 
 export type ToneDto = "ok" | "warn";
@@ -531,6 +531,8 @@ export type ChamberProposalPageDto = {
   proposer: string;
   proposerId: string;
   chamber: string;
+  scoreLabel: "CM" | "MM";
+  milestoneIndex: number | null;
   budget: string;
   formationEligible: boolean;
   teamSlots: string;
@@ -577,7 +579,7 @@ export type FormationProposalPageDto = {
   projectState?:
     | "active"
     | "awaiting_milestone_vote"
-    | "suspended"
+    | "canceled"
     | "ready_to_finish"
     | "completed";
   pendingMilestoneIndex?: number | null;

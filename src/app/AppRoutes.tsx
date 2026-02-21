@@ -16,6 +16,7 @@ import FactionCreate from "../pages/factions/FactionCreate";
 import ProposalPP from "../pages/proposals/ProposalPP";
 import ProposalChamber from "../pages/proposals/ProposalChamber";
 import ProposalFormation from "../pages/proposals/ProposalFormation";
+import ProposalFinished from "../pages/proposals/ProposalFinished";
 import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
 import Chamber from "../pages/chambers/Chamber";
@@ -90,6 +91,7 @@ const AppRoutes: React.FC = () => {
         <Route path="proposals/:id/pp" element={<ProposalPP />} />
         <Route path="proposals/:id/chamber" element={<ProposalChamber />} />
         <Route path="proposals/:id/formation" element={<ProposalFormation />} />
+        <Route path="proposals/:id/finished" element={<ProposalFinished />} />
         <Route path="chambers" element={<Chambers />} />
         <Route path="chambers/:id" element={<Chamber />} />
         <Route path="formation" element={<Formation />} />
