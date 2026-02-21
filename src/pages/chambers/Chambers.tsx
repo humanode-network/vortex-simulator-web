@@ -13,9 +13,7 @@ import { Link } from "react-router";
 import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiChambers, apiClock, apiHumans } from "@/lib/apiClient";
-import {
-  getChamberNumericStats,
-} from "@/lib/dtoParsers";
+import { getChamberNumericStats } from "@/lib/dtoParsers";
 import type { ChamberDto } from "@/types/api";
 import { Surface } from "@/components/Surface";
 
@@ -50,11 +48,8 @@ const Chambers: React.FC = () => {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [chambersResult, humansResult, clockResult] = await Promise.allSettled([
-        apiChambers(),
-        apiHumans(),
-        apiClock(),
-      ]);
+      const [chambersResult, humansResult, clockResult] =
+        await Promise.allSettled([apiChambers(), apiHumans(), apiClock()]);
       if (!active) return;
 
       if (chambersResult.status === "fulfilled") {

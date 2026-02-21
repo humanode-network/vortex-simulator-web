@@ -1,4 +1,10 @@
-export const proposalStages = ["pool", "vote", "build", "passed", "failed"] as const;
+export const proposalStages = [
+  "pool",
+  "vote",
+  "build",
+  "passed",
+  "failed",
+] as const;
 
 export type ProposalStage = (typeof proposalStages)[number];
 

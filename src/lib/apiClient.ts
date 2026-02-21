@@ -617,7 +617,9 @@ export async function apiProposalFormationPage(
 export async function apiProposalFinishedPage(
   id: string,
 ): Promise<FormationProposalPageDto> {
-  return await apiGet<FormationProposalPageDto>(`/api/proposals/${id}/finished`);
+  return await apiGet<FormationProposalPageDto>(
+    `/api/proposals/${id}/finished`,
+  );
 }
 
 export async function apiCourts(): Promise<GetCourtsResponse> {

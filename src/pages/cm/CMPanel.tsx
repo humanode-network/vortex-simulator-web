@@ -176,8 +176,8 @@ const CMPanel: React.FC = () => {
         <CardContent className="text-sm text-muted">
           Set your <HintLabel termId="cognitocratic_measure">CM</HintLabel>{" "}
           multipliers for chambers you are not a member of. Chambers you belong
-          to are blurred and not adjustable here. If you submit a new number
-          for the same chamber later, it replaces your previous submission.
+          to are blurred and not adjustable here. If you submit a new number for
+          the same chamber later, it replaces your previous submission.
         </CardContent>
       </Card>
 

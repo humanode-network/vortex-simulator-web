@@ -100,8 +100,9 @@ const isUrgentItemInteractable = (
   if (item.actionable !== true) return false;
   if (item.stage === "build") {
     const viewer = viewerAddress?.trim().toLowerCase();
-    const proposer =
-      (item.proposerId ?? item.proposer ?? "").trim().toLowerCase();
+    const proposer = (item.proposerId ?? item.proposer ?? "")
+      .trim()
+      .toLowerCase();
     return Boolean(viewer && proposer && viewer === proposer);
   }
   if ((item.stage === "pool" || item.stage === "vote") && !isGovernorActive) {
@@ -192,13 +193,16 @@ const Feed: React.FC = () => {
         ]);
         if (!active) return;
         const tier = profile.tierProgress?.tier?.trim().toLowerCase() ?? "";
-        const bootstrapGovernor = clock.currentEra === 0 && tier !== "" && tier !== "nominee";
+        const bootstrapGovernor =
+          clock.currentEra === 0 && tier !== "" && tier !== "nominee";
         const chamberIds = governance.myChamberIds ?? [];
         const unique = Array.from(
           new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
         );
         setChamberFilters(unique);
-        setViewerGovernorActive(Boolean(profile.governorActive) || bootstrapGovernor);
+        setViewerGovernorActive(
+          Boolean(profile.governorActive) || bootstrapGovernor,
+        );
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);
@@ -277,7 +281,11 @@ const Feed: React.FC = () => {
         }
         const filteredItems =
           feedScope === "urgent"
-            ? toUrgentItems(items, viewerGovernorActive, auth.address ?? undefined)
+            ? toUrgentItems(
+                items,
+                viewerGovernorActive,
+                auth.address ?? undefined,
+              )
             : items;
         setFeedItems(filteredItems);
         setNextCursor(res.nextCursor ?? null);

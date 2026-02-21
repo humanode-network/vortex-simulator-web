@@ -27,7 +27,10 @@ export function ProposalPageHeader({
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
-      <ProposalStageBar current={stage} showFormationStage={showFormationStage} />
+      <ProposalStageBar
+        current={stage}
+        showFormationStage={showFormationStage}
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <StatTile
           label="Chamber"

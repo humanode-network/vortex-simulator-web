@@ -442,11 +442,11 @@ const Proposals: React.FC = () => {
                         proposal.summaryPill === "Finished"
                           ? "Finished"
                           : ended
-                          ? "Ended"
-                          : proposal.stage === "build" &&
-                              proposal.summaryPill === "Finished"
-                            ? "Finished"
-                            : undefined
+                            ? "Ended"
+                            : proposal.stage === "build" &&
+                                proposal.summaryPill === "Finished"
+                              ? "Finished"
+                              : undefined
                       }
                     />
                     <Badge variant="muted" size="sm">
@@ -787,11 +787,11 @@ const Proposals: React.FC = () => {
                           ? `/app/proposals/${proposal.id}/chamber`
                           : proposal.stage === "passed"
                             ? `/app/proposals/${proposal.id}/chamber`
-                          : proposal.stage === "build"
-                            ? proposal.summaryPill === "Finished"
-                              ? `/app/proposals/${proposal.id}/finished`
-                              : `/app/proposals/${proposal.id}/formation`
-                            : `/app/proposals/${proposal.id}/pp`
+                            : proposal.stage === "build"
+                              ? proposal.summaryPill === "Finished"
+                                ? `/app/proposals/${proposal.id}/finished`
+                                : `/app/proposals/${proposal.id}/formation`
+                              : `/app/proposals/${proposal.id}/pp`
                     }
                     primaryLabel={proposal.ctaPrimary}
                   />
