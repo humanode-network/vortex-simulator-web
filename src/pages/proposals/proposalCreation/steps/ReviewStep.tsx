@@ -2,6 +2,7 @@ import type React from "react";
 import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
+import { AddressInline } from "@/components/AddressInline";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
@@ -24,6 +25,7 @@ export function ReviewStep(props: {
   draft: ProposalDraftForm;
   formationEligible?: boolean;
   mode: "project" | "system";
+  proposerAddress: string | null;
   selectedChamber: ChamberDto | null;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   textareaClassName: string;
@@ -35,6 +37,7 @@ export function ReviewStep(props: {
     draft,
     formationEligible,
     mode,
+    proposerAddress,
     selectedChamber,
     setDraft,
     textareaClassName,
@@ -47,13 +50,17 @@ export function ReviewStep(props: {
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-border bg-panel-alt p-4">
-        <p className="text-sm font-semibold text-text">Who (auto-filled)</p>
-        <div className="mt-2 grid gap-2 text-sm text-muted sm:grid-cols-2">
+        <p className="text-sm font-semibold text-text">
+          Proposer (auto-filled)
+        </p>
+        <div className="mt-2 grid gap-2 text-sm text-muted sm:grid-cols-1">
           <div>
-            <span className="text-text">Name</span>: Humanode Governor
-          </div>
-          <div>
-            <span className="text-text">Handle</span>: @governor_42
+            <span className="text-text">Wallet</span>:{" "}
+            {proposerAddress ? (
+              <AddressInline address={proposerAddress} size={7} />
+            ) : (
+              "—"
+            )}
           </div>
         </div>
         <div className="mt-3 space-y-1">

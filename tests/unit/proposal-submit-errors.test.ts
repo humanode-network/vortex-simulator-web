@@ -31,7 +31,7 @@ test("formats chamber submit eligibility errors", () => {
     },
   };
   expect(formatProposalSubmitError(generalError)).toBe(
-    "General chamber proposals require voting rights in any chamber.",
+    "Submission to general was blocked by outdated chamber-membership gating. Any eligible human node can submit to any chamber; refresh and retry.",
   );
 
   const chamberError = {
@@ -40,7 +40,7 @@ test("formats chamber submit eligibility errors", () => {
     },
   };
   expect(formatProposalSubmitError(chamberError)).toBe(
-    "Only chamber members can submit to engineering.",
+    "Submission to engineering was blocked by outdated chamber-membership gating. Any eligible human node can submit to any chamber; refresh and retry.",
   );
 });
 

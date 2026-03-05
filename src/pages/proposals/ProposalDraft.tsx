@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 
 import { Button } from "@/components/primitives/button";
 import {
@@ -20,19 +20,34 @@ import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
 import { apiProposalDraft, apiProposalSubmitToPool } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProposalDraftDetailDto } from "@/types/api";
+
+function parseRatioPair(value: string): { left: number; right: number } {
+  const matches = value.match(/\d+/g) ?? [];
+  const leftRaw = matches[0];
+  const rightRaw = matches[1];
+  if (!leftRaw || !rightRaw) return { left: 0, right: 0 };
+  const left = Number.parseInt(leftRaw, 10);
+  const right = Number.parseInt(rightRaw, 10);
+  return {
+    left: Number.isFinite(left) ? left : 0,
+    right: Number.isFinite(right) ? right : 0,
+  };
+}
 
 const ProposalDraft: React.FC = () => {
   const auth = useAuth();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [draftDetails, setDraftDetails] =
     useState<ProposalDraftDetailDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [filledSlots, totalSlots] = (draftDetails?.teamSlots ?? "0 / 0")
-    .split("/")
-    .map((v) => Number(v.trim()));
+  const { left: filledSlots, right: totalSlots } = parseRatioPair(
+    draftDetails?.teamSlots ?? "0 / 0",
+  );
   const openSlots = Math.max((totalSlots || 0) - (filledSlots || 0), 0);
   const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
 
@@ -81,7 +96,9 @@ const ProposalDraft: React.FC = () => {
         </div>
 
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          {loadError ? `Draft unavailable: ${loadError}` : "Loading draft…"}
+          {loadError
+            ? `Draft unavailable: ${formatLoadError(loadError, "Failed to load draft.")}`
+            : "Loading draft…"}
         </Card>
       </div>
     );
@@ -121,7 +138,9 @@ const ProposalDraft: React.FC = () => {
               setSubmitting(true);
               try {
                 const res = await apiProposalSubmitToPool({ draftId: id });
-                window.location.href = `/app/proposals/${res.proposalId}/pp`;
+                navigate(`/app/proposals/${res.proposalId}/pp`, {
+                  replace: true,
+                });
               } catch (error) {
                 setSubmitError(formatProposalSubmitError(error));
               } finally {
@@ -135,7 +154,7 @@ const ProposalDraft: React.FC = () => {
       </div>
       {submitError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-[var(--destructive)]">
-          Submit failed: {submitError}
+          Submit failed: {formatLoadError(submitError)}
         </Card>
       ) : null}
 

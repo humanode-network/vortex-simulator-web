@@ -17,6 +17,7 @@ import { apiHuman } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 import { buildTierRequirementItems } from "@/lib/tierProgress";
+import { formatLoadError } from "@/lib/errorFormatting";
 import { CmEconomyPanel } from "@/components/CmEconomyPanel";
 import { Check, Copy } from "lucide-react";
 import {
@@ -174,7 +175,9 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         </Card>
       ) : profile === null ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          {loadError ? `Profile unavailable: ${loadError}` : "Loading profile…"}
+          {loadError
+            ? `Profile unavailable: ${formatLoadError(loadError)}`
+            : "Loading profile…"}
         </Card>
       ) : null}
 

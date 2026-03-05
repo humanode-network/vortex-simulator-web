@@ -14,6 +14,7 @@ import { InlineHelp } from "@/components/InlineHelp";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiChambers, apiClock, apiHumans } from "@/lib/apiClient";
 import { getChamberNumericStats } from "@/lib/dtoParsers";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { ChamberDto } from "@/types/api";
 import { Surface } from "@/components/Surface";
 
@@ -101,9 +102,7 @@ const Chambers: React.FC = () => {
           chamber.stats.lcm.toLowerCase().includes(term) ||
           String(chamber.multiplier).toLowerCase().includes(term);
         const matchesPipeline =
-          pipelineFilter === "any" ||
-          chamber.pipeline[pipelineFilter] > 0 ||
-          pipelineFilter === "build";
+          pipelineFilter === "any" || chamber.pipeline[pipelineFilter] > 0;
         return matchesTerm && matchesPipeline;
       })
       .sort((a, b) => {
@@ -189,7 +188,7 @@ const Chambers: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-destructive"
         >
-          Chambers unavailable: {loadError}
+          Chambers unavailable: {formatLoadError(loadError)}
         </Surface>
       ) : null}
 

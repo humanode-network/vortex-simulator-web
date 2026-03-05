@@ -12,7 +12,8 @@ import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
-import { formatTime } from "@/lib/dateTime";
+import { formatTime, toTimestampMs } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import {
   requiredTierForProposalType,
   isTierEligible,
@@ -437,7 +438,7 @@ const ProposalCreation: React.FC = () => {
       });
       setServerDraftId(res.draftId);
       persistServerDraftId(res.draftId);
-      setSavedAt(Date.parse(res.updatedAt) || Date.now());
+      setSavedAt(toTimestampMs(res.updatedAt, Date.now()));
     } catch (error) {
       setSaveError((error as Error).message);
     } finally {
@@ -510,7 +511,7 @@ const ProposalCreation: React.FC = () => {
         <CardContent className="space-y-5 text-sm text-text">
           {saveError ? (
             <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-muted">
-              {saveError}
+              {formatLoadError(saveError)}
             </div>
           ) : null}
           {loadingDraftId ? (
@@ -520,12 +521,12 @@ const ProposalCreation: React.FC = () => {
           ) : null}
           {loadDraftError ? (
             <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
-              Draft load failed: {loadDraftError}
+              Draft load failed: {formatLoadError(loadDraftError)}
             </div>
           ) : null}
           {submitError ? (
             <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
-              Submit failed: {submitError}
+              Submit failed: {formatLoadError(submitError)}
             </div>
           ) : null}
           {tierBlocked ? (
@@ -589,6 +590,7 @@ const ProposalCreation: React.FC = () => {
               draft={draft}
               formationEligible={draft.formationEligible}
               mode={template.id}
+              proposerAddress={auth.address ?? null}
               selectedChamber={selectedChamber}
               setDraft={setDraft}
               textareaClassName={textareaClassName}

@@ -27,6 +27,14 @@ function parseDate(value: string | number | Date): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+export function toTimestampMs(
+  value: string | number | Date,
+  fallback = 0,
+): number {
+  const parsed = parseDate(value);
+  return parsed ? parsed.getTime() : fallback;
+}
+
 export function getStoredDateFormat(): DateFormat {
   try {
     const raw = localStorage.getItem(DATE_FORMAT_KEY);

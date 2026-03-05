@@ -13,7 +13,8 @@ import { Surface } from "@/components/Surface";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { ToggleGroup } from "@/components/ToggleGroup";
-import { formatDateTime } from "@/lib/dateTime";
+import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import {
   apiClock,
   apiCourt,
@@ -40,6 +41,7 @@ const FEED_SCOPES: { value: FeedScope; label: string }[] = [
 const FEED_CARD_ESTIMATE = 240;
 const FEED_MIN_PAGE_SIZE = 6;
 const FEED_MAX_PAGE_SIZE = 30;
+const URGENT_STAGE_LIMIT = FEED_MAX_PAGE_SIZE * 2;
 
 const normalizeAppHref = (href?: string) => {
   if (!href) return undefined;
@@ -55,9 +57,11 @@ const normalizeAppHref = (href?: string) => {
   }
 
   const chamberThreadMatch = appHref.match(
-    /^\/app\/chambers\/([^/]+)\/threads\/[^/]+$/,
+    /^\/app\/chambers\/([^/]+)\/threads\/([^/]+)$/,
   );
-  if (chamberThreadMatch) return `/app/chambers/${chamberThreadMatch[1]}`;
+  if (chamberThreadMatch) {
+    return `/app/chambers/${chamberThreadMatch[1]}?thread=${encodeURIComponent(chamberThreadMatch[2])}`;
+  }
 
   return appHref;
 };
@@ -71,8 +75,13 @@ const courtCaseIdFromHref = (href?: string) => {
 
 const proposalIdFromHref = (href?: string) => {
   if (!href) return null;
-  const clean = href.startsWith("/app/") ? href.slice("/app".length) : href;
-  const match = clean.match(/^\/proposals\/([^/]+)\/(pp|chamber|formation)$/);
+  const noQuery = href.split("?")[0] ?? href;
+  const clean = noQuery.startsWith("/app/")
+    ? noQuery.slice("/app".length)
+    : noQuery;
+  const match = clean.match(
+    /^\/proposals\/([^/]+)\/(pp|chamber|formation|finished)$/,
+  );
   return match?.[1] ?? null;
 };
 
@@ -128,14 +137,60 @@ const toUrgentItems = (
       continue;
     }
     if (
-      new Date(item.timestamp).getTime() >
-      new Date(existing.timestamp).getTime()
+      toTimestampMs(item.timestamp, -1) > toTimestampMs(existing.timestamp, -1)
     ) {
       deduped.set(key, item);
     }
   }
   return Array.from(deduped.values());
 };
+
+async function loadUrgentFeedItems(input: {
+  address?: string;
+  chambers: string[];
+  limit: number;
+  isGovernorActive: boolean;
+}): Promise<FeedItemDto[]> {
+  const [base, pool, vote, build, invites] = await Promise.all([
+    apiFeed({ chambers: input.chambers, limit: input.limit }),
+    apiFeed({
+      stage: "pool",
+      chambers: input.chambers,
+      limit: URGENT_STAGE_LIMIT,
+    }),
+    apiFeed({
+      stage: "vote",
+      chambers: input.chambers,
+      limit: URGENT_STAGE_LIMIT,
+    }),
+    input.address
+      ? apiFeed({
+          stage: "build",
+          actor: input.address,
+          limit: URGENT_STAGE_LIMIT,
+        })
+      : Promise.resolve({ items: [] as FeedItemDto[] }),
+    input.address
+      ? apiFeed({
+          actor: input.address,
+          stage: "faction",
+          limit: FEED_MIN_PAGE_SIZE,
+        })
+      : Promise.resolve({ items: [] as FeedItemDto[] }),
+  ]);
+
+  return toUrgentItems(
+    [
+      ...base.items,
+      ...pool.items,
+      ...vote.items,
+      ...build.items,
+      ...invites.items,
+    ],
+    input.isGovernorActive,
+    input.address,
+  );
+}
 
 const feedItemKey = (item: FeedItemDto) =>
   `${item.id}|${item.stage}|${item.timestamp}|${item.href ?? ""}`;
@@ -260,34 +315,28 @@ const Feed: React.FC = () => {
         return;
       }
       try {
+        if (!active) return;
+        if (feedScope === "urgent") {
+          const urgentItems = await loadUrgentFeedItems({
+            address: auth.address ?? undefined,
+            chambers: chamberFilters ?? [],
+            limit: pageSize,
+            isGovernorActive: viewerGovernorActive,
+          });
+          if (!active) return;
+          setFeedItems(urgentItems);
+          setNextCursor(null);
+          setLoadError(null);
+          return;
+        }
         const res = await apiFeed({
           actor: feedScope === "my" ? (auth.address ?? undefined) : undefined,
           chambers:
-            feedScope === "chambers" || feedScope === "urgent"
-              ? (chamberFilters ?? [])
-              : undefined,
+            feedScope === "chambers" ? (chamberFilters ?? []) : undefined,
           limit: pageSize,
         });
         if (!active) return;
-        let items = res.items;
-        if (feedScope === "urgent" && auth.address) {
-          const inviteRes = await apiFeed({
-            actor: auth.address,
-            stage: "faction",
-            limit: FEED_MIN_PAGE_SIZE,
-          });
-          if (!active) return;
-          items = [...items, ...inviteRes.items];
-        }
-        const filteredItems =
-          feedScope === "urgent"
-            ? toUrgentItems(
-                items,
-                viewerGovernorActive,
-                auth.address ?? undefined,
-              )
-            : items;
-        setFeedItems(filteredItems);
+        setFeedItems(res.items);
         setNextCursor(res.nextCursor ?? null);
         setLoadError(null);
       } catch (error) {
@@ -312,8 +361,7 @@ const Feed: React.FC = () => {
 
   const sortedFeed = useMemo(() => {
     return [...(feedItems ?? [])].sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      (a, b) => toTimestampMs(b.timestamp, -1) - toTimestampMs(a.timestamp, -1),
     );
   }, [feedItems]);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -498,7 +546,7 @@ const Feed: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-destructive"
         >
-          Feed unavailable: {loadError}
+          Feed unavailable: {formatLoadError(loadError)}
         </Surface>
       ) : null}
 
@@ -629,9 +677,12 @@ const Feed: React.FC = () => {
                     : 0;
 
                   const parsePair = (value: string) => {
-                    const parts = value.split("/").map((v) => Number(v.trim()));
-                    if (parts.length !== 2) return { a: 0, b: 0 };
-                    const [a, b] = parts;
+                    const matches = value.match(/\d+/g) ?? [];
+                    const aRaw = matches[0];
+                    const bRaw = matches[1];
+                    if (!aRaw || !bRaw) return { a: 0, b: 0 };
+                    const a = Number.parseInt(aRaw, 10);
+                    const b = Number.parseInt(bRaw, 10);
                     return {
                       a: Number.isFinite(a) ? a : 0,
                       b: Number.isFinite(b) ? b : 0,

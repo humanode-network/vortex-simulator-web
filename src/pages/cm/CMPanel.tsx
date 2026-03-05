@@ -17,6 +17,7 @@ import {
   apiChamberMultiplierSubmit,
   apiMyGovernance,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { ChamberDto } from "@/types/api";
 
 const CMPanel: React.FC = () => {
@@ -153,7 +154,7 @@ const CMPanel: React.FC = () => {
       <PageHint pageId="cm-panel" />
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          CM panel unavailable: {loadError}
+          CM panel unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
       {chambers === null && !loadError ? (
@@ -166,7 +167,7 @@ const CMPanel: React.FC = () => {
       ) : null}
       {submitError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          CM submission failed: {submitError}
+          CM submission failed: {formatLoadError(submitError)}
         </Card>
       ) : null}
       <Card>

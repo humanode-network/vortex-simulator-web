@@ -20,6 +20,7 @@ import { ToggleGroup } from "@/components/ToggleGroup";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { AddressInline } from "@/components/AddressInline";
 import { DETAIL_TILE_CLASS, normalizeDetailValue } from "@/lib/profileUi";
+import { formatLoadError } from "@/lib/errorFormatting";
 import {
   apiChambers,
   apiFactions,
@@ -195,7 +196,7 @@ const HumanNodes: React.FC = () => {
       ) : null}
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Human nodes unavailable: {loadError}
+          Human nodes unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
       {nodes !== null && nodes.length === 0 && !loadError ? (

@@ -269,8 +269,8 @@ const Guide: React.FC = () => {
             Vortex Guide
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-white! [text-shadow:0_0_18px_rgba(244,179,127,0.14)] sm:text-base">
-            A short, human-readable map of what you’re seeing in this demo, why
-            Vortex exists, and how each page works.
+            A short, human-readable map of what you’re seeing in the simulator,
+            why Vortex exists, and how each page works.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -325,8 +325,9 @@ const Guide: React.FC = () => {
                 simplistic voting surface.
               </p>
               <p className="text-white">
-                This repo is a <strong>demo mockup</strong> of that experience.
-                Numbers, identities, and statuses are illustrative.
+                This repo is a <strong>living simulator UI</strong> of that
+                experience. Data and governance state come from the current
+                simulation backend.
               </p>
             </GuideSection>
 
@@ -401,8 +402,8 @@ const Guide: React.FC = () => {
                 >
                   Proposal Creation
                 </Link>{" "}
-                is a multi-step wizard in this demo. Steps are navigable so you
-                can explore the structure even if you don’t fill everything in.
+                is a multi-step wizard. Steps are navigable so you can explore
+                structure and submit complete proposals.
               </p>
               <p>
                 Drafts:{" "}
@@ -521,8 +522,7 @@ const Guide: React.FC = () => {
             >
               <p>
                 Invision is where governance becomes measurable: it summarizes
-                behavior and delivery patterns into scannable insights (still a
-                mock in this repo).
+                behavior and delivery patterns into scannable insights.
               </p>
               <p>
                 In the app you’ll see “Invision insight” snippets attached to
@@ -534,7 +534,7 @@ const Guide: React.FC = () => {
             <GuideSection
               id="courts"
               title="Courts"
-              subtitle="Disputes, evidence, and verdicts (mock UI)."
+              subtitle="Disputes, evidence, and verdicts."
             >
               <p>
                 Courts is the judicial layer. Cases are structured around a
@@ -546,8 +546,8 @@ const Guide: React.FC = () => {
                   Statuses (jury / live / ended) reflect the state of the case.
                 </li>
                 <li>
-                  Verdict buttons are present as a UI mock to show how an action
-                  might look.
+                  Verdict actions appear based on case stage and participant
+                  permissions.
                 </li>
               </ul>
             </GuideSection>
@@ -555,7 +555,7 @@ const Guide: React.FC = () => {
             <GuideSection
               id="cm-panel"
               title="CM Panel"
-              subtitle="A control surface for chamber multipliers (mock UI)."
+              subtitle="A control surface for chamber multipliers."
             >
               <p>
                 The CM Panel is a specialized admin-style surface. In a real
@@ -566,7 +566,7 @@ const Guide: React.FC = () => {
             <GuideSection
               id="profile-settings"
               title="Profile & Settings"
-              subtitle="Personal details and global preferences (demo)."
+              subtitle="Personal details and global preferences."
             >
               <p>
                 Profile is your personal view. Settings is where future
@@ -627,8 +627,8 @@ const Guide: React.FC = () => {
         </div>
 
         <MarketingFooter className="mt-12 text-white">
-          This guide describes the demo mockups shipped in this repo and will
-          evolve as the community tests and gives feedback.
+          This guide describes the live simulator surfaces and will evolve as
+          the community tests and gives feedback.
         </MarketingFooter>
       </div>
     </MarketingPage>

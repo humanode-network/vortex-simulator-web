@@ -16,6 +16,8 @@ import { Surface } from "@/components/Surface";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { HintLabel } from "@/components/Hint";
 import { getFormationProgress } from "@/lib/dtoParsers";
+import { formatLoadError } from "@/lib/errorFormatting";
+import { toTimestampMs } from "@/lib/dateTime";
 import {
   apiProposalChamberPage,
   apiProposalFormationPage,
@@ -28,6 +30,19 @@ import type {
   PoolProposalPageDto,
   ProposalListItemDto,
 } from "@/types/api";
+
+function parseRatioPair(value: string): { left: number; right: number } {
+  const matches = value.match(/\d+/g) ?? [];
+  const leftRaw = matches[0];
+  const rightRaw = matches[1];
+  if (!leftRaw || !rightRaw) return { left: 0, right: 0 };
+  const left = Number.parseInt(leftRaw, 10);
+  const right = Number.parseInt(rightRaw, 10);
+  return {
+    left: Number.isFinite(left) ? left : 0,
+    right: Number.isFinite(right) ? right : 0,
+  };
+}
 
 const Proposals: React.FC = () => {
   const [proposalData, setProposalData] = useState<
@@ -140,10 +155,10 @@ const Proposals: React.FC = () => {
       })
       .sort((a, b) => {
         if (sortBy === "Newest") {
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return toTimestampMs(b.date, -1) - toTimestampMs(a.date, -1);
         }
         if (sortBy === "Oldest") {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
+          return toTimestampMs(a.date, -1) - toTimestampMs(b.date, -1);
         }
         if (sortBy === "Activity") {
           return b.activityScore - a.activityScore;
@@ -258,7 +273,7 @@ const Proposals: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-destructive"
         >
-          Proposals unavailable: {loadError}
+          Proposals unavailable: {formatLoadError(loadError)}
         </Surface>
       ) : null}
 
@@ -300,9 +315,8 @@ const Proposals: React.FC = () => {
                       1,
                       poolPage.activeGovernors,
                     );
-                    const [filledSlots, totalSlots] = poolPage.teamSlots
-                      .split("/")
-                      .map((v) => Number(v.trim()));
+                    const { left: filledSlots, right: totalSlots } =
+                      parseRatioPair(poolPage.teamSlots);
                     const openSlots = Math.max(totalSlots - filledSlots, 0);
                     const milestonesCount = Number(poolPage.milestones);
                     const engaged = poolPage.upvotes + poolPage.downvotes;
@@ -372,21 +386,18 @@ const Proposals: React.FC = () => {
                     // Derive engaged from chamber vote totals to avoid mixing in
                     // any pre-vote/pool counters.
                     const engaged = totalVotes;
-                    const quorumNeeded = Math.ceil(
-                      activeGovernors * chamberPage.attentionQuorum,
-                    );
+                    const quorumNeeded = chamberPage.quorumNeeded;
                     const quorumPercent = Math.round(
                       (engaged / activeGovernors) * 100,
                     );
                     const quorumNeededPercent = Math.round(
-                      chamberPage.attentionQuorum * 100,
+                      (quorumNeeded / activeGovernors) * 100,
                     );
                     const yesPercentOfQuorum =
                       engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;
 
-                    const [filledSlots, totalSlots] = chamberPage.teamSlots
-                      .split("/")
-                      .map((v) => Number(v.trim()));
+                    const { left: filledSlots, right: totalSlots } =
+                      parseRatioPair(chamberPage.teamSlots);
                     const openSlots = Math.max(totalSlots - filledSlots, 0);
 
                     const meetsQuorum = engaged >= quorumNeeded;
@@ -786,7 +797,9 @@ const Proposals: React.FC = () => {
                         : proposal.stage === "vote"
                           ? `/app/proposals/${proposal.id}/chamber`
                           : proposal.stage === "passed"
-                            ? `/app/proposals/${proposal.id}/chamber`
+                            ? proposal.summaryPill === "Finished"
+                              ? `/app/proposals/${proposal.id}/finished`
+                              : `/app/proposals/${proposal.id}/chamber`
                             : proposal.stage === "build"
                               ? proposal.summaryPill === "Finished"
                                 ? `/app/proposals/${proposal.id}/finished`

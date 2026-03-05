@@ -9,6 +9,7 @@ import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
 import { formatDateTime } from "@/lib/dateTime";
+import { Link } from "react-router";
 
 export type ProposalSummaryStat = {
   label: string;
@@ -41,6 +42,13 @@ export type ProposalTimelineItem = {
   title: string;
   detail?: string;
   actor?: string;
+  snapshot?: {
+    fromStage: "pool" | "vote" | "build";
+    toStage: "vote" | "build" | "passed" | "failed";
+    reason?: string;
+    milestoneIndex?: number | null;
+    metrics: Array<{ label: string; value: string }>;
+  };
 };
 
 type ProposalSummaryCardProps = {
@@ -228,13 +236,29 @@ export function ProposalInvisionInsightCard({
 
 type ProposalTimelineCardProps = {
   items: ProposalTimelineItem[];
+  proposalId?: string;
 };
 
 function isLikelyAddress(value: string): boolean {
   return /^[a-z0-9]{6,}$/i.test(value) && value.length >= 20;
 }
 
-export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
+function snapshotStageHref(
+  proposalId: string,
+  stage: "pool" | "vote" | "build",
+): string | null {
+  if (stage === "pool")
+    return `/app/proposals/${proposalId}/pp?snapshotStage=pool`;
+  if (stage === "vote")
+    return `/app/proposals/${proposalId}/chamber?snapshotStage=vote`;
+  // `build` stage can become unavailable after terminal transition.
+  return null;
+}
+
+export function ProposalTimelineCard({
+  items,
+  proposalId,
+}: ProposalTimelineCardProps) {
   return (
     <section className="space-y-3 text-sm text-text">
       <h2 className="text-lg font-semibold text-text">Timeline</h2>
@@ -270,6 +294,49 @@ export function ProposalTimelineCard({ items }: ProposalTimelineCardProps) {
                   item.actor
                 )}
               </p>
+            ) : null}
+            {item.snapshot ? (
+              <div className="space-y-2 rounded-lg border border-border/70 bg-panel-alt px-2 py-2">
+                <p className="text-xs font-semibold text-text">
+                  Stage transition: {item.snapshot.fromStage} →{" "}
+                  {item.snapshot.toStage}
+                </p>
+                {item.snapshot.reason ? (
+                  <p className="text-xs text-muted">{item.snapshot.reason}</p>
+                ) : null}
+                {item.snapshot.metrics.length > 0 ? (
+                  <ul className="grid gap-1 sm:grid-cols-2">
+                    {item.snapshot.metrics.map((metric) => (
+                      <li
+                        key={`${item.id}-${metric.label}`}
+                        className="text-xs text-muted"
+                      >
+                        <span className="font-semibold text-text">
+                          {metric.label}:
+                        </span>{" "}
+                        {metric.value}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {proposalId
+                  ? (() => {
+                      const href = snapshotStageHref(
+                        proposalId,
+                        item.snapshot.fromStage,
+                      );
+                      if (!href) return null;
+                      return (
+                        <Link
+                          to={href}
+                          className="inline-flex text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                        >
+                          Open {item.snapshot.fromStage} snapshot
+                        </Link>
+                      );
+                    })()
+                  : null}
+              </div>
             ) : null}
           </Surface>
         ))}

@@ -762,7 +762,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "A cognitocratic system contains multiple specialization chambers, so CM/LCM from different chambers cannot be treated as equal by default.",
       "A CM of 5 in one chamber can be meaningfully different from a CM of 5 in another depending on what the system values at that time.",
       "The chamber multiplier defines these proportions between chambers so contributions can be normalized for aggregation.",
-      "In this demo, the multiplier is set collectively by cognitocrats who have not received LCM in that chamber (average of their inputs).",
+      "The multiplier is set collectively by cognitocrats who have not received LCM in that chamber (average of their inputs).",
     ],
     tags: ["cm", "multiplier", "chamber", "weighting"],
     related: ["cognitocratic_measure", "lcm", "mcm", "acm"],

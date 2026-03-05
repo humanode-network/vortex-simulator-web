@@ -14,6 +14,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { ActivityTile } from "@/components/ActivityTile";
 import { apiHuman } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { Check, Copy } from "lucide-react";
 import {
@@ -60,7 +61,7 @@ const HumanNode: React.FC = () => {
       <div className="flex flex-col gap-6">
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           {loadError
-            ? `Human profile unavailable: ${loadError}`
+            ? `Human profile unavailable: ${formatLoadError(loadError)}`
             : "Loading profile…"}
         </Card>
       </div>

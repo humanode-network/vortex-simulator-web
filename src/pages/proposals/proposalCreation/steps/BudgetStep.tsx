@@ -57,7 +57,7 @@ export function BudgetStep(props: {
                     <p className="text-sm text-text">
                       {item.timeframe.trim().length > 0
                         ? item.timeframe
-                        : "Timeline TBD"}
+                        : "Timeline not specified"}
                     </p>
                   </div>
                   <div className="space-y-1">

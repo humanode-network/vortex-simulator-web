@@ -13,7 +13,8 @@ import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiCourts } from "@/lib/apiClient";
-import { formatDateTime } from "@/lib/dateTime";
+import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { CourtCaseDto, CourtCaseStatusDto } from "@/types/api";
 
 const Courts: React.FC = () => {
@@ -25,7 +26,6 @@ const Courts: React.FC = () => {
     sortBy: "recent" | "reports";
   }>({ statusFilter: "any", sortBy: "recent" });
   const { statusFilter, sortBy } = filters;
-
   useEffect(() => {
     let active = true;
     (async () => {
@@ -61,8 +61,7 @@ const Courts: React.FC = () => {
       .sort((a, b) => {
         if (sortBy === "reports") return b.reports - a.reports;
         return (
-          new Date(b.opened.split("/").reverse().join("-")).getTime() -
-          new Date(a.opened.split("/").reverse().join("-")).getTime()
+          toTimestampMs(b.opened ?? "", 0) - toTimestampMs(a.opened ?? "", 0)
         );
       });
   }, [cases, search, statusFilter, sortBy]);
@@ -99,7 +98,8 @@ const Courts: React.FC = () => {
         ) : null}
         {loadError ? (
           <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-            Courts unavailable: {loadError}
+            Courts unavailable:{" "}
+            {formatLoadError(loadError, "Failed to load courts.")}
           </Card>
         ) : null}
 
@@ -157,7 +157,10 @@ const Courts: React.FC = () => {
                         <div className="flex flex-col items-end gap-2">
                           <CourtStatusBadge status={courtCase.status} />
                           <p className="text-xs text-muted">
-                            Opened {formatDateTime(courtCase.opened)}
+                            Opened{" "}
+                            {courtCase.opened
+                              ? formatDateTime(courtCase.opened)
+                              : "—"}
                           </p>
                         </div>
                       </div>

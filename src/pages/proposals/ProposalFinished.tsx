@@ -14,6 +14,11 @@ import type {
   FormationProposalPageDto,
   ProposalTimelineItemDto,
 } from "@/types/api";
+import {
+  useProposalStageSync,
+  useProposalTransitionNotice,
+} from "./useProposalStageSync";
+import { formatLoadError } from "@/lib/errorFormatting";
 
 const ProposalFinished: React.FC = () => {
   const { id } = useParams();
@@ -21,7 +26,8 @@ const ProposalFinished: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
-
+  useProposalStageSync(id);
+  const transitionNotice = useProposalTransitionNotice();
   useEffect(() => {
     if (!id) return;
     let active = true;
@@ -63,6 +69,16 @@ const ProposalFinished: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="proposals" />
+        {transitionNotice ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {transitionNotice}
+          </Surface>
+        ) : null}
         <Surface
           variant="panelAlt"
           radius="2xl"
@@ -70,7 +86,7 @@ const ProposalFinished: React.FC = () => {
           className="px-5 py-4 text-sm text-muted"
         >
           {loadError
-            ? `Proposal unavailable: ${loadError}`
+            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
             : "Loading proposal…"}
         </Surface>
       </div>
@@ -82,9 +98,19 @@ const ProposalFinished: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
+      {transitionNotice ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {transitionNotice}
+        </Surface>
+      ) : null}
       <ProposalPageHeader
         title={project.title}
-        stage="build"
+        stage="passed"
         chamber={project.chamber}
         proposer={project.proposer}
       />
@@ -153,10 +179,10 @@ const ProposalFinished: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
         >
-          Timeline unavailable: {timelineError}
+          Timeline unavailable: {formatLoadError(timelineError)}
         </Surface>
       ) : (
-        <ProposalTimelineCard items={timeline} />
+        <ProposalTimelineCard items={timeline} proposalId={id} />
       )}
     </div>
   );

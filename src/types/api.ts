@@ -398,9 +398,31 @@ export type ProposalTimelineItemDto = {
   detail?: string;
   actor?: string;
   timestamp: string;
+  snapshot?: {
+    fromStage: "pool" | "vote" | "build";
+    toStage: "vote" | "build" | "passed" | "failed";
+    reason?: string;
+    milestoneIndex?: number | null;
+    metrics: Array<{ label: string; value: string }>;
+  };
 };
 
 export type GetProposalTimelineResponse = { items: ProposalTimelineItemDto[] };
+
+export type ProposalStatusDto = {
+  proposalId: string;
+  canonicalStage: ProposalStageDto;
+  canonicalRoute: string;
+  redirectReason?: string;
+  formationProjectState?:
+    | "active"
+    | "awaiting_milestone_vote"
+    | "canceled"
+    | "ready_to_finish"
+    | "completed";
+  pendingMilestoneIndex?: number | null;
+  updatedAt: string;
+};
 
 export type ProposalDraftListItemDto = {
   id: string;
@@ -611,7 +633,7 @@ export type CourtCaseDto = {
   status: CourtCaseStatusDto;
   reports: number;
   juryIds: string[];
-  opened: string;
+  opened: string | null;
 };
 export type CourtCaseDetailDto = CourtCaseDto & {
   parties: { role: string; humanId: string; note?: string }[];

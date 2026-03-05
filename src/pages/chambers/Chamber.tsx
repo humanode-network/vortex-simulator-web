@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useSearchParams } from "react-router";
 
 import { Button } from "@/components/primitives/button";
 import {
@@ -43,11 +43,13 @@ import {
   apiMyGovernance,
 } from "@/lib/apiClient";
 import { formatDate, formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { useAuth } from "@/app/auth/AuthContext";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { address } = useAuth();
   const [chamberTitle, setChamberTitle] = useState<string>(() =>
     id ? id.replace(/-/g, " ") : "Chamber",
@@ -91,6 +93,7 @@ const Chamber: React.FC = () => {
   const [stageFilter, setStageFilter] =
     useState<ChamberProposalStageDto>("upcoming");
   const [governorSearch, setGovernorSearch] = useState("");
+  const requestedThreadId = searchParams.get("thread")?.trim() || null;
 
   useEffect(() => {
     if (!id) return;
@@ -547,6 +550,12 @@ const Chamber: React.FC = () => {
     [activeThread, canWrite, id, threadReplyBody],
   );
 
+  useEffect(() => {
+    if (!requestedThreadId) return;
+    if (activeThread?.thread.id === requestedThreadId) return;
+    void handleThreadSelect(requestedThreadId);
+  }, [activeThread?.thread.id, handleThreadSelect, requestedThreadId]);
+
   const handleChatSend = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
@@ -594,7 +603,7 @@ const Chamber: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-destructive"
         >
-          Chamber unavailable: {loadError}
+          Chamber unavailable: {formatLoadError(loadError)}
         </Surface>
       ) : null}
 
@@ -799,7 +808,9 @@ const Chamber: React.FC = () => {
                 borderStyle="dashed"
                 className="px-4 py-4 text-center text-sm text-muted"
               >
-                {cmError ? `CM summary unavailable: ${cmError}` : "Loading CM…"}
+                {cmError
+                  ? `CM summary unavailable: ${formatLoadError(cmError)}`
+                  : "Loading CM…"}
               </Surface>
             )}
           </CardContent>
@@ -1023,7 +1034,9 @@ const Chamber: React.FC = () => {
                   className="min-h-[110px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
                 />
                 {threadError ? (
-                  <p className="text-sm text-destructive">{threadError}</p>
+                  <p className="text-sm text-destructive">
+                    {formatLoadError(threadError)}
+                  </p>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -1077,7 +1090,7 @@ const Chamber: React.FC = () => {
                 radius="xl"
                 className="px-4 py-3 text-sm text-destructive"
               >
-                {threadDetailError}
+                {formatLoadError(threadDetailError)}
               </Surface>
             ) : null}
 
@@ -1121,7 +1134,7 @@ const Chamber: React.FC = () => {
                   />
                   {threadReplyError ? (
                     <p className="text-sm text-destructive">
-                      {threadReplyError}
+                      {formatLoadError(threadReplyError)}
                     </p>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2">
@@ -1176,10 +1189,14 @@ const Chamber: React.FC = () => {
               </Button>
             </form>
             {chatError ? (
-              <p className="mt-2 text-sm text-destructive">{chatError}</p>
+              <p className="mt-2 text-sm text-destructive">
+                {formatLoadError(chatError)}
+              </p>
             ) : null}
             {chatSignalError ? (
-              <p className="mt-2 text-xs text-muted">{chatSignalError}</p>
+              <p className="mt-2 text-xs text-destructive">
+                {formatLoadError(chatSignalError)}
+              </p>
             ) : null}
             {!canWrite ? (
               <p className="mt-2 text-xs text-muted">

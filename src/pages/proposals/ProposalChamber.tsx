@@ -18,10 +18,15 @@ import {
   apiProposalChamberPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type {
   ChamberProposalPageDto,
   ProposalTimelineItemDto,
 } from "@/types/api";
+import {
+  useProposalStageSync,
+  useProposalTransitionNotice,
+} from "./useProposalStageSync";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -32,7 +37,8 @@ const ProposalChamber: React.FC = () => {
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const [yesScore, setYesScore] = useState(5);
-
+  const syncProposalStage = useProposalStageSync(id);
+  const transitionNotice = useProposalTransitionNotice();
   const loadPage = useCallback(async () => {
     if (!id) return;
     const page = await apiProposalChamberPage(id);
@@ -81,6 +87,16 @@ const ProposalChamber: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="proposals" />
+        {transitionNotice ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {transitionNotice}
+          </Surface>
+        ) : null}
         <Surface
           variant="panelAlt"
           radius="2xl"
@@ -88,7 +104,7 @@ const ProposalChamber: React.FC = () => {
           className="px-5 py-4 text-sm text-muted"
         >
           {loadError
-            ? `Proposal unavailable: ${loadError}`
+            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
             : "Loading proposal…"}
         </Surface>
       </div>
@@ -146,17 +162,30 @@ const ProposalChamber: React.FC = () => {
         choice,
         score: choice === "yes" ? score : undefined,
       });
+      const redirected = await syncProposalStage();
+      if (redirected) return;
       await loadPage();
     } catch (error) {
       setSubmitError((error as Error).message);
     } finally {
       setSubmitting(false);
+      void syncProposalStage();
     }
   };
 
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
+      {transitionNotice ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {transitionNotice}
+        </Surface>
+      ) : null}
       <ProposalPageHeader
         title={chamberTitle}
         stage="vote"
@@ -218,9 +247,9 @@ const ProposalChamber: React.FC = () => {
             variant="panelAlt"
             radius="2xl"
             shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
+            className="px-5 py-4 text-sm text-destructive"
           >
-            {submitError}
+            {formatLoadError(submitError)}
           </Surface>
         ) : null}
       </ProposalPageHeader>
@@ -332,10 +361,10 @@ const ProposalChamber: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
         >
-          Timeline unavailable: {timelineError}
+          Timeline unavailable: {formatLoadError(timelineError)}
         </Surface>
       ) : (
-        <ProposalTimelineCard items={timeline} />
+        <ProposalTimelineCard items={timeline} proposalId={id} />
       )}
     </div>
   );

@@ -23,6 +23,8 @@ import {
   apiCmMe,
   apiMyGovernance,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
+import { toTimestampMs } from "@/lib/dateTime";
 import type {
   ChamberDto,
   CmSummaryDto,
@@ -205,7 +207,7 @@ const MyGovernance: React.FC = () => {
 
   const timeLeftValue = useMemo(() => {
     const targetMs = clock?.nextEraAt
-      ? new Date(clock.nextEraAt).getTime()
+      ? toTimestampMs(clock.nextEraAt, NaN)
       : NaN;
     if (Number.isFinite(targetMs)) {
       return formatDayHourMinute(targetMs, nowMs);
@@ -255,7 +257,9 @@ const MyGovernance: React.FC = () => {
             loadError ? "text-destructive" : undefined,
           )}
         >
-          {loadError ? `My governance unavailable: ${loadError}` : "Loading…"}
+          {loadError
+            ? `My governance unavailable: ${formatLoadError(loadError)}`
+            : "Loading…"}
         </Surface>
       ) : null}
       <Card>
