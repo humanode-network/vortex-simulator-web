@@ -30,6 +30,7 @@ import {
   getApiErrorPayload,
 } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
 
 function normalizeAddress(value: string): string {
@@ -162,7 +163,9 @@ const Faction: React.FC = () => {
       <div className="flex flex-col gap-4">
         <h1 className="text-xl font-semibold text-text">Faction not found</h1>
         {loadError ? (
-          <p className="text-sm text-destructive">{loadError}</p>
+          <p className="text-sm text-destructive">
+            {formatLoadError(loadError)}
+          </p>
         ) : null}
         <Button asChild size="sm">
           <Link to="/app/factions">Back to factions</Link>
@@ -351,7 +354,7 @@ const Faction: React.FC = () => {
 
       {actionError ? (
         <Card className="border-dashed px-4 py-3 text-sm text-destructive">
-          {actionError}
+          {formatLoadError(actionError)}
         </Card>
       ) : null}
 

@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { apiFactionCreate, getApiErrorPayload } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 
 type FormState = {
   name: string;
@@ -387,7 +388,7 @@ const FactionCreate: React.FC = () => {
 
           {error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
+              {formatLoadError(error)}
             </div>
           ) : null}
           {!error && validationError ? (

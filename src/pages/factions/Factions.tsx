@@ -15,6 +15,7 @@ import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiFactions } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
 
 const Factions: React.FC = () => {
@@ -108,7 +109,7 @@ const Factions: React.FC = () => {
       ) : null}
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Factions unavailable: {loadError}
+          Factions unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
       {factions !== null && factions.length === 0 && !loadError ? (

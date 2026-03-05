@@ -9,6 +9,7 @@ import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiProposalDrafts } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProposalDraftListItemDto } from "@/types/api";
 
 const ProposalDrafts: React.FC = () => {
@@ -114,7 +115,7 @@ const ProposalDrafts: React.FC = () => {
       ) : null}
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Drafts unavailable: {loadError}
+          Drafts unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
       {drafts !== null && drafts.length === 0 && !loadError ? (

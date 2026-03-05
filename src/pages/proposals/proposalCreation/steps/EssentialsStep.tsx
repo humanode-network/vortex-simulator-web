@@ -678,7 +678,7 @@ export function EssentialsStep(props: {
                         chamberId: "general",
                       }));
                     }}
-                    placeholder={"5F...Alice\n5F...Bob"}
+                    placeholder={"hm...\nhm..."}
                   />
                 </div>
               ) : null}

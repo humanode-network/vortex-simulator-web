@@ -12,6 +12,7 @@ import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { AddressInline } from "@/components/AddressInline";
 import { apiFormation } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type {
   FormationCategoryDto as Category,
   FormationProjectDto,
@@ -82,7 +83,7 @@ const Formation: React.FC = () => {
       ) : null}
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Formation unavailable: {loadError}
+          Formation unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
       {data !== null && projects.length === 0 && !loadError ? (

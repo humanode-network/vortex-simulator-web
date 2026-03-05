@@ -6,6 +6,7 @@ import {
   apiChamberCm,
   apiCmAddress,
   apiCmMe,
+  apiProposalStatus,
 } from "../../src/lib/apiClient.ts";
 
 test("apiChamber requests the chamber endpoint with credentials", async () => {
@@ -130,6 +131,37 @@ test("apiCmAddress requests the cm/:address endpoint", async () => {
   const res = await apiCmAddress("0xabc");
   assert.equal(res.address, "0xabc");
   assert.equal(calls[0].input, "/api/cm/0xabc");
+
+  global.fetch = originalFetch;
+});
+
+test("apiProposalStatus requests canonical proposal status endpoint", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response(
+      JSON.stringify({
+        proposalId: "proposal-1",
+        canonicalStage: "vote",
+        canonicalRoute: "/app/proposals/proposal-1/chamber",
+        redirectReason: "milestone_vote_open",
+        pendingMilestoneIndex: 1,
+        updatedAt: new Date().toISOString(),
+      }),
+      {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      },
+    );
+  };
+
+  const res = await apiProposalStatus("proposal-1");
+  assert.equal(res.proposalId, "proposal-1");
+  assert.equal(res.canonicalStage, "vote");
+  assert.equal(calls[0].input, "/api/proposals/proposal-1/status");
+  assert.equal(calls[0].init.credentials, "include");
 
   global.fetch = originalFetch;
 });

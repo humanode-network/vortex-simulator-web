@@ -12,6 +12,7 @@ import { PageHint } from "@/components/PageHint";
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiFactions, apiInvision } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto, GetInvisionResponse } from "@/types/api";
 
 const Invision: React.FC = () => {
@@ -79,7 +80,7 @@ const Invision: React.FC = () => {
         ) : null}
         {loadError ? (
           <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-            Invision unavailable: {loadError}
+            Invision unavailable: {formatLoadError(loadError)}
           </Card>
         ) : null}
         {invision !== null &&

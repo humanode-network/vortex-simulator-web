@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { apiHuman } from "@/lib/apiClient";
 import { formatActivityTimestamp } from "@/lib/profileUi";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { HumanNodeProfileDto } from "@/types/api";
 
 const FullHistory: React.FC = () => {
@@ -71,7 +72,9 @@ const FullHistory: React.FC = () => {
 
       {profile === null ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          {loadError ? `History unavailable: ${loadError}` : "Loading history…"}
+          {loadError
+            ? `History unavailable: ${formatLoadError(loadError)}`
+            : "Loading history…"}
         </Card>
       ) : null}
 

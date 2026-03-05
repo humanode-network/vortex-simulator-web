@@ -21,6 +21,7 @@ import {
   getApiErrorPayload,
 } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
 
 function normalizeAddress(value: string): string {
@@ -74,7 +75,6 @@ const FactionChannel: React.FC = () => {
 
   const viewerRole = viewerMembership?.isActive ? viewerMembership.role : null;
   const canPost = !!viewerAddress && !!viewerMembership?.isActive;
-  const isFounderAdmin = viewerRole === "founder";
   const canModerate = viewerRole === "founder" || viewerRole === "steward";
 
   const channel = useMemo(
@@ -126,7 +126,9 @@ const FactionChannel: React.FC = () => {
       <div className="flex flex-col gap-4">
         <h1 className="text-xl font-semibold text-text">Channel not found</h1>
         {loadError ? (
-          <p className="text-sm text-destructive">{loadError}</p>
+          <p className="text-sm text-destructive">
+            {formatLoadError(loadError)}
+          </p>
         ) : null}
         <Button asChild size="sm">
           <Link to={id ? `/app/factions/${id}` : "/app/factions"}>
@@ -165,7 +167,7 @@ const FactionChannel: React.FC = () => {
 
       {actionError ? (
         <Card className="border-dashed px-4 py-3 text-sm text-destructive">
-          {actionError}
+          {formatLoadError(actionError)}
         </Card>
       ) : null}
 
@@ -314,7 +316,7 @@ const FactionChannel: React.FC = () => {
                   )}
                 </div>
 
-                {isFounderAdmin ? (
+                {canModerate ? (
                   <Select
                     value={activeThread.status}
                     onChange={(event) =>

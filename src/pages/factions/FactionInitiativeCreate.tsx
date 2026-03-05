@@ -15,6 +15,7 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
 
 function normalizeAddress(value: string): string {
@@ -104,7 +105,9 @@ const FactionInitiativeCreate: React.FC = () => {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-xl font-semibold text-text">Faction not found</h1>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-destructive">{formatLoadError(error)}</p>
+        ) : null}
         <Button asChild size="sm">
           <Link to="/app/factions">Back to factions</Link>
         </Button>
@@ -125,7 +128,9 @@ const FactionInitiativeCreate: React.FC = () => {
             </p>
           ) : null}
 
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? (
+            <p className="text-sm text-destructive">{formatLoadError(error)}</p>
+          ) : null}
 
           <Input
             value={title}

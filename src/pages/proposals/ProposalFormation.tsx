@@ -17,11 +17,16 @@ import {
   apiProposalFormationPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import { useAuth } from "@/app/auth/AuthContext";
 import type {
   FormationProposalPageDto,
   ProposalTimelineItemDto,
 } from "@/types/api";
+import {
+  useProposalStageSync,
+  useProposalTransitionNotice,
+} from "./useProposalStageSync";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
@@ -33,7 +38,8 @@ const ProposalFormation: React.FC = () => {
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const auth = useAuth();
-
+  const syncProposalStage = useProposalStageSync(id);
+  const transitionNotice = useProposalTransitionNotice();
   useEffect(() => {
     if (!id) return;
     let active = true;
@@ -75,6 +81,16 @@ const ProposalFormation: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="proposals" />
+        {transitionNotice ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {transitionNotice}
+          </Surface>
+        ) : null}
         <Surface
           variant="panelAlt"
           radius="2xl"
@@ -82,7 +98,7 @@ const ProposalFormation: React.FC = () => {
           className="px-5 py-4 text-sm text-muted"
         >
           {loadError
-            ? `Proposal unavailable: ${loadError}`
+            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
             : "Loading proposal…"}
         </Surface>
       </div>
@@ -90,10 +106,12 @@ const ProposalFormation: React.FC = () => {
   }
 
   const parseRatio = (value: string): { filled: number; total: number } => {
-    const parts = value.split("/").map((p) => p.trim());
-    if (parts.length !== 2) return { filled: 0, total: 0 };
-    const filled = Number(parts[0]);
-    const total = Number(parts[1]);
+    const matches = value.match(/\d+/g) ?? [];
+    const filledRaw = matches[0];
+    const totalRaw = matches[1];
+    if (!filledRaw || !totalRaw) return { filled: 0, total: 0 };
+    const filled = Number.parseInt(filledRaw, 10);
+    const total = Number.parseInt(totalRaw, 10);
     return {
       filled: Number.isFinite(filled) ? filled : 0,
       total: Number.isFinite(total) ? total : 0,
@@ -138,6 +156,8 @@ const ProposalFormation: React.FC = () => {
     setActionBusy(true);
     try {
       await fn();
+      const redirected = await syncProposalStage();
+      if (redirected) return;
       if (id) {
         const next = await apiProposalFormationPage(id);
         setProject(next);
@@ -152,6 +172,16 @@ const ProposalFormation: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
+      {transitionNotice ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {transitionNotice}
+        </Surface>
+      ) : null}
       <ProposalPageHeader
         title={project.title}
         stage={stageForHeader}
@@ -255,8 +285,8 @@ const ProposalFormation: React.FC = () => {
           ) : null}
 
           {actionError ? (
-            <p className="text-xs text-muted" role="status">
-              {actionError}
+            <p className="text-xs text-destructive" role="status">
+              {formatLoadError(actionError)}
             </p>
           ) : null}
         </Surface>
@@ -310,10 +340,10 @@ const ProposalFormation: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
         >
-          Timeline unavailable: {timelineError}
+          Timeline unavailable: {formatLoadError(timelineError)}
         </Surface>
       ) : (
-        <ProposalTimelineCard items={timeline} />
+        <ProposalTimelineCard items={timeline} proposalId={id} />
       )}
     </div>
   );

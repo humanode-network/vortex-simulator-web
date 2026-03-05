@@ -19,8 +19,13 @@ import {
   apiProposalTimeline,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { PoolProposalPageDto, ProposalTimelineItemDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
+import {
+  useProposalStageSync,
+  useProposalTransitionNotice,
+} from "./useProposalStageSync";
 
 const ProposalPP: React.FC = () => {
   const { id } = useParams();
@@ -36,6 +41,8 @@ const ProposalPP: React.FC = () => {
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const auth = useAuth();
+  const syncProposalStage = useProposalStageSync(id);
+  const transitionNotice = useProposalTransitionNotice();
 
   const formatPoolVoteError = (error: unknown): string => {
     const payloadMessage = getApiErrorPayload(error)?.error?.message;
@@ -87,6 +94,16 @@ const ProposalPP: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="proposals" />
+        {transitionNotice ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {transitionNotice}
+          </Surface>
+        ) : null}
         <Surface
           variant="panelAlt"
           radius="2xl"
@@ -94,7 +111,7 @@ const ProposalPP: React.FC = () => {
           className="px-5 py-4 text-sm text-muted"
         >
           {loadError
-            ? `Proposal unavailable: ${loadError}`
+            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
             : "Loading proposal…"}
         </Surface>
       </div>
@@ -128,6 +145,16 @@ const ProposalPP: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
+      {transitionNotice ? (
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {transitionNotice}
+        </Surface>
+      ) : null}
       <div className="grid items-start gap-4">
         <ProposalPageHeader
           title={proposal.title}
@@ -333,6 +360,11 @@ const ProposalPP: React.FC = () => {
                     direction: pendingAction === "upvote" ? "up" : "down",
                     idempotencyKey: crypto.randomUUID(),
                   });
+                  const redirected = await syncProposalStage();
+                  if (redirected) {
+                    setShowRules(false);
+                    return;
+                  }
                   const next = await apiProposalPoolPage(id);
                   setProposal(next);
                   setShowRules(false);
@@ -340,6 +372,7 @@ const ProposalPP: React.FC = () => {
                   setVoteError(formatPoolVoteError(error));
                 } finally {
                   setVoteSubmitting(false);
+                  void syncProposalStage();
                 }
               }}
             >
@@ -353,7 +386,9 @@ const ProposalPP: React.FC = () => {
             </button>
           </div>
           {voteError ? (
-            <p className="mt-3 text-sm text-destructive">{voteError}</p>
+            <p className="mt-3 text-sm text-destructive">
+              {formatLoadError(voteError)}
+            </p>
           ) : null}
         </Surface>
       </Modal>
@@ -365,10 +400,10 @@ const ProposalPP: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
         >
-          Timeline unavailable: {timelineError}
+          Timeline unavailable: {formatLoadError(timelineError)}
         </Surface>
       ) : (
-        <ProposalTimelineCard items={timeline} />
+        <ProposalTimelineCard items={timeline} proposalId={id} />
       )}
     </div>
   );

@@ -20,6 +20,7 @@ import {
   apiHumans,
 } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatLoadError } from "@/lib/errorFormatting";
 import type { CourtCaseDetailDto, HumanNodeDto } from "@/types/api";
 
 const Courtroom: React.FC = () => {
@@ -133,7 +134,7 @@ const Courtroom: React.FC = () => {
       ) : null}
       {loadError ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Courtroom unavailable: {loadError}
+          Courtroom unavailable: {formatLoadError(loadError)}
         </Card>
       ) : null}
 
@@ -220,8 +221,8 @@ const Courtroom: React.FC = () => {
             />
           </div>
           {actionError ? (
-            <p className="text-xs text-muted" role="status">
-              {actionError}
+            <p className="text-xs text-destructive" role="status">
+              {formatLoadError(actionError)}
             </p>
           ) : null}
           {!votingEnabled ? (

@@ -263,7 +263,7 @@ export const pageHints: Record<string, PageHintEntry> = {
         items: [
           "Review case context and filings.",
           "See jury composition and timeline; track status badges.",
-          "Submit statements or view decisions (UI placeholder actions).",
+          "Submit statements or view decisions based on your current role and permissions.",
         ],
       },
     ],
