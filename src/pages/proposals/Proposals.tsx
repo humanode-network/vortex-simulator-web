@@ -792,7 +792,8 @@ const Proposals: React.FC = () => {
                     proposer={proposal.proposer}
                     proposerId={proposal.proposerId}
                     primaryHref={
-                      proposal.stage === "pool"
+                      proposal.href ??
+                      (proposal.stage === "pool"
                         ? `/app/proposals/${proposal.id}/pp`
                         : proposal.stage === "vote"
                           ? `/app/proposals/${proposal.id}/chamber`
@@ -804,7 +805,7 @@ const Proposals: React.FC = () => {
                               ? proposal.summaryPill === "Finished"
                                 ? `/app/proposals/${proposal.id}/finished`
                                 : `/app/proposals/${proposal.id}/formation`
-                              : `/app/proposals/${proposal.id}/pp`
+                              : `/app/proposals/${proposal.id}/pp`)
                     }
                     primaryLabel={proposal.ctaPrimary}
                   />

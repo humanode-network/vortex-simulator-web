@@ -324,6 +324,14 @@ export type TierProgressDto = {
 export type GetMyGovernanceResponse = {
   eraActivity: MyGovernanceEraActivityDto;
   myChamberIds: string[];
+  legitimacy: {
+    percent: number;
+    objecting: boolean;
+    objectingHumanNodes: number;
+    eligibleHumanNodes: number;
+    referendumTriggered: boolean;
+    triggerThresholdPercent: number;
+  };
   tier?: TierProgressDto;
   rollup?: {
     era: number;
@@ -382,6 +390,7 @@ export type ProposalListItemDto = {
   date: string;
   votes: number;
   activityScore: number;
+  href?: string;
   ctaPrimary: string;
   ctaSecondary: string;
 };
@@ -553,7 +562,10 @@ export type ChamberProposalPageDto = {
   proposer: string;
   proposerId: string;
   chamber: string;
-  scoreLabel: "CM" | "MM";
+  voteKind: "chamber" | "milestone" | "referendum";
+  voterLabel: "Governors" | "Human nodes";
+  scoreLabel: "CM" | "MM" | null;
+  scoreEnabled: boolean;
   milestoneIndex: number | null;
   budget: string;
   formationEligible: boolean;
@@ -566,6 +578,8 @@ export type ChamberProposalPageDto = {
   passingRule: string;
   engagedGovernors: number;
   activeGovernors: number;
+  engagedVoters: number;
+  eligibleVoters: number;
   attachments: { id: string; title: string }[];
   teamLocked: { name: string; role: string }[];
   openSlotNeeds: { title: string; desc: string }[];

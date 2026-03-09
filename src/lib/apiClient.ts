@@ -613,6 +613,39 @@ export async function apiProposalChamberPage(
   return await apiGet<ChamberProposalPageDto>(`/api/proposals/${id}/chamber`);
 }
 
+export async function apiProposalReferendumPage(
+  id: string,
+): Promise<ChamberProposalPageDto> {
+  return await apiGet<ChamberProposalPageDto>(
+    `/api/proposals/${id}/referendum`,
+  );
+}
+
+export async function apiReferendumVote(input: {
+  proposalId: string;
+  choice: ChamberVoteChoice;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "referendum.vote";
+  proposalId: string;
+  choice: ChamberVoteChoice;
+  counts: { yes: number; no: number; abstain: number };
+  systemReset?: boolean;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "referendum.vote",
+      payload: { proposalId: input.proposalId, choice: input.choice },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
 export async function apiProposalFormationPage(
   id: string,
 ): Promise<FormationProposalPageDto> {
@@ -1216,6 +1249,29 @@ export async function apiInvision(): Promise<GetInvisionResponse> {
 
 export async function apiMyGovernance(): Promise<GetMyGovernanceResponse> {
   return await apiGet<GetMyGovernanceResponse>("/api/my-governance");
+}
+
+export async function apiLegitimacyObjectSet(input: {
+  active: boolean;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "legitimacy.object.set";
+  legitimacy: GetMyGovernanceResponse["legitimacy"];
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "legitimacy.object.set",
+      payload: {
+        active: input.active,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
 }
 
 export async function apiCmMe(): Promise<CmSummaryDto> {
