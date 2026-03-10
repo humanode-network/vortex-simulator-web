@@ -285,7 +285,9 @@ const ProposalChamber: React.FC = () => {
               <>
                 <span>
                   {quorumPercent}% /{" "}
-                  {referendumVote ? referendumQuorumRuleLabel : `${quorumNeededPercent}%`}
+                  {referendumVote
+                    ? referendumQuorumRuleLabel
+                    : `${quorumNeededPercent}%`}
                 </span>
                 <span className="text-xs font-semibold text-muted">
                   {engaged} / {quorumNeeded} {proposal.voterLabel.toLowerCase()}

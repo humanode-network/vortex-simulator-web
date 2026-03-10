@@ -274,7 +274,8 @@ const ProposalReferendum: React.FC = () => {
                   {yesPercentOfQuorum}% / {passingNeededPercent}%
                 </span>
                 <span className="text-xs font-semibold text-muted">
-                  {Math.ceil(engaged * 0.666)} yes votes needed at current participation
+                  {Math.ceil(engaged * 0.666)} yes votes needed at current
+                  participation
                 </span>
               </>
             }
