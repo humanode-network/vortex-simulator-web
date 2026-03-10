@@ -20,6 +20,7 @@ import { Kicker } from "@/components/Kicker";
 import {
   apiChambers,
   apiClock,
+  apiLegitimacyObjectSet,
   apiCmMe,
   apiMyGovernance,
 } from "@/lib/apiClient";
@@ -157,6 +158,8 @@ const MyGovernance: React.FC = () => {
   const [clock, setClock] = useState<GetClockResponse | null>(null);
   const [cmSummary, setCmSummary] = useState<CmSummaryDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [legitimacyPending, setLegitimacyPending] = useState(false);
+  const [legitimacyError, setLegitimacyError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -243,6 +246,32 @@ const MyGovernance: React.FC = () => {
           }, 0) / requirementKeys.length,
         )
       : 100;
+
+  const legitimacy = gov?.legitimacy ?? {
+    percent: 100,
+    objecting: false,
+    objectingHumanNodes: 0,
+    eligibleHumanNodes: 0,
+    referendumTriggered: false,
+    triggerThresholdPercent: 33.3,
+  };
+
+  const handleLegitimacyToggle = async () => {
+    try {
+      setLegitimacyPending(true);
+      setLegitimacyError(null);
+      await apiLegitimacyObjectSet({
+        active: !legitimacy.objecting,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const fresh = await apiMyGovernance();
+      setGov(fresh);
+    } catch (error) {
+      setLegitimacyError(formatLoadError((error as Error).message));
+    } finally {
+      setLegitimacyPending(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -645,6 +674,83 @@ const MyGovernance: React.FC = () => {
               </div>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>System legitimacy</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                label: "Legitimacy",
+                value: `${legitimacy.percent}%`,
+              },
+              {
+                label: "Objectors",
+                value: `${legitimacy.objectingHumanNodes} / ${legitimacy.eligibleHumanNodes}`,
+              },
+              {
+                label: "Referendum trigger",
+                value: `< ${legitimacy.triggerThresholdPercent}%`,
+              },
+            ].map((tile) => (
+              <Surface
+                key={tile.label}
+                variant="panelAlt"
+                radius="2xl"
+                shadow="tile"
+                className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
+              >
+                <p className="text-sm text-muted">{tile.label}</p>
+                <p className="text-xl font-semibold text-text">{tile.value}</p>
+              </Surface>
+            ))}
+          </div>
+
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="space-y-3 p-4"
+          >
+            <p className="text-sm text-muted">
+              Any active human node can object to Vortex legitimacy. Each
+              objector reduces legitimacy by their equal share of the active
+              human-node base.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant={legitimacy.objecting ? "outline" : "ghost"}
+                className="border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white"
+                disabled={legitimacyPending}
+                onClick={handleLegitimacyToggle}
+              >
+                {legitimacy.objecting
+                  ? "Withdraw illegitimacy objection"
+                  : "VORTEX IS ILLEGITIMATE"}
+              </Button>
+              <Badge variant="outline">
+                {legitimacy.objecting
+                  ? "You are objecting"
+                  : "You are not objecting"}
+              </Badge>
+              {legitimacy.referendumTriggered ? (
+                <Badge
+                  variant="outline"
+                  className="border-danger/40 text-danger"
+                >
+                  Referendum threshold reached
+                </Badge>
+              ) : null}
+            </div>
+            {legitimacyError ? (
+              <p className="text-sm text-danger">{legitimacyError}</p>
+            ) : null}
+          </Surface>
         </CardContent>
       </Card>
     </div>

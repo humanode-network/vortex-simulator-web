@@ -80,7 +80,7 @@ const proposalIdFromHref = (href?: string) => {
     ? noQuery.slice("/app".length)
     : noQuery;
   const match = clean.match(
-    /^\/proposals\/([^/]+)\/(pp|chamber|formation|finished)$/,
+    /^\/proposals\/([^/]+)\/(pp|chamber|referendum|formation|finished)$/,
   );
   return match?.[1] ?? null;
 };
@@ -115,6 +115,7 @@ const isUrgentItemInteractable = (
     return Boolean(viewer && proposer && viewer === proposer);
   }
   if ((item.stage === "pool" || item.stage === "vote") && !isGovernorActive) {
+    if (item.href?.includes("/referendum")) return true;
     return false;
   }
   return true;

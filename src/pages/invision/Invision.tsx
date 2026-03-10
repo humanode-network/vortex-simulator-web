@@ -69,9 +69,21 @@ const Invision: React.FC = () => {
       });
   }, [factions, search, factionSort]);
 
+  const hasInvisionContent =
+    Boolean(invision?.governanceState.metrics.length) ||
+    Boolean(invision?.economicIndicators.length) ||
+    Boolean(invision?.riskSignals.length) ||
+    Boolean(invision?.chamberProposals.length);
+  const primaryGovernanceMetrics = (
+    invision?.governanceState.metrics ?? []
+  ).slice(0, 3);
+  const secondaryGovernanceMetrics = (
+    invision?.governanceState.metrics ?? []
+  ).slice(3);
+
   return (
-    <div className="relative">
-      <div className="pointer-events-none flex flex-col gap-5 opacity-35 blur-[6px] select-none">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5">
         <PageHint pageId="invision" />
         {invision === null ? (
           <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
@@ -86,6 +98,7 @@ const Invision: React.FC = () => {
         {invision !== null &&
         factions !== null &&
         factions.length === 0 &&
+        !hasInvisionContent &&
         !loadError ? (
           <NoDataYetBar label="Invision data" />
         ) : null}
@@ -94,22 +107,43 @@ const Invision: React.FC = () => {
             variant="panelAlt"
             className="px-6 py-5 text-center sm:col-span-2 lg:col-span-3"
           >
-            <Kicker align="center">Governance model</Kicker>
+            <Kicker align="center">System state</Kicker>
             <h1 className="text-2xl font-semibold text-text">
               {invision?.governanceState.label ?? "—"}
             </h1>
           </Surface>
-          {(invision?.governanceState.metrics ?? []).map((metric) => (
+          {primaryGovernanceMetrics.map((metric) => (
             <Surface
               key={metric.label}
               variant="panel"
-              className="px-3 py-3 text-center"
+              className="px-4 py-4 text-center"
             >
               <Kicker align="center">{metric.label}</Kicker>
-              <p className="text-2xl font-semibold text-text">{metric.value}</p>
+              <p className="text-3xl font-semibold text-text">{metric.value}</p>
             </Surface>
           ))}
         </div>
+
+        {secondaryGovernanceMetrics.length > 0 ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Governance signals</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-3">
+              {secondaryGovernanceMetrics.map((metric) => (
+                <div
+                  key={metric.label}
+                  className="rounded-xl border border-border px-3 py-3"
+                >
+                  <Kicker>{metric.label}</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {metric.value}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
 
         <SearchBar
           value={search}
@@ -253,11 +287,6 @@ const Invision: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center p-6">
-        <h2 className="text-center text-4xl font-semibold text-text sm:text-5xl lg:text-6xl">
-          coming sooner than you think...
-        </h2>
       </div>
     </div>
   );

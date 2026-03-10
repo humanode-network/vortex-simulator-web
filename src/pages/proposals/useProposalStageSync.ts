@@ -49,6 +49,9 @@ export function formatProposalStageTransitionMessage(
       ? `Milestone M${status.pendingMilestoneIndex} entered chamber vote.`
       : "Milestone entered chamber vote.";
   }
+  if (status.redirectReason === "referendum_open") {
+    return "Legitimacy referendum opened.";
+  }
   if (status.redirectReason === "formation_completed") {
     return "Project finished and moved to Finished.";
   }
