@@ -271,6 +271,21 @@ export type InvisionGovernanceStateDto = {
   label: string;
   metrics: InvisionGovernanceMetricDto[];
 };
+export type InvisionStabilityComponentDto = {
+  label: string;
+  score: number;
+  detail: string;
+  tone: "positive" | "watch" | "critical";
+};
+export type InvisionStabilityDto = {
+  score: number;
+  band: "Stable" | "Watch" | "Unstable";
+  confidence: number;
+  confidenceBand: "Low" | "Medium" | "High";
+  windowLabel: string;
+  capsApplied: string[];
+  components: InvisionStabilityComponentDto[];
+};
 export type InvisionEconomicIndicatorDto = {
   label: string;
   value: string;
@@ -288,6 +303,7 @@ export type InvisionChamberProposalDto = {
 };
 export type GetInvisionResponse = {
   governanceState: InvisionGovernanceStateDto;
+  stability: InvisionStabilityDto;
   economicIndicators: InvisionEconomicIndicatorDto[];
   riskSignals: InvisionRiskSignalDto[];
   chamberProposals: InvisionChamberProposalDto[];

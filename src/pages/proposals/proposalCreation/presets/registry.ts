@@ -656,7 +656,7 @@ export const PROPOSAL_PRESETS: ProposalPreset[] = [
   },
   {
     id: "project.dao_core.governing-threshold.policy",
-    label: "Governing threshhold",
+    label: "Governing threshold",
     description: "Governing thresholds and quorum constraints.",
     templateId: "project",
     proposalType: "dao-core",

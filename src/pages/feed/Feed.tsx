@@ -152,7 +152,7 @@ async function loadUrgentFeedItems(input: {
   limit: number;
   isGovernorActive: boolean;
 }): Promise<FeedItemDto[]> {
-  const [base, pool, vote, build, invites] = await Promise.all([
+  const [base, pool, vote, build, invites, system] = await Promise.all([
     apiFeed({ chambers: input.chambers, limit: input.limit }),
     apiFeed({
       stage: "pool",
@@ -178,6 +178,13 @@ async function loadUrgentFeedItems(input: {
           limit: FEED_MIN_PAGE_SIZE,
         })
       : Promise.resolve({ items: [] as FeedItemDto[] }),
+    input.address
+      ? apiFeed({
+          actor: input.address,
+          stage: "system",
+          limit: URGENT_STAGE_LIMIT,
+        })
+      : Promise.resolve({ items: [] as FeedItemDto[] }),
   ]);
 
   return toUrgentItems(
@@ -187,6 +194,7 @@ async function loadUrgentFeedItems(input: {
       ...vote.items,
       ...build.items,
       ...invites.items,
+      ...system.items,
     ],
     input.isGovernorActive,
     input.address,
