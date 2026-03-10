@@ -184,10 +184,16 @@ const Courts: React.FC = () => {
           </Card>
         )}
       </div>
+
       <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center p-6">
-        <h2 className="text-center text-4xl font-semibold text-text sm:text-5xl lg:text-6xl">
-          coming sooner than you think...
-        </h2>
+        <Card className="max-w-md border-dashed bg-panel/90 px-6 py-5 text-center shadow-lg backdrop-blur">
+          <p className="text-sm tracking-[0.24em] text-muted uppercase">
+            Courts
+          </p>
+          <p className="mt-3 text-xl font-semibold text-foreground">
+            coming sooner than you think...
+          </p>
+        </Card>
       </div>
     </div>
   );

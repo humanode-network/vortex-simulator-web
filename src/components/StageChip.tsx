@@ -17,6 +17,7 @@ const chipClasses: Record<StageChipKind, string> = {
   thread: "bg-panel-alt text-muted",
   courts: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
   faction: "bg-panel-alt text-muted",
+  system: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
 };
 
 const hintByKind: Partial<Record<StageChipKind, string>> = {

@@ -80,12 +80,18 @@ const Invision: React.FC = () => {
   const secondaryGovernanceMetrics = (
     invision?.governanceState.metrics ?? []
   ).slice(3);
+  const stability = invision?.stability ?? null;
+  const stabilityToneClass = (tone: "positive" | "watch" | "critical") => {
+    if (tone === "critical") return "text-destructive";
+    if (tone === "watch") return "text-primary";
+    return "text-text";
+  };
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-5">
         <PageHint pageId="invision" />
-        {invision === null ? (
+        {invision === null && !loadError ? (
           <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
             Loading Invision…
           </Card>
@@ -141,6 +147,64 @@ const Invision: React.FC = () => {
                   </p>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {stability ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Stability engine</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-text">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Band</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {stability.band}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Confidence</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {stability.confidence}% · {stability.confidenceBand}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Window</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {stability.windowLabel}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {stability.components.map((component) => (
+                  <div
+                    key={component.label}
+                    className="rounded-xl border border-border px-3 py-3"
+                  >
+                    <Kicker>{component.label}</Kicker>
+                    <p
+                      className={`text-lg font-semibold ${stabilityToneClass(component.tone)}`}
+                    >
+                      {component.score}%
+                    </p>
+                    <p className="text-xs text-muted">{component.detail}</p>
+                  </div>
+                ))}
+              </div>
+
+              {stability.capsApplied.length > 0 ? (
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Active caps</Kicker>
+                  <div className="space-y-1 text-xs text-muted">
+                    {stability.capsApplied.map((cap) => (
+                      <p key={cap}>{cap}</p>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         ) : null}

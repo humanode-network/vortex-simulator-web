@@ -15,6 +15,7 @@ export const feedStages = [
   "thread",
   "courts",
   "faction",
+  "system",
 ] as const;
 
 export type FeedStage = (typeof feedStages)[number];
@@ -28,7 +29,8 @@ export type StageChipKind =
   | "passed"
   | "thread"
   | "courts"
-  | "faction";
+  | "faction"
+  | "system";
 
 export const stageToChipKind = {
   pool: "proposal_pool",
@@ -39,6 +41,7 @@ export const stageToChipKind = {
   thread: "thread",
   courts: "courts",
   faction: "faction",
+  system: "system",
 } as const satisfies Record<Stage, StageChipKind>;
 
 export const stageLabel = {
@@ -50,6 +53,7 @@ export const stageLabel = {
   thread: "Thread",
   courts: "Courts",
   faction: "Faction",
+  system: "System",
 } as const satisfies Record<Stage, string>;
 
 export const proposalStageToChipKind: Record<ProposalStage, StageChipKind> =
