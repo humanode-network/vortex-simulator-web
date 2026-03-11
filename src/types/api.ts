@@ -286,6 +286,17 @@ export type InvisionStabilityDto = {
   capsApplied: string[];
   components: InvisionStabilityComponentDto[];
 };
+export type InvisionDecentralizationComponentDto =
+  InvisionStabilityComponentDto;
+export type InvisionDecentralizationDto = {
+  score: number;
+  band: "Broad" | "Mixed" | "Concentrated";
+  confidence: number;
+  confidenceBand: "Low" | "Medium" | "High";
+  windowLabel: string;
+  capsApplied: string[];
+  components: InvisionDecentralizationComponentDto[];
+};
 export type InvisionEconomicIndicatorDto = {
   label: string;
   value: string;
@@ -303,6 +314,7 @@ export type InvisionChamberProposalDto = {
 };
 export type GetInvisionResponse = {
   governanceState: InvisionGovernanceStateDto;
+  decentralization: InvisionDecentralizationDto;
   stability: InvisionStabilityDto;
   economicIndicators: InvisionEconomicIndicatorDto[];
   riskSignals: InvisionRiskSignalDto[];

@@ -80,6 +80,7 @@ const Invision: React.FC = () => {
   const secondaryGovernanceMetrics = (
     invision?.governanceState.metrics ?? []
   ).slice(3);
+  const decentralization = invision?.decentralization ?? null;
   const stability = invision?.stability ?? null;
   const stabilityToneClass = (tone: "positive" | "watch" | "critical") => {
     if (tone === "critical") return "text-destructive";
@@ -147,6 +148,65 @@ const Invision: React.FC = () => {
                   </p>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {decentralization ? (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Decentralization engine</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-text">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Band</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {decentralization.band}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Confidence</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {decentralization.confidence}% ·{" "}
+                    {decentralization.confidenceBand}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Window</Kicker>
+                  <p className="text-lg font-semibold text-text">
+                    {decentralization.windowLabel}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {decentralization.components.map((component) => (
+                  <div
+                    key={component.label}
+                    className="rounded-xl border border-border px-3 py-3"
+                  >
+                    <Kicker>{component.label}</Kicker>
+                    <p
+                      className={`text-lg font-semibold ${stabilityToneClass(component.tone)}`}
+                    >
+                      {component.score}%
+                    </p>
+                    <p className="text-xs text-muted">{component.detail}</p>
+                  </div>
+                ))}
+              </div>
+
+              {decentralization.capsApplied.length > 0 ? (
+                <div className="rounded-xl border border-border px-3 py-3">
+                  <Kicker>Active caps</Kicker>
+                  <div className="space-y-1 text-xs text-muted">
+                    {decentralization.capsApplied.map((cap) => (
+                      <p key={cap}>{cap}</p>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         ) : null}
