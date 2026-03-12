@@ -4,6 +4,7 @@ import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
+import { AddressInline } from "@/components/AddressInline";
 import { Input } from "@/components/primitives/input";
 import {
   ProposalInvisionInsightCard,
@@ -19,6 +20,7 @@ import {
   apiProposalTimeline,
 } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { formatDateTime } from "@/lib/dateTime";
 import type {
   ChamberProposalPageDto,
   ProposalTimelineItemDto,
@@ -343,6 +345,125 @@ const ProposalChamber: React.FC = () => {
           />
         </div>
       </section>
+
+      {proposal.delegation ? (
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-text">
+            Delegation context
+          </h2>
+          <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-3">
+            <StatTile
+              label="Vote weight source"
+              value={
+                <>
+                  <span>
+                    {proposal.delegation.source === "snapshot"
+                      ? "Snapshot-backed"
+                      : "Live delegation"}
+                  </span>
+                  <span className="text-xs font-semibold text-muted">
+                    {proposal.delegation.snapshotCapturedAt
+                      ? formatDateTime(proposal.delegation.snapshotCapturedAt)
+                      : "No captured timestamp"}
+                  </span>
+                </>
+              }
+              variant="panel"
+              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+              valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
+            />
+            <StatTile
+              label="Delegation links"
+              value={
+                <>
+                  <span>{proposal.delegation.activeDelegations}</span>
+                  <span className="text-xs font-semibold text-muted">
+                    {proposal.delegation.activeDelegatees} active delegatees
+                  </span>
+                </>
+              }
+              variant="panel"
+              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+              valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
+            />
+            <StatTile
+              label="Your effective weight"
+              value={
+                proposal.delegation.viewer ? (
+                  <>
+                    <span>
+                      {proposal.delegation.viewer.effectiveVotingWeight}
+                    </span>
+                    <span className="text-xs font-semibold text-muted">
+                      1 base +{" "}
+                      {proposal.delegation.viewer.inboundDelegatedWeight}{" "}
+                      delegated
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>—</span>
+                    <span className="text-xs font-semibold text-muted">
+                      Sign in to inspect your vote power
+                    </span>
+                  </>
+                )
+              }
+              variant="panel"
+              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+              valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
+            />
+          </div>
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            {proposal.delegation.viewer ? (
+              proposal.delegation.viewer.delegateeAddress ? (
+                proposal.delegation.viewer.hasDirectVote ? (
+                  <>
+                    Your direct vote is overriding your delegation to{" "}
+                    <AddressInline
+                      address={proposal.delegation.viewer.delegateeAddress}
+                      showCopy={false}
+                    />{" "}
+                    on this proposal.
+                  </>
+                ) : (
+                  <>
+                    You currently delegate your vote in this chamber to{" "}
+                    <AddressInline
+                      address={proposal.delegation.viewer.delegateeAddress}
+                      showCopy={false}
+                    />
+                    . If you cast a direct vote on this proposal, that
+                    delegation will be overridden here.
+                  </>
+                )
+              ) : proposal.delegation.viewer.inboundDelegatedWeight > 0 ? (
+                <>
+                  Other governors currently delegate to you, so your direct vote
+                  carries additional weight on this proposal.
+                </>
+              ) : (
+                <>You are voting with only your base chamber weight here.</>
+              )
+            ) : proposal.delegation.source === "snapshot" ? (
+              <>
+                This vote is using a proposal-local delegation snapshot, so
+                later delegation changes will not rewrite this chamber vote.
+              </>
+            ) : (
+              <>
+                This vote is currently using the live delegation graph because
+                no proposal-local snapshot was found.
+              </>
+            )}
+          </Surface>
+        </section>
+      ) : null}
 
       <ProposalSummaryCard
         summary={proposal.summary}

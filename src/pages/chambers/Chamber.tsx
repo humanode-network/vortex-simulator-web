@@ -179,7 +179,12 @@ const Chamber: React.FC = () => {
         String(gov.acm).includes(term) ||
         String(gov.lcm).includes(term) ||
         String(gov.mcm).includes(term) ||
-        String(gov.delegatedWeight).includes(term),
+        String(gov.delegatedWeight).includes(term) ||
+        String(gov.effectiveVotingPower).includes(term) ||
+        gov.delegateeAddress?.toLowerCase().includes(term) ||
+        gov.inboundDelegators.some((address) =>
+          address.toLowerCase().includes(term),
+        ),
     );
   }, [data, governorSearch]);
 
@@ -970,13 +975,37 @@ const Chamber: React.FC = () => {
                       <TierLabel tier={gov.tier} /> · {gov.focus}
                     </p>
                     <p className="text-xs text-muted">
+                      Vote power {gov.effectiveVotingPower}
+                      {gov.delegatedWeight > 0
+                        ? ` · Carries +${gov.delegatedWeight} delegated`
+                        : ""}
+                    </p>
+                    <p className="text-xs text-muted">
                       ACM {gov.acm.toLocaleString()} · LCM{" "}
                       {gov.lcm.toLocaleString()} · MCM{" "}
                       {gov.mcm.toLocaleString()}
-                      {gov.delegatedWeight > 0
-                        ? ` · Delegated +${gov.delegatedWeight}`
-                        : ""}
                     </p>
+                    {gov.delegateeAddress ? (
+                      <div className="mt-1 flex items-center gap-1 text-xs text-muted">
+                        <span>Delegates to</span>
+                        <AddressInline
+                          address={gov.delegateeAddress}
+                          showCopy={false}
+                        />
+                      </div>
+                    ) : null}
+                    {gov.inboundDelegators.length > 0 ? (
+                      <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted">
+                        <span>Backed by</span>
+                        {gov.inboundDelegators.map((address) => (
+                          <AddressInline
+                            key={`${gov.id}-${address}`}
+                            address={address}
+                            showCopy={false}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <Button asChild size="sm" variant="ghost">
                     <Link to={`/app/human-nodes/${gov.id}`}>Profile</Link>

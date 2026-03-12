@@ -13,6 +13,7 @@ import { CmEconomyPanel } from "@/components/CmEconomyPanel";
 import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { ActivityTile } from "@/components/ActivityTile";
+import { AddressInline } from "@/components/AddressInline";
 import { apiHuman } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
@@ -28,6 +29,9 @@ import {
   shortAddress,
   shouldShowDetail,
 } from "@/lib/profileUi";
+
+const chamberLabel = (chamberId: string): string =>
+  chamberId === "general" ? "General chamber" : chamberId;
 
 const HumanNode: React.FC = () => {
   const { id } = useParams();
@@ -76,6 +80,7 @@ const HumanNode: React.FC = () => {
     quickDetails,
     proofSections,
     governanceActions,
+    delegation,
     projects,
     cmHistory = [],
     cmChambers = [],
@@ -136,6 +141,7 @@ const HumanNode: React.FC = () => {
   const visibleDetails = quickDetails.filter((detail) =>
     shouldShowDetail(detail.label),
   );
+  const delegationChambers = delegation?.chambers ?? [];
   const proofTiles = proofCards.flatMap(({ key, section }) =>
     section.items.map((item) => ({
       key: `${key}-${item.label}`,
@@ -272,6 +278,55 @@ const HumanNode: React.FC = () => {
         history={cmHistory}
         mmValue="—"
       />
+
+      {delegationChambers.length > 0 ? (
+        <section className="space-y-4">
+          <SectionHeader>Delegation</SectionHeader>
+          <div className="grid gap-4 md:grid-cols-2">
+            {delegationChambers.map((item) => (
+              <Surface
+                key={item.chamberId}
+                variant="panelAlt"
+                radius="xl"
+                shadow="tile"
+                className="space-y-3 px-4 py-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <Kicker>{chamberLabel(item.chamberId)}</Kicker>
+                  <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                    Current delegate
+                  </p>
+                  {item.delegateeAddress ? (
+                    <AddressInline
+                      address={item.delegateeAddress}
+                      textClassName="text-sm text-text"
+                    />
+                  ) : (
+                    <p className="text-sm text-text">No delegate set</p>
+                  )}
+                </div>
+                {item.inboundDelegators.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                      Delegated by
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {item.inboundDelegators.map((delegator) => (
+                        <Badge key={delegator} variant="muted">
+                          {shortAddress(delegator)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </Surface>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3">

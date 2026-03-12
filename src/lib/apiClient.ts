@@ -1274,6 +1274,59 @@ export async function apiLegitimacyObjectSet(input: {
   );
 }
 
+export async function apiDelegationSet(input: {
+  chamberId: string;
+  delegateeAddress: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "delegation.set";
+  chamberId: string;
+  delegatorAddress: string;
+  delegateeAddress: string;
+  updatedAt: string;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "delegation.set",
+      payload: {
+        chamberId: input.chamberId,
+        delegateeAddress: input.delegateeAddress,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiDelegationClear(input: {
+  chamberId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "delegation.clear";
+  chamberId: string;
+  delegatorAddress: string;
+  cleared: boolean;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "delegation.clear",
+      payload: {
+        chamberId: input.chamberId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
 export async function apiCmMe(): Promise<CmSummaryDto> {
   return await apiGet<CmSummaryDto>("/api/cm/me");
 }

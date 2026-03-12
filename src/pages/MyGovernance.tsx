@@ -12,6 +12,8 @@ import { AppCard } from "@/components/AppCard";
 import { HintLabel } from "@/components/Hint";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
+import { Input } from "@/components/primitives/input";
+import { AddressInline } from "@/components/AddressInline";
 import { PipelineList } from "@/components/PipelineList";
 import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { Surface } from "@/components/Surface";
@@ -20,6 +22,8 @@ import { Kicker } from "@/components/Kicker";
 import {
   apiChambers,
   apiClock,
+  apiDelegationClear,
+  apiDelegationSet,
   apiLegitimacyObjectSet,
   apiCmMe,
   apiMyGovernance,
@@ -152,6 +156,15 @@ const formatDayHourMinute = (targetMs: number, nowMs: number): string => {
   return `${days}d:${String(hours).padStart(2, "0")}h:${String(minutes).padStart(2, "0")}m`;
 };
 
+const chamberLabel = (
+  chamberId: string,
+  chambers: ChamberDto[] | null,
+): string => {
+  if (chamberId === "general") return "General chamber";
+  const match = chambers?.find((item) => item.id === chamberId);
+  return match?.name ?? chamberId;
+};
+
 const MyGovernance: React.FC = () => {
   const [gov, setGov] = useState<GetMyGovernanceResponse | null>(null);
   const [chambers, setChambers] = useState<ChamberDto[] | null>(null);
@@ -160,6 +173,15 @@ const MyGovernance: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [legitimacyPending, setLegitimacyPending] = useState(false);
   const [legitimacyError, setLegitimacyError] = useState<string | null>(null);
+  const [delegationDrafts, setDelegationDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [delegationPendingByChamber, setDelegationPendingByChamber] = useState<
+    Record<string, boolean>
+  >({});
+  const [delegationErrorByChamber, setDelegationErrorByChamber] = useState<
+    Record<string, string | null>
+  >({});
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -182,6 +204,15 @@ const MyGovernance: React.FC = () => {
         setChambers(chambersRes.items);
         setClock(clockRes);
         setCmSummary(cmRes);
+        setDelegationDrafts((current) => {
+          const next = { ...current };
+          for (const item of govRes.delegation.chambers) {
+            if (next[item.chamberId] === undefined) {
+              next[item.chamberId] = item.delegateeAddress ?? "";
+            }
+          }
+          return next;
+        });
         setLoadError(null);
       } catch (error) {
         if (!active) return;
@@ -256,6 +287,90 @@ const MyGovernance: React.FC = () => {
     triggerThresholdPercent: 33.3,
   };
 
+  const updateDelegationDraft = (chamberId: string, value: string) => {
+    setDelegationDrafts((current) => ({
+      ...current,
+      [chamberId]: value,
+    }));
+  };
+
+  const refreshGovernance = async () => {
+    const fresh = await apiMyGovernance();
+    setGov(fresh);
+    setDelegationDrafts((current) => {
+      const next = { ...current };
+      for (const item of fresh.delegation.chambers) {
+        next[item.chamberId] = item.delegateeAddress ?? "";
+      }
+      return next;
+    });
+  };
+
+  const handleDelegationSet = async (chamberId: string) => {
+    const delegateeAddress = delegationDrafts[chamberId]?.trim() ?? "";
+    if (!delegateeAddress) {
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: "Enter an address to delegate to.",
+      }));
+      return;
+    }
+    try {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: true,
+      }));
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: null,
+      }));
+      await apiDelegationSet({
+        chamberId,
+        delegateeAddress,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await refreshGovernance();
+    } catch (error) {
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: formatLoadError((error as Error).message),
+      }));
+    } finally {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: false,
+      }));
+    }
+  };
+
+  const handleDelegationClear = async (chamberId: string) => {
+    try {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: true,
+      }));
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: null,
+      }));
+      await apiDelegationClear({
+        chamberId,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await refreshGovernance();
+    } catch (error) {
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: formatLoadError((error as Error).message),
+      }));
+    } finally {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: false,
+      }));
+    }
+  };
+
   const handleLegitimacyToggle = async () => {
     try {
       setLegitimacyPending(true);
@@ -264,8 +379,7 @@ const MyGovernance: React.FC = () => {
         active: !legitimacy.objecting,
         idempotencyKey: crypto.randomUUID(),
       });
-      const fresh = await apiMyGovernance();
-      setGov(fresh);
+      await refreshGovernance();
     } catch (error) {
       setLegitimacyError(formatLoadError((error as Error).message));
     } finally {
@@ -673,6 +787,110 @@ const MyGovernance: React.FC = () => {
                 )}
               </div>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Delegation</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {gov?.delegation.chambers.length ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {gov.delegation.chambers.map((item) => {
+                const pending =
+                  delegationPendingByChamber[item.chamberId] ?? false;
+                const currentValue =
+                  delegationDrafts[item.chamberId] ??
+                  item.delegateeAddress ??
+                  "";
+                return (
+                  <Surface
+                    key={item.chamberId}
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="space-y-3 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Kicker>
+                          {chamberLabel(item.chamberId, chambers)}
+                        </Kicker>
+                        <p className="mt-1 text-sm font-semibold text-text">
+                          Current delegate
+                        </p>
+                        {item.delegateeAddress ? (
+                          <AddressInline
+                            address={item.delegateeAddress}
+                            textClassName="text-sm text-muted"
+                          />
+                        ) : (
+                          <p className="text-sm text-muted">No delegate set</p>
+                        )}
+                      </div>
+                      <Badge variant="outline">
+                        Inbound weight {item.inboundWeight}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Input
+                        value={currentValue}
+                        onChange={(event) =>
+                          updateDelegationDraft(
+                            item.chamberId,
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Delegate address"
+                        disabled={pending}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            void handleDelegationSet(item.chamberId)
+                          }
+                          disabled={pending || currentValue.trim().length === 0}
+                        >
+                          {item.delegateeAddress
+                            ? "Update delegate"
+                            : "Set delegate"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            void handleDelegationClear(item.chamberId)
+                          }
+                          disabled={pending || item.delegateeAddress === null}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+
+                    {delegationErrorByChamber[item.chamberId] ? (
+                      <p className="text-sm text-danger">
+                        {delegationErrorByChamber[item.chamberId]}
+                      </p>
+                    ) : null}
+                  </Surface>
+                );
+              })}
+            </div>
+          ) : (
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="px-4 py-3 text-sm text-muted"
+            >
+              Delegation becomes available once you are participating in chamber
+              governance.
+            </Surface>
           )}
         </CardContent>
       </Card>
