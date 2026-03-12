@@ -154,6 +154,9 @@ export type ChamberGovernorDto = {
   lcm: number;
   mcm: number;
   delegatedWeight: number;
+  effectiveVotingPower: number;
+  delegateeAddress: string | null;
+  inboundDelegators: string[];
 };
 export type ChamberThreadDto = {
   id: string;
@@ -349,9 +352,17 @@ export type TierProgressDto = {
     formationParticipation?: number;
   } | null;
 };
+export type DelegationGovernanceItemDto = {
+  chamberId: string;
+  delegateeAddress: string | null;
+  inboundWeight: number;
+};
 export type GetMyGovernanceResponse = {
   eraActivity: MyGovernanceEraActivityDto;
   myChamberIds: string[];
+  delegation: {
+    chambers: DelegationGovernanceItemDto[];
+  };
   legitimacy: {
     percent: number;
     objecting: boolean;
@@ -617,6 +628,20 @@ export type ChamberProposalPageDto = {
   executionPlan: string[];
   budgetScope: string;
   invisionInsight: InvisionInsightDto;
+  delegation: null | {
+    source: "snapshot" | "live";
+    snapshotCapturedAt: string | null;
+    activeDelegations: number;
+    activeDelegatees: number;
+    viewer: null | {
+      address: string;
+      delegateeAddress: string | null;
+      inboundDelegatedWeight: number;
+      effectiveVotingWeight: number;
+      hasDirectVote: boolean;
+      directVoteOverrideApplies: boolean;
+    };
+  };
   thresholdContext?: {
     activityThreshold: {
       categories: string[];
@@ -739,6 +764,12 @@ export type ProjectCardDto = {
   summary: string;
   chips: string[];
 };
+export type HumanDelegationChamberDto = {
+  chamberId: string;
+  delegateeAddress: string | null;
+  inboundWeight: number;
+  inboundDelegators: string[];
+};
 export type HumanNodeProfileDto = {
   id: string;
   name: string;
@@ -749,6 +780,9 @@ export type HumanNodeProfileDto = {
   quickDetails: QuickDetailDto[];
   proofSections: Record<ProofKeyDto, ProofSectionDto>;
   governanceActions: GovernanceActionDto[];
+  delegation: {
+    chambers: HumanDelegationChamberDto[];
+  };
   projects: ProjectCardDto[];
   activity: HistoryItemDto[];
   history: string[];

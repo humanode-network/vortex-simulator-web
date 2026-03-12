@@ -13,6 +13,7 @@ import { ToggleGroup } from "@/components/ToggleGroup";
 import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { ActivityTile } from "@/components/ActivityTile";
+import { AddressInline } from "@/components/AddressInline";
 import { apiHuman } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -31,6 +32,9 @@ import {
   shortAddress,
   shouldShowDetail,
 } from "@/lib/profileUi";
+
+const chamberLabel = (chamberId: string): string =>
+  chamberId === "general" ? "General chamber" : chamberId;
 
 type ProfileProps = {
   showHint?: boolean;
@@ -130,6 +134,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
   const historyHref = headerAddress
     ? `/app/human-nodes/${headerAddress}/history`
     : null;
+  const delegationChambers = profile?.delegation?.chambers ?? [];
   const normalizedName = (profile?.name ?? "").trim().toLowerCase();
   const isGenericName = [
     "human node profile",
@@ -296,6 +301,55 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         history={cmHistory}
         mmValue="—"
       />
+
+      {delegationChambers.length > 0 ? (
+        <section className="space-y-4">
+          <SectionHeader>Delegation</SectionHeader>
+          <div className="grid gap-4 md:grid-cols-2">
+            {delegationChambers.map((item) => (
+              <Surface
+                key={item.chamberId}
+                variant="panelAlt"
+                radius="xl"
+                shadow="tile"
+                className="space-y-3 px-4 py-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <Kicker>{chamberLabel(item.chamberId)}</Kicker>
+                  <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                    Current delegate
+                  </p>
+                  {item.delegateeAddress ? (
+                    <AddressInline
+                      address={item.delegateeAddress}
+                      textClassName="text-sm text-text"
+                    />
+                  ) : (
+                    <p className="text-sm text-text">No delegate set</p>
+                  )}
+                </div>
+                {item.inboundDelegators.length > 0 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                      Delegated by
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {item.inboundDelegators.map((delegator) => (
+                        <Badge key={delegator} variant="muted">
+                          {shortAddress(delegator)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </Surface>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
