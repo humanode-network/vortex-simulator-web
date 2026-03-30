@@ -24,8 +24,10 @@ import {
   apiHuman,
   apiMyGovernance,
   apiProposalChamberPage,
+  apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
+  apiProposalReferendumPage,
 } from "@/lib/apiClient";
 import type { FeedItemDto } from "@/types/api";
 
@@ -83,6 +85,26 @@ const proposalIdFromHref = (href?: string) => {
     /^\/proposals\/([^/]+)\/(pp|chamber|referendum|formation|finished)$/,
   );
   return match?.[1] ?? null;
+};
+
+const proposalDetailRouteFromHref = (
+  href?: string,
+): "pool" | "chamber" | "referendum" | "formation" | "finished" | null => {
+  if (!href) return null;
+  const noQuery = href.split("?")[0] ?? href;
+  const clean = noQuery.startsWith("/app/")
+    ? noQuery.slice("/app".length)
+    : noQuery;
+  const match = clean.match(
+    /^\/proposals\/[^/]+\/(pp|chamber|referendum|formation|finished)$/,
+  );
+  const route = match?.[1] ?? null;
+  if (route === "pp") return "pool";
+  if (route === "chamber") return "chamber";
+  if (route === "referendum") return "referendum";
+  if (route === "formation") return "formation";
+  if (route === "finished") return "finished";
+  return null;
 };
 
 const factionIdFromHref = (href?: string) => {
@@ -477,22 +499,38 @@ const Feed: React.FC = () => {
     if (!item) return;
 
     const proposalId = proposalIdFromHref(item.href) ?? item.id;
+    const detailRoute = proposalDetailRouteFromHref(item.href);
 
-    if (item.stage === "pool" && poolPagesById[proposalId] === undefined) {
+    if (detailRoute === "pool" && poolPagesById[proposalId] === undefined) {
       void apiProposalPoolPage(proposalId).then((page) => {
         setPoolPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
-    if (item.stage === "vote" && chamberPagesById[proposalId] === undefined) {
+    if (
+      detailRoute === "chamber" &&
+      chamberPagesById[proposalId] === undefined
+    ) {
       void apiProposalChamberPage(proposalId).then((page) => {
         setChamberPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
     if (
-      item.stage === "build" &&
+      detailRoute === "referendum" &&
+      chamberPagesById[proposalId] === undefined
+    ) {
+      void apiProposalReferendumPage(proposalId).then((page) => {
+        setChamberPagesById((curr) => ({ ...curr, [proposalId]: page }));
+      });
+    }
+    if (
+      (detailRoute === "formation" || detailRoute === "finished") &&
       formationPagesById[proposalId] === undefined
     ) {
-      void apiProposalFormationPage(proposalId).then((page) => {
+      const loader =
+        detailRoute === "finished"
+          ? apiProposalFinishedPage(proposalId)
+          : apiProposalFormationPage(proposalId);
+      void loader.then((page) => {
         setFormationPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
@@ -571,15 +609,20 @@ const Feed: React.FC = () => {
         {sortedFeed.map((item, index) => {
           const itemKey = feedItemKey(item);
           const proposalId = proposalIdFromHref(item.href) ?? item.id;
+          const detailRoute = proposalDetailRouteFromHref(item.href);
           const poolPage =
-            item.stage === "pool" ? poolPagesById[proposalId] : null;
+            detailRoute === "pool" ? poolPagesById[proposalId] : null;
           const chamberPage =
-            item.stage === "vote" ? chamberPagesById[proposalId] : null;
+            detailRoute === "chamber" || detailRoute === "referendum"
+              ? chamberPagesById[proposalId]
+              : null;
           const formationPage =
-            item.stage === "build" ? formationPagesById[proposalId] : null;
+            detailRoute === "formation" || detailRoute === "finished"
+              ? formationPagesById[proposalId]
+              : null;
 
           const poolStats =
-            item.stage === "pool" && poolPage
+            detailRoute === "pool" && poolPage
               ? (() => {
                   const activeGovernors = Math.max(1, poolPage.activeGovernors);
                   const engaged = poolPage.upvotes + poolPage.downvotes;
@@ -619,7 +662,8 @@ const Feed: React.FC = () => {
               : null;
 
           const chamberStats =
-            item.stage === "vote" && chamberPage
+            (detailRoute === "chamber" || detailRoute === "referendum") &&
+            chamberPage
               ? (() => {
                   const activeGovernors = Math.max(
                     1,
@@ -675,7 +719,8 @@ const Feed: React.FC = () => {
               : null;
 
           const formationStats =
-            item.stage === "build" && formationPage
+            (detailRoute === "formation" || detailRoute === "finished") &&
+            formationPage
               ? (() => {
                   const progressRaw = Number.parseInt(
                     formationPage.progress.replace("%", ""),
@@ -737,7 +782,7 @@ const Feed: React.FC = () => {
                   <p className="text-sm text-muted">{item.summary}</p>
                 </div>
 
-                {item.stage === "pool" && poolPage && poolStats ? (
+                {detailRoute === "pool" && poolPage && poolStats ? (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-text">
                       Quorum of attention
@@ -778,10 +823,15 @@ const Feed: React.FC = () => {
                       />
                     </div>
                   </div>
-                ) : item.stage === "vote" && chamberPage && chamberStats ? (
+                ) : (detailRoute === "chamber" ||
+                    detailRoute === "referendum") &&
+                  chamberPage &&
+                  chamberStats ? (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-text">
-                      Vote snapshot
+                      {detailRoute === "referendum"
+                        ? "Referendum snapshot"
+                        : "Vote snapshot"}
                     </p>
 
                     <Surface
@@ -832,7 +882,7 @@ const Feed: React.FC = () => {
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <StageDataTile
                         title="Voting quorum"
-                        description={`Governors ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
+                        description={`${chamberPage.voterLabel} ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
                         value={`${chamberStats.quorumPercent}% / ${chamberStats.quorumNeededPercent}%`}
                         tone={chamberStats.meetsQuorum ? "ok" : "warn"}
                       />
@@ -849,7 +899,8 @@ const Feed: React.FC = () => {
                       />
                     </div>
                   </div>
-                ) : item.stage === "build" &&
+                ) : (detailRoute === "formation" ||
+                    detailRoute === "finished") &&
                   formationPage &&
                   formationStats ? (
                   <div className="space-y-3">
@@ -905,6 +956,26 @@ const Feed: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                ) : detailRoute === "chamber" ||
+                  detailRoute === "referendum" ? (
+                  <Surface
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="px-5 py-4 text-sm text-muted"
+                  >
+                    Loading vote stats…
+                  </Surface>
+                ) : detailRoute === "formation" ||
+                  detailRoute === "finished" ? (
+                  <Surface
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="px-5 py-4 text-sm text-muted"
+                  >
+                    Loading execution stats…
+                  </Surface>
                 ) : item.stage === "courts" ? (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-text">

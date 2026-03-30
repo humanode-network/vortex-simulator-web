@@ -412,6 +412,10 @@ const MyGovernance: React.FC = () => {
               Governing threshold
             </HintLabel>
           </CardTitle>
+          <p className="text-sm text-muted">
+            This tracks your participation across opportunities that occurred in
+            the current era, even if those votes are already closed now.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -443,11 +447,11 @@ const MyGovernance: React.FC = () => {
                 key: "required",
                 label: (
                   <HintLabel termId="governing_threshold">
-                    Required actions
+                    Era participation
                   </HintLabel>
                 ),
                 value: eraActivity
-                  ? `${eraActivity.completed} / ${eraActivity.required} completed`
+                  ? `${eraActivity.completed} / ${eraActivity.required} completed this era`
                   : "—",
               },
               {
@@ -480,7 +484,7 @@ const MyGovernance: React.FC = () => {
                 className="flex h-full flex-col items-center justify-center px-3 py-3 text-center"
               >
                 <Kicker align="center" className="text-[0.7rem]">
-                  {act.label}
+                  {act.label} this era
                 </Kicker>
                 <p className="text-base font-semibold text-text">
                   {act.done} / {act.required}

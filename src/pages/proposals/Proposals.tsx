@@ -20,9 +20,11 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import { toTimestampMs } from "@/lib/dateTime";
 import {
   apiProposalChamberPage,
+  apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
   apiProposals,
+  apiProposalReferendumPage,
 } from "@/lib/apiClient";
 import type {
   ChamberProposalPageDto,
@@ -42,6 +44,26 @@ function parseRatioPair(value: string): { left: number; right: number } {
     left: Number.isFinite(left) ? left : 0,
     right: Number.isFinite(right) ? right : 0,
   };
+}
+
+function proposalDetailRouteFromHref(
+  href?: string,
+): "pool" | "chamber" | "referendum" | "formation" | "finished" | null {
+  if (!href) return null;
+  const noQuery = href.split("?")[0] ?? href;
+  const clean = noQuery.startsWith("/app/")
+    ? noQuery.slice("/app".length)
+    : noQuery;
+  const match = clean.match(
+    /^\/proposals\/[^/]+\/(pp|chamber|referendum|formation|finished)$/,
+  );
+  const route = match?.[1] ?? null;
+  if (route === "pp") return "pool";
+  if (route === "chamber") return "chamber";
+  if (route === "referendum") return "referendum";
+  if (route === "formation") return "formation";
+  if (route === "finished") return "finished";
+  return null;
 }
 
 const Proposals: React.FC = () => {
@@ -98,13 +120,15 @@ const Proposals: React.FC = () => {
     const proposal = proposalData.find((p) => p.id === expanded);
     if (!proposal) return;
 
-    if (proposal.stage === "pool" && poolPagesById[proposal.id] === undefined) {
+    const detailRoute = proposalDetailRouteFromHref(proposal.href);
+
+    if (detailRoute === "pool" && poolPagesById[proposal.id] === undefined) {
       void apiProposalPoolPage(proposal.id).then((page) => {
         setPoolPagesById((curr) => ({ ...curr, [proposal.id]: page }));
       });
     }
     if (
-      proposal.stage === "vote" &&
+      detailRoute === "chamber" &&
       chamberPagesById[proposal.id] === undefined
     ) {
       void apiProposalChamberPage(proposal.id).then((page) => {
@@ -112,10 +136,22 @@ const Proposals: React.FC = () => {
       });
     }
     if (
-      proposal.stage === "build" &&
+      detailRoute === "referendum" &&
+      chamberPagesById[proposal.id] === undefined
+    ) {
+      void apiProposalReferendumPage(proposal.id).then((page) => {
+        setChamberPagesById((curr) => ({ ...curr, [proposal.id]: page }));
+      });
+    }
+    if (
+      (detailRoute === "formation" || detailRoute === "finished") &&
       formationPagesById[proposal.id] === undefined
     ) {
-      void apiProposalFormationPage(proposal.id).then((page) => {
+      const loader =
+        detailRoute === "finished"
+          ? apiProposalFinishedPage(proposal.id)
+          : apiProposalFormationPage(proposal.id);
+      void loader.then((page) => {
         setFormationPagesById((curr) => ({ ...curr, [proposal.id]: page }));
       });
     }
@@ -295,12 +331,15 @@ const Proposals: React.FC = () => {
           // Collapsed preview and expanded content are stage-aware, but always
           // keep the same "card skeleton": summary + stage module + key stats.
           (() => {
+            const detailRoute = proposalDetailRouteFromHref(proposal.href);
             const poolPage =
-              proposal.stage === "pool" ? poolPagesById[proposal.id] : null;
+              detailRoute === "pool" ? poolPagesById[proposal.id] : null;
             const chamberPage =
-              proposal.stage === "vote" ? chamberPagesById[proposal.id] : null;
+              detailRoute === "chamber" || detailRoute === "referendum"
+                ? chamberPagesById[proposal.id]
+                : null;
             const formationPage =
-              proposal.stage === "build"
+              detailRoute === "formation" || detailRoute === "finished"
                 ? formationPagesById[proposal.id]
                 : null;
             const ended =
@@ -309,7 +348,7 @@ const Proposals: React.FC = () => {
               proposal.stage === "failed" ? "vote" : proposal.stage;
 
             const poolStats =
-              proposal.stage === "pool" && poolPage
+              detailRoute === "pool" && poolPage
                 ? (() => {
                     const activeGovernors = Math.max(
                       1,
@@ -372,7 +411,8 @@ const Proposals: React.FC = () => {
                 : null;
 
             const chamberStats =
-              proposal.stage === "vote" && chamberPage
+              (detailRoute === "chamber" || detailRoute === "referendum") &&
+              chamberPage
                 ? (() => {
                     const activeGovernors = Math.max(
                       1,
@@ -435,7 +475,8 @@ const Proposals: React.FC = () => {
                 : null;
 
             const formationStats =
-              proposal.stage === "build" && formationPage
+              (detailRoute === "formation" || detailRoute === "finished") &&
+              formationPage
                 ? getFormationProgress(formationPage)
                 : null;
 
@@ -475,7 +516,7 @@ const Proposals: React.FC = () => {
                     <p className="text-sm text-muted">{proposal.summary}</p>
                   </div>
 
-                  {proposal.stage === "pool" && poolPage && poolStats ? (
+                  {detailRoute === "pool" && poolPage && poolStats ? (
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-text">
                         Quorum of attention
@@ -531,12 +572,15 @@ const Proposals: React.FC = () => {
                         attention quorum and the upvote floor.
                       </p>
                     </div>
-                  ) : proposal.stage === "vote" &&
+                  ) : (detailRoute === "chamber" ||
+                      detailRoute === "referendum") &&
                     chamberPage &&
                     chamberStats ? (
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-text">
-                        Vote snapshot
+                        {detailRoute === "referendum"
+                          ? "Referendum snapshot"
+                          : "Vote snapshot"}
                       </p>
 
                       <Surface
@@ -587,7 +631,7 @@ const Proposals: React.FC = () => {
                       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         <StageDataTile
                           title="Voting quorum"
-                          description={`Governors ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
+                          description={`${chamberPage.voterLabel} ${chamberStats.engaged} / ${chamberStats.activeGovernors} (needs ${chamberStats.quorumNeeded})`}
                           value={`${chamberStats.quorumPercent}% / ${chamberStats.quorumNeededPercent}%`}
                           tone={chamberStats.meetsQuorum ? "ok" : "warn"}
                         />
@@ -608,7 +652,8 @@ const Proposals: React.FC = () => {
                         If this passes, it moves to Formation for execution.
                       </p>
                     </div>
-                  ) : proposal.stage === "build" &&
+                  ) : (detailRoute === "formation" ||
+                      detailRoute === "finished") &&
                     formationPage &&
                     formationStats ? (
                     <div className="space-y-3">
@@ -667,14 +712,15 @@ const Proposals: React.FC = () => {
                           ))}
                       </div>
                     </div>
-                  ) : proposal.stage === "vote" ? (
+                  ) : detailRoute === "chamber" ||
+                    detailRoute === "referendum" ? (
                     <Surface
                       variant="panelAlt"
                       radius="2xl"
                       shadow="tile"
                       className="px-5 py-4 text-sm text-muted"
                     >
-                      Loading chamber vote stats…
+                      Loading vote stats…
                     </Surface>
                   ) : (
                     <div className="space-y-2">
@@ -698,7 +744,7 @@ const Proposals: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Key stats</p>
                     <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
-                      {proposal.stage === "pool" && poolPage && poolStats ? (
+                      {detailRoute === "pool" && poolPage && poolStats ? (
                         <>
                           <DashedStatItem
                             label="Budget ask"
@@ -721,7 +767,8 @@ const Proposals: React.FC = () => {
                             value={poolPage.cooldown}
                           />
                         </>
-                      ) : proposal.stage === "vote" &&
+                      ) : (detailRoute === "chamber" ||
+                          detailRoute === "referendum") &&
                         chamberPage &&
                         chamberStats ? (
                         <>
@@ -742,7 +789,9 @@ const Proposals: React.FC = () => {
                             value={`${chamberPage.milestones} planned`}
                           />
                         </>
-                      ) : proposal.stage === "build" && formationPage ? (
+                      ) : (detailRoute === "formation" ||
+                          detailRoute === "finished") &&
+                        formationPage ? (
                         <>
                           <DashedStatItem
                             label="Budget ask"
