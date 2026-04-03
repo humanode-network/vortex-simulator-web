@@ -1,7 +1,13 @@
 import React from "react";
 import { HintLabel } from "@/components/Hint";
 
-export type ProposalStage = "draft" | "pool" | "vote" | "build" | "passed";
+export type ProposalStage =
+  | "draft"
+  | "pool"
+  | "vote"
+  | "build"
+  | "passed"
+  | "failed";
 
 type ProposalStageBarProps = {
   current: ProposalStage;
@@ -36,6 +42,7 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
       render: <HintLabel termId="formation">Formation</HintLabel>,
     },
     { key: "passed", label: "Passed" },
+    { key: "failed", label: "Failed" },
   ];
   const stages = allStages.filter(
     (stage) =>
@@ -43,7 +50,9 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
   );
 
   return (
-    <div className={["flex gap-2", className].filter(Boolean).join(" ")}>
+    <div
+      className={["flex flex-wrap gap-2", className].filter(Boolean).join(" ")}
+    >
       {stages.map((stage) => {
         const active = stage.key === current;
         const activeClasses =
@@ -55,12 +64,14 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
                 ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
                 : stage.key === "build"
                   ? "bg-[var(--accent-warm)] text-[var(--text)]"
-                  : "bg-[color:var(--ok)]/20 text-[color:var(--ok)]";
+                  : stage.key === "passed"
+                    ? "bg-[color:var(--ok)]/20 text-[color:var(--ok)]"
+                    : "bg-[color:var(--danger)]/12 text-[color:var(--danger)]";
         return (
           <div
             key={stage.key}
             className={[
-              "flex-1 rounded-full px-3 py-2 text-center text-xs font-semibold transition",
+              "min-w-0 basis-[calc(50%-0.25rem)] rounded-full px-3 py-2 text-center text-xs leading-tight font-semibold transition sm:flex-1 sm:basis-0",
               active
                 ? activeClasses
                 : "border border-border bg-panel-alt [background-image:var(--card-grad)] bg-cover bg-no-repeat text-muted",

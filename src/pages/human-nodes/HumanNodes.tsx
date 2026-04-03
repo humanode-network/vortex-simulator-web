@@ -282,18 +282,19 @@ const HumanNodes: React.FC = () => {
                 <option value="name">Name</option>
               </Select>
             </div>
-            <ToggleGroup
-              className="ml-auto"
-              value={effectiveView}
-              onValueChange={(val) => {
-                if (isMobileViewport) return;
-                setView(val as "cards" | "list");
-              }}
-              options={[
-                { value: "cards", label: "Cards" },
-                { value: "list", label: "List" },
-              ]}
-            />
+            {!isMobileViewport ? (
+              <ToggleGroup
+                className="ml-auto"
+                value={effectiveView}
+                onValueChange={(val) => {
+                  setView(val as "cards" | "list");
+                }}
+                options={[
+                  { value: "cards", label: "Cards" },
+                  { value: "list", label: "List" },
+                ]}
+              />
+            ) : null}
           </div>
 
           {effectiveView === "cards" ? (

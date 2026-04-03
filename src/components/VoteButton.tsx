@@ -51,11 +51,13 @@ export function VoteButton({
   const title =
     titleProp ??
     (gated
-      ? !auth.authenticated
-        ? "Connect and verify to interact."
-        : auth.gateReason
-          ? `Not eligible: ${auth.gateReason}`
-          : "Not eligible to interact."
+      ? auth.loading
+        ? "Checking wallet status…"
+        : !auth.authenticated
+          ? "Connect and verify to interact."
+          : auth.gateReason
+            ? `Not eligible: ${auth.gateReason}`
+            : "Not eligible to interact."
       : undefined);
 
   return (

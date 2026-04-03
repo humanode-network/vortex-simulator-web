@@ -246,7 +246,7 @@ const Faction: React.FC = () => {
           value={String(faction.members)}
           align="center"
         />
-        <StatTile label="Votes" value={String(faction.votes)} align="center" />
+        <StatTile label="ACM" value={String(faction.acm)} align="center" />
         <StatTile
           label="Role"
           value={

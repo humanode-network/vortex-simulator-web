@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Card } from "@/components/primitives/card";
+import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
@@ -14,9 +15,19 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { ActivityTile } from "@/components/ActivityTile";
 import { AddressInline } from "@/components/AddressInline";
-import { apiHuman } from "@/lib/apiClient";
+import {
+  apiDelegationClear,
+  apiDelegationSet,
+  apiHuman,
+  apiMyGovernance,
+} from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
-import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
+import type {
+  GetMyGovernanceResponse,
+  HumanNodeProfileDto,
+  ProofKeyDto,
+} from "@/types/api";
+import { useAuth } from "@/app/auth/AuthContext";
 import { Check, Copy } from "lucide-react";
 import {
   ACTIVITY_FILTERS,
@@ -34,11 +45,31 @@ const chamberLabel = (chamberId: string): string =>
   chamberId === "general" ? "General chamber" : chamberId;
 
 const HumanNode: React.FC = () => {
+  const auth = useAuth();
   const { id } = useParams();
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [viewerGovernance, setViewerGovernance] =
+    useState<GetMyGovernanceResponse | null>(null);
+  const [delegationPendingByChamber, setDelegationPendingByChamber] = useState<
+    Record<string, boolean>
+  >({});
+  const [delegationErrorByChamber, setDelegationErrorByChamber] = useState<
+    Record<string, string | null>
+  >({});
+
+  const refreshProfile = async (targetId: string) => {
+    const res = await apiHuman(targetId);
+    setProfile(res);
+    setLoadError(null);
+  };
+
+  const refreshViewerGovernance = async () => {
+    const res = await apiMyGovernance();
+    setViewerGovernance(res);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -60,6 +91,68 @@ const HumanNode: React.FC = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await apiMyGovernance();
+        if (!active) return;
+        setViewerGovernance(res);
+      } catch {
+        if (!active) return;
+        setViewerGovernance(null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const delegationChambers = profile?.delegation?.chambers ?? [];
+  const profileDelegationEligibleChambers =
+    profile?.delegationEligibleChambers ?? [];
+  const viewerDelegationByChamber = useMemo(() => {
+    const out = new Map<
+      string,
+      GetMyGovernanceResponse["delegation"]["chambers"][number]
+    >();
+    for (const item of viewerGovernance?.delegation.chambers ?? []) {
+      out.set(item.chamberId, item);
+    }
+    return out;
+  }, [viewerGovernance]);
+  const delegationCards = useMemo(() => {
+    const byChamber = new Map<
+      string,
+      HumanNodeProfileDto["delegation"]["chambers"][number]
+    >();
+    for (const item of delegationChambers) {
+      byChamber.set(item.chamberId, item);
+    }
+    for (const chamberId of profileDelegationEligibleChambers) {
+      if (!byChamber.has(chamberId)) {
+        byChamber.set(chamberId, {
+          chamberId,
+          delegateeAddress: null,
+          inboundWeight: 0,
+          inboundDelegators: [],
+        });
+      }
+    }
+    return [...byChamber.values()].sort((a, b) =>
+      a.chamberId.localeCompare(b.chamberId),
+    );
+  }, [delegationChambers, profileDelegationEligibleChambers]);
+  const manageableChambers = useMemo(() => {
+    const targetEligible = new Set(profileDelegationEligibleChambers);
+    return (viewerGovernance?.delegation.chambers ?? [])
+      .filter((item) => targetEligible.has(item.chamberId))
+      .sort((a, b) => a.chamberId.localeCompare(b.chamberId));
+  }, [
+    profileDelegationEligibleChambers,
+    viewerGovernance?.delegation.chambers,
+  ]);
+
   if (!profile) {
     return (
       <div className="flex flex-col gap-6">
@@ -80,7 +173,6 @@ const HumanNode: React.FC = () => {
     quickDetails,
     proofSections,
     governanceActions,
-    delegation,
     projects,
     cmHistory = [],
     cmChambers = [],
@@ -141,7 +233,6 @@ const HumanNode: React.FC = () => {
   const visibleDetails = quickDetails.filter((detail) =>
     shouldShowDetail(detail.label),
   );
-  const delegationChambers = delegation?.chambers ?? [];
   const proofTiles = proofCards.flatMap(({ key, section }) =>
     section.items.map((item) => ({
       key: `${key}-${item.label}`,
@@ -160,6 +251,66 @@ const HumanNode: React.FC = () => {
   );
 
   const showShortBadge = !isAddressName && !isGenericName;
+  const isSelfProfile = Boolean(auth.address && profile.id === auth.address);
+
+  const handleDelegateHere = async (chamberId: string) => {
+    if (!id) return;
+    try {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: true,
+      }));
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: null,
+      }));
+      await apiDelegationSet({
+        chamberId,
+        delegateeAddress: profile.id,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await Promise.all([refreshProfile(id), refreshViewerGovernance()]);
+    } catch (error) {
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: formatLoadError((error as Error).message),
+      }));
+    } finally {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: false,
+      }));
+    }
+  };
+
+  const handleClearDelegation = async (chamberId: string) => {
+    if (!id) return;
+    try {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: true,
+      }));
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: null,
+      }));
+      await apiDelegationClear({
+        chamberId,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      await Promise.all([refreshProfile(id), refreshViewerGovernance()]);
+    } catch (error) {
+      setDelegationErrorByChamber((current) => ({
+        ...current,
+        [chamberId]: formatLoadError((error as Error).message),
+      }));
+    } finally {
+      setDelegationPendingByChamber((current) => ({
+        ...current,
+        [chamberId]: false,
+      }));
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -279,58 +430,116 @@ const HumanNode: React.FC = () => {
         mmValue="—"
       />
 
-      {delegationChambers.length > 0 ? (
+      {delegationCards.length > 0 ? (
         <section className="space-y-4">
           <SectionHeader>Delegation</SectionHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            {delegationChambers.map((item) => (
-              <Surface
-                key={item.chamberId}
-                variant="panelAlt"
-                radius="xl"
-                shadow="tile"
-                className="space-y-3 px-4 py-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <Kicker>{chamberLabel(item.chamberId)}</Kicker>
-                  <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                    Current delegate
-                  </p>
-                  {item.delegateeAddress ? (
-                    <AddressInline
-                      address={item.delegateeAddress}
-                      textClassName="text-sm text-text"
-                    />
-                  ) : (
-                    <p className="text-sm text-text">No delegate set</p>
-                  )}
-                </div>
-                {item.inboundDelegators.length > 0 ? (
+            {delegationCards.map((item) => {
+              const viewerItem =
+                viewerDelegationByChamber.get(item.chamberId) ?? null;
+              const viewerAlreadyDelegatesHere =
+                viewerItem?.delegateeAddress === profile.id;
+              const canManage =
+                !isSelfProfile &&
+                manageableChambers.some(
+                  (chamber) => chamber.chamberId === item.chamberId,
+                );
+              const pending =
+                delegationPendingByChamber[item.chamberId] ?? false;
+
+              return (
+                <Surface
+                  key={item.chamberId}
+                  variant="panelAlt"
+                  radius="xl"
+                  shadow="tile"
+                  className="space-y-3 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <Kicker>{chamberLabel(item.chamberId)}</Kicker>
+                    <Badge variant="outline">
+                      Inbound {item.inboundWeight}
+                    </Badge>
+                  </div>
                   <div className="space-y-1">
                     <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                      Delegated by
+                      Current delegate
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {item.inboundDelegators.map((delegator) => (
-                        <Badge key={delegator} variant="muted">
-                          {shortAddress(delegator)}
-                        </Badge>
-                      ))}
-                    </div>
+                    {item.delegateeAddress ? (
+                      <AddressInline
+                        address={item.delegateeAddress}
+                        textClassName="text-sm text-text"
+                      />
+                    ) : (
+                      <p className="text-sm text-text">No delegate set</p>
+                    )}
                   </div>
-                ) : null}
-              </Surface>
-            ))}
+                  {item.inboundDelegators.length > 0 ? (
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                        Delegated by
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {item.inboundDelegators.map((delegator) => (
+                          <Badge key={delegator} variant="muted">
+                            {shortAddress(delegator)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {canManage ? (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          disabled={pending || viewerAlreadyDelegatesHere}
+                          onClick={() =>
+                            void handleDelegateHere(item.chamberId)
+                          }
+                        >
+                          {viewerAlreadyDelegatesHere
+                            ? "Delegated here"
+                            : "Delegate here"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={pending || !viewerAlreadyDelegatesHere}
+                          onClick={() =>
+                            void handleClearDelegation(item.chamberId)
+                          }
+                        >
+                          Undelegate
+                        </Button>
+                      </div>
+                      {viewerItem?.delegateeAddress &&
+                      !viewerAlreadyDelegatesHere ? (
+                        <p className="text-xs text-muted">
+                          You currently delegate this chamber to{" "}
+                          <span className="font-semibold text-text">
+                            {shortAddress(viewerItem.delegateeAddress)}
+                          </span>
+                          .
+                        </p>
+                      ) : null}
+                      {delegationErrorByChamber[item.chamberId] ? (
+                        <p className="text-sm text-danger">
+                          {delegationErrorByChamber[item.chamberId]}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </Surface>
+              );
+            })}
           </div>
         </section>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <SectionHeader>Governance activity</SectionHeader>
             <Link
               to={`/app/human-nodes/${id ?? ""}/history`}

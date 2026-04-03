@@ -14,6 +14,7 @@ const chipClasses: Record<StageChipKind, string> = {
   chamber_vote: "bg-[color:var(--accent)]/15 text-[var(--accent)]",
   formation: "bg-[color:var(--primary)]/12 text-primary",
   passed: "bg-[color:var(--ok)]/20 text-[color:var(--ok)]",
+  failed: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
   thread: "bg-panel-alt text-muted",
   courts: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
   faction: "bg-panel-alt text-muted",

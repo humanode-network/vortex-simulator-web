@@ -50,7 +50,7 @@ const FullHistory: React.FC = () => {
         context: item.context,
         detail: item.detail,
         date: formatDateTime(item.date),
-        href: undefined,
+        href: item.href ?? undefined,
       }))
     : governanceActions.map((item) => ({
         title: item.title,

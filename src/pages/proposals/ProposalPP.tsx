@@ -122,9 +122,18 @@ const ProposalPP: React.FC = () => {
     .split("/")
     .map((v) => Number(v.trim()));
   const openSlots = Math.max(totalSlots - filledSlots, 0);
+  const poolWindowOpen = proposal.timeLeft !== "Ended";
 
   const votingAllowed =
-    !auth.enabled || (auth.authenticated && auth.eligible && !auth.loading);
+    poolWindowOpen &&
+    (!auth.enabled || (auth.authenticated && auth.eligible && !auth.loading));
+  const votingDisabledReason = !poolWindowOpen
+    ? "Pool window ended."
+    : auth.enabled && auth.loading
+      ? "Checking wallet status…"
+      : auth.enabled && !auth.authenticated
+        ? "Connect your wallet to vote."
+        : (auth.gateReason ?? "Only active human nodes can vote.");
 
   const activeGovernors = Math.max(1, proposal.activeGovernors);
   const engaged = proposal.upvotes + proposal.downvotes;
@@ -170,13 +179,7 @@ const ProposalPP: React.FC = () => {
               icon="▲"
               label="Upvote"
               disabled={!votingAllowed}
-              title={
-                votingAllowed
-                  ? undefined
-                  : auth.enabled && !auth.authenticated
-                    ? "Connect your wallet to vote."
-                    : (auth.gateReason ?? "Only active human nodes can vote.")
-              }
+              title={votingAllowed ? undefined : votingDisabledReason}
               onClick={() => {
                 setPendingAction("upvote");
                 setRulesChecked(false);
@@ -190,13 +193,7 @@ const ProposalPP: React.FC = () => {
               icon="▼"
               label="Downvote"
               disabled={!votingAllowed}
-              title={
-                votingAllowed
-                  ? undefined
-                  : auth.enabled && !auth.authenticated
-                    ? "Connect your wallet to vote."
-                    : (auth.gateReason ?? "Only active human nodes can vote.")
-              }
+              title={votingAllowed ? undefined : votingDisabledReason}
               onClick={() => {
                 setPendingAction("downvote");
                 setRulesChecked(false);
@@ -205,7 +202,12 @@ const ProposalPP: React.FC = () => {
               }}
             />
           </div>
-          <div className="mx-auto flex w-fit items-center gap-5 rounded-full border border-border bg-panel-alt px-14 py-7 text-2xl font-semibold text-text">
+          {!poolWindowOpen ? (
+            <p className="text-center text-sm text-muted">
+              Pool window ended. This proposal can no longer receive pool votes.
+            </p>
+          ) : null}
+          <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-center gap-4 rounded-full border border-border bg-panel-alt px-6 py-5 text-center text-xl font-semibold text-text sm:w-fit sm:px-14 sm:py-7 sm:text-2xl">
             <span className="text-accent">{proposal.upvotes} upvotes</span>
             <span className="text-muted">·</span>
             <span className="text-destructive">
@@ -253,6 +255,13 @@ const ProposalPP: React.FC = () => {
               className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
               valueClassName="text-2xl font-semibold"
             />
+            <StatTile
+              label="Time left"
+              value={proposal.timeLeft}
+              variant="panel"
+              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4 sm:col-span-2 lg:col-span-2"
+              valueClassName="text-2xl font-semibold"
+            />
           </div>
         </section>
       </div>
@@ -261,6 +270,7 @@ const ProposalPP: React.FC = () => {
         summary={proposal.summary}
         stats={[
           { label: "Budget ask", value: proposal.budget },
+          { label: "Time left", value: proposal.timeLeft },
           {
             label: "Formation",
             value: proposal.formationEligible ? "Yes" : "No",
@@ -298,7 +308,7 @@ const ProposalPP: React.FC = () => {
           shadow="popover"
           className="p-6 text-text"
         >
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-lg font-semibold">Pool rules</p>
             <button
               type="button"
@@ -342,9 +352,17 @@ const ProposalPP: React.FC = () => {
             </button>
             <button
               type="button"
-              disabled={!rulesChecked || voteSubmitting || !pendingAction}
+              disabled={
+                !rulesChecked ||
+                voteSubmitting ||
+                !pendingAction ||
+                !poolWindowOpen
+              }
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                !rulesChecked || voteSubmitting || !pendingAction
+                !rulesChecked ||
+                voteSubmitting ||
+                !pendingAction ||
+                !poolWindowOpen
                   ? "cursor-not-allowed bg-muted text-primary-foreground opacity-60"
                   : pendingAction === "downvote"
                     ? "border-2 border-destructive bg-destructive text-destructive-foreground hover:opacity-95"

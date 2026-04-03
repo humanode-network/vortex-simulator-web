@@ -265,7 +265,9 @@ const ProposalFormation: React.FC = () => {
             </Button>
           </div>
 
-          {!auth.authenticated ? (
+          {auth.loading ? (
+            <p className="text-xs text-muted">Checking wallet status…</p>
+          ) : !auth.authenticated ? (
             <p className="text-xs text-muted">Connect a wallet to act.</p>
           ) : isProposerViewer ? (
             <p className="text-xs text-muted">

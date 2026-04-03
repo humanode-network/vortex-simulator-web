@@ -12,6 +12,8 @@ export const feedStages = [
   "pool",
   "vote",
   "build",
+  "passed",
+  "failed",
   "thread",
   "courts",
   "faction",
@@ -27,6 +29,7 @@ export type StageChipKind =
   | "chamber_vote"
   | "formation"
   | "passed"
+  | "failed"
   | "thread"
   | "courts"
   | "faction"
@@ -37,7 +40,7 @@ export const stageToChipKind = {
   vote: "chamber_vote",
   build: "formation",
   passed: "passed",
-  failed: "chamber_vote",
+  failed: "failed",
   thread: "thread",
   courts: "courts",
   faction: "faction",
@@ -49,7 +52,7 @@ export const stageLabel = {
   vote: "Chamber vote",
   build: "Formation",
   passed: "Passed",
-  failed: "Ended",
+  failed: "Failed",
   thread: "Thread",
   courts: "Courts",
   faction: "Faction",

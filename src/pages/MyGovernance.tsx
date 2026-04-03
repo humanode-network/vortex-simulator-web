@@ -229,16 +229,6 @@ const MyGovernance: React.FC = () => {
   }, []);
 
   const eraActivity = gov?.eraActivity;
-  const status: { label: GoverningStatus; termId: string } = gov?.rollup
-    ? {
-        label: gov.rollup.status,
-        termId: governingStatusTermId(gov.rollup.status),
-      }
-    : governingStatusForProgress(
-        eraActivity?.completed ?? 0,
-        eraActivity?.required ?? 0,
-      );
-
   const timeLeftValue = useMemo(() => {
     const targetMs = clock?.nextEraAt
       ? toTimestampMs(clock.nextEraAt, NaN)
@@ -253,6 +243,37 @@ const MyGovernance: React.FC = () => {
     if (!gov || !chambers) return [];
     return chambers.filter((chamber) => gov.myChamberIds.includes(chamber.id));
   }, [gov, chambers]);
+
+  if (gov === null || chambers === null) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHint pageId="my-governance" />
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className={cn(
+            "px-5 py-4 text-sm text-muted",
+            loadError ? "text-destructive" : undefined,
+          )}
+        >
+          {loadError
+            ? `My governance unavailable: ${formatLoadError(loadError)}`
+            : "Loading…"}
+        </Surface>
+      </div>
+    );
+  }
+
+  const status: { label: GoverningStatus; termId: string } = gov?.rollup
+    ? {
+        label: gov.rollup.status,
+        termId: governingStatusTermId(gov.rollup.status),
+      }
+    : governingStatusForProgress(
+        eraActivity?.completed ?? 0,
+        eraActivity?.required ?? 0,
+      );
 
   const tierProgress = gov?.tier ?? null;
   const currentTier = (tierProgress?.tier as TierKey | undefined) ?? "Nominee";
@@ -390,21 +411,6 @@ const MyGovernance: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="my-governance" />
-      {gov === null || chambers === null ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className={cn(
-            "px-5 py-4 text-sm text-muted",
-            loadError ? "text-destructive" : undefined,
-          )}
-        >
-          {loadError
-            ? `My governance unavailable: ${formatLoadError(loadError)}`
-            : "Loading…"}
-        </Surface>
-      ) : null}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle>
@@ -414,6 +420,15 @@ const MyGovernance: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-4 py-3 text-sm text-muted"
+          >
+            This tracks opportunities that occurred during the current era, even
+            if those votes are already closed.
+          </Surface>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               { label: "Era", value: eraActivity?.era ?? "—" },
@@ -443,11 +458,11 @@ const MyGovernance: React.FC = () => {
                 key: "required",
                 label: (
                   <HintLabel termId="governing_threshold">
-                    Required actions
+                    Era participation
                   </HintLabel>
                 ),
                 value: eraActivity
-                  ? `${eraActivity.completed} / ${eraActivity.required} completed`
+                  ? `${eraActivity.completed} / ${eraActivity.required} completed this era`
                   : "—",
               },
               {
@@ -480,7 +495,7 @@ const MyGovernance: React.FC = () => {
                 className="flex h-full flex-col items-center justify-center px-3 py-3 text-center"
               >
                 <Kicker align="center" className="text-[0.7rem]">
-                  {act.label}
+                  {act.label} this era
                 </Kicker>
                 <p className="text-base font-semibold text-text">
                   {act.done} / {act.required}
@@ -552,7 +567,7 @@ const MyGovernance: React.FC = () => {
                     );
                     return (
                       <div key={key} className="space-y-2">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                           <p className="text-sm font-semibold text-text">
                             {requirementLabel[key]}
                           </p>
@@ -595,7 +610,7 @@ const MyGovernance: React.FC = () => {
                     return (
                       <div
                         key={key}
-                        className="flex items-center justify-between gap-4 px-3 py-3"
+                        className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                       >
                         <p className="text-sm leading-snug font-semibold text-text">
                           {requirementLabel[key]}
@@ -769,7 +784,7 @@ const MyGovernance: React.FC = () => {
                       shadow="tile"
                       className="space-y-2 px-4 py-3"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm font-semibold text-text">
                           {chamber.chamberTitle}
                         </p>
@@ -813,7 +828,7 @@ const MyGovernance: React.FC = () => {
                     shadow="tile"
                     className="space-y-3 p-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <Kicker>
                           {chamberLabel(item.chamberId, chambers)}

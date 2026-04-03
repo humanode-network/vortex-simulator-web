@@ -6,6 +6,7 @@ import { Surface } from "@/components/Surface";
 export type AttachmentItem = {
   id: string;
   title: ReactNode;
+  href?: string;
   actionLabel?: ReactNode;
 };
 
@@ -39,12 +40,20 @@ export function AttachmentList({
             <span className="min-w-0 flex-1 [overflow-wrap:anywhere] break-words">
               {file.title}
             </span>
-            <button
-              type="button"
-              className="shrink-0 text-sm font-semibold text-primary"
-            >
-              {file.actionLabel ?? "View"}
-            </button>
+            {file.href ? (
+              <a
+                href={file.href}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 text-sm font-semibold text-primary"
+              >
+                {file.actionLabel ?? "View"}
+              </a>
+            ) : (
+              <span className="shrink-0 text-sm font-semibold text-muted">
+                {file.actionLabel ?? "Attached"}
+              </span>
+            )}
           </Surface>
         ))}
       </ul>

@@ -48,6 +48,9 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (auth.enabled && auth.loading) {
+      return;
+    }
     if (!auth.enabled || !auth.authenticated || !auth.address) {
       setProfile(null);
       setLoadError(null);
@@ -78,7 +81,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
     return () => {
       active = false;
     };
-  }, [auth.address, auth.authenticated, auth.enabled]);
+  }, [auth.address, auth.authenticated, auth.enabled, auth.loading]);
 
   const proofKeys: ProofKeyDto[] = ["time", "devotion", "governance"];
   const proofCards = proofKeys
@@ -173,6 +176,10 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
       {!auth.enabled ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
           Auth is disabled in this build.
+        </Card>
+      ) : auth.loading ? (
+        <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
+          Checking wallet status…
         </Card>
       ) : !auth.authenticated ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
@@ -314,7 +321,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
                 shadow="tile"
                 className="space-y-3 px-4 py-4"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <Kicker>{chamberLabel(item.chamberId)}</Kicker>
                   <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
                 </div>
@@ -354,12 +361,12 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <SectionHeader>Governance activity</SectionHeader>
               {historyHref ? (
                 <Link
                   to={historyHref}
-                  className="text-sm font-semibold text-primary hover:underline"
+                  className="text-sm font-semibold text-primary hover:underline sm:self-auto"
                 >
                   View full history
                 </Link>

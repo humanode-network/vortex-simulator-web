@@ -25,6 +25,7 @@ import type { CourtCaseDetailDto, HumanNodeDto } from "@/types/api";
 
 const Courtroom: React.FC = () => {
   const { id } = useParams();
+  const courtsBlocked = true;
   const [courtCase, setCourtCase] = useState<CourtCaseDetailDto | null>(null);
   const [humansById, setHumansById] = useState<Record<string, HumanNodeDto>>(
     {},
@@ -35,7 +36,7 @@ const Courtroom: React.FC = () => {
   const auth = useAuth();
 
   useEffect(() => {
-    if (!id) return;
+    if (courtsBlocked || !id) return;
     let active = true;
     (async () => {
       try {
@@ -66,7 +67,7 @@ const Courtroom: React.FC = () => {
   const canAct = auth.authenticated && auth.eligible;
 
   const refresh = async () => {
-    if (!id) return;
+    if (courtsBlocked || !id) return;
     const [court, humans] = await Promise.all([apiCourt(id), apiHumans()]);
     setCourtCase(court);
     setHumansById(
@@ -122,6 +123,28 @@ const Courtroom: React.FC = () => {
       }
       return <span key={`${idx}-${part}`}>{part}</span>;
     });
+
+  if (courtsBlocked) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHint pageId="courtroom" />
+        <Card className="border-dashed">
+          <CardHeader className="pb-2">
+            <CardTitle>Courtroom</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="text-text">
+              Courts are still quarantined for release hardening.
+            </p>
+            <p className="text-muted">
+              Direct courtroom routes are intentionally blocked until the courts
+              module is ready to ship as a live release surface.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -229,6 +252,8 @@ const Courtroom: React.FC = () => {
             <p className="text-xs text-muted">
               Voting is available only when the session is live.
             </p>
+          ) : auth.loading ? (
+            <p className="text-xs text-muted">Checking wallet status…</p>
           ) : !auth.authenticated ? (
             <p className="text-xs text-muted">Connect a wallet to act.</p>
           ) : auth.authenticated && !auth.eligible ? (

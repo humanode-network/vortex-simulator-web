@@ -21,7 +21,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        "inline-flex rounded-full border border-border bg-panel [background-image:var(--card-grad)] p-1 shadow-(--shadow-control) ring-1 ring-(--glass-border) ring-inset",
+        "flex max-w-full flex-wrap rounded-full border border-border bg-panel [background-image:var(--card-grad)] p-1 shadow-(--shadow-control) ring-1 ring-(--glass-border) ring-inset",
         className,
       )}
       {...props}

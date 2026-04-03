@@ -25,6 +25,7 @@ import {
   apiProposalDraft,
   apiProposalDraftDelete,
   apiProposalDraftSave,
+  apiProposalStatus,
   apiProposalSubmitToPool,
 } from "@/lib/apiClient";
 import type { ChamberDto, TierProgressDto } from "@/types/api";
@@ -281,6 +282,19 @@ const ProposalCreation: React.FC = () => {
       try {
         const detail = await apiProposalDraft(requestedDraftId);
         if (!active) return;
+        if (detail.submittedProposalId) {
+          try {
+            const status = await apiProposalStatus(detail.submittedProposalId);
+            if (!active) return;
+            navigate(status.canonicalRoute, { replace: true });
+          } catch {
+            if (!active) return;
+            navigate(`/app/proposals/${detail.submittedProposalId}/pp`, {
+              replace: true,
+            });
+          }
+          return;
+        }
         if (!detail.editableForm) {
           throw new Error("Draft payload unavailable for editing.");
         }
@@ -316,7 +330,7 @@ const ProposalCreation: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [requestedDraftId]);
+  }, [navigate, requestedDraftId]);
 
   useEffect(() => {
     if (!auth.enabled || !auth.authenticated) {
