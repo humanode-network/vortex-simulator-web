@@ -50,7 +50,6 @@ export type ProposalPresetId =
   | "project.core.protocol-upgrades.policy"
   | "project.admin.formation.policy"
   | "project.admin.chamber-rules.policy"
-  | "project.admin.veto.policy"
   | "project.admin.identity.policy"
   | "project.admin.treasury.policy"
   | "project.admin.incentives.policy"
@@ -518,16 +517,6 @@ export const PROPOSAL_PRESETS: ProposalPreset[] = [
     id: "project.admin.chamber-rules.policy",
     label: "Chamber rules",
     description: "Chamber rules, membership, and governance ops.",
-    templateId: "project",
-    proposalType: "dao-core",
-    formationEligible: false,
-    recommendedChamber: "General chamber",
-    defaultChamberId: "general",
-  },
-  {
-    id: "project.admin.veto.policy",
-    label: "Veto council",
-    description: "Veto council rules and governance operations.",
     templateId: "project",
     proposalType: "dao-core",
     formationEligible: false,

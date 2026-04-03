@@ -11,8 +11,10 @@ import { apiProposalDrafts } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProposalDraftListItemDto } from "@/types/api";
+import { useAuth } from "@/app/auth/AuthContext";
 
 const ProposalDrafts: React.FC = () => {
+  const auth = useAuth();
   const navigate = useNavigate();
   const [drafts, setDrafts] = useState<ProposalDraftListItemDto[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -24,6 +26,14 @@ const ProposalDrafts: React.FC = () => {
   const { sortBy, chamberFilter } = filters;
 
   useEffect(() => {
+    if (auth.enabled && auth.loading) {
+      return;
+    }
+    if (auth.enabled && !auth.authenticated) {
+      setDrafts(null);
+      setLoadError(null);
+      return;
+    }
     let active = true;
     (async () => {
       try {
@@ -40,7 +50,7 @@ const ProposalDrafts: React.FC = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [auth.authenticated, auth.enabled, auth.loading]);
 
   const chambers = useMemo(
     () => Array.from(new Set((drafts ?? []).map((d) => d.chamber))),
@@ -66,13 +76,13 @@ const ProposalDrafts: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="sm">
             <Link to="/app/proposals">Back to proposals</Link>
           </Button>
         </div>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="w-full sm:w-auto">
           <Link to="/app/proposals/new">New proposal</Link>
         </Button>
       </div>
@@ -110,7 +120,11 @@ const ProposalDrafts: React.FC = () => {
 
       {drafts === null ? (
         <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          Loading drafts…
+          {auth.enabled && auth.loading
+            ? "Loading drafts…"
+            : auth.enabled && !auth.authenticated
+              ? "Connect a wallet to view your drafts."
+              : "Loading drafts…"}
         </Card>
       ) : null}
       {loadError ? (

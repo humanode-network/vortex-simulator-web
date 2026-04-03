@@ -28,6 +28,7 @@ import type {
   ChamberThreadDto,
   ChamberThreadMessageDto,
   GetChamberResponse,
+  GetMyGovernanceResponse,
 } from "@/types/api";
 import {
   apiChamber,
@@ -79,7 +80,8 @@ const Chamber: React.FC = () => {
   const [chatMessage, setChatMessage] = useState("");
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatBusy, setChatBusy] = useState(false);
-  const [myChamberIds, setMyChamberIds] = useState<string[]>([]);
+  const [myGovernance, setMyGovernance] =
+    useState<GetMyGovernanceResponse | null>(null);
   const [chatPeers, setChatPeers] = useState<ChamberChatPeerDto[]>([]);
   const [chatSignalError, setChatSignalError] = useState<string | null>(null);
 
@@ -142,7 +144,7 @@ const Chamber: React.FC = () => {
 
   useEffect(() => {
     if (!address) {
-      setMyChamberIds([]);
+      setMyGovernance(null);
       return;
     }
     let active = true;
@@ -150,10 +152,10 @@ const Chamber: React.FC = () => {
       try {
         const res = await apiMyGovernance();
         if (!active) return;
-        setMyChamberIds(res.myChamberIds ?? []);
+        setMyGovernance(res);
       } catch {
         if (!active) return;
-        setMyChamberIds([]);
+        setMyGovernance(null);
       }
     })();
     return () => {
@@ -238,10 +240,15 @@ const Chamber: React.FC = () => {
   const canWrite = useMemo(() => {
     if (!address || !id) return false;
     if (id === "general") {
-      return isMember || myChamberIds.length > 0;
+      return (
+        isMember ||
+        (myGovernance?.delegation.chambers ?? []).some(
+          (item) => item.chamberId === "general",
+        )
+      );
     }
     return isMember;
-  }, [address, id, isMember, myChamberIds.length]);
+  }, [address, id, isMember, myGovernance]);
 
   const appendChatMessage = useCallback((message: ChamberChatMessageDto) => {
     if (chatMessageIdsRef.current.has(message.id)) return;
@@ -944,7 +951,7 @@ const Chamber: React.FC = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex items-center justify-between pb-3">
+          <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <Kicker>Governors</Kicker>
               <CardTitle>Chamber roster</CardTitle>
@@ -986,7 +993,7 @@ const Chamber: React.FC = () => {
                       {gov.mcm.toLocaleString()}
                     </p>
                     {gov.delegateeAddress ? (
-                      <div className="mt-1 flex items-center gap-1 text-xs text-muted">
+                      <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted">
                         <span>Delegates to</span>
                         <AddressInline
                           address={gov.delegateeAddress}

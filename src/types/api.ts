@@ -72,7 +72,6 @@ export type FactionDto = {
   description: string;
   visibility: "public" | "private";
   members: number;
-  votes: string;
   acm: string;
   focus: string;
   goals: string[];
@@ -529,6 +528,8 @@ export type ProposalDraftEditableFormDto = {
 
 export type ProposalDraftDetailDto = {
   id?: string;
+  submittedAt?: string | null;
+  submittedProposalId?: string | null;
   title: string;
   proposer: string;
   chamber: string;
@@ -547,7 +548,7 @@ export type ProposalDraftDetailDto = {
   teamLocked: { name: string; role: string }[];
   openSlotNeeds: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
-  attachments: { title: string; href: string }[];
+  attachments: { title: string; href?: string }[];
   editableForm?: ProposalDraftEditableFormDto;
 };
 
@@ -561,6 +562,7 @@ export type PoolProposalPageDto = {
   budget: string;
   cooldown: string;
   formationEligible: boolean;
+  timeLeft: string;
   teamSlots: string;
   milestones: string;
   upvotes: number;
@@ -569,7 +571,7 @@ export type PoolProposalPageDto = {
   activeGovernors: number;
   upvoteFloor: number;
   rules: string[];
-  attachments: { id: string; title: string }[];
+  attachments: { id: string; title: string; href?: string }[];
   teamLocked: { name: string; role: string }[];
   openSlotNeeds: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
@@ -619,7 +621,7 @@ export type ChamberProposalPageDto = {
   activeGovernors: number;
   engagedVoters: number;
   eligibleVoters: number;
-  attachments: { id: string; title: string }[];
+  attachments: { id: string; title: string; href?: string }[];
   teamLocked: { name: string; role: string }[];
   openSlotNeeds: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
@@ -683,7 +685,31 @@ export type FormationProposalPageDto = {
   lockedTeam: { name: string; role: string }[];
   openSlots: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
-  attachments: { id: string; title: string }[];
+  attachments: { id: string; title: string; href?: string }[];
+  summary: string;
+  overview: string;
+  executionPlan: string[];
+  budgetScope: string;
+  invisionInsight: InvisionInsightDto;
+};
+
+export type ProposalFinishedPageDto = {
+  title: string;
+  chamber: string;
+  proposer: string;
+  proposerId: string;
+  terminalStage: "passed" | "failed";
+  terminalLabel: string;
+  terminalSummary: string;
+  formationEligible: boolean;
+  budget: string;
+  timeLeft: string;
+  stageData: { title: string; description: string; value: string }[];
+  stats: { label: string; value: string }[];
+  lockedTeam: { name: string; role: string }[];
+  openSlots: { title: string; desc: string }[];
+  milestonesDetail: { title: string; desc: string }[];
+  attachments: { id: string; title: string; href?: string }[];
   summary: string;
   overview: string;
   executionPlan: string[];
@@ -757,6 +783,7 @@ export type HistoryItemDto = {
   context: string;
   detail: string;
   date: string;
+  href?: string | null;
 };
 export type ProjectCardDto = {
   title: string;
@@ -783,6 +810,7 @@ export type HumanNodeProfileDto = {
   delegation: {
     chambers: HumanDelegationChamberDto[];
   };
+  delegationEligibleChambers: string[];
   projects: ProjectCardDto[];
   activity: HistoryItemDto[];
   history: string[];

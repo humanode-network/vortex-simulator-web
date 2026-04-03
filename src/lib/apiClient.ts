@@ -11,6 +11,7 @@ import type {
   CourtCaseDetailDto,
   FactionDto,
   FormationProposalPageDto,
+  ProposalFinishedPageDto,
   GetFactionsResponse,
   GetChamberResponse,
   GetChambersResponse,
@@ -656,10 +657,8 @@ export async function apiProposalFormationPage(
 
 export async function apiProposalFinishedPage(
   id: string,
-): Promise<FormationProposalPageDto> {
-  return await apiGet<FormationProposalPageDto>(
-    `/api/proposals/${id}/finished`,
-  );
+): Promise<ProposalFinishedPageDto> {
+  return await apiGet<ProposalFinishedPageDto>(`/api/proposals/${id}/finished`);
 }
 
 export async function apiCourts(): Promise<GetCourtsResponse> {

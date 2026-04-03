@@ -21,7 +21,7 @@ const Invision: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<{
-    factionSort: "members" | "votes" | "acm";
+    factionSort: "members" | "acm";
   }>({ factionSort: "members" });
   const { factionSort } = filters;
 
@@ -60,8 +60,6 @@ const Invision: React.FC = () => {
       )
       .sort((a, b) => {
         if (factionSort === "members") return b.members - a.members;
-        if (factionSort === "votes")
-          return parseInt(b.votes, 10) - parseInt(a.votes, 10);
         return (
           parseInt(b.acm.replace(/[,]/g, ""), 10) -
           parseInt(a.acm.replace(/[,]/g, ""), 10)
@@ -280,7 +278,6 @@ const Invision: React.FC = () => {
               label: "Sort factions",
               options: [
                 { value: "members", label: "Members (desc)" },
-                { value: "votes", label: "Votes (desc)" },
                 { value: "acm", label: "ACM (desc)" },
               ],
             },
@@ -304,7 +301,7 @@ const Invision: React.FC = () => {
                     <Kicker className="text-primary">
                       {faction.description}
                     </Kicker>
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-center">
                       <Surface
                         variant="panel"
                         radius="xl"
@@ -317,17 +314,6 @@ const Invision: React.FC = () => {
                         <p className="text-lg font-semibold">
                           {faction.members}
                         </p>
-                      </Surface>
-                      <Surface
-                        variant="panel"
-                        radius="xl"
-                        shadow="control"
-                        className="px-2 py-2"
-                      >
-                        <Kicker align="center" className="text-[0.7rem]">
-                          Votes, %
-                        </Kicker>
-                        <p className="text-lg font-semibold">{faction.votes}</p>
                       </Surface>
                       <Surface
                         variant="panel"

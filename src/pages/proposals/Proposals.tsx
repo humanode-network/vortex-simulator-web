@@ -20,6 +20,7 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import { toTimestampMs } from "@/lib/dateTime";
 import {
   apiProposalChamberPage,
+  apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
   apiProposals,
@@ -27,6 +28,7 @@ import {
 import type {
   ChamberProposalPageDto,
   FormationProposalPageDto,
+  ProposalFinishedPageDto,
   PoolProposalPageDto,
   ProposalListItemDto,
 } from "@/types/api";
@@ -42,6 +44,19 @@ function parseRatioPair(value: string): { left: number; right: number } {
     left: Number.isFinite(left) ? left : 0,
     right: Number.isFinite(right) ? right : 0,
   };
+}
+
+function isEndedProposal(proposal: ProposalListItemDto): boolean {
+  return (
+    proposal.stage === "passed" ||
+    proposal.stage === "failed" ||
+    proposal.summaryPill === "Finished" ||
+    proposal.summaryPill === "Failed"
+  );
+}
+
+function hasFinishedRoute(href?: string): boolean {
+  return Boolean(href?.includes("/finished"));
 }
 
 const Proposals: React.FC = () => {
@@ -73,6 +88,9 @@ const Proposals: React.FC = () => {
   const [formationPagesById, setFormationPagesById] = useState<
     Record<string, FormationProposalPageDto | undefined>
   >({});
+  const [finishedPagesById, setFinishedPagesById] = useState<
+    Record<string, ProposalFinishedPageDto | undefined>
+  >({});
 
   useEffect(() => {
     let active = true;
@@ -97,6 +115,15 @@ const Proposals: React.FC = () => {
     if (!expanded || !proposalData) return;
     const proposal = proposalData.find((p) => p.id === expanded);
     if (!proposal) return;
+
+    if (hasFinishedRoute(proposal.href)) {
+      if (finishedPagesById[proposal.id] === undefined) {
+        void apiProposalFinishedPage(proposal.id).then((page) => {
+          setFinishedPagesById((curr) => ({ ...curr, [proposal.id]: page }));
+        });
+      }
+      return;
+    }
 
     if (proposal.stage === "pool" && poolPagesById[proposal.id] === undefined) {
       void apiProposalPoolPage(proposal.id).then((page) => {
@@ -125,6 +152,7 @@ const Proposals: React.FC = () => {
     poolPagesById,
     chamberPagesById,
     formationPagesById,
+    finishedPagesById,
   ]);
 
   const filteredProposals = useMemo(() => {
@@ -142,8 +170,7 @@ const Proposals: React.FC = () => {
           : true;
         const matchesStage =
           stageFilter === "any" ? true : proposal.stage === stageFilter;
-        const ended =
-          proposal.stage === "failed" || proposal.summaryPill === "Failed";
+        const ended = isEndedProposal(proposal);
         const matchesLifecycle = lifecycleFilter === "all" ? true : !ended;
         const matchesChamber =
           chamberFilter === "All chambers"
@@ -194,7 +221,7 @@ const Proposals: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      <div className="flex justify-between gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button
           asChild
           size="sm"
@@ -203,7 +230,7 @@ const Proposals: React.FC = () => {
         >
           <Link to="/app/proposals/drafts">Drafts</Link>
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Button asChild size="sm" className="rounded-full px-4">
             <Link to="/app/proposals/new">Create proposal</Link>
           </Button>
@@ -248,7 +275,7 @@ const Proposals: React.FC = () => {
               { value: "Newest", label: "Newest" },
               { value: "Oldest", label: "Oldest" },
               { value: "Activity", label: "Activity" },
-              { value: "Votes", label: "Votes casted" },
+              { value: "Votes", label: "Votes cast" },
             ],
           },
         ]}
@@ -303,10 +330,10 @@ const Proposals: React.FC = () => {
               proposal.stage === "build"
                 ? formationPagesById[proposal.id]
                 : null;
-            const ended =
-              proposal.stage === "failed" || proposal.summaryPill === "Failed";
-            const stageForChip: ProposalStage =
-              proposal.stage === "failed" ? "vote" : proposal.stage;
+            const finishedPage = hasFinishedRoute(proposal.href)
+              ? (finishedPagesById[proposal.id] ?? null)
+              : null;
+            const stageForChip: ProposalStage = proposal.stage;
 
             const poolStats =
               proposal.stage === "pool" && poolPage
@@ -452,12 +479,7 @@ const Proposals: React.FC = () => {
                       label={
                         proposal.summaryPill === "Finished"
                           ? "Finished"
-                          : ended
-                            ? "Ended"
-                            : proposal.stage === "build" &&
-                                proposal.summaryPill === "Finished"
-                              ? "Finished"
-                              : undefined
+                          : undefined
                       }
                     />
                     <Badge variant="muted" size="sm">
@@ -475,7 +497,40 @@ const Proposals: React.FC = () => {
                     <p className="text-sm text-muted">{proposal.summary}</p>
                   </div>
 
-                  {proposal.stage === "pool" && poolPage && poolStats ? (
+                  {finishedPage ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-text">
+                        Outcome status
+                      </p>
+                      <Surface
+                        variant="panelAlt"
+                        radius="2xl"
+                        shadow="tile"
+                        className="px-5 py-4 text-sm text-muted"
+                      >
+                        {finishedPage.terminalSummary}
+                      </Surface>
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {finishedPage.stageData.map((item, index) => (
+                          <StageDataTile
+                            key={`${proposal.id}-finished-${index}`}
+                            title={item.title}
+                            description={item.description}
+                            value={item.value}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : hasFinishedRoute(proposal.href) ? (
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="px-5 py-4 text-sm text-muted"
+                    >
+                      Loading outcome details…
+                    </Surface>
+                  ) : proposal.stage === "pool" && poolPage && poolStats ? (
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-text">
                         Quorum of attention
@@ -523,6 +578,11 @@ const Proposals: React.FC = () => {
                           description={`Upvotes ${poolPage.upvotes} / ${poolStats.upvoteFloor} governors`}
                           value={`${poolStats.upvoteFloorProgressPercent}% / ${poolStats.upvoteFloorFractionPercent}%`}
                           tone={poolStats.meetsUpvoteFloor ? "ok" : "warn"}
+                        />
+                        <StageDataTile
+                          title="Time left"
+                          description="Pool window"
+                          value={poolPage.timeLeft}
                         />
                       </div>
 
@@ -742,6 +802,14 @@ const Proposals: React.FC = () => {
                             value={`${chamberPage.milestones} planned`}
                           />
                         </>
+                      ) : finishedPage ? (
+                        finishedPage.stats.map((stat) => (
+                          <DashedStatItem
+                            key={stat.label}
+                            label={stat.label}
+                            value={stat.value}
+                          />
+                        ))
                       ) : proposal.stage === "build" && formationPage ? (
                         <>
                           <DashedStatItem
@@ -798,9 +866,7 @@ const Proposals: React.FC = () => {
                         : proposal.stage === "vote"
                           ? `/app/proposals/${proposal.id}/chamber`
                           : proposal.stage === "passed"
-                            ? proposal.summaryPill === "Finished"
-                              ? `/app/proposals/${proposal.id}/finished`
-                              : `/app/proposals/${proposal.id}/chamber`
+                            ? `/app/proposals/${proposal.id}/finished`
                             : proposal.stage === "build"
                               ? proposal.summaryPill === "Finished"
                                 ? `/app/proposals/${proposal.id}/finished`

@@ -24,7 +24,7 @@ const Factions: React.FC = () => {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<{
     focusFilter: string;
-    sortBy: "members" | "votes" | "acm";
+    sortBy: "members" | "acm";
   }>({ focusFilter: "any", sortBy: "members" });
   const { focusFilter, sortBy } = filters;
 
@@ -50,14 +50,12 @@ const Factions: React.FC = () => {
   const totals = useMemo(() => {
     const list = factions ?? [];
     const totalMembers = list.reduce((sum, f) => sum + f.members, 0);
-    const totalVotes = list.reduce((sum, f) => sum + parseInt(f.votes, 10), 0);
     const totalAcm = list.reduce(
       (sum, f) => sum + parseInt(f.acm.replace(/[,]/g, ""), 10),
       0,
     );
     return {
       totalMembers,
-      totalVotes,
       totalAcm,
       totalFactions: list.length,
     };
@@ -83,8 +81,6 @@ const Factions: React.FC = () => {
       })
       .sort((a, b) => {
         if (sortBy === "members") return b.members - a.members;
-        if (sortBy === "votes")
-          return parseInt(b.votes, 10) - parseInt(a.votes, 10);
         return (
           parseInt(b.acm.replace(/[,]/g, ""), 10) -
           parseInt(a.acm.replace(/[,]/g, ""), 10)
@@ -120,7 +116,6 @@ const Factions: React.FC = () => {
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricTile label="Total factions" value={totals.totalFactions} />
             <MetricTile label="Members" value={totals.totalMembers} />
-            <MetricTile label="Votes" value={totals.totalVotes} />
             <MetricTile
               label={<HintLabel termId="acm" termText="ACM" />}
               value={totals.totalAcm}
@@ -146,7 +141,6 @@ const Factions: React.FC = () => {
                 label: "Sort by",
                 options: [
                   { value: "members", label: "Members (desc)" },
-                  { value: "votes", label: "Votes (desc)" },
                   { value: "acm", label: "ACM (desc)" },
                 ],
               },
@@ -173,16 +167,10 @@ const Factions: React.FC = () => {
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-text">
-                    <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="grid grid-cols-2 gap-2 text-center">
                       <StatTile
                         label="Members"
                         value={faction.members}
-                        className="px-2 py-2"
-                        valueClassName="text-lg"
-                      />
-                      <StatTile
-                        label="Votes"
-                        value={faction.votes}
                         className="px-2 py-2"
                         valueClassName="text-lg"
                       />
@@ -224,6 +212,7 @@ const Factions: React.FC = () => {
                 </div>
                 <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
                   <Badge variant="outline">Members: {faction.members}</Badge>
+                  <Badge variant="outline">ACM: {faction.acm}</Badge>
                 </div>
                 <Button asChild size="sm">
                   <Link to={`/app/factions/${faction.id}`}>Open</Link>

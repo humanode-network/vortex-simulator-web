@@ -11,7 +11,7 @@ import {
 } from "@/components/ProposalSections";
 import { apiProposalFinishedPage, apiProposalTimeline } from "@/lib/apiClient";
 import type {
-  FormationProposalPageDto,
+  ProposalFinishedPageDto,
   ProposalTimelineItemDto,
 } from "@/types/api";
 import {
@@ -22,7 +22,9 @@ import { formatLoadError } from "@/lib/errorFormatting";
 
 const ProposalFinished: React.FC = () => {
   const { id } = useParams();
-  const [project, setProject] = useState<FormationProposalPageDto | null>(null);
+  const [proposal, setProposal] = useState<ProposalFinishedPageDto | null>(
+    null,
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
@@ -39,10 +41,10 @@ const ProposalFinished: React.FC = () => {
         ]);
         if (!active) return;
         if (pageResult.status === "fulfilled") {
-          setProject(pageResult.value);
+          setProposal(pageResult.value);
           setLoadError(null);
         } else {
-          setProject(null);
+          setProposal(null);
           setLoadError(pageResult.reason?.message ?? "Failed to load proposal");
         }
         if (timelineResult.status === "fulfilled") {
@@ -56,7 +58,7 @@ const ProposalFinished: React.FC = () => {
         }
       } catch (error) {
         if (!active) return;
-        setProject(null);
+        setProposal(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -65,7 +67,7 @@ const ProposalFinished: React.FC = () => {
     };
   }, [id]);
 
-  if (!project) {
+  if (!proposal) {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="proposals" />
@@ -93,7 +95,7 @@ const ProposalFinished: React.FC = () => {
     );
   }
 
-  const isCanceled = project.projectState === "canceled";
+  const showFormationDetails = proposal.formationEligible;
 
   return (
     <div className="flex flex-col gap-6">
@@ -109,15 +111,16 @@ const ProposalFinished: React.FC = () => {
         </Surface>
       ) : null}
       <ProposalPageHeader
-        title={project.title}
-        stage="passed"
-        chamber={project.chamber}
-        proposer={project.proposer}
+        title={proposal.title}
+        stage={proposal.terminalStage}
+        showFormationStage={proposal.formationEligible}
+        chamber={proposal.chamber}
+        proposer={proposal.proposer}
       />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-text">
-          {isCanceled ? "Canceled project" : "Finished project"}
+          {proposal.terminalLabel}
         </h2>
         <Surface
           variant="panelAlt"
@@ -125,16 +128,14 @@ const ProposalFinished: React.FC = () => {
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
         >
-          {isCanceled
-            ? "This project ended as canceled."
-            : "This project has completed formation execution."}
+          {proposal.terminalSummary}
         </Surface>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-text">Project status</h2>
+        <h2 className="text-lg font-semibold text-text">Outcome status</h2>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {project.stageData.map((entry) => (
+          {proposal.stageData.map((entry) => (
             <Surface
               key={entry.title}
               variant="panelAlt"
@@ -151,26 +152,23 @@ const ProposalFinished: React.FC = () => {
       </section>
 
       <ProposalSummaryCard
-        summary={project.summary}
-        stats={[
-          { label: "Budget ask", value: project.budget },
-          { label: "Time left", value: project.timeLeft },
-          { label: "Team slots", value: project.teamSlots },
-          { label: "Milestones", value: project.milestones },
-        ]}
-        overview={project.overview}
-        executionPlan={project.executionPlan}
-        budgetScope={project.budgetScope}
-        attachments={project.attachments}
+        summary={proposal.summary}
+        stats={proposal.stats}
+        overview={proposal.overview}
+        executionPlan={proposal.executionPlan}
+        budgetScope={proposal.budgetScope}
+        attachments={proposal.attachments}
       />
 
-      <ProposalTeamMilestonesCard
-        teamLocked={project.lockedTeam}
-        openSlots={project.openSlots}
-        milestonesDetail={project.milestonesDetail}
-      />
+      {showFormationDetails ? (
+        <ProposalTeamMilestonesCard
+          teamLocked={proposal.lockedTeam}
+          openSlots={proposal.openSlots}
+          milestonesDetail={proposal.milestonesDetail}
+        />
+      ) : null}
 
-      <ProposalInvisionInsightCard insight={project.invisionInsight} />
+      <ProposalInvisionInsightCard insight={proposal.invisionInsight} />
 
       {timelineError ? (
         <Surface

@@ -10,24 +10,23 @@ import { ExpandableCard } from "@/components/ExpandableCard";
 import { StageChip } from "@/components/StageChip";
 import { StageDataTile } from "@/components/StageDataTile";
 import { Surface } from "@/components/Surface";
-import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import {
   apiClock,
-  apiCourt,
   apiFeed,
   apiFactionCofounderInviteAccept,
   apiFactionCofounderInviteDecline,
   apiHuman,
   apiMyGovernance,
   apiProposalChamberPage,
+  apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
 } from "@/lib/apiClient";
-import type { FeedItemDto } from "@/types/api";
+import type { FeedItemDto, ProposalFinishedPageDto } from "@/types/api";
 
 type FeedScope = "urgent" | "my" | "chambers" | "all";
 
@@ -91,6 +90,9 @@ const factionIdFromHref = (href?: string) => {
   const match = clean.match(/^\/factions\/([^/]+)$/);
   return match?.[1] ?? null;
 };
+
+const hasFinishedRoute = (href?: string) =>
+  Boolean(href?.includes("/finished"));
 
 const urgentEntityKey = (item: FeedItemDto) => {
   const proposalId = proposalIdFromHref(item.href);
@@ -226,8 +228,8 @@ const Feed: React.FC = () => {
   const [formationPagesById, setFormationPagesById] = useState<
     Record<string, import("@/types/api").FormationProposalPageDto | undefined>
   >({});
-  const [courtCasesById, setCourtCasesById] = useState<
-    Record<string, import("@/types/api").CourtCaseDetailDto | undefined>
+  const [finishedPagesById, setFinishedPagesById] = useState<
+    Record<string, ProposalFinishedPageDto | undefined>
   >({});
 
   useEffect(() => {
@@ -478,6 +480,15 @@ const Feed: React.FC = () => {
 
     const proposalId = proposalIdFromHref(item.href) ?? item.id;
 
+    if (hasFinishedRoute(item.href)) {
+      if (finishedPagesById[proposalId] === undefined) {
+        void apiProposalFinishedPage(proposalId).then((page) => {
+          setFinishedPagesById((curr) => ({ ...curr, [proposalId]: page }));
+        });
+      }
+      return;
+    }
+
     if (item.stage === "pool" && poolPagesById[proposalId] === undefined) {
       void apiProposalPoolPage(proposalId).then((page) => {
         setPoolPagesById((curr) => ({ ...curr, [proposalId]: page }));
@@ -496,21 +507,13 @@ const Feed: React.FC = () => {
         setFormationPagesById((curr) => ({ ...curr, [proposalId]: page }));
       });
     }
-    if (item.stage === "courts") {
-      const caseId = courtCaseIdFromHref(item.href);
-      if (caseId && courtCasesById[caseId] === undefined) {
-        void apiCourt(caseId).then((page) => {
-          setCourtCasesById((curr) => ({ ...curr, [caseId]: page }));
-        });
-      }
-    }
   }, [
     expandedKey,
     feedItems,
     poolPagesById,
     chamberPagesById,
     formationPagesById,
-    courtCasesById,
+    finishedPagesById,
   ]);
 
   return (
@@ -571,6 +574,9 @@ const Feed: React.FC = () => {
         {sortedFeed.map((item, index) => {
           const itemKey = feedItemKey(item);
           const proposalId = proposalIdFromHref(item.href) ?? item.id;
+          const finishedPage = hasFinishedRoute(item.href)
+            ? (finishedPagesById[proposalId] ?? null)
+            : null;
           const poolPage =
             item.stage === "pool" ? poolPagesById[proposalId] : null;
           const chamberPage =
@@ -589,11 +595,19 @@ const Feed: React.FC = () => {
                   const attentionNeededPercent = Math.round(
                     poolPage.attentionQuorum * 100,
                   );
-                  const upvoteFloorPercent = Math.round(
-                    (poolPage.upvoteFloor / activeGovernors) * 100,
+                  const upvoteFloorFractionPercent = Math.round(
+                    ((poolPage.thresholdContext?.quorumThreshold
+                      ?.upvoteFloorFraction ?? 0.1) *
+                      1000) /
+                      10,
                   );
-                  const upvoteCurrentPercent = Math.round(
-                    (poolPage.upvotes / activeGovernors) * 100,
+                  const upvoteFloorProgressPercent = Math.round(
+                    Math.min(
+                      1,
+                      poolPage.upvoteFloor > 0
+                        ? poolPage.upvotes / poolPage.upvoteFloor
+                        : 0,
+                    ) * upvoteFloorFractionPercent,
                   );
                   const meetsAttention =
                     engaged / activeGovernors >= poolPage.attentionQuorum;
@@ -608,8 +622,8 @@ const Feed: React.FC = () => {
                     engaged,
                     attentionPercent,
                     attentionNeededPercent,
-                    upvoteFloorPercent,
-                    upvoteCurrentPercent,
+                    upvoteFloorFractionPercent,
+                    upvoteFloorProgressPercent,
                     meetsAttention,
                     meetsUpvoteFloor,
                     engagedNeeded,
@@ -706,14 +720,6 @@ const Feed: React.FC = () => {
                 })()
               : null;
 
-          const courtCase =
-            item.stage === "courts"
-              ? (() => {
-                  const caseId = courtCaseIdFromHref(item.href);
-                  return caseId ? (courtCasesById[caseId] ?? null) : null;
-                })()
-              : null;
-
           return (
             <ExpandableCard
               key={itemKey}
@@ -737,7 +743,42 @@ const Feed: React.FC = () => {
                   <p className="text-sm text-muted">{item.summary}</p>
                 </div>
 
-                {item.stage === "pool" && poolPage && poolStats ? (
+                {finishedPage ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-text">
+                      Outcome status
+                    </p>
+
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="px-5 py-4 text-sm text-muted"
+                    >
+                      {finishedPage.terminalSummary}
+                    </Surface>
+
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {finishedPage.stageData.map((entry, idx) => (
+                        <StageDataTile
+                          key={`${item.id}-finished-${idx}`}
+                          title={entry.title}
+                          description={entry.description}
+                          value={entry.value}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : hasFinishedRoute(item.href) ? (
+                  <Surface
+                    variant="panelAlt"
+                    radius="2xl"
+                    shadow="tile"
+                    className="px-5 py-4 text-sm text-muted"
+                  >
+                    Loading outcome details…
+                  </Surface>
+                ) : item.stage === "pool" && poolPage && poolStats ? (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-text">
                       Quorum of attention
@@ -773,8 +814,13 @@ const Feed: React.FC = () => {
                       <StageDataTile
                         title="Upvote floor"
                         description={`Upvotes ${poolPage.upvotes} / ${poolStats.upvoteFloor} governors`}
-                        value={`${poolStats.upvoteCurrentPercent}% / ${poolStats.upvoteFloorPercent}%`}
+                        value={`${poolStats.upvoteFloorProgressPercent}% / ${poolStats.upvoteFloorFractionPercent}%`}
                         tone={poolStats.meetsUpvoteFloor ? "ok" : "warn"}
+                      />
+                      <StageDataTile
+                        title="Time left"
+                        description="Pool window"
+                        value={poolPage.timeLeft}
                       />
                     </div>
                   </div>
@@ -863,7 +909,7 @@ const Feed: React.FC = () => {
                       shadow="tile"
                       className="space-y-3 px-5 py-4"
                     >
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                         <span className="font-semibold text-text">
                           Progress
                         </span>
@@ -908,66 +954,22 @@ const Feed: React.FC = () => {
                 ) : item.stage === "courts" ? (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-text">
-                      Case snapshot
+                      Courts status
                     </p>
 
                     <Surface
                       variant="panelAlt"
                       radius="2xl"
                       shadow="tile"
-                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                      className="space-y-2 px-5 py-4"
                     >
-                      <div className="flex flex-wrap items-center gap-3">
-                        {courtCase?.status ? (
-                          <CourtStatusBadge status={courtCase.status} />
-                        ) : null}
-                        <span className="text-xs text-muted">
-                          Opened{" "}
-                          {courtCase?.opened
-                            ? formatDateTime(courtCase.opened)
-                            : "—"}
-                        </span>
-                      </div>
-                    </Surface>
-
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      <StageDataTile
-                        title="Evidence"
-                        description="Items submitted"
-                        value={String(
-                          courtCase?.proceedings.evidence.length ?? 0,
-                        )}
-                      />
-                      <StageDataTile
-                        title="Reports"
-                        description="Submitted reports"
-                        value={String(courtCase?.reports ?? 0)}
-                      />
-                      <StageDataTile
-                        title="Session"
-                        description="Court status"
-                        value={
-                          courtCase?.status === "jury"
-                            ? "Jury forming"
-                            : courtCase?.status === "live"
-                              ? "Live"
-                              : "Ended"
-                        }
-                        tone={courtCase?.status === "live" ? "ok" : undefined}
-                      />
-                    </div>
-
-                    <Surface
-                      variant="panelAlt"
-                      radius="2xl"
-                      shadow="tile"
-                      className="px-5 py-4"
-                    >
-                      <p className="text-xs font-semibold text-muted">
-                        Claim excerpt
+                      <p className="text-sm text-text">
+                        Courts are still quarantined for release hardening.
                       </p>
-                      <p className="mt-2 line-clamp-4 text-sm text-text">
-                        {courtCase?.proceedings.claim ?? "—"}
+                      <p className="text-xs text-muted">
+                        Court items remain visible in history, but detailed
+                        courtroom views are intentionally blocked until the
+                        courts module is ready to ship as a live surface.
                       </p>
                     </Surface>
                   </div>
@@ -1040,13 +1042,13 @@ const Feed: React.FC = () => {
                   </div>
                 ) : null}
 
-                {item.stats &&
+                {(finishedPage || item.stats) &&
                 item.stage !== "courts" &&
                 item.stage !== "thread" ? (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Key stats</p>
                     <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
-                      {item.stats.map((stat) => (
+                      {(finishedPage?.stats ?? item.stats ?? []).map((stat) => (
                         <DashedStatItem
                           key={stat.label}
                           label={stat.label}
