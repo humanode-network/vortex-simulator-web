@@ -376,22 +376,6 @@ const ProposalDraft: React.FC = () => {
           />
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Invision insight</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-text">
-          <p className="text-sm font-semibold text-muted">
-            {draftDetails.invisionInsight.role}
-          </p>
-          <ul className="list-disc space-y-2 pl-5 text-muted">
-            {draftDetails.invisionInsight.bullets.map((bullet) => (
-              <li key={bullet}>{bullet}</li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 };

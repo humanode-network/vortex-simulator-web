@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
+import { Button } from "@/components/primitives/button";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import {
-  ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
   ProposalTimelineCard,
@@ -116,7 +116,19 @@ const ProposalFinished: React.FC = () => {
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
-      />
+      >
+        {proposal.canReconsider ? (
+          <div className="flex justify-center">
+            <Button asChild size="sm">
+              <Link
+                to={`/app/proposals/new?resubmitsProposalId=${encodeURIComponent(proposal.decisionRootProposalId)}`}
+              >
+                Resubmit for reconsideration
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+      </ProposalPageHeader>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-text">
@@ -158,6 +170,8 @@ const ProposalFinished: React.FC = () => {
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}
         attachments={proposal.attachments}
+        showExecutionPlan={proposal.formationEligible}
+        showBudgetScope={proposal.formationEligible}
       />
 
       {showFormationDetails ? (
@@ -167,8 +181,6 @@ const ProposalFinished: React.FC = () => {
           milestonesDetail={proposal.milestonesDetail}
         />
       ) : null}
-
-      <ProposalInvisionInsightCard insight={proposal.invisionInsight} />
 
       {timelineError ? (
         <Surface

@@ -22,11 +22,18 @@ import {
   apiHuman,
   apiMyGovernance,
   apiProposalChamberPage,
+  apiProposalChamberVetoPage,
+  apiProposalCitizenVetoPage,
   apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
 } from "@/lib/apiClient";
-import type { FeedItemDto, ProposalFinishedPageDto } from "@/types/api";
+import type {
+  ChamberVetoProposalPageDto,
+  CitizenVetoProposalPageDto,
+  FeedItemDto,
+  ProposalFinishedPageDto,
+} from "@/types/api";
 
 type FeedScope = "urgent" | "my" | "chambers" | "all";
 
@@ -79,7 +86,7 @@ const proposalIdFromHref = (href?: string) => {
     ? noQuery.slice("/app".length)
     : noQuery;
   const match = clean.match(
-    /^\/proposals\/([^/]+)\/(pp|chamber|referendum|formation|finished)$/,
+    /^\/proposals\/([^/]+)\/(pp|chamber|citizen-veto|chamber-veto|referendum|formation|finished)$/,
   );
   return match?.[1] ?? null;
 };
@@ -224,6 +231,12 @@ const Feed: React.FC = () => {
   >({});
   const [chamberPagesById, setChamberPagesById] = useState<
     Record<string, import("@/types/api").ChamberProposalPageDto | undefined>
+  >({});
+  const [citizenVetoPagesById, setCitizenVetoPagesById] = useState<
+    Record<string, CitizenVetoProposalPageDto | undefined>
+  >({});
+  const [chamberVetoPagesById, setChamberVetoPagesById] = useState<
+    Record<string, ChamberVetoProposalPageDto | undefined>
   >({});
   const [formationPagesById, setFormationPagesById] = useState<
     Record<string, import("@/types/api").FormationProposalPageDto | undefined>
@@ -500,6 +513,22 @@ const Feed: React.FC = () => {
       });
     }
     if (
+      item.stage === "citizen_veto" &&
+      citizenVetoPagesById[proposalId] === undefined
+    ) {
+      void apiProposalCitizenVetoPage(proposalId).then((page) => {
+        setCitizenVetoPagesById((curr) => ({ ...curr, [proposalId]: page }));
+      });
+    }
+    if (
+      item.stage === "chamber_veto" &&
+      chamberVetoPagesById[proposalId] === undefined
+    ) {
+      void apiProposalChamberVetoPage(proposalId).then((page) => {
+        setChamberVetoPagesById((curr) => ({ ...curr, [proposalId]: page }));
+      });
+    }
+    if (
       item.stage === "build" &&
       formationPagesById[proposalId] === undefined
     ) {
@@ -512,6 +541,8 @@ const Feed: React.FC = () => {
     feedItems,
     poolPagesById,
     chamberPagesById,
+    citizenVetoPagesById,
+    chamberVetoPagesById,
     formationPagesById,
     finishedPagesById,
   ]);
@@ -581,6 +612,14 @@ const Feed: React.FC = () => {
             item.stage === "pool" ? poolPagesById[proposalId] : null;
           const chamberPage =
             item.stage === "vote" ? chamberPagesById[proposalId] : null;
+          const citizenVetoPage =
+            item.stage === "citizen_veto"
+              ? citizenVetoPagesById[proposalId]
+              : null;
+          const chamberVetoPage =
+            item.stage === "chamber_veto"
+              ? chamberVetoPagesById[proposalId]
+              : null;
           const formationPage =
             item.stage === "build" ? formationPagesById[proposalId] : null;
 
@@ -719,6 +758,12 @@ const Feed: React.FC = () => {
                   };
                 })()
               : null;
+          const keyStats =
+            finishedPage?.stats ??
+            citizenVetoPage?.stats ??
+            chamberVetoPage?.stats ??
+            item.stats ??
+            [];
 
           return (
             <ExpandableCard
@@ -817,11 +862,6 @@ const Feed: React.FC = () => {
                         value={`${poolStats.upvoteFloorProgressPercent}% / ${poolStats.upvoteFloorFractionPercent}%`}
                         tone={poolStats.meetsUpvoteFloor ? "ok" : "warn"}
                       />
-                      <StageDataTile
-                        title="Time left"
-                        description="Pool window"
-                        value={poolPage.timeLeft}
-                      />
                     </div>
                   </div>
                 ) : item.stage === "vote" && chamberPage && chamberStats ? (
@@ -893,6 +933,68 @@ const Feed: React.FC = () => {
                         description="Voting window"
                         value={chamberPage.timeLeft}
                       />
+                    </div>
+                  </div>
+                ) : item.stage === "citizen_veto" && citizenVetoPage ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-text">
+                      Citizen veto snapshot
+                    </p>
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="space-y-2 px-5 py-4"
+                    >
+                      <p className="text-sm text-text">
+                        Eligible Citizens: {citizenVetoPage.eligibleCitizens}
+                      </p>
+                      <p className="text-xs text-muted">
+                        Attempts used: {citizenVetoPage.attemptsUsed} ·
+                        Remaining: {citizenVetoPage.attemptsRemaining}
+                      </p>
+                    </Surface>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {citizenVetoPage.stageData.map((entry, idx) => (
+                        <StageDataTile
+                          key={`${item.id}-citizen-veto-${idx}`}
+                          title={entry.title}
+                          description={entry.description}
+                          value={entry.value}
+                          tone={entry.tone}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : item.stage === "chamber_veto" && chamberVetoPage ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-text">
+                      Chamber veto snapshot
+                    </p>
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="space-y-2 px-5 py-4"
+                    >
+                      <p className="text-sm text-text">
+                        Vetoing chambers: {chamberVetoPage.vetoingChambers} /{" "}
+                        {chamberVetoPage.chamberThreshold}
+                      </p>
+                      <p className="text-xs text-muted">
+                        Active chambers: {chamberVetoPage.activeChambers}
+                      </p>
+                    </Surface>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {chamberVetoPage.stageData.map((entry, idx) => (
+                        <StageDataTile
+                          key={`${item.id}-chamber-veto-${idx}`}
+                          title={entry.title}
+                          description={entry.description}
+                          value={entry.value}
+                          tone={entry.tone}
+                        />
+                      ))}
                     </div>
                   </div>
                 ) : item.stage === "build" &&
@@ -1042,13 +1144,13 @@ const Feed: React.FC = () => {
                   </div>
                 ) : null}
 
-                {(finishedPage || item.stats) &&
+                {keyStats.length > 0 &&
                 item.stage !== "courts" &&
                 item.stage !== "thread" ? (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Key stats</p>
                     <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
-                      {(finishedPage?.stats ?? item.stats ?? []).map((stat) => (
+                      {keyStats.map((stat) => (
                         <DashedStatItem
                           key={stat.label}
                           label={stat.label}

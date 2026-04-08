@@ -5,7 +5,6 @@ import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { Button } from "@/components/primitives/button";
 import {
-  ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
   ProposalTimelineCard,
@@ -332,8 +331,6 @@ const ProposalFormation: React.FC = () => {
         openSlots={project.openSlots}
         milestonesDetail={project.milestonesDetail}
       />
-
-      <ProposalInvisionInsightCard insight={project.invisionInsight} />
 
       {timelineError ? (
         <Surface

@@ -31,11 +31,6 @@ export type ProposalMilestoneDetail = {
   desc: string;
 };
 
-export type ProposalInvisionInsight = {
-  role: string;
-  bullets: string[];
-};
-
 export type ProposalTimelineItem = {
   id: string;
   timestamp: string;
@@ -43,8 +38,14 @@ export type ProposalTimelineItem = {
   detail?: string;
   actor?: string;
   snapshot?: {
-    fromStage: "pool" | "vote" | "build";
-    toStage: "vote" | "build" | "passed" | "failed";
+    fromStage: "pool" | "vote" | "citizen_veto" | "chamber_veto" | "build";
+    toStage:
+      | "vote"
+      | "citizen_veto"
+      | "chamber_veto"
+      | "build"
+      | "passed"
+      | "failed";
     reason?: string;
     milestoneIndex?: number | null;
     metrics: Array<{ label: string; value: string }>;
@@ -58,7 +59,21 @@ type ProposalSummaryCardProps = {
   executionPlan: string[];
   budgetScope: string;
   attachments: AttachmentItem[];
+  showExecutionPlan?: boolean;
+  showBudgetScope?: boolean;
 };
+
+function canonicalizeProposalText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[^a-z0-9]+/i, "")
+    .replace(/\b(the|a|an)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[.!?]+$/g, "")
+    .trim();
+}
 
 export function ProposalSummaryCard({
   summary,
@@ -67,14 +82,28 @@ export function ProposalSummaryCard({
   executionPlan,
   budgetScope,
   attachments,
+  showExecutionPlan,
+  showBudgetScope,
 }: ProposalSummaryCardProps) {
   const normalizedSummary = summary.replace(/\s+/g, " ").trim();
   const normalizedOverview = overview.replace(/\s+/g, " ").trim();
-  const showSummary = normalizedSummary !== normalizedOverview;
+  const normalizedBudgetScope = budgetScope.replace(/\s+/g, " ").trim();
+  const canonicalSummary = canonicalizeProposalText(normalizedSummary);
+  const canonicalOverview = canonicalizeProposalText(normalizedOverview);
+  const showSummary =
+    canonicalSummary.length > 0 &&
+    canonicalOverview.length > 0 &&
+    canonicalSummary !== canonicalOverview;
+  const showSummaryHeader = showSummary || stats.length > 0;
+  const renderExecutionPlan =
+    showExecutionPlan ?? executionPlan.some((item) => item.trim().length > 0);
+  const renderBudgetScope = showBudgetScope ?? normalizedBudgetScope.length > 0;
 
   return (
     <section className="space-y-3 text-sm text-muted">
-      <h2 className="text-lg font-semibold text-text">Summary</h2>
+      {showSummaryHeader ? (
+        <h2 className="text-lg font-semibold text-text">Summary</h2>
+      ) : null}
       {showSummary && <p>{summary}</p>}
       {stats.length > 0 && (
         <div className="grid gap-2 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
@@ -92,16 +121,20 @@ export function ProposalSummaryCard({
         <TitledSurface title="Proposal overview">
           <p className="text-sm leading-relaxed text-muted">{overview}</p>
         </TitledSurface>
-        <TitledSurface title="Execution plan">
-          <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-            {executionPlan.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </TitledSurface>
-        <TitledSurface title="Budget & scope">
-          <p className="text-sm text-muted">{budgetScope}</p>
-        </TitledSurface>
+        {renderExecutionPlan ? (
+          <TitledSurface title="Execution plan">
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+              {executionPlan.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </TitledSurface>
+        ) : null}
+        {renderBudgetScope ? (
+          <TitledSurface title="Budget & scope">
+            <p className="text-sm text-muted">{budgetScope}</p>
+          </TitledSurface>
+        ) : null}
         <AttachmentList items={attachments} />
       </div>
     </section>
@@ -214,26 +247,6 @@ export function ProposalTeamMilestonesCard({
   );
 }
 
-type ProposalInvisionInsightCardProps = {
-  insight: ProposalInvisionInsight;
-};
-
-export function ProposalInvisionInsightCard({
-  insight,
-}: ProposalInvisionInsightCardProps) {
-  return (
-    <section className="space-y-3 text-sm text-text">
-      <h2 className="text-lg font-semibold text-text">Invision insight</h2>
-      <p className="text-sm font-semibold text-text">Role: {insight.role}</p>
-      <ul className="list-disc space-y-2 pl-5 text-muted">
-        {insight.bullets.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 type ProposalTimelineCardProps = {
   items: ProposalTimelineItem[];
   proposalId?: string;
@@ -245,12 +258,18 @@ function isLikelyAddress(value: string): boolean {
 
 function snapshotStageHref(
   proposalId: string,
-  stage: "pool" | "vote" | "build",
+  stage: "pool" | "vote" | "citizen_veto" | "chamber_veto" | "build",
 ): string | null {
   if (stage === "pool")
     return `/app/proposals/${proposalId}/pp?snapshotStage=pool`;
   if (stage === "vote")
     return `/app/proposals/${proposalId}/chamber?snapshotStage=vote`;
+  if (stage === "citizen_veto") {
+    return `/app/proposals/${proposalId}/citizen-veto?snapshotStage=citizen_veto`;
+  }
+  if (stage === "chamber_veto") {
+    return `/app/proposals/${proposalId}/chamber-veto?snapshotStage=chamber_veto`;
+  }
   // `build` stage can become unavailable after terminal transition.
   return null;
 }

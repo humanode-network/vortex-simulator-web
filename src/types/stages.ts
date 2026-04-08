@@ -1,6 +1,8 @@
 export const proposalStages = [
   "pool",
   "vote",
+  "citizen_veto",
+  "chamber_veto",
   "build",
   "passed",
   "failed",
@@ -11,6 +13,8 @@ export type ProposalStage = (typeof proposalStages)[number];
 export const feedStages = [
   "pool",
   "vote",
+  "citizen_veto",
+  "chamber_veto",
   "build",
   "passed",
   "failed",
@@ -27,6 +31,8 @@ export type Stage = ProposalStage | FeedStage;
 export type StageChipKind =
   | "proposal_pool"
   | "chamber_vote"
+  | "citizen_veto"
+  | "chamber_veto"
   | "formation"
   | "passed"
   | "failed"
@@ -38,6 +44,8 @@ export type StageChipKind =
 export const stageToChipKind = {
   pool: "proposal_pool",
   vote: "chamber_vote",
+  citizen_veto: "citizen_veto",
+  chamber_veto: "chamber_veto",
   build: "formation",
   passed: "passed",
   failed: "failed",
@@ -50,6 +58,8 @@ export const stageToChipKind = {
 export const stageLabel = {
   pool: "Proposal pool",
   vote: "Chamber vote",
+  citizen_veto: "Citizen veto",
+  chamber_veto: "Chamber veto",
   build: "Formation",
   passed: "Passed",
   failed: "Failed",

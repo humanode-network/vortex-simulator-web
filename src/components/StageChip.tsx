@@ -12,6 +12,9 @@ import {
 const chipClasses: Record<StageChipKind, string> = {
   proposal_pool: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
   chamber_vote: "bg-[color:var(--accent)]/15 text-[var(--accent)]",
+  citizen_veto: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
+  chamber_veto:
+    "bg-[color:var(--danger)]/16 text-[color:var(--danger)] ring-1 ring-[color:var(--danger)]/20",
   formation: "bg-[color:var(--primary)]/12 text-primary",
   passed: "bg-[color:var(--ok)]/20 text-[color:var(--ok)]",
   failed: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",

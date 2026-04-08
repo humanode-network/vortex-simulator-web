@@ -466,7 +466,7 @@ const HumanNodes: React.FC = () => {
                           </Badge>
                           {node.formationCapable && (
                             <Badge size="sm" variant="outline">
-                              Formation
+                              Active node
                             </Badge>
                           )}
                         </div>

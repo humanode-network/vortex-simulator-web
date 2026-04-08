@@ -7,6 +7,7 @@ const ScrollToTopOnRouteChange: React.FC = () => {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
+    document.title = "Vortex Sim";
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname, search]);
 

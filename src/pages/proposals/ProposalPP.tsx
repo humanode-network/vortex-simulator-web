@@ -118,17 +118,36 @@ const ProposalPP: React.FC = () => {
     );
   }
 
-  const [filledSlots, totalSlots] = proposal.teamSlots
-    .split("/")
-    .map((v) => Number(v.trim()));
+  const [filledSlots, totalSlots] = proposal.formationEligible
+    ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
+    : [0, 0];
   const openSlots = Math.max(totalSlots - filledSlots, 0);
-  const poolWindowOpen = proposal.timeLeft !== "Ended";
+  const viewerIsProposer =
+    auth.address?.trim().toLowerCase() ===
+    proposal.proposerId.trim().toLowerCase();
+  const formationSummaryStats = proposal.formationEligible
+    ? [
+        { label: "Budget ask", value: proposal.budget },
+        {
+          label: "Formation",
+          value: "Yes",
+        },
+        {
+          label: "Team slots",
+          value: `${proposal.teamSlots} (open: ${openSlots})`,
+        },
+        {
+          label: "Milestones",
+          value: `${proposal.milestones} milestones planned`,
+        },
+      ]
+    : [];
 
   const votingAllowed =
-    poolWindowOpen &&
+    !viewerIsProposer &&
     (!auth.enabled || (auth.authenticated && auth.eligible && !auth.loading));
-  const votingDisabledReason = !poolWindowOpen
-    ? "Pool window ended."
+  const votingDisabledReason = viewerIsProposer
+    ? "You cannot vote on your own proposal."
     : auth.enabled && auth.loading
       ? "Checking wallet status…"
       : auth.enabled && !auth.authenticated
@@ -202,9 +221,9 @@ const ProposalPP: React.FC = () => {
               }}
             />
           </div>
-          {!poolWindowOpen ? (
+          {viewerIsProposer ? (
             <p className="text-center text-sm text-muted">
-              Pool window ended. This proposal can no longer receive pool votes.
+              You cannot vote on your own proposal.
             </p>
           ) : null}
           <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-center gap-4 rounded-full border border-border bg-panel-alt px-6 py-5 text-center text-xl font-semibold text-text sm:w-fit sm:px-14 sm:py-7 sm:text-2xl">
@@ -255,46 +274,28 @@ const ProposalPP: React.FC = () => {
               className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
               valueClassName="text-2xl font-semibold"
             />
-            <StatTile
-              label="Time left"
-              value={proposal.timeLeft}
-              variant="panel"
-              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4 sm:col-span-2 lg:col-span-2"
-              valueClassName="text-2xl font-semibold"
-            />
           </div>
         </section>
       </div>
 
       <ProposalSummaryCard
         summary={proposal.summary}
-        stats={[
-          { label: "Budget ask", value: proposal.budget },
-          { label: "Time left", value: proposal.timeLeft },
-          {
-            label: "Formation",
-            value: proposal.formationEligible ? "Yes" : "No",
-          },
-          {
-            label: "Team slots",
-            value: `${proposal.teamSlots} (open: ${openSlots})`,
-          },
-          {
-            label: "Milestones",
-            value: `${proposal.milestones} milestones planned`,
-          },
-        ]}
+        stats={formationSummaryStats}
         overview={proposal.overview}
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}
         attachments={proposal.attachments}
+        showExecutionPlan={proposal.formationEligible}
+        showBudgetScope={proposal.formationEligible}
       />
 
-      <ProposalTeamMilestonesCard
-        teamLocked={proposal.teamLocked}
-        openSlots={proposal.openSlotNeeds}
-        milestonesDetail={proposal.milestonesDetail}
-      />
+      {proposal.formationEligible ? (
+        <ProposalTeamMilestonesCard
+          teamLocked={proposal.teamLocked}
+          openSlots={proposal.openSlotNeeds}
+          milestonesDetail={proposal.milestonesDetail}
+        />
+      ) : null}
 
       <Modal
         open={showRules}
@@ -352,17 +353,9 @@ const ProposalPP: React.FC = () => {
             </button>
             <button
               type="button"
-              disabled={
-                !rulesChecked ||
-                voteSubmitting ||
-                !pendingAction ||
-                !poolWindowOpen
-              }
+              disabled={!rulesChecked || voteSubmitting || !pendingAction}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                !rulesChecked ||
-                voteSubmitting ||
-                !pendingAction ||
-                !poolWindowOpen
+                !rulesChecked || voteSubmitting || !pendingAction
                   ? "cursor-not-allowed bg-muted text-primary-foreground opacity-60"
                   : pendingAction === "downvote"
                     ? "border-2 border-destructive bg-destructive text-destructive-foreground hover:opacity-95"

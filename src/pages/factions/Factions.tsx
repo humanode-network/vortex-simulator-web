@@ -20,6 +20,12 @@ import type { FactionDto } from "@/types/api";
 
 const Factions: React.FC = () => {
   const [factions, setFactions] = useState<FactionDto[] | null>(null);
+  const [serverTotals, setServerTotals] = useState<{
+    totalFactions: number;
+    totalMemberships: number;
+    uniqueMembers: number;
+    totalAcm: number;
+  } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<{
@@ -35,10 +41,12 @@ const Factions: React.FC = () => {
         const res = await apiFactions();
         if (!active) return;
         setFactions(res.items);
+        setServerTotals(res.totals ?? null);
         setLoadError(null);
       } catch (error) {
         if (!active) return;
         setFactions([]);
+        setServerTotals(null);
         setLoadError((error as Error).message);
       }
     })();
@@ -49,7 +57,9 @@ const Factions: React.FC = () => {
 
   const totals = useMemo(() => {
     const list = factions ?? [];
-    const totalMembers = list.reduce((sum, f) => sum + f.members, 0);
+    const totalMembers =
+      serverTotals?.uniqueMembers ??
+      list.reduce((sum, f) => sum + f.members, 0);
     const totalAcm = list.reduce(
       (sum, f) => sum + parseInt(f.acm.replace(/[,]/g, ""), 10),
       0,
@@ -59,7 +69,7 @@ const Factions: React.FC = () => {
       totalAcm,
       totalFactions: list.length,
     };
-  }, [factions]);
+  }, [factions, serverTotals]);
 
   const focusOptions = useMemo(
     () => Array.from(new Set((factions ?? []).map((f) => f.focus))),
