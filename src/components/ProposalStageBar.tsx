@@ -5,6 +5,8 @@ export type ProposalStage =
   | "draft"
   | "pool"
   | "vote"
+  | "citizen_veto"
+  | "chamber_veto"
   | "build"
   | "passed"
   | "failed";
@@ -36,6 +38,8 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
       label: "Chamber vote",
       render: <HintLabel termId="chamber_vote">Chamber vote</HintLabel>,
     },
+    { key: "citizen_veto", label: "Citizen veto" },
+    { key: "chamber_veto", label: "Chamber veto" },
     {
       key: "build",
       label: "Formation",
@@ -62,11 +66,15 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
               ? "bg-primary text-[var(--primary-foreground)]"
               : stage.key === "vote"
                 ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                : stage.key === "build"
-                  ? "bg-[var(--accent-warm)] text-[var(--text)]"
-                  : stage.key === "passed"
-                    ? "bg-[color:var(--ok)]/20 text-[color:var(--ok)]"
-                    : "bg-[color:var(--danger)]/12 text-[color:var(--danger)]";
+                : stage.key === "citizen_veto"
+                  ? "bg-[color:var(--danger)]/14 text-[color:var(--danger)]"
+                  : stage.key === "chamber_veto"
+                    ? "bg-[color:var(--danger)]/18 text-[color:var(--danger)] ring-1 ring-[color:var(--danger)]/25"
+                    : stage.key === "build"
+                      ? "bg-[var(--accent-warm)] text-[var(--text)]"
+                      : stage.key === "passed"
+                        ? "bg-[color:var(--ok)]/20 text-[color:var(--ok)]"
+                        : "bg-[color:var(--danger)]/12 text-[color:var(--danger)]";
         return (
           <div
             key={stage.key}

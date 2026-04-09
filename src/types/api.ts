@@ -3,8 +3,22 @@
 
 import type { FeedStage } from "./stages";
 
-export type ProposalStageDto = "pool" | "vote" | "build" | "passed" | "failed";
+export type ProposalStageDto =
+  | "pool"
+  | "vote"
+  | "citizen_veto"
+  | "chamber_veto"
+  | "build"
+  | "passed"
+  | "failed";
 export type FeedStageDto = FeedStage;
+export type ProposalResolutionKindDto =
+  | "ordinary_failed_pool"
+  | "ordinary_failed_vote"
+  | "citizen_veto_remand"
+  | "chamber_veto_void"
+  | "formation_completed"
+  | "formation_canceled";
 
 export type ToneDto = "ok" | "warn";
 
@@ -128,8 +142,30 @@ export type FactionDto = {
     invitedAt: string;
     respondedAt: string | null;
   }>;
+  joinRequests?: Array<{
+    address: string;
+    status: "pending" | "accepted" | "declined" | "canceled";
+    requestedAt: string;
+    respondedAt: string | null;
+    respondedBy: string | null;
+  }>;
+  viewerJoinRequest?: {
+    address: string;
+    status: "pending" | "accepted" | "declined" | "canceled";
+    requestedAt: string;
+    respondedAt: string | null;
+    respondedBy: string | null;
+  } | null;
 };
-export type GetFactionsResponse = { items: FactionDto[] };
+export type GetFactionsResponse = {
+  items: FactionDto[];
+  totals?: {
+    totalFactions: number;
+    totalMemberships: number;
+    uniqueMembers: number;
+    totalAcm: number;
+  };
+};
 
 export type ChamberProposalStageDto = "upcoming" | "live" | "ended";
 export type ChamberProposalDto = {
@@ -434,8 +470,6 @@ export type ProposalListItemDto = {
 };
 export type GetProposalsResponse = { items: ProposalListItemDto[] };
 
-export type InvisionInsightDto = { role: string; bullets: string[] };
-
 export type ProposalTimelineEventTypeDto = string;
 
 export type ProposalTimelineItemDto = {
@@ -446,8 +480,14 @@ export type ProposalTimelineItemDto = {
   actor?: string;
   timestamp: string;
   snapshot?: {
-    fromStage: "pool" | "vote" | "build";
-    toStage: "vote" | "build" | "passed" | "failed";
+    fromStage: "pool" | "vote" | "citizen_veto" | "chamber_veto" | "build";
+    toStage:
+      | "vote"
+      | "citizen_veto"
+      | "chamber_veto"
+      | "build"
+      | "passed"
+      | "failed";
     reason?: string;
     milestoneIndex?: number | null;
     metrics: Array<{ label: string; value: string }>;
@@ -484,6 +524,7 @@ export type GetProposalDraftsResponse = { items: ProposalDraftListItemDto[] };
 export type ProposalDraftEditableFormDto = {
   templateId?: "project" | "system";
   presetId?: string;
+  resubmitsProposalId?: string;
   formationEligible?: boolean;
   title: string;
   chamberId: string;
@@ -542,7 +583,6 @@ export type ProposalDraftDetailDto = {
   summary: string;
   rationale: string;
   budgetScope: string;
-  invisionInsight: InvisionInsightDto;
   checklist: string[];
   milestones: string[];
   teamLocked: { name: string; role: string }[];
@@ -579,7 +619,6 @@ export type PoolProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
-  invisionInsight: InvisionInsightDto;
   thresholdContext?: {
     activityThreshold: {
       categories: string[];
@@ -629,7 +668,11 @@ export type ChamberProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
-  invisionInsight: InvisionInsightDto;
+  viewerVote: null | {
+    choice: "yes" | "no" | "abstain";
+    score: number | null;
+    updatedAt: string;
+  };
   delegation: null | {
     source: "snapshot" | "live";
     snapshotCapturedAt: string | null;
@@ -662,6 +705,69 @@ export type ChamberProposalPageDto = {
   };
 };
 
+export type CitizenVetoProposalPageDto = {
+  title: string;
+  proposer: string;
+  proposerId: string;
+  chamber: string;
+  budget: string;
+  timeLeft: string;
+  formationEligible: boolean;
+  summary: string;
+  overview: string;
+  executionPlan: string[];
+  budgetScope: string;
+  attachments: { id: string; title: string; href?: string }[];
+  stageData: ProposalStageDatumDto[];
+  stats: { label: string; value: string }[];
+  attemptsUsed: number;
+  attemptsRemaining: number;
+  eligibleCitizens: number;
+  quorumNeeded: number;
+  vetoNeeded: number;
+  votes: { veto: number; keep: number };
+  viewer: {
+    eligible: boolean;
+    currentVote: "veto" | "keep" | null;
+  };
+};
+
+export type ChamberVetoProposalPageDto = {
+  title: string;
+  proposer: string;
+  proposerId: string;
+  chamber: string;
+  budget: string;
+  timeLeft: string;
+  formationEligible: boolean;
+  summary: string;
+  overview: string;
+  executionPlan: string[];
+  budgetScope: string;
+  attachments: { id: string; title: string; href?: string }[];
+  stageData: ProposalStageDatumDto[];
+  stats: { label: string; value: string }[];
+  activeChambers: number;
+  chamberThreshold: number;
+  vetoingChambers: number;
+  chambers: Array<{
+    chamberId: string;
+    chamberTitle: string;
+    eligibleVoters: number;
+    quorumNeeded: number;
+    votes: { veto: number; keep: number; abstain: number };
+    countsAsVetoing: boolean;
+    delegation: {
+      source: "snapshot" | "live";
+      snapshotCapturedAt: string | null;
+    };
+    viewer: {
+      eligible: boolean;
+      currentVote: "veto" | "keep" | "abstain" | null;
+    };
+  }>;
+};
+
 export type FormationProposalPageDto = {
   title: string;
   chamber: string;
@@ -690,7 +796,6 @@ export type FormationProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
-  invisionInsight: InvisionInsightDto;
 };
 
 export type ProposalFinishedPageDto = {
@@ -699,8 +804,11 @@ export type ProposalFinishedPageDto = {
   proposer: string;
   proposerId: string;
   terminalStage: "passed" | "failed";
+  resolutionKind: ProposalResolutionKindDto | null;
   terminalLabel: string;
   terminalSummary: string;
+  decisionRootProposalId: string;
+  canReconsider: boolean;
   formationEligible: boolean;
   budget: string;
   timeLeft: string;
@@ -714,7 +822,6 @@ export type ProposalFinishedPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
-  invisionInsight: InvisionInsightDto;
 };
 
 export type CourtCaseStatusDto = "jury" | "live" | "ended";

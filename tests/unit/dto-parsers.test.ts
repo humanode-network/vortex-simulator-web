@@ -90,10 +90,6 @@ test("formation progress mapping uses ratios", () => {
     overview: "",
     executionPlan: [],
     budgetScope: "",
-    invisionInsight: {
-      role: "observer",
-      bullets: [],
-    },
   };
 
   const progress = getFormationProgress(formation);

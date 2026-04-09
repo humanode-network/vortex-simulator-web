@@ -171,7 +171,7 @@ const Invision: React.FC = () => {
                   </p>
                 </div>
                 <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Window</Kicker>
+                  <Kicker>Timeframe</Kicker>
                   <p className="text-lg font-semibold text-text">
                     {decentralization.windowLabel}
                   </p>
@@ -229,7 +229,7 @@ const Invision: React.FC = () => {
                   </p>
                 </div>
                 <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Window</Kicker>
+                  <Kicker>Timeframe</Kicker>
                   <p className="text-lg font-semibold text-text">
                     {stability.windowLabel}
                   </p>

@@ -21,6 +21,7 @@ export function AttachmentList({
   title = "Attachments",
   className,
 }: AttachmentListProps) {
+  if (items.length === 0) return null;
   return (
     <Surface
       variant="panelAlt"

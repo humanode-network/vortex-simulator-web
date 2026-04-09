@@ -23,6 +23,8 @@ import {
   apiFactionCofounderInviteCancel,
   apiFactionDelete,
   apiFactionJoin,
+  apiFactionJoinRequestApprove,
+  apiFactionJoinRequestDecline,
   apiFactionLeave,
   apiFactionMemberRoleSet,
   apiFactionUpdate,
@@ -89,6 +91,8 @@ const Faction: React.FC = () => {
   const threads = faction?.threads ?? [];
   const initiatives = faction?.initiativesDetailed ?? [];
   const cofounderInvitations = faction?.cofounderInvitations ?? [];
+  const joinRequests = faction?.joinRequests ?? [];
+  const viewerJoinRequest = faction?.viewerJoinRequest ?? null;
 
   const viewerMembership = useMemo(() => {
     if (!viewerAddress) return null;
@@ -101,6 +105,8 @@ const Faction: React.FC = () => {
 
   const viewerRole = viewerMembership?.isActive ? viewerMembership.role : null;
   const isFounderAdmin = viewerRole === "founder";
+  const canModerateQueues =
+    viewerRole === "founder" || viewerRole === "steward";
   const canJoin = !!viewerAddress && !viewerMembership?.isActive;
   const canLeave =
     !!viewerAddress && !!viewerMembership?.isActive && viewerRole !== "founder";
@@ -194,14 +200,18 @@ const Faction: React.FC = () => {
               {canJoin ? (
                 <Button
                   size="sm"
-                  disabled={mutating}
+                  disabled={mutating || viewerJoinRequest?.status === "pending"}
                   onClick={() =>
                     runAction(async () => {
                       await apiFactionJoin({ factionId: faction.id });
                     })
                   }
                 >
-                  Join faction
+                  {faction.visibility === "private"
+                    ? viewerJoinRequest?.status === "pending"
+                      ? "Request pending"
+                      : "Request to join"
+                    : "Join faction"}
                 </Button>
               ) : null}
               {canLeave ? (
@@ -234,6 +244,14 @@ const Faction: React.FC = () => {
             <div className="mt-3">
               <Badge variant="outline">
                 Founder leave disabled until transfer
+              </Badge>
+            </div>
+          ) : null}
+          {viewerJoinRequest?.status === "pending" &&
+          !viewerMembership?.isActive ? (
+            <div className="mt-3">
+              <Badge variant="outline">
+                Private faction join request pending
               </Badge>
             </div>
           ) : null}
@@ -422,56 +440,124 @@ const Faction: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Cofounder invitations</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {cofounderInvitations.length === 0 ? (
-            <NoDataYetBar label="cofounder invitations" />
-          ) : (
-            cofounderInvitations.map((invite) => (
-              <div
-                key={`${invite.address}-${invite.invitedAt}`}
-                className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <AddressInline
-                    address={invite.address}
-                    className="text-text"
-                    textClassName="text-sm font-semibold [overflow-wrap:anywhere] break-words"
-                  />
-                  <div className="flex flex-wrap items-center gap-1 text-xs text-muted">
-                    <span>Invited by</span>
-                    <AddressInline address={invite.invitedBy} />
-                    <span>· {formatDateTime(invite.invitedAt)}</span>
+      {canModerateQueues ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Cofounder invitations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {cofounderInvitations.length === 0 ? (
+              <NoDataYetBar label="cofounder invitations" />
+            ) : (
+              cofounderInvitations.map((invite) => (
+                <div
+                  key={`${invite.address}-${invite.invitedAt}`}
+                  className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <AddressInline
+                      address={invite.address}
+                      className="text-text"
+                      textClassName="text-sm font-semibold [overflow-wrap:anywhere] break-words"
+                    />
+                    <div className="flex flex-wrap items-center gap-1 text-xs text-muted">
+                      <span>Invited by</span>
+                      <AddressInline address={invite.invitedBy} />
+                      <span>· {formatDateTime(invite.invitedAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{invite.status}</Badge>
+                    {isFounderAdmin && invite.status === "pending" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={mutating}
+                        onClick={() =>
+                          runAction(async () => {
+                            await apiFactionCofounderInviteCancel({
+                              factionId: faction.id,
+                              address: invite.address,
+                            });
+                          })
+                        }
+                      >
+                        Cancel
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{invite.status}</Badge>
-                  {isFounderAdmin && invite.status === "pending" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={mutating}
-                      onClick={() =>
-                        runAction(async () => {
-                          await apiFactionCofounderInviteCancel({
-                            factionId: faction.id,
-                            address: invite.address,
-                          });
-                        })
-                      }
-                    >
-                      Cancel
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {canModerateQueues ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Join requests</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {joinRequests.filter((request) => request.status === "pending")
+              .length === 0 ? (
+              <NoDataYetBar label="join requests" />
+            ) : (
+              joinRequests
+                .filter((request) => request.status === "pending")
+                .map((request) => (
+                  <div
+                    key={`${request.address}-${request.requestedAt}`}
+                    className="flex flex-col gap-2 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <AddressInline
+                        address={request.address}
+                        className="text-text"
+                        textClassName="text-sm font-semibold [overflow-wrap:anywhere] break-words"
+                      />
+                      <div className="flex flex-wrap items-center gap-1 text-xs text-muted">
+                        <span>Requested</span>
+                        <span>{formatDateTime(request.requestedAt)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        disabled={mutating}
+                        onClick={() =>
+                          runAction(async () => {
+                            await apiFactionJoinRequestApprove({
+                              factionId: faction.id,
+                              address: request.address,
+                            });
+                          })
+                        }
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={mutating}
+                        onClick={() =>
+                          runAction(async () => {
+                            await apiFactionJoinRequestDecline({
+                              factionId: faction.id,
+                              address: request.address,
+                            });
+                          })
+                        }
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                ))
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>

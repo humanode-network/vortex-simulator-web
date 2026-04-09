@@ -29,6 +29,9 @@ export function draftToApiForm(
   return {
     ...(input?.templateId ? { templateId: input.templateId } : {}),
     ...(draft.presetId ? { presetId: draft.presetId } : {}),
+    ...(draft.resubmitsProposalId
+      ? { resubmitsProposalId: draft.resubmitsProposalId }
+      : {}),
     ...(typeof draft.formationEligible === "boolean"
       ? { formationEligible: draft.formationEligible }
       : {}),

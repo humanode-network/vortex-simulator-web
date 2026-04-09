@@ -1,5 +1,6 @@
 import type {
   ChamberProposalPageDto,
+  ChamberVetoProposalPageDto,
   ChamberChatPeerDto,
   ChamberChatSignalDto,
   ChamberThreadDetailDto,
@@ -7,6 +8,7 @@ import type {
   ChamberThreadMessageDto,
   ChamberChatMessageDto,
   ChamberCmDto,
+  CitizenVetoProposalPageDto,
   CmSummaryDto,
   CourtCaseDetailDto,
   FactionDto,
@@ -287,6 +289,35 @@ export async function apiProposalStatus(
   return await apiGet<ProposalStatusDto>(`/api/proposals/${id}/status`);
 }
 
+export type CitizenVetoVoteChoice = "veto" | "keep";
+
+export async function apiCitizenVetoVote(input: {
+  proposalId: string;
+  choice: CitizenVetoVoteChoice;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "veto.citizen.vote";
+  proposalId: string;
+  choice: CitizenVetoVoteChoice;
+  counts: { veto: number; keep: number };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "veto.citizen.vote",
+      payload: {
+        proposalId: input.proposalId,
+        choice: input.choice,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
 export type PoolVoteDirection = "up" | "down";
 
 export async function apiPoolVote(input: {
@@ -314,6 +345,8 @@ export async function apiPoolVote(input: {
 }
 
 export type ChamberVoteChoice = "yes" | "no" | "abstain";
+
+export type ChamberVetoVoteChoice = "veto" | "keep" | "abstain";
 
 export async function apiChamberVote(input: {
   proposalId: string;
@@ -614,6 +647,22 @@ export async function apiProposalChamberPage(
   return await apiGet<ChamberProposalPageDto>(`/api/proposals/${id}/chamber`);
 }
 
+export async function apiProposalCitizenVetoPage(
+  id: string,
+): Promise<CitizenVetoProposalPageDto> {
+  return await apiGet<CitizenVetoProposalPageDto>(
+    `/api/proposals/${id}/citizen-veto`,
+  );
+}
+
+export async function apiProposalChamberVetoPage(
+  id: string,
+): Promise<ChamberVetoProposalPageDto> {
+  return await apiGet<ChamberVetoProposalPageDto>(
+    `/api/proposals/${id}/chamber-veto`,
+  );
+}
+
 export async function apiProposalReferendumPage(
   id: string,
 ): Promise<ChamberProposalPageDto> {
@@ -639,6 +688,36 @@ export async function apiReferendumVote(input: {
     {
       type: "referendum.vote",
       payload: { proposalId: input.proposalId, choice: input.choice },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiChamberVetoVote(input: {
+  proposalId: string;
+  chamberId: string;
+  choice: ChamberVetoVoteChoice;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "veto.chamber.vote";
+  proposalId: string;
+  chamberId: string;
+  choice: ChamberVetoVoteChoice;
+  counts: { veto: number; keep: number; abstain: number };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "veto.chamber.vote",
+      payload: {
+        proposalId: input.proposalId,
+        chamberId: input.chamberId,
+        choice: input.choice,
+      },
       idempotencyKey: input.idempotencyKey,
     },
     input.idempotencyKey
@@ -868,6 +947,7 @@ export async function apiFactionJoin(input: {
   type: "faction.join";
   factionId: string;
   joined: boolean;
+  pending: boolean;
 }> {
   return await apiPost(
     "/api/command",
@@ -876,6 +956,54 @@ export async function apiFactionJoin(input: {
       payload: {
         factionId: input.factionId,
       },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionJoinRequestApprove(input: {
+  factionId: string;
+  address: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.join.request.approve";
+  factionId: string;
+  address: string;
+  accepted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.join.request.approve",
+      payload: { factionId: input.factionId, address: input.address },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionJoinRequestDecline(input: {
+  factionId: string;
+  address: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.join.request.decline";
+  factionId: string;
+  address: string;
+  declined: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.join.request.decline",
+      payload: { factionId: input.factionId, address: input.address },
       idempotencyKey: input.idempotencyKey,
     },
     input.idempotencyKey
@@ -1351,6 +1479,7 @@ export async function apiProposalDraft(
 export type ProposalDraftFormPayload = {
   templateId?: "project" | "system";
   presetId?: string;
+  resubmitsProposalId?: string;
   formationEligible?: boolean;
   title: string;
   chamberId: string;

@@ -28,6 +28,7 @@ export type OpenSlotNeedItem = {
 export type ProposalDraftForm = {
   title: string;
   chamberId: string;
+  resubmitsProposalId?: string;
   summary: string;
   what: string;
   why: string;
@@ -67,6 +68,7 @@ export type ProposalDraftForm = {
 export const DEFAULT_DRAFT: ProposalDraftForm = {
   title: "",
   chamberId: "",
+  resubmitsProposalId: undefined,
   summary: "",
   what: "",
   why: "",

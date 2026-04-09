@@ -5,6 +5,9 @@ const isTest = process.env.RSTEST === "1";
 
 export default defineConfig({
   plugins: [pluginReact()],
+  html: {
+    title: "Vortex Sim",
+  },
   server: {
     ...(isTest ? { host: "127.0.0.1", port: 0 } : {}),
     proxy: {

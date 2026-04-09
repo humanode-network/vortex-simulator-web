@@ -34,7 +34,13 @@ function hasSnapshotRouteOverride(search?: string): boolean {
   if (!search) return false;
   const params = new URLSearchParams(search);
   const stage = params.get("snapshotStage");
-  return stage === "pool" || stage === "vote" || stage === "build";
+  return (
+    stage === "pool" ||
+    stage === "vote" ||
+    stage === "citizen_veto" ||
+    stage === "chamber_veto" ||
+    stage === "build"
+  );
 }
 
 export function formatProposalStageTransitionMessage(
@@ -52,6 +58,12 @@ export function formatProposalStageTransitionMessage(
   if (status.redirectReason === "referendum_open") {
     return "Legitimacy referendum opened.";
   }
+  if (status.redirectReason === "citizen_veto_opened") {
+    return "Citizen veto opened.";
+  }
+  if (status.redirectReason === "chamber_veto_opened") {
+    return "Chamber veto opened.";
+  }
   if (status.redirectReason === "formation_completed") {
     return "Project finished and moved to Finished.";
   }
@@ -60,6 +72,10 @@ export function formatProposalStageTransitionMessage(
   }
   if (status.canonicalStage === "vote")
     return "Proposal moved to Chamber vote.";
+  if (status.canonicalStage === "citizen_veto")
+    return "Proposal moved to Citizen veto.";
+  if (status.canonicalStage === "chamber_veto")
+    return "Proposal moved to Chamber veto.";
   if (status.canonicalStage === "build") return "Proposal moved to Formation.";
   if (status.canonicalStage === "passed") return "Proposal moved to Passed.";
   if (status.canonicalStage === "failed") return "Proposal moved to Failed.";

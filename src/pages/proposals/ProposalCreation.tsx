@@ -116,6 +116,9 @@ const ProposalCreation: React.FC = () => {
     null,
   );
   const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
+  const requestedResubmitsProposalId = (
+    searchParams.get("resubmitsProposalId") ?? ""
+  ).trim();
 
   useEffect(() => {
     const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
@@ -333,6 +336,18 @@ const ProposalCreation: React.FC = () => {
   }, [navigate, requestedDraftId]);
 
   useEffect(() => {
+    if (requestedDraftId) return;
+    setDraft((prev) => {
+      const nextLineage = requestedResubmitsProposalId || undefined;
+      if (prev.resubmitsProposalId === nextLineage) return prev;
+      return {
+        ...prev,
+        resubmitsProposalId: nextLineage,
+      };
+    });
+  }, [requestedDraftId, requestedResubmitsProposalId]);
+
+  useEffect(() => {
     if (!auth.enabled || !auth.authenticated) {
       setTierProgress(null);
       return;
@@ -466,6 +481,16 @@ const ProposalCreation: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
+      {draft.resubmitsProposalId ? (
+        <Card className="border-dashed px-4 py-4 text-sm text-muted">
+          This draft is marked as a reconsideration of decision lineage{" "}
+          <span className="font-mono text-xs text-text">
+            {draft.resubmitsProposalId}
+          </span>
+          . Submit it only if you intend this proposal to count as the same
+          decision lineage.
+        </Card>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm">

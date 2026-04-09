@@ -20,6 +20,8 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import { toTimestampMs } from "@/lib/dateTime";
 import {
   apiProposalChamberPage,
+  apiProposalChamberVetoPage,
+  apiProposalCitizenVetoPage,
   apiProposalFinishedPage,
   apiProposalFormationPage,
   apiProposalPoolPage,
@@ -27,6 +29,8 @@ import {
 } from "@/lib/apiClient";
 import type {
   ChamberProposalPageDto,
+  ChamberVetoProposalPageDto,
+  CitizenVetoProposalPageDto,
   FormationProposalPageDto,
   ProposalFinishedPageDto,
   PoolProposalPageDto,
@@ -85,6 +89,12 @@ const Proposals: React.FC = () => {
   const [chamberPagesById, setChamberPagesById] = useState<
     Record<string, ChamberProposalPageDto | undefined>
   >({});
+  const [citizenVetoPagesById, setCitizenVetoPagesById] = useState<
+    Record<string, CitizenVetoProposalPageDto | undefined>
+  >({});
+  const [chamberVetoPagesById, setChamberVetoPagesById] = useState<
+    Record<string, ChamberVetoProposalPageDto | undefined>
+  >({});
   const [formationPagesById, setFormationPagesById] = useState<
     Record<string, FormationProposalPageDto | undefined>
   >({});
@@ -139,6 +149,22 @@ const Proposals: React.FC = () => {
       });
     }
     if (
+      proposal.stage === "citizen_veto" &&
+      citizenVetoPagesById[proposal.id] === undefined
+    ) {
+      void apiProposalCitizenVetoPage(proposal.id).then((page) => {
+        setCitizenVetoPagesById((curr) => ({ ...curr, [proposal.id]: page }));
+      });
+    }
+    if (
+      proposal.stage === "chamber_veto" &&
+      chamberVetoPagesById[proposal.id] === undefined
+    ) {
+      void apiProposalChamberVetoPage(proposal.id).then((page) => {
+        setChamberVetoPagesById((curr) => ({ ...curr, [proposal.id]: page }));
+      });
+    }
+    if (
       proposal.stage === "build" &&
       formationPagesById[proposal.id] === undefined
     ) {
@@ -151,6 +177,8 @@ const Proposals: React.FC = () => {
     proposalData,
     poolPagesById,
     chamberPagesById,
+    citizenVetoPagesById,
+    chamberVetoPagesById,
     formationPagesById,
     finishedPagesById,
   ]);
@@ -250,6 +278,8 @@ const Proposals: React.FC = () => {
               { value: "any", label: "Any" },
               { value: "pool", label: "Proposal pool" },
               { value: "vote", label: "Chamber vote" },
+              { value: "citizen_veto", label: "Citizen veto" },
+              { value: "chamber_veto", label: "Chamber veto" },
               { value: "build", label: "Formation" },
               { value: "passed", label: "Passed" },
               { value: "failed", label: "Ended (failed)" },
@@ -326,6 +356,14 @@ const Proposals: React.FC = () => {
               proposal.stage === "pool" ? poolPagesById[proposal.id] : null;
             const chamberPage =
               proposal.stage === "vote" ? chamberPagesById[proposal.id] : null;
+            const citizenVetoPage =
+              proposal.stage === "citizen_veto"
+                ? citizenVetoPagesById[proposal.id]
+                : null;
+            const chamberVetoPage =
+              proposal.stage === "chamber_veto"
+                ? chamberVetoPagesById[proposal.id]
+                : null;
             const formationPage =
               proposal.stage === "build"
                 ? formationPagesById[proposal.id]
@@ -465,6 +503,76 @@ const Proposals: React.FC = () => {
               proposal.stage === "build" && formationPage
                 ? getFormationProgress(formationPage)
                 : null;
+            const keyStats =
+              proposal.stage === "pool" && poolPage && poolStats
+                ? poolPage.formationEligible
+                  ? [
+                      {
+                        label: "Budget ask",
+                        value: poolPage.budget,
+                      },
+                      {
+                        label: "Formation",
+                        value: "Yes",
+                      },
+                      {
+                        label: "Team slots",
+                        value: `${poolPage.teamSlots} (open: ${poolStats.openSlots})`,
+                      },
+                      {
+                        label: "Milestones",
+                        value: `${poolStats.milestonesCount} planned`,
+                      },
+                    ]
+                  : []
+                : proposal.stage === "vote" && chamberPage && chamberStats
+                  ? chamberPage.formationEligible
+                    ? [
+                        {
+                          label: "Budget ask",
+                          value: chamberPage.budget,
+                        },
+                        {
+                          label: "Formation",
+                          value: "Yes",
+                        },
+                        {
+                          label: "Team slots",
+                          value: `${chamberPage.teamSlots} (open: ${chamberStats.openSlots})`,
+                        },
+                        {
+                          label: "Milestones",
+                          value: `${chamberPage.milestones} planned`,
+                        },
+                      ]
+                    : []
+                  : proposal.stage === "citizen_veto" && citizenVetoPage
+                    ? citizenVetoPage.stats
+                    : proposal.stage === "chamber_veto" && chamberVetoPage
+                      ? chamberVetoPage.stats
+                      : finishedPage
+                        ? finishedPage.stats
+                        : proposal.stage === "build" && formationPage
+                          ? [
+                              {
+                                label: "Budget ask",
+                                value: formationPage.budget,
+                              },
+                              {
+                                label: "Time left",
+                                value: formationPage.timeLeft,
+                              },
+                              {
+                                label: "Team slots",
+                                value: formationPage.teamSlots,
+                              },
+                              {
+                                label: "Milestones",
+                                value: formationPage.milestones,
+                              },
+                              ...formationPage.stats,
+                            ]
+                          : proposal.stats;
 
             return (
               <ExpandableCard
@@ -579,11 +687,6 @@ const Proposals: React.FC = () => {
                           value={`${poolStats.upvoteFloorProgressPercent}% / ${poolStats.upvoteFloorFractionPercent}%`}
                           tone={poolStats.meetsUpvoteFloor ? "ok" : "warn"}
                         />
-                        <StageDataTile
-                          title="Time left"
-                          description="Pool window"
-                          value={poolPage.timeLeft}
-                        />
                       </div>
 
                       <p className="text-xs text-muted">
@@ -665,8 +768,67 @@ const Proposals: React.FC = () => {
                       </div>
 
                       <p className="text-xs text-muted">
-                        If this passes, it moves to Formation for execution.
+                        {chamberPage.formationEligible
+                          ? "If this passes, it moves to Formation for execution."
+                          : "If this passes, it stays a non-formation governance decision."}
                       </p>
+                    </div>
+                  ) : proposal.stage === "citizen_veto" && citizenVetoPage ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-text">
+                        Citizen veto snapshot
+                      </p>
+                      <Surface
+                        variant="panelAlt"
+                        radius="2xl"
+                        shadow="tile"
+                        className="px-5 py-4 text-sm text-muted"
+                      >
+                        Citizen-tier voters can remand this approved decision
+                        for reconsideration. Attempts used:{" "}
+                        {citizenVetoPage.attemptsUsed} /{" "}
+                        {citizenVetoPage.attemptsUsed +
+                          citizenVetoPage.attemptsRemaining}
+                        .
+                      </Surface>
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {citizenVetoPage.stageData.map((item, index) => (
+                          <StageDataTile
+                            key={`${proposal.id}-citizen-veto-${index}`}
+                            title={item.title}
+                            description={item.description}
+                            value={item.value}
+                            tone={item.tone}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : proposal.stage === "chamber_veto" && chamberVetoPage ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-text">
+                        Chamber veto snapshot
+                      </p>
+                      <Surface
+                        variant="panelAlt"
+                        radius="2xl"
+                        shadow="tile"
+                        className="px-5 py-4 text-sm text-muted"
+                      >
+                        {chamberVetoPage.vetoingChambers} /{" "}
+                        {chamberVetoPage.chamberThreshold} chambers currently
+                        count as vetoing.
+                      </Surface>
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {chamberVetoPage.stageData.map((item, index) => (
+                          <StageDataTile
+                            key={`${proposal.id}-chamber-veto-${index}`}
+                            title={item.title}
+                            description={item.description}
+                            value={item.value}
+                            tone={item.tone}
+                          />
+                        ))}
+                      </div>
                     </div>
                   ) : proposal.stage === "build" &&
                     formationPage &&
@@ -736,6 +898,24 @@ const Proposals: React.FC = () => {
                     >
                       Loading chamber vote stats…
                     </Surface>
+                  ) : proposal.stage === "citizen_veto" ? (
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="px-5 py-4 text-sm text-muted"
+                    >
+                      Loading citizen veto stats…
+                    </Surface>
+                  ) : proposal.stage === "chamber_veto" ? (
+                    <Surface
+                      variant="panelAlt"
+                      radius="2xl"
+                      shadow="tile"
+                      className="px-5 py-4 text-sm text-muted"
+                    >
+                      Loading chamber veto stats…
+                    </Surface>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-text">
@@ -755,98 +935,22 @@ const Proposals: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-text">Key stats</p>
-                    <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
-                      {proposal.stage === "pool" && poolPage && poolStats ? (
-                        <>
+                  {keyStats.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-text">
+                        Key stats
+                      </p>
+                      <ul className="grid gap-2 text-sm text-text sm:grid-cols-2">
+                        {keyStats.map((stat) => (
                           <DashedStatItem
-                            label="Budget ask"
-                            value={poolPage.budget}
-                          />
-                          <DashedStatItem
-                            label="Formation"
-                            value={poolPage.formationEligible ? "Yes" : "No"}
-                          />
-                          <DashedStatItem
-                            label="Team slots"
-                            value={`${poolPage.teamSlots} (open: ${poolStats.openSlots})`}
-                          />
-                          <DashedStatItem
-                            label="Milestones"
-                            value={`${poolStats.milestonesCount} planned`}
-                          />
-                          <DashedStatItem
-                            label="Cooldown"
-                            value={poolPage.cooldown}
-                          />
-                        </>
-                      ) : proposal.stage === "vote" &&
-                        chamberPage &&
-                        chamberStats ? (
-                        <>
-                          <DashedStatItem
-                            label="Budget ask"
-                            value={chamberPage.budget}
-                          />
-                          <DashedStatItem
-                            label="Formation"
-                            value={chamberPage.formationEligible ? "Yes" : "No"}
-                          />
-                          <DashedStatItem
-                            label="Team slots"
-                            value={`${chamberPage.teamSlots} (open: ${chamberStats.openSlots})`}
-                          />
-                          <DashedStatItem
-                            label="Milestones"
-                            value={`${chamberPage.milestones} planned`}
-                          />
-                        </>
-                      ) : finishedPage ? (
-                        finishedPage.stats.map((stat) => (
-                          <DashedStatItem
-                            key={stat.label}
+                            key={`${proposal.id}-stat-${stat.label}`}
                             label={stat.label}
                             value={stat.value}
                           />
-                        ))
-                      ) : proposal.stage === "build" && formationPage ? (
-                        <>
-                          <DashedStatItem
-                            label="Budget ask"
-                            value={formationPage.budget}
-                          />
-                          <DashedStatItem
-                            label="Time left"
-                            value={formationPage.timeLeft}
-                          />
-                          <DashedStatItem
-                            label="Team slots"
-                            value={formationPage.teamSlots}
-                          />
-                          <DashedStatItem
-                            label="Milestones"
-                            value={formationPage.milestones}
-                          />
-                          {formationPage.stats.map((stat) => (
-                            <DashedStatItem
-                              key={`${proposal.id}-formation-stat-${stat.label}`}
-                              label={stat.label}
-                              value={stat.value}
-                            />
-                          ))}
-                        </>
-                      ) : (
-                        proposal.stats.map((stat) => (
-                          <DashedStatItem
-                            key={stat.label}
-                            label={stat.label}
-                            value={stat.value}
-                          />
-                        ))
-                      )}
-                    </ul>
-                  </div>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
 
                   <div className="flex flex-wrap gap-2">
                     {proposal.tags.map((tag) => (
@@ -865,13 +969,17 @@ const Proposals: React.FC = () => {
                         ? `/app/proposals/${proposal.id}/pp`
                         : proposal.stage === "vote"
                           ? `/app/proposals/${proposal.id}/chamber`
-                          : proposal.stage === "passed"
-                            ? `/app/proposals/${proposal.id}/finished`
-                            : proposal.stage === "build"
-                              ? proposal.summaryPill === "Finished"
+                          : proposal.stage === "citizen_veto"
+                            ? `/app/proposals/${proposal.id}/citizen-veto`
+                            : proposal.stage === "chamber_veto"
+                              ? `/app/proposals/${proposal.id}/chamber-veto`
+                              : proposal.stage === "passed"
                                 ? `/app/proposals/${proposal.id}/finished`
-                                : `/app/proposals/${proposal.id}/formation`
-                              : `/app/proposals/${proposal.id}/pp`)
+                                : proposal.stage === "build"
+                                  ? proposal.summaryPill === "Finished"
+                                    ? `/app/proposals/${proposal.id}/finished`
+                                    : `/app/proposals/${proposal.id}/formation`
+                                  : `/app/proposals/${proposal.id}/pp`)
                     }
                     primaryLabel={proposal.ctaPrimary}
                   />

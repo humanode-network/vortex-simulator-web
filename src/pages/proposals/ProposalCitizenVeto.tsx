@@ -3,35 +3,38 @@ import { useParams } from "react-router";
 
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
-import { VoteButton } from "@/components/VoteButton";
 import {
   ProposalSummaryCard,
-  ProposalTeamMilestonesCard,
   ProposalTimelineCard,
 } from "@/components/ProposalSections";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
+import { VoteButton } from "@/components/VoteButton";
 import {
-  apiProposalReferendumPage,
+  apiCitizenVetoVote,
+  apiProposalCitizenVetoPage,
   apiProposalTimeline,
-  apiReferendumVote,
 } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type {
-  ChamberProposalPageDto,
+  CitizenVetoProposalPageDto,
   ProposalTimelineItemDto,
 } from "@/types/api";
 import {
   useProposalStageSync,
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
+import { useAuth } from "@/app/auth/AuthContext";
 
-const ProposalReferendum: React.FC = () => {
+const ProposalCitizenVeto: React.FC = () => {
   const { id } = useParams();
-  const [proposal, setProposal] = useState<ChamberProposalPageDto | null>(null);
+  const [proposal, setProposal] = useState<CitizenVetoProposalPageDto | null>(
+    null,
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const auth = useAuth();
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const syncProposalStage = useProposalStageSync(id);
@@ -39,7 +42,7 @@ const ProposalReferendum: React.FC = () => {
 
   const loadPage = useCallback(async () => {
     if (!id) return;
-    const page = await apiProposalReferendumPage(id);
+    const page = await apiProposalCitizenVetoPage(id);
     setProposal(page);
     setLoadError(null);
   }, [id]);
@@ -50,7 +53,7 @@ const ProposalReferendum: React.FC = () => {
     (async () => {
       try {
         const [pageResult, timelineResult] = await Promise.allSettled([
-          apiProposalReferendumPage(id),
+          apiProposalCitizenVetoPage(id),
           apiProposalTimeline(id),
         ]);
         if (!active) return;
@@ -60,7 +63,7 @@ const ProposalReferendum: React.FC = () => {
         } else {
           setProposal(null);
           setLoadError(
-            pageResult.reason?.message ?? "Failed to load referendum",
+            pageResult.reason?.message ?? "Failed to load citizen veto",
           );
         }
         if (timelineResult.status === "fulfilled") {
@@ -104,69 +107,31 @@ const ProposalReferendum: React.FC = () => {
           className="px-5 py-4 text-sm text-muted"
         >
           {loadError
-            ? `Referendum unavailable: ${formatLoadError(loadError, "Failed to load referendum.")}`
-            : "Loading referendum…"}
+            ? `Citizen veto unavailable: ${formatLoadError(loadError, "Failed to load citizen veto.")}`
+            : "Loading citizen veto…"}
         </Surface>
       </div>
     );
   }
 
-  const yesTotal = proposal.votes.yes;
-  const noTotal = proposal.votes.no;
-  const abstainTotal = proposal.votes.abstain;
-  const totalVotes = yesTotal + noTotal + abstainTotal;
-  const engaged = proposal.engagedVoters ?? proposal.engagedGovernors;
-  const eligibleVoters = Math.max(
-    1,
-    proposal.eligibleVoters ?? proposal.activeGovernors,
-  );
-  const quorumRuleLabel = "33.3% + 1";
-  const quorumPercent = Math.round((engaged / eligibleVoters) * 100);
-  const yesPercentOfTotal =
-    totalVotes > 0 ? Math.round((yesTotal / totalVotes) * 100) : 0;
-  const noPercentOfTotal =
-    totalVotes > 0 ? Math.round((noTotal / totalVotes) * 100) : 0;
-  const abstainPercentOfTotal =
-    totalVotes > 0 ? Math.round((abstainTotal / totalVotes) * 100) : 0;
-  const yesPercentOfQuorum =
-    engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;
-  const passingNeededPercent = 66.6;
+  const castVotes = proposal.votes.veto + proposal.votes.keep;
+  const quorumPercent =
+    proposal.eligibleCitizens > 0
+      ? Math.round((castVotes / proposal.eligibleCitizens) * 100)
+      : 0;
+  const vetoPercent =
+    castVotes > 0 ? Math.round((proposal.votes.veto / castVotes) * 100) : 0;
+  const viewerIsProposer =
+    auth.address?.trim().toLowerCase() ===
+    proposal.proposerId.trim().toLowerCase();
 
-  const [filledSlots, totalSlots] = proposal.formationEligible
-    ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
-    : [0, 0];
-  const openSlots = Math.max(totalSlots - filledSlots, 0);
-  const formationSummaryStats = proposal.formationEligible
-    ? [
-        { label: "Budget ask", value: proposal.budget },
-        {
-          label: "Formation",
-          value: "Yes",
-        },
-        {
-          label: "Team slots",
-          value: `${proposal.teamSlots} (open: ${openSlots})`,
-        },
-        {
-          label: "Milestones",
-          value: `${proposal.milestones} milestones planned`,
-        },
-      ]
-    : [];
-
-  const handleVote = async (choice: "yes" | "no" | "abstain") => {
-    if (!id || submitting) return;
+  const handleVote = async (choice: "veto" | "keep") => {
+    if (!id || submitting || !proposal.viewer.eligible || viewerIsProposer)
+      return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await apiReferendumVote({
-        proposalId: id,
-        choice,
-      });
-      if (result.systemReset) {
-        window.location.assign("/app");
-        return;
-      }
+      await apiCitizenVetoVote({ proposalId: id, choice });
       const redirected = await syncProposalStage();
       if (redirected) return;
       await loadPage();
@@ -191,11 +156,12 @@ const ProposalReferendum: React.FC = () => {
           {transitionNotice}
         </Surface>
       ) : null}
+
       <ProposalPageHeader
-        title={`${proposal.title} — Referendum`}
-        stage="vote"
-        showFormationStage={false}
-        chamber="System-wide referendum"
+        title={`${proposal.title} — Citizen veto`}
+        stage="citizen_veto"
+        showFormationStage={proposal.formationEligible}
+        chamber={proposal.chamber}
         proposer={proposal.proposer}
       >
         <Surface
@@ -204,28 +170,54 @@ const ProposalReferendum: React.FC = () => {
           shadow="tile"
           className="mx-auto px-4 py-2 text-xs font-semibold text-muted"
         >
-          All active human nodes can vote
+          Only snapped Citizen-tier voters can participate in this window
         </Surface>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <VoteButton
-            tone="accent"
-            label="Vote yes"
-            disabled={submitting}
-            onClick={() => handleVote("yes")}
-          />
-          <VoteButton
             tone="destructive"
-            label="Vote no"
-            disabled={submitting}
-            onClick={() => handleVote("no")}
+            label="Veto"
+            disabled={
+              submitting || !proposal.viewer.eligible || viewerIsProposer
+            }
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : !proposal.viewer.eligible
+                  ? "You were not in the snapped Citizen electorate for this veto."
+                  : undefined
+            }
+            onClick={() => handleVote("veto")}
           />
           <VoteButton
-            tone="neutral"
-            label="Abstain"
-            disabled={submitting}
-            onClick={() => handleVote("abstain")}
+            tone="accent"
+            label="Keep"
+            disabled={
+              submitting || !proposal.viewer.eligible || viewerIsProposer
+            }
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : !proposal.viewer.eligible
+                  ? "You were not in the snapped Citizen electorate for this veto."
+                  : undefined
+            }
+            onClick={() => handleVote("keep")}
           />
         </div>
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="mx-auto px-4 py-3 text-sm text-muted"
+        >
+          {viewerIsProposer
+            ? "You cannot vote on your own proposal."
+            : proposal.viewer.eligible
+              ? proposal.viewer.currentVote
+                ? `Your current vote: ${proposal.viewer.currentVote === "veto" ? "Veto" : "Keep"}`
+                : "You are eligible to vote in this Citizen Veto window."
+              : "You are not eligible in the snapped Citizen electorate for this window."}
+        </Surface>
         {submitError ? (
           <Surface
             variant="panelAlt"
@@ -239,42 +231,8 @@ const ProposalReferendum: React.FC = () => {
       </ProposalPageHeader>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-text">Referendum quorum</h2>
+        <h2 className="text-lg font-semibold text-text">Citizen veto window</h2>
         <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile
-            label="Participation (%)"
-            value={
-              <>
-                <span>
-                  {quorumPercent}% / {quorumRuleLabel}
-                </span>
-                <span className="text-xs font-semibold text-muted">
-                  {engaged} / {proposal.quorumNeeded} human nodes
-                </span>
-              </>
-            }
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
-          />
-          <StatTile
-            label="Vote split (%)"
-            value={
-              <>
-                <span>
-                  <span className="text-accent">{yesPercentOfTotal}%</span> /{" "}
-                  <span className="text-destructive">{noPercentOfTotal}%</span>{" "}
-                  / <span className="text-muted">{abstainPercentOfTotal}%</span>
-                </span>
-                <span className="text-xs font-semibold text-muted">
-                  {yesTotal} / {noTotal} / {abstainTotal}
-                </span>
-              </>
-            }
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
-          />
           <StatTile
             label="Time left"
             value={proposal.timeLeft}
@@ -283,15 +241,47 @@ const ProposalReferendum: React.FC = () => {
             valueClassName="text-2xl font-semibold"
           />
           <StatTile
-            label="Passing (%)"
+            label="Participation"
             value={
               <>
                 <span>
-                  {yesPercentOfQuorum}% / {passingNeededPercent}%
+                  {castVotes} / {proposal.quorumNeeded}
                 </span>
                 <span className="text-xs font-semibold text-muted">
-                  {Math.ceil(engaged * 0.666)} yes votes needed at current
-                  participation
+                  {quorumPercent}% of snapped Citizens
+                </span>
+              </>
+            }
+            variant="panel"
+            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
+          />
+          <StatTile
+            label="Veto threshold"
+            value={
+              <>
+                <span>
+                  {proposal.votes.veto} / {proposal.vetoNeeded}
+                </span>
+                <span className="text-xs font-semibold text-muted">
+                  {vetoPercent}% veto among cast votes
+                </span>
+              </>
+            }
+            variant="panel"
+            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
+            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
+          />
+          <StatTile
+            label="Breakability"
+            value={
+              <>
+                <span>
+                  {proposal.attemptsUsed} /{" "}
+                  {proposal.attemptsUsed + proposal.attemptsRemaining}
+                </span>
+                <span className="text-xs font-semibold text-muted">
+                  {proposal.attemptsRemaining} Citizen veto tries left
                 </span>
               </>
             }
@@ -304,7 +294,7 @@ const ProposalReferendum: React.FC = () => {
 
       <ProposalSummaryCard
         summary={proposal.summary}
-        stats={formationSummaryStats}
+        stats={proposal.stats}
         overview={proposal.overview}
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}
@@ -312,14 +302,6 @@ const ProposalReferendum: React.FC = () => {
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
       />
-
-      {proposal.formationEligible ? (
-        <ProposalTeamMilestonesCard
-          teamLocked={proposal.teamLocked}
-          openSlots={proposal.openSlotNeeds}
-          milestonesDetail={proposal.milestonesDetail}
-        />
-      ) : null}
 
       {timelineError ? (
         <Surface
@@ -331,10 +313,10 @@ const ProposalReferendum: React.FC = () => {
           Timeline unavailable: {formatLoadError(timelineError)}
         </Surface>
       ) : (
-        <ProposalTimelineCard items={timeline} proposalId={id ?? ""} />
+        <ProposalTimelineCard items={timeline} proposalId={id} />
       )}
     </div>
   );
 };
 
-export default ProposalReferendum;
+export default ProposalCitizenVeto;

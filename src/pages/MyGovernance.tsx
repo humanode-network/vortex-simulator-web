@@ -15,6 +15,7 @@ import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { AddressInline } from "@/components/AddressInline";
 import { PipelineList } from "@/components/PipelineList";
+import { StageChip } from "@/components/StageChip";
 import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
@@ -27,6 +28,7 @@ import {
   apiLegitimacyObjectSet,
   apiCmMe,
   apiMyGovernance,
+  apiProposals,
 } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { toTimestampMs } from "@/lib/dateTime";
@@ -35,6 +37,7 @@ import type {
   CmSummaryDto,
   GetClockResponse,
   GetMyGovernanceResponse,
+  ProposalListItemDto,
 } from "@/types/api";
 import { cn } from "@/lib/utils";
 
@@ -182,6 +185,7 @@ const MyGovernance: React.FC = () => {
   const [delegationErrorByChamber, setDelegationErrorByChamber] = useState<
     Record<string, string | null>
   >({});
+  const [vetoWindows, setVetoWindows] = useState<ProposalListItemDto[]>([]);
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -227,6 +231,39 @@ const MyGovernance: React.FC = () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!gov) {
+      setVetoWindows([]);
+      return;
+    }
+    let active = true;
+    const currentTierLabel = gov.tier?.tier ?? "Nominee";
+    (async () => {
+      try {
+        const [citizenResult, chamberResult] = await Promise.all([
+          currentTierLabel === "Citizen"
+            ? apiProposals({ stage: "citizen_veto" })
+            : Promise.resolve({ items: [] as ProposalListItemDto[] }),
+          currentTierLabel !== "Nominee"
+            ? apiProposals({ stage: "chamber_veto" })
+            : Promise.resolve({ items: [] as ProposalListItemDto[] }),
+        ]);
+        if (!active) return;
+        setVetoWindows(
+          [...citizenResult.items, ...chamberResult.items].sort(
+            (a, b) => toTimestampMs(b.date, -1) - toTimestampMs(a.date, -1),
+          ),
+        );
+      } catch {
+        if (!active) return;
+        setVetoWindows([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [gov]);
 
   const eraActivity = gov?.eraActivity;
   const timeLeftValue = useMemo(() => {
@@ -685,6 +722,68 @@ const MyGovernance: React.FC = () => {
               </Surface>
             ) : null}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Veto windows</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-4 py-3 text-sm text-muted"
+          >
+            Snapshot eligibility is finalized on each veto proposal page. This
+            section highlights currently open Citizen and Chamber Veto windows
+            you may want to inspect.
+          </Surface>
+          {vetoWindows.length === 0 ? (
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="px-4 py-3 text-sm text-muted"
+            >
+              No live veto windows right now.
+            </Surface>
+          ) : (
+            <div className="grid gap-3">
+              {vetoWindows.map((proposal) => (
+                <Surface
+                  key={proposal.id}
+                  variant="panelAlt"
+                  radius="2xl"
+                  shadow="tile"
+                  className="flex flex-col gap-3 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StageChip stage={proposal.stage} />
+                        <span className="text-xs text-muted">
+                          {proposal.chamber}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-text">
+                        {proposal.title}
+                      </p>
+                      <p className="text-xs text-muted">{proposal.summary}</p>
+                    </div>
+                    <Button asChild size="sm">
+                      <Link
+                        to={proposal.href ?? `/app/proposals/${proposal.id}/pp`}
+                      >
+                        Open
+                      </Link>
+                    </Button>
+                  </div>
+                </Surface>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

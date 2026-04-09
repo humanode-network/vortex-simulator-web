@@ -7,7 +7,6 @@ import { VoteButton } from "@/components/VoteButton";
 import { AddressInline } from "@/components/AddressInline";
 import { Input } from "@/components/primitives/input";
 import {
-  ProposalInvisionInsightCard,
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
   ProposalTimelineCard,
@@ -29,6 +28,7 @@ import {
   useProposalStageSync,
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
+import { useAuth } from "@/app/auth/AuthContext";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -39,6 +39,7 @@ const ProposalChamber: React.FC = () => {
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const [yesScore, setYesScore] = useState(5);
+  const auth = useAuth();
   const syncProposalStage = useProposalStageSync(id);
   const transitionNotice = useProposalTransitionNotice();
   const loadPage = useCallback(async () => {
@@ -84,6 +85,15 @@ const ProposalChamber: React.FC = () => {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (
+      proposal?.viewerVote?.choice === "yes" &&
+      typeof proposal.viewerVote.score === "number"
+    ) {
+      setYesScore(proposal.viewerVote.score);
+    }
+  }, [proposal?.viewerVote?.choice, proposal?.viewerVote?.score]);
 
   if (!proposal) {
     return (
@@ -144,6 +154,9 @@ const ProposalChamber: React.FC = () => {
       ? proposal.milestoneIndex
       : null;
   const referendumVote = proposal.voteKind === "referendum";
+  const viewerIsProposer =
+    auth.address?.trim().toLowerCase() ===
+    proposal.proposerId.trim().toLowerCase();
   const scoreLabel =
     proposal.scoreLabel === "MM" || milestoneVoteIndex !== null
       ? "MM"
@@ -155,17 +168,74 @@ const ProposalChamber: React.FC = () => {
     : milestoneVoteIndex !== null
       ? `${proposal.title} — Milestone vote (M${milestoneVoteIndex})`
       : proposal.title;
+  const delegationNote = proposal.delegation?.viewer ? (
+    proposal.delegation.viewer.delegateeAddress ? (
+      proposal.delegation.viewer.hasDirectVote ? (
+        <>
+          Direct vote overrides your delegation to{" "}
+          <AddressInline
+            address={proposal.delegation.viewer.delegateeAddress}
+            showCopy={false}
+          />
+          .
+        </>
+      ) : (
+        <>
+          You delegate to{" "}
+          <AddressInline
+            address={proposal.delegation.viewer.delegateeAddress}
+            showCopy={false}
+          />
+          . Direct vote overrides it here.
+        </>
+      )
+    ) : proposal.delegation.viewer.inboundDelegatedWeight > 0 ? (
+      <>Your vote currently carries delegated weight.</>
+    ) : null
+  ) : proposal.delegation?.source === "snapshot" ? (
+    <>Uses a frozen delegation snapshot.</>
+  ) : proposal.delegation ? (
+    <>Uses current chamber delegations.</>
+  ) : null;
 
-  const [filledSlots, totalSlots] = proposal.teamSlots
-    .split("/")
-    .map((v) => Number(v.trim()));
+  const [filledSlots, totalSlots] = proposal.formationEligible
+    ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
+    : [0, 0];
   const openSlots = Math.max(totalSlots - filledSlots, 0);
+  const formationSummaryStats = proposal.formationEligible
+    ? [
+        { label: "Budget ask", value: proposal.budget },
+        {
+          label: "Formation",
+          value: "Yes",
+        },
+        {
+          label: "Team slots",
+          value: `${proposal.teamSlots} (open: ${openSlots})`,
+        },
+        {
+          label: "Milestones",
+          value: `${proposal.milestones} milestones planned`,
+        },
+      ]
+    : [];
+  const viewerVoteLabel = proposal.viewerVote
+    ? proposal.viewerVote.choice === "yes"
+      ? `Yes${
+          typeof proposal.viewerVote.score === "number"
+            ? ` (score ${proposal.viewerVote.score})`
+            : ""
+        }`
+      : proposal.viewerVote.choice === "no"
+        ? "No"
+        : "Abstain"
+    : null;
 
   const handleVote = async (
     choice: "yes" | "no" | "abstain",
     score?: number,
   ) => {
-    if (!id || submitting) return;
+    if (!id || submitting || viewerIsProposer) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -219,7 +289,12 @@ const ProposalChamber: React.FC = () => {
           <VoteButton
             tone="accent"
             label="Vote yes"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("yes", yesScore)}
           />
           {proposal.scoreEnabled && scoreLabel ? (
@@ -246,16 +321,36 @@ const ProposalChamber: React.FC = () => {
           <VoteButton
             tone="destructive"
             label="Vote no"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("no")}
           />
           <VoteButton
             tone="neutral"
             label="Abstain"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("abstain")}
           />
         </div>
+        {viewerIsProposer ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            You cannot vote on your own proposal.
+          </Surface>
+        ) : null}
         {submitError ? (
           <Surface
             variant="panelAlt"
@@ -264,6 +359,20 @@ const ProposalChamber: React.FC = () => {
             className="px-5 py-4 text-sm text-destructive"
           >
             {formatLoadError(submitError)}
+          </Surface>
+        ) : null}
+        {proposal.viewerVote && !viewerIsProposer ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            Your current vote:{" "}
+            <span className="font-semibold text-text">{viewerVoteLabel}</span>
+            <span className="block text-xs text-muted">
+              Recorded {formatDateTime(proposal.viewerVote.updatedAt)}
+            </span>
           </Surface>
         ) : null}
       </ProposalPageHeader>
@@ -414,87 +523,37 @@ const ProposalChamber: React.FC = () => {
               valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
             />
           </div>
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            {proposal.delegation.viewer ? (
-              proposal.delegation.viewer.delegateeAddress ? (
-                proposal.delegation.viewer.hasDirectVote ? (
-                  <>
-                    Your direct vote is overriding your delegation to{" "}
-                    <AddressInline
-                      address={proposal.delegation.viewer.delegateeAddress}
-                      showCopy={false}
-                    />{" "}
-                    on this proposal.
-                  </>
-                ) : (
-                  <>
-                    You currently delegate your vote in this chamber to{" "}
-                    <AddressInline
-                      address={proposal.delegation.viewer.delegateeAddress}
-                      showCopy={false}
-                    />
-                    . If you cast a direct vote on this proposal, that
-                    delegation will be overridden here.
-                  </>
-                )
-              ) : proposal.delegation.viewer.inboundDelegatedWeight > 0 ? (
-                <>
-                  Other governors currently delegate to you, so your direct vote
-                  carries additional weight on this proposal.
-                </>
-              ) : (
-                <>You are voting with only your base chamber weight here.</>
-              )
-            ) : proposal.delegation.source === "snapshot" ? (
-              <>
-                This vote is using a proposal-local delegation snapshot, so
-                later delegation changes will not rewrite this chamber vote.
-              </>
-            ) : (
-              <>
-                This vote is currently using the live delegation graph because
-                no proposal-local snapshot was found.
-              </>
-            )}
-          </Surface>
+          {delegationNote ? (
+            <Surface
+              variant="panelAlt"
+              radius="2xl"
+              shadow="tile"
+              className="px-5 py-4 text-sm text-muted"
+            >
+              {delegationNote}
+            </Surface>
+          ) : null}
         </section>
       ) : null}
 
       <ProposalSummaryCard
         summary={proposal.summary}
-        stats={[
-          { label: "Budget ask", value: proposal.budget },
-          {
-            label: "Formation",
-            value: proposal.formationEligible ? "Yes" : "No",
-          },
-          {
-            label: "Team slots",
-            value: `${proposal.teamSlots} (open: ${openSlots})`,
-          },
-          {
-            label: "Milestones",
-            value: `${proposal.milestones} milestones planned`,
-          },
-        ]}
+        stats={formationSummaryStats}
         overview={proposal.overview}
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}
         attachments={proposal.attachments}
+        showExecutionPlan={proposal.formationEligible}
+        showBudgetScope={proposal.formationEligible}
       />
 
-      <ProposalTeamMilestonesCard
-        teamLocked={proposal.teamLocked}
-        openSlots={proposal.openSlotNeeds}
-        milestonesDetail={proposal.milestonesDetail}
-      />
-
-      <ProposalInvisionInsightCard insight={proposal.invisionInsight} />
+      {proposal.formationEligible ? (
+        <ProposalTeamMilestonesCard
+          teamLocked={proposal.teamLocked}
+          openSlots={proposal.openSlotNeeds}
+          milestonesDetail={proposal.milestonesDetail}
+        />
+      ) : null}
 
       {timelineError ? (
         <Surface
