@@ -124,9 +124,26 @@ const ProposalCitizenVeto: React.FC = () => {
   const viewerIsProposer =
     auth.address?.trim().toLowerCase() ===
     proposal.proposerId.trim().toLowerCase();
+  const stageLinks = id
+    ? {
+        vote: proposal.voteRoute,
+        citizen_veto: `/app/proposals/${id}/citizen-veto`,
+        chamber_veto: `/app/proposals/${id}/chamber-veto`,
+      }
+    : undefined;
+  const vetoWindowOpen = proposal.timeLeft !== "Ended";
+  const currentVote = proposal.viewer.currentVote;
+  const vetoRecorded = currentVote === "veto";
+  const keepRecorded = currentVote === "keep";
 
   const handleVote = async (choice: "veto" | "keep") => {
-    if (!id || submitting || !proposal.viewer.eligible || viewerIsProposer)
+    if (
+      !id ||
+      submitting ||
+      !vetoWindowOpen ||
+      !proposal.viewer.eligible ||
+      viewerIsProposer
+    )
       return;
     setSubmitting(true);
     setSubmitError(null);
@@ -163,61 +180,102 @@ const ProposalCitizenVeto: React.FC = () => {
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
+        stageLinks={stageLinks}
       >
         <Surface
           variant="panelAlt"
           radius="2xl"
           shadow="tile"
-          className="mx-auto px-4 py-2 text-xs font-semibold text-muted"
+          className="mx-auto max-w-3xl px-5 py-4 text-sm text-muted"
         >
-          Only snapped Citizen-tier voters can participate in this window
+          <p className="font-semibold text-text">Citizen Veto</p>
+          <p className="mt-2">
+            {viewerIsProposer
+              ? "You proposed this decision, so you cannot vote in its Citizen Veto."
+              : proposal.viewer.eligible
+                ? proposal.viewer.currentVote === "veto"
+                  ? "Only Citizens captured when this veto window opened can vote here. Your current vote is Veto."
+                  : proposal.viewer.currentVote === "keep"
+                    ? "Only Citizens captured when this veto window opened can vote here. Your current vote is Keep."
+                    : "Only Citizens captured when this veto window opened can vote here. Cast Veto to send the decision back for reconsideration, or Keep to leave it in place."
+                : "Only Citizens captured when this veto window opened can vote here. You were not in that group for this proposal."}
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            {vetoWindowOpen
+              ? "If Veto reaches the threshold before this window ends, the proposal returns to the proposer for reconsideration."
+              : "This veto window has ended."}
+          </p>
         </Surface>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <VoteButton
             tone="destructive"
-            label="Veto"
+            label={
+              submitting
+                ? "Casting veto..."
+                : vetoRecorded
+                  ? "Veto cast"
+                  : "Veto"
+            }
+            className={
+              vetoRecorded
+                ? "bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]"
+                : undefined
+            }
             disabled={
-              submitting || !proposal.viewer.eligible || viewerIsProposer
+              submitting ||
+              !vetoWindowOpen ||
+              vetoRecorded ||
+              !proposal.viewer.eligible ||
+              viewerIsProposer
             }
             title={
               viewerIsProposer
                 ? "You cannot vote on your own proposal."
-                : !proposal.viewer.eligible
-                  ? "You were not in the snapped Citizen electorate for this veto."
-                  : undefined
+                : vetoRecorded
+                  ? "Your citizen veto is already recorded."
+                  : !vetoWindowOpen
+                    ? "Veto window ended."
+                    : !proposal.viewer.eligible
+                      ? "Only Citizens captured when this veto window opened can vote here."
+                      : undefined
             }
             onClick={() => handleVote("veto")}
           />
           <VoteButton
-            tone="accent"
-            label="Keep"
+            tone="neutral"
+            label={
+              submitting
+                ? "Casting keep..."
+                : keepRecorded
+                  ? "Keep cast"
+                  : "Keep"
+            }
+            className={
+              keepRecorded
+                ? "bg-[var(--panel-alt)] text-[var(--text)] ring-1 ring-[var(--border-strong)] hover:bg-[var(--panel-alt)]"
+                : undefined
+            }
             disabled={
-              submitting || !proposal.viewer.eligible || viewerIsProposer
+              submitting ||
+              !vetoWindowOpen ||
+              keepRecorded ||
+              !proposal.viewer.eligible ||
+              viewerIsProposer
             }
             title={
               viewerIsProposer
                 ? "You cannot vote on your own proposal."
-                : !proposal.viewer.eligible
-                  ? "You were not in the snapped Citizen electorate for this veto."
-                  : undefined
+                : keepRecorded
+                  ? "Your citizen keep vote is already recorded."
+                  : !vetoWindowOpen
+                    ? "Veto window ended."
+                    : !proposal.viewer.eligible
+                      ? "Only Citizens captured when this veto window opened can vote here."
+                      : undefined
             }
             onClick={() => handleVote("keep")}
           />
         </div>
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="mx-auto px-4 py-3 text-sm text-muted"
-        >
-          {viewerIsProposer
-            ? "You cannot vote on your own proposal."
-            : proposal.viewer.eligible
-              ? proposal.viewer.currentVote
-                ? `Your current vote: ${proposal.viewer.currentVote === "veto" ? "Veto" : "Keep"}`
-                : "You are eligible to vote in this Citizen Veto window."
-              : "You are not eligible in the snapped Citizen electorate for this window."}
-        </Surface>
         {submitError ? (
           <Surface
             variant="panelAlt"
@@ -232,6 +290,16 @@ const ProposalCitizenVeto: React.FC = () => {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-text">Citizen veto window</h2>
+        {castVotes === 0 ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            No Citizen Veto votes yet.
+          </Surface>
+        ) : null}
         <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
             label="Time left"
@@ -248,7 +316,7 @@ const ProposalCitizenVeto: React.FC = () => {
                   {castVotes} / {proposal.quorumNeeded}
                 </span>
                 <span className="text-xs font-semibold text-muted">
-                  {quorumPercent}% of snapped Citizens
+                  {quorumPercent}% of eligible Citizens
                 </span>
               </>
             }
@@ -273,15 +341,13 @@ const ProposalCitizenVeto: React.FC = () => {
             valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
           />
           <StatTile
-            label="Breakability"
+            label="Attempts left"
             value={
               <>
-                <span>
-                  {proposal.attemptsUsed} /{" "}
-                  {proposal.attemptsUsed + proposal.attemptsRemaining}
-                </span>
+                <span>{proposal.attemptsRemaining}</span>
                 <span className="text-xs font-semibold text-muted">
-                  {proposal.attemptsRemaining} Citizen veto tries left
+                  {proposal.attemptsUsed} of{" "}
+                  {proposal.attemptsUsed + proposal.attemptsRemaining} used
                 </span>
               </>
             }
@@ -294,7 +360,7 @@ const ProposalCitizenVeto: React.FC = () => {
 
       <ProposalSummaryCard
         summary={proposal.summary}
-        stats={proposal.stats}
+        stats={[]}
         overview={proposal.overview}
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}

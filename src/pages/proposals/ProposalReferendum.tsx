@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
+import { Button } from "@/components/primitives/button";
 import {
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
@@ -25,9 +26,13 @@ import {
   useProposalStageSync,
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
+import { useAuth } from "@/app/auth/AuthContext";
+import { apiCitizenVetoVote } from "@/lib/apiClient";
+import { CitizenVetoActions } from "./CitizenVetoActions";
 
 const ProposalReferendum: React.FC = () => {
   const { id } = useParams();
+  const auth = useAuth();
   const [proposal, setProposal] = useState<ChamberProposalPageDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -131,6 +136,9 @@ const ProposalReferendum: React.FC = () => {
   const yesPercentOfQuorum =
     engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;
   const passingNeededPercent = 66.6;
+  const viewerIsProposer =
+    auth.address?.trim().toLowerCase() ===
+    proposal.proposerId.trim().toLowerCase();
 
   const [filledSlots, totalSlots] = proposal.formationEligible
     ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
@@ -153,9 +161,17 @@ const ProposalReferendum: React.FC = () => {
         },
       ]
     : [];
+  const stageLinks = id
+    ? {
+        vote: `/app/proposals/${id}/referendum`,
+        citizen_veto: `/app/proposals/${id}/citizen-veto`,
+        chamber_veto: `/app/proposals/${id}/chamber-veto`,
+      }
+    : undefined;
+  const vetoWindowOpen = proposal.timeLeft !== "Ended";
 
   const handleVote = async (choice: "yes" | "no" | "abstain") => {
-    if (!id || submitting) return;
+    if (!id || submitting || viewerIsProposer) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -167,6 +183,30 @@ const ProposalReferendum: React.FC = () => {
         window.location.assign("/app");
         return;
       }
+      const redirected = await syncProposalStage();
+      if (redirected) return;
+      await loadPage();
+    } catch (error) {
+      setSubmitError((error as Error).message);
+    } finally {
+      setSubmitting(false);
+      void syncProposalStage();
+    }
+  };
+
+  const handleCitizenVetoVote = async (choice: "veto" | "keep") => {
+    if (
+      !id ||
+      submitting ||
+      viewerIsProposer ||
+      !proposal.citizenVeto.viewer.eligible
+    ) {
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await apiCitizenVetoVote({ proposalId: id, choice });
       const redirected = await syncProposalStage();
       if (redirected) return;
       await loadPage();
@@ -197,6 +237,7 @@ const ProposalReferendum: React.FC = () => {
         showFormationStage={false}
         chamber="System-wide referendum"
         proposer={proposal.proposer}
+        stageLinks={stageLinks}
       >
         <Surface
           variant="panelAlt"
@@ -210,22 +251,67 @@ const ProposalReferendum: React.FC = () => {
           <VoteButton
             tone="accent"
             label="Vote yes"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("yes")}
           />
           <VoteButton
             tone="destructive"
             label="Vote no"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("no")}
           />
           <VoteButton
             tone="neutral"
             label="Abstain"
-            disabled={submitting}
+            disabled={submitting || viewerIsProposer}
+            title={
+              viewerIsProposer
+                ? "You cannot vote on your own proposal."
+                : undefined
+            }
             onClick={() => handleVote("abstain")}
           />
         </div>
+        <CitizenVetoActions
+          citizenVeto={proposal.citizenVeto}
+          viewerIsProposer={viewerIsProposer}
+          windowOpen={vetoWindowOpen}
+          submittingKey={submitting ? "citizen" : null}
+          onVote={() => handleCitizenVetoVote("veto")}
+        />
+        {id ? (
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/proposals/${id}/citizen-veto`}>
+                Open Citizen Veto
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/proposals/${id}/chamber-veto`}>
+                Open Chamber Veto
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          Use the Citizen Veto tab to inspect or cast Citizen Veto votes, and
+          the Chamber Veto tab to inspect chamber-veto activity.
+        </Surface>
         {submitError ? (
           <Surface
             variant="panelAlt"

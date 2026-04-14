@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
 import { AddressInline } from "@/components/AddressInline";
 import { Input } from "@/components/primitives/input";
+import { Button } from "@/components/primitives/button";
 import {
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
@@ -15,6 +16,7 @@ import { Surface } from "@/components/Surface";
 import { HintLabel } from "@/components/Hint";
 import {
   apiChamberVote,
+  apiCitizenVetoVote,
   apiProposalChamberPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
@@ -29,6 +31,7 @@ import {
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
 import { useAuth } from "@/app/auth/AuthContext";
+import { CitizenVetoActions } from "./CitizenVetoActions";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -36,6 +39,9 @@ const ProposalChamber: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submittingVetoKey, setSubmittingVetoKey] = useState<string | null>(
+    null,
+  );
   const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
   const [timelineError, setTimelineError] = useState<string | null>(null);
   const [yesScore, setYesScore] = useState(5);
@@ -230,12 +236,21 @@ const ProposalChamber: React.FC = () => {
         ? "No"
         : "Abstain"
     : null;
+  const ordinaryVoteClosed = proposal.ordinaryVoteClosed;
+  const stageLinks = id
+    ? {
+        vote: `/app/proposals/${id}/chamber`,
+        citizen_veto: `/app/proposals/${id}/citizen-veto`,
+        chamber_veto: `/app/proposals/${id}/chamber-veto`,
+      }
+    : undefined;
+  const vetoWindowOpen = proposal.timeLeft !== "Ended";
 
   const handleVote = async (
     choice: "yes" | "no" | "abstain",
     score?: number,
   ) => {
-    if (!id || submitting || viewerIsProposer) return;
+    if (!id || submitting || ordinaryVoteClosed || viewerIsProposer) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -251,6 +266,30 @@ const ProposalChamber: React.FC = () => {
       setSubmitError((error as Error).message);
     } finally {
       setSubmitting(false);
+      void syncProposalStage();
+    }
+  };
+
+  const handleCitizenVetoVote = async (choice: "veto" | "keep") => {
+    if (
+      !id ||
+      submittingVetoKey ||
+      viewerIsProposer ||
+      !proposal.citizenVeto.viewer.eligible
+    ) {
+      return;
+    }
+    setSubmittingVetoKey(`citizen:${choice}`);
+    setSubmitError(null);
+    try {
+      await apiCitizenVetoVote({ proposalId: id, choice });
+      const redirected = await syncProposalStage();
+      if (redirected) return;
+      await loadPage();
+    } catch (error) {
+      setSubmitError((error as Error).message);
+    } finally {
+      setSubmittingVetoKey(null);
       void syncProposalStage();
     }
   };
@@ -274,6 +313,7 @@ const ProposalChamber: React.FC = () => {
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
+        stageLinks={stageLinks}
       >
         {milestoneVoteIndex !== null ? (
           <Surface
@@ -289,11 +329,13 @@ const ProposalChamber: React.FC = () => {
           <VoteButton
             tone="accent"
             label="Vote yes"
-            disabled={submitting || viewerIsProposer}
+            disabled={submitting || ordinaryVoteClosed || viewerIsProposer}
             title={
               viewerIsProposer
                 ? "You cannot vote on your own proposal."
-                : undefined
+                : ordinaryVoteClosed
+                  ? "Ordinary chamber voting is closed. Only veto actions remain in this window."
+                  : undefined
             }
             onClick={() => handleVote("yes", yesScore)}
           />
@@ -321,36 +363,61 @@ const ProposalChamber: React.FC = () => {
           <VoteButton
             tone="destructive"
             label="Vote no"
-            disabled={submitting || viewerIsProposer}
+            disabled={submitting || ordinaryVoteClosed || viewerIsProposer}
             title={
               viewerIsProposer
                 ? "You cannot vote on your own proposal."
-                : undefined
+                : ordinaryVoteClosed
+                  ? "Ordinary chamber voting is closed. Only veto actions remain in this window."
+                  : undefined
             }
             onClick={() => handleVote("no")}
           />
           <VoteButton
             tone="neutral"
             label="Abstain"
-            disabled={submitting || viewerIsProposer}
+            disabled={submitting || ordinaryVoteClosed || viewerIsProposer}
             title={
               viewerIsProposer
                 ? "You cannot vote on your own proposal."
-                : undefined
+                : ordinaryVoteClosed
+                  ? "Ordinary chamber voting is closed. Only veto actions remain in this window."
+                  : undefined
             }
             onClick={() => handleVote("abstain")}
           />
         </div>
-        {viewerIsProposer ? (
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            You cannot vote on your own proposal.
-          </Surface>
+        <CitizenVetoActions
+          citizenVeto={proposal.citizenVeto}
+          viewerIsProposer={viewerIsProposer}
+          windowOpen={vetoWindowOpen}
+          submittingKey={submittingVetoKey}
+          onVote={() => handleCitizenVetoVote("veto")}
+        />
+        {id ? (
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/proposals/${id}/citizen-veto`}>
+                Open Citizen Veto
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/proposals/${id}/chamber-veto`}>
+                Open Chamber Veto
+              </Link>
+            </Button>
+          </div>
         ) : null}
+        <Surface
+          variant="panelAlt"
+          radius="2xl"
+          shadow="tile"
+          className="px-5 py-4 text-sm text-muted"
+        >
+          {ordinaryVoteClosed
+            ? "The ordinary vote passed. Use the veto pages above during the 24h veto window. If a veto succeeds, the proposal returns to the proposer for reconsideration."
+            : "Use the Citizen Veto page for Citizen votes and the Chamber Veto page for chamber-by-chamber veto activity before the chamber vote closes."}
+        </Surface>
         {submitError ? (
           <Surface
             variant="panelAlt"
@@ -428,7 +495,7 @@ const ProposalChamber: React.FC = () => {
             valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
           />
           <StatTile
-            label="Time left"
+            label={proposal.timeContextLabel}
             value={proposal.timeLeft}
             variant="panel"
             className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"

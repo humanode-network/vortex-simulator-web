@@ -121,7 +121,11 @@ const ProposalFinished: React.FC = () => {
           <div className="flex justify-center">
             <Button asChild size="sm">
               <Link
-                to={`/app/proposals/new?resubmitsProposalId=${encodeURIComponent(proposal.decisionRootProposalId)}`}
+                to={
+                  proposal.reconsiderationDraftId
+                    ? `/app/proposals/new?draftId=${encodeURIComponent(proposal.reconsiderationDraftId)}`
+                    : `/app/proposals/new?resubmitsProposalId=${encodeURIComponent(proposal.decisionRootProposalId)}`
+                }
               >
                 Resubmit for reconsideration
               </Link>
