@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router";
 import { HintLabel } from "@/components/Hint";
 
 export type ProposalStage =
@@ -15,12 +16,14 @@ type ProposalStageBarProps = {
   current: ProposalStage;
   showFormationStage?: boolean;
   className?: string;
+  stageLinks?: Partial<Record<ProposalStage, string>>;
 };
 
 export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
   current,
   showFormationStage = true,
   className,
+  stageLinks,
 }) => {
   const allStages: {
     key: ProposalStage;
@@ -59,6 +62,7 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
     >
       {stages.map((stage) => {
         const active = stage.key === current;
+        const href = stageLinks?.[stage.key];
         const activeClasses =
           stage.key === "draft"
             ? "bg-panel text-text border border-border shadow-[var(--shadow-control)] ring-1 ring-inset ring-[color:var(--glass-border)]"
@@ -75,17 +79,21 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
                       : stage.key === "passed"
                         ? "bg-[color:var(--ok)]/20 text-[color:var(--ok)]"
                         : "bg-[color:var(--danger)]/12 text-[color:var(--danger)]";
-        return (
-          <div
-            key={stage.key}
-            className={[
-              "min-w-0 basis-[calc(50%-0.25rem)] rounded-full px-3 py-2 text-center text-xs leading-tight font-semibold transition sm:flex-1 sm:basis-0",
-              active
-                ? activeClasses
-                : "border border-border bg-panel-alt [background-image:var(--card-grad)] bg-cover bg-no-repeat text-muted",
-            ].join(" ")}
-          >
-            {stage.render ?? stage.label}
+        const className = [
+          "min-w-0 basis-[calc(50%-0.25rem)] rounded-full px-3 py-2 text-center text-xs leading-tight font-semibold transition sm:flex-1 sm:basis-0",
+          active
+            ? activeClasses
+            : "border border-border bg-panel-alt [background-image:var(--card-grad)] bg-cover bg-no-repeat text-muted",
+          href ? "hover:border-border-strong hover:text-text" : "",
+        ].join(" ");
+        const content = stage.render ?? stage.label;
+        return href ? (
+          <Link key={stage.key} to={href} className={className}>
+            {content}
+          </Link>
+        ) : (
+          <div key={stage.key} className={className}>
+            {content}
           </div>
         );
       })}

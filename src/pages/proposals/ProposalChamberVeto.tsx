@@ -118,12 +118,25 @@ const ProposalChamberVeto: React.FC = () => {
   const viewerIsProposer =
     auth.address?.trim().toLowerCase() ===
     proposal.proposerId.trim().toLowerCase();
+  const stageLinks = id
+    ? {
+        vote: proposal.voteRoute,
+        citizen_veto: `/app/proposals/${id}/citizen-veto`,
+        chamber_veto: `/app/proposals/${id}/chamber-veto`,
+      }
+    : undefined;
+  const vetoWindowOpen = proposal.timeLeft !== "Ended";
+  const chamberVetoVoteCount = proposal.chambers.reduce(
+    (sum, chamber) =>
+      sum + chamber.votes.veto + chamber.votes.keep + chamber.votes.abstain,
+    0,
+  );
 
   const handleVote = async (
     chamberId: string,
     choice: "veto" | "keep" | "abstain",
   ) => {
-    if (!id || submittingKey || viewerIsProposer) return;
+    if (!id || submittingKey || !vetoWindowOpen || viewerIsProposer) return;
     setSubmittingKey(`${chamberId}:${choice}`);
     setSubmitError(null);
     try {
@@ -163,14 +176,24 @@ const ProposalChamberVeto: React.FC = () => {
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
+        stageLinks={stageLinks}
       >
         <Surface
           variant="panelAlt"
           radius="2xl"
           shadow="tile"
-          className="mx-auto px-4 py-2 text-xs font-semibold text-muted"
+          className="mx-auto max-w-3xl px-5 py-4 text-sm text-muted"
         >
-          All snapped active chambers may separately decide whether to veto
+          <p className="font-semibold text-text">Chamber Veto</p>
+          <p className="mt-2">
+            Chambers captured for this proposal&apos;s veto process can each
+            vote to veto, keep, or abstain.
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            If enough chambers cross their own internal veto thresholds before
+            this window ends, the proposal returns to the proposer for
+            reconsideration.
+          </p>
         </Surface>
         {viewerIsProposer ? (
           <Surface
@@ -196,6 +219,16 @@ const ProposalChamberVeto: React.FC = () => {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-text">Chamber veto window</h2>
+        {chamberVetoVoteCount === 0 ? (
+          <Surface
+            variant="panelAlt"
+            radius="2xl"
+            shadow="tile"
+            className="px-5 py-4 text-sm text-muted"
+          >
+            No chamber veto initiated yet.
+          </Surface>
+        ) : null}
         <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
             label="Time left"
@@ -235,6 +268,10 @@ const ProposalChamberVeto: React.FC = () => {
             const totalVotes =
               chamber.votes.veto + chamber.votes.keep + chamber.votes.abstain;
             const chamberKey = chamber.chamberId;
+            const currentVote = chamber.viewer.currentVote;
+            const vetoRecorded = currentVote === "veto";
+            const keepRecorded = currentVote === "keep";
+            const abstainRecorded = currentVote === "abstain";
             return (
               <Surface
                 key={chamberKey}
@@ -265,7 +302,7 @@ const ProposalChamberVeto: React.FC = () => {
 
                 <div className="grid gap-2 text-sm text-text sm:grid-cols-2">
                   <StatTile
-                    label="Electorate"
+                    label="Eligible voters"
                     value={String(chamber.eligibleVoters)}
                     className="px-3 py-3"
                   />
@@ -275,7 +312,12 @@ const ProposalChamberVeto: React.FC = () => {
                     className="px-3 py-3"
                   />
                   <StatTile
-                    label="Vote split"
+                    label="Veto needed"
+                    value={String(chamber.vetoNeeded)}
+                    className="px-3 py-3"
+                  />
+                  <StatTile
+                    label="Weighted split"
                     value={`${chamber.votes.veto} / ${chamber.votes.keep} / ${chamber.votes.abstain}`}
                     className="px-3 py-3"
                   />
@@ -291,6 +333,12 @@ const ProposalChamberVeto: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-muted">
+                  Eligible voters and quorum are headcount-based. Weighted
+                  totals below include delegated voting weight captured for this
+                  proposal.
+                </p>
+
+                <p className="text-xs text-muted">
                   {viewerIsProposer
                     ? "You cannot vote on your own proposal."
                     : chamber.viewer.eligible
@@ -303,59 +351,92 @@ const ProposalChamberVeto: React.FC = () => {
                 <div className="flex flex-wrap gap-2">
                   <VoteButton
                     tone="destructive"
-                    label="Veto"
+                    label={vetoRecorded ? "Veto cast" : "Veto"}
+                    className={
+                      vetoRecorded
+                        ? "bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]"
+                        : undefined
+                    }
                     disabled={
                       submittingKey !== null ||
+                      !vetoWindowOpen ||
                       !chamber.viewer.eligible ||
-                      viewerIsProposer
+                      viewerIsProposer ||
+                      vetoRecorded
                     }
                     title={
                       viewerIsProposer
                         ? "You cannot vote on your own proposal."
-                        : !chamber.viewer.eligible
-                          ? "You are not eligible to vote in this chamber veto."
-                          : undefined
+                        : vetoRecorded
+                          ? "Your chamber veto is already recorded here."
+                          : !vetoWindowOpen
+                            ? "Veto window ended."
+                            : !chamber.viewer.eligible
+                              ? "You are not eligible to vote in this chamber veto."
+                              : undefined
                     }
                     onClick={() => handleVote(chamber.chamberId, "veto")}
                   />
                   <VoteButton
                     tone="accent"
-                    label="Keep"
+                    label={keepRecorded ? "Keep cast" : "Keep"}
+                    className={
+                      keepRecorded
+                        ? "bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]"
+                        : undefined
+                    }
                     disabled={
                       submittingKey !== null ||
+                      !vetoWindowOpen ||
                       !chamber.viewer.eligible ||
-                      viewerIsProposer
+                      viewerIsProposer ||
+                      keepRecorded
                     }
                     title={
                       viewerIsProposer
                         ? "You cannot vote on your own proposal."
-                        : !chamber.viewer.eligible
-                          ? "You are not eligible to vote in this chamber veto."
-                          : undefined
+                        : keepRecorded
+                          ? "Your chamber keep vote is already recorded here."
+                          : !vetoWindowOpen
+                            ? "Veto window ended."
+                            : !chamber.viewer.eligible
+                              ? "You are not eligible to vote in this chamber veto."
+                              : undefined
                     }
                     onClick={() => handleVote(chamber.chamberId, "keep")}
                   />
                   <VoteButton
                     tone="neutral"
-                    label="Abstain"
+                    label={abstainRecorded ? "Abstaining" : "Abstain"}
+                    className={
+                      abstainRecorded
+                        ? "bg-[var(--panel-alt)] text-[var(--text)] ring-1 ring-[var(--border-strong)] hover:bg-[var(--panel-alt)]"
+                        : undefined
+                    }
                     disabled={
                       submittingKey !== null ||
+                      !vetoWindowOpen ||
                       !chamber.viewer.eligible ||
-                      viewerIsProposer
+                      viewerIsProposer ||
+                      abstainRecorded
                     }
                     title={
                       viewerIsProposer
                         ? "You cannot vote on your own proposal."
-                        : !chamber.viewer.eligible
-                          ? "You are not eligible to vote in this chamber veto."
-                          : undefined
+                        : abstainRecorded
+                          ? "Your chamber abstain vote is already recorded here."
+                          : !vetoWindowOpen
+                            ? "Veto window ended."
+                            : !chamber.viewer.eligible
+                              ? "You are not eligible to vote in this chamber veto."
+                              : undefined
                     }
                     onClick={() => handleVote(chamber.chamberId, "abstain")}
                   />
                 </div>
 
                 <p className="text-xs text-muted">
-                  {totalVotes} votes cast so far in this chamber.
+                  {totalVotes} weighted votes cast so far in this chamber.
                 </p>
               </Surface>
             );
@@ -365,7 +446,7 @@ const ProposalChamberVeto: React.FC = () => {
 
       <ProposalSummaryCard
         summary={proposal.summary}
-        stats={proposal.stats}
+        stats={[]}
         overview={proposal.overview}
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}

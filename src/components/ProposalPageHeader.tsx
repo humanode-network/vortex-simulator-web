@@ -13,6 +13,7 @@ type ProposalPageHeaderProps = {
   showFormationStage?: boolean;
   chamber: string;
   proposer: string;
+  stageLinks?: Partial<Record<ProposalStage, string>>;
   children?: ReactNode;
 };
 
@@ -22,6 +23,7 @@ export function ProposalPageHeader({
   showFormationStage = true,
   chamber,
   proposer,
+  stageLinks,
   children,
 }: ProposalPageHeaderProps) {
   return (
@@ -30,6 +32,7 @@ export function ProposalPageHeader({
       <ProposalStageBar
         current={stage}
         showFormationStage={showFormationStage}
+        stageLinks={stageLinks}
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <StatTile

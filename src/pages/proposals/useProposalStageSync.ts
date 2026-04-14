@@ -30,6 +30,17 @@ export function shouldNavigateToCanonicalRoute(
   );
 }
 
+function isEmbeddedVetoRouteOverride(
+  currentPath: string,
+  status: Pick<ProposalStatusDto, "canonicalStage">,
+): boolean {
+  if (status.canonicalStage !== "vote") return false;
+  return (
+    currentPath.endsWith("/citizen-veto") ||
+    currentPath.endsWith("/chamber-veto")
+  );
+}
+
 function hasSnapshotRouteOverride(search?: string): boolean {
   if (!search) return false;
   const params = new URLSearchParams(search);
@@ -69,6 +80,9 @@ export function formatProposalStageTransitionMessage(
   }
   if (status.redirectReason === "formation_canceled") {
     return "Project was canceled and moved to Finished.";
+  }
+  if (status.redirectReason === "veto_remanded") {
+    return "Proposal was remanded for reconsideration.";
   }
   if (status.canonicalStage === "vote")
     return "Proposal moved to Chamber vote.";
@@ -131,6 +145,7 @@ export async function syncToCanonicalProposalStage(
     return false;
   }
   const status = await apiProposalStatus(input.proposalId);
+  if (isEmbeddedVetoRouteOverride(input.currentPath, status)) return false;
   if (!shouldNavigateToCanonicalRoute(input.currentPath, status)) return false;
   storeTransitionNotice({
     route: status.canonicalRoute,

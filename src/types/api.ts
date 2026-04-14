@@ -16,6 +16,7 @@ export type ProposalResolutionKindDto =
   | "ordinary_failed_pool"
   | "ordinary_failed_vote"
   | "citizen_veto_remand"
+  | "chamber_veto_remand"
   | "chamber_veto_void"
   | "formation_completed"
   | "formation_canceled";
@@ -652,6 +653,10 @@ export type ChamberProposalPageDto = {
   teamSlots: string;
   milestones: string;
   timeLeft: string;
+  timeContextLabel: string;
+  ordinaryVoteClosed: boolean;
+  votePassedAt: string | null;
+  voteFinalizesAt: string | null;
   votes: { yes: number; no: number; abstain: number };
   attentionQuorum: number;
   quorumNeeded: number;
@@ -687,6 +692,40 @@ export type ChamberProposalPageDto = {
       directVoteOverrideApplies: boolean;
     };
   };
+  citizenVeto: {
+    available: boolean;
+    attemptsUsed: number;
+    attemptsRemaining: number;
+    eligibleCitizens: number;
+    quorumNeeded: number;
+    vetoNeeded: number;
+    votes: { veto: number; keep: number };
+    viewer: {
+      eligible: boolean;
+      currentVote: "veto" | "keep" | null;
+    };
+  };
+  chamberVeto: {
+    activeChambers: number;
+    chamberThreshold: number;
+    vetoingChambers: number;
+    chambers: Array<{
+      chamberId: string;
+      chamberTitle: string;
+      eligibleVoters: number;
+      quorumNeeded: number;
+      votes: { veto: number; keep: number; abstain: number };
+      countsAsVetoing: boolean;
+      delegation: {
+        source: "snapshot" | "live";
+        snapshotCapturedAt: string | null;
+      };
+      viewer: {
+        eligible: boolean;
+        currentVote: "veto" | "keep" | "abstain" | null;
+      };
+    }>;
+  };
   thresholdContext?: {
     activityThreshold: {
       categories: string[];
@@ -710,6 +749,7 @@ export type CitizenVetoProposalPageDto = {
   proposer: string;
   proposerId: string;
   chamber: string;
+  voteRoute: string;
   budget: string;
   timeLeft: string;
   formationEligible: boolean;
@@ -737,6 +777,7 @@ export type ChamberVetoProposalPageDto = {
   proposer: string;
   proposerId: string;
   chamber: string;
+  voteRoute: string;
   budget: string;
   timeLeft: string;
   formationEligible: boolean;
@@ -755,6 +796,7 @@ export type ChamberVetoProposalPageDto = {
     chamberTitle: string;
     eligibleVoters: number;
     quorumNeeded: number;
+    vetoNeeded: number;
     votes: { veto: number; keep: number; abstain: number };
     countsAsVetoing: boolean;
     delegation: {
@@ -809,6 +851,7 @@ export type ProposalFinishedPageDto = {
   terminalSummary: string;
   decisionRootProposalId: string;
   canReconsider: boolean;
+  reconsiderationDraftId: string | null;
   formationEligible: boolean;
   budget: string;
   timeLeft: string;
