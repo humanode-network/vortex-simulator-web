@@ -1355,6 +1355,63 @@ export async function apiFactionThreadTransition(input: {
   );
 }
 
+export async function apiFactionThreadDelete(input: {
+  factionId: string;
+  threadId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.delete";
+  factionId: string;
+  threadId: string;
+  deleted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.delete",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiFactionThreadReplyDelete(input: {
+  factionId: string;
+  threadId: string;
+  messageId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "faction.thread.reply.delete";
+  factionId: string;
+  threadId: string;
+  messageId: string;
+  deleted: true;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "faction.thread.reply.delete",
+      payload: {
+        factionId: input.factionId,
+        threadId: input.threadId,
+        messageId: input.messageId,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
 export async function apiFactionInitiativeCreate(input: {
   factionId: string;
   title: string;
