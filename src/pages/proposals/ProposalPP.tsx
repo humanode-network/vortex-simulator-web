@@ -26,6 +26,7 @@ import {
   useProposalStageSync,
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalPP: React.FC = () => {
   const { id } = useParams();
@@ -296,6 +297,8 @@ const ProposalPP: React.FC = () => {
           milestonesDetail={proposal.milestonesDetail}
         />
       ) : null}
+
+      <ProposalDeliberation proposalId={id} />
 
       <Modal
         open={showRules}

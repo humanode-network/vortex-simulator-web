@@ -19,6 +19,7 @@ import {
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalFinished: React.FC = () => {
   const { id } = useParams();
@@ -185,6 +186,8 @@ const ProposalFinished: React.FC = () => {
           milestonesDetail={proposal.milestonesDetail}
         />
       ) : null}
+
+      <ProposalDeliberation proposalId={id} />
 
       {timelineError ? (
         <Surface

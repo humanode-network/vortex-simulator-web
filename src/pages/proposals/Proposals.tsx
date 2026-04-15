@@ -63,6 +63,12 @@ function hasFinishedRoute(href?: string): boolean {
   return Boolean(href?.includes("/finished"));
 }
 
+const DELIBERATION_STAT_LABELS = new Set([
+  "Deliberation",
+  "Open concerns",
+  "Last discussion",
+]);
+
 const Proposals: React.FC = () => {
   const [proposalData, setProposalData] = useState<
     ProposalListItemDto[] | null
@@ -503,7 +509,7 @@ const Proposals: React.FC = () => {
               proposal.stage === "build" && formationPage
                 ? getFormationProgress(formationPage)
                 : null;
-            const keyStats =
+            const baseKeyStats =
               proposal.stage === "pool" && poolPage && poolStats
                 ? poolPage.formationEligible
                   ? [
@@ -573,6 +579,16 @@ const Proposals: React.FC = () => {
                               ...formationPage.stats,
                             ]
                           : proposal.stats;
+            const deliberationStats = proposal.stats.filter((stat) =>
+              DELIBERATION_STAT_LABELS.has(stat.label),
+            );
+            const keyStats = [
+              ...baseKeyStats,
+              ...deliberationStats.filter(
+                (stat) =>
+                  !baseKeyStats.some((item) => item.label === stat.label),
+              ),
+            ];
 
             return (
               <ExpandableCard

@@ -29,6 +29,7 @@ import {
 import { useAuth } from "@/app/auth/AuthContext";
 import { apiCitizenVetoVote } from "@/lib/apiClient";
 import { CitizenVetoActions } from "./CitizenVetoActions";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalReferendum: React.FC = () => {
   const { id } = useParams();
@@ -406,6 +407,8 @@ const ProposalReferendum: React.FC = () => {
           milestonesDetail={proposal.milestonesDetail}
         />
       ) : null}
+
+      <ProposalDeliberation proposalId={id} />
 
       {timelineError ? (
         <Surface

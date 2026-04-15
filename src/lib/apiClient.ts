@@ -29,6 +29,10 @@ import type {
   GetProposalTimelineResponse,
   HumanNodeProfileDto,
   ProposalDraftDetailDto,
+  ProposalThreadDetailDto,
+  ProposalThreadDto,
+  ProposalThreadListDto,
+  ProposalThreadMessageDto,
   ProposalStatusDto,
   PoolProposalPageDto,
 } from "@/types/api";
@@ -283,6 +287,21 @@ export async function apiProposalTimeline(
   );
 }
 
+export async function apiProposalThreads(
+  id: string,
+): Promise<ProposalThreadListDto> {
+  return await apiGet<ProposalThreadListDto>(`/api/proposals/${id}/threads`);
+}
+
+export async function apiProposalThreadDetail(
+  proposalId: string,
+  threadId: string,
+): Promise<ProposalThreadDetailDto> {
+  return await apiGet<ProposalThreadDetailDto>(
+    `/api/proposals/${proposalId}/threads/${threadId}`,
+  );
+}
+
 export async function apiProposalStatus(
   id: string,
 ): Promise<ProposalStatusDto> {
@@ -458,6 +477,94 @@ export async function apiChamberThreadReply(input: {
         chamberId: input.chamberId,
         threadId: input.threadId,
         body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiProposalThreadCreate(input: {
+  proposalId: string;
+  category?: ProposalThreadDto["category"];
+  title: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.thread.create";
+  proposalId: string;
+  thread: ProposalThreadDto;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "proposal.thread.create",
+      payload: {
+        proposalId: input.proposalId,
+        category: input.category ?? "general",
+        title: input.title,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiProposalThreadReply(input: {
+  proposalId: string;
+  threadId: string;
+  body: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.thread.reply";
+  proposalId: string;
+  threadId: string;
+  message: ProposalThreadMessageDto;
+  replies: number;
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "proposal.thread.reply",
+      payload: {
+        proposalId: input.proposalId,
+        threadId: input.threadId,
+        body: input.body,
+      },
+      idempotencyKey: input.idempotencyKey,
+    },
+    input.idempotencyKey
+      ? { headers: { "idempotency-key": input.idempotencyKey } }
+      : undefined,
+  );
+}
+
+export async function apiProposalThreadTransition(input: {
+  proposalId: string;
+  threadId: string;
+  status: ProposalThreadDto["status"];
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.thread.transition";
+  proposalId: string;
+  thread: { id: string; status: ProposalThreadDto["status"] };
+}> {
+  return await apiPost(
+    "/api/command",
+    {
+      type: "proposal.thread.transition",
+      payload: {
+        proposalId: input.proposalId,
+        threadId: input.threadId,
+        status: input.status,
       },
       idempotencyKey: input.idempotencyKey,
     },

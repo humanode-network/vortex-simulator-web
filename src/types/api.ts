@@ -218,6 +218,58 @@ export type ChamberThreadDetailDto = {
   };
   messages: ChamberThreadMessageDto[];
 };
+
+export type ProposalThreadCategoryDto =
+  | "question"
+  | "concern"
+  | "amendment"
+  | "support"
+  | "execution"
+  | "general";
+export type ProposalThreadStatusDto = "open" | "resolved" | "locked";
+export type ProposalThreadPermissionsDto = {
+  canReply: boolean;
+  canTransition: boolean;
+  canDelete: boolean;
+};
+export type ProposalThreadDto = {
+  id: string;
+  proposalId: string;
+  decisionRootProposalId: string;
+  category: ProposalThreadCategoryDto;
+  status: ProposalThreadStatusDto;
+  title: string;
+  body: string;
+  authorAddress: string;
+  replies: number;
+  createdAt: string;
+  updatedAt: string;
+  permissions: ProposalThreadPermissionsDto;
+};
+export type ProposalThreadMessageDto = {
+  id: string;
+  proposalId: string;
+  threadId: string;
+  authorAddress: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  permissions: {
+    canDelete: boolean;
+  };
+};
+export type ProposalThreadListDto = {
+  proposalId: string;
+  permissions: {
+    canCreate: boolean;
+  };
+  items: ProposalThreadDto[];
+};
+export type ProposalThreadDetailDto = {
+  proposalId: string;
+  thread: ProposalThreadDto;
+  messages: ProposalThreadMessageDto[];
+};
 export type ChamberChatMessageDto = {
   id: string;
   author: string;
