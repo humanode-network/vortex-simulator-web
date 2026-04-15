@@ -25,6 +25,7 @@ import {
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
 import { useAuth } from "@/app/auth/AuthContext";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalCitizenVeto: React.FC = () => {
   const { id } = useParams();
@@ -368,6 +369,8 @@ const ProposalCitizenVeto: React.FC = () => {
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
       />
+
+      <ProposalDeliberation proposalId={id} />
 
       {timelineError ? (
         <Surface

@@ -32,6 +32,7 @@ import {
 } from "./useProposalStageSync";
 import { useAuth } from "@/app/auth/AuthContext";
 import { CitizenVetoActions } from "./CitizenVetoActions";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -621,6 +622,8 @@ const ProposalChamber: React.FC = () => {
           milestonesDetail={proposal.milestonesDetail}
         />
       ) : null}
+
+      <ProposalDeliberation proposalId={id} />
 
       {timelineError ? (
         <Surface

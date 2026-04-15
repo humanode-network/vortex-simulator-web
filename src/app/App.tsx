@@ -4,12 +4,12 @@ import { AuthProvider } from "@/app/auth/AuthContext";
 import AppRoutes from "./AppRoutes";
 
 const ScrollToTopOnRouteChange: React.FC = () => {
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     document.title = "Vortex Sim";
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [pathname, search]);
+  }, [pathname]);
 
   return null;
 };

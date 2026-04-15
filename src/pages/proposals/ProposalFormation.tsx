@@ -26,6 +26,7 @@ import {
   useProposalStageSync,
   useProposalTransitionNotice,
 } from "./useProposalStageSync";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
@@ -331,6 +332,8 @@ const ProposalFormation: React.FC = () => {
         openSlots={project.openSlots}
         milestonesDetail={project.milestonesDetail}
       />
+
+      <ProposalDeliberation proposalId={id} />
 
       {timelineError ? (
         <Surface
