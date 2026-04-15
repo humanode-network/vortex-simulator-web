@@ -13,8 +13,6 @@ import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import {
   apiFaction,
-  apiFactionThreadDelete,
-  apiFactionThreadReplyDelete,
   apiFactionThreadReply,
   apiFactionThreadTransition,
   apiMe,
@@ -208,27 +206,6 @@ const FactionChannel: React.FC = () => {
                       {formatDateTime(thread.updatedAt)}
                     </p>
                   </Link>
-                  {canModerate ||
-                  normalizeAddress(thread.authorAddress) ===
-                    normalizeAddress(viewerAddress ?? "") ? (
-                    <div className="px-2 py-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={mutating}
-                        onClick={() =>
-                          runAction(async () => {
-                            await apiFactionThreadDelete({
-                              factionId: faction.id,
-                              threadId: thread.id,
-                            });
-                          })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  ) : null}
                 </div>
               </div>
             ))
@@ -269,50 +246,24 @@ const FactionChannel: React.FC = () => {
                   {(activeThread.messages ?? []).length === 0 ? (
                     <p className="text-sm text-muted">No replies yet.</p>
                   ) : (
-                    (activeThread.messages ?? []).map((message) => {
-                      const canDeleteMessage =
-                        canModerate ||
-                        normalizeAddress(message.authorAddress) ===
-                          normalizeAddress(viewerAddress ?? "");
-                      return (
-                        <div
-                          key={message.id}
-                          className="space-y-1 rounded-md border border-border px-3 py-2"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <AddressInline
-                              address={message.authorAddress}
-                              className="text-text"
-                              textClassName="text-xs [overflow-wrap:anywhere] break-words"
-                            />
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted">
-                                {formatDateTime(message.createdAt)}
-                              </span>
-                              {canDeleteMessage ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={mutating}
-                                  onClick={() =>
-                                    runAction(async () => {
-                                      await apiFactionThreadReplyDelete({
-                                        factionId: faction.id,
-                                        threadId: activeThread.id,
-                                        messageId: message.id,
-                                      });
-                                    })
-                                  }
-                                >
-                                  Delete
-                                </Button>
-                              ) : null}
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted">{message.body}</p>
+                    (activeThread.messages ?? []).map((message) => (
+                      <div
+                        key={message.id}
+                        className="space-y-1 rounded-md border border-border px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <AddressInline
+                            address={message.authorAddress}
+                            className="text-text"
+                            textClassName="text-xs [overflow-wrap:anywhere] break-words"
+                          />
+                          <span className="text-xs text-muted">
+                            {formatDateTime(message.createdAt)}
+                          </span>
                         </div>
-                      );
-                    })
+                        <p className="text-sm text-muted">{message.body}</p>
+                      </div>
+                    ))
                   )}
                 </div>
 
