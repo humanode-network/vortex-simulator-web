@@ -121,7 +121,9 @@ const ProposalCitizenVeto: React.FC = () => {
       ? Math.round((castVotes / proposal.eligibleCitizens) * 100)
       : 0;
   const vetoPercent =
-    castVotes > 0 ? Math.round((proposal.votes.veto / castVotes) * 100) : 0;
+    proposal.eligibleCitizens > 0
+      ? Math.round((proposal.votes.veto / proposal.eligibleCitizens) * 100)
+      : 0;
   const viewerIsProposer =
     auth.address?.trim().toLowerCase() ===
     proposal.proposerId.trim().toLowerCase();
@@ -333,7 +335,7 @@ const ProposalCitizenVeto: React.FC = () => {
                   {proposal.votes.veto} / {proposal.vetoNeeded}
                 </span>
                 <span className="text-xs font-semibold text-muted">
-                  {vetoPercent}% veto among cast votes
+                  {vetoPercent}% of eligible Citizens
                 </span>
               </>
             }
