@@ -333,7 +333,7 @@ const ProposalCitizenVeto: React.FC = () => {
                   {proposal.votes.veto} / {proposal.vetoNeeded}
                 </span>
                 <span className="text-xs font-semibold text-muted">
-                  {vetoPercent}% veto among cast votes
+                  {vetoPercent}% of eligible Citizens
                 </span>
               </>
             }
