@@ -19,6 +19,7 @@ import {
   apiProposalTimeline,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { PoolProposalPageDto, ProposalTimelineItemDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -123,9 +124,10 @@ const ProposalPP: React.FC = () => {
     ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
     : [0, 0];
   const openSlots = Math.max(totalSlots - filledSlots, 0);
-  const viewerIsProposer =
-    auth.address?.trim().toLowerCase() ===
-    proposal.proposerId.trim().toLowerCase();
+  const viewerIsProposer = addressesReferToSameIdentity(
+    auth.address,
+    proposal.proposerId,
+  );
   const formationSummaryStats = proposal.formationEligible
     ? [
         { label: "Budget ask", value: proposal.budget },

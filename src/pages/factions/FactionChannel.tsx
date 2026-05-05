@@ -18,13 +18,10 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
-
-function normalizeAddress(value: string): string {
-  return value.trim().toLowerCase();
-}
 
 const FactionChannel: React.FC = () => {
   const { id, channelId, threadId } = useParams();
@@ -64,10 +61,8 @@ const FactionChannel: React.FC = () => {
 
   const viewerMembership = useMemo(() => {
     if (!viewerAddress) return null;
-    return memberships.find(
-      (membership) =>
-        normalizeAddress(membership.address) ===
-        normalizeAddress(viewerAddress),
+    return memberships.find((membership) =>
+      addressesReferToSameIdentity(membership.address, viewerAddress),
     );
   }, [memberships, viewerAddress]);
 

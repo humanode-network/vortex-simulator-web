@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { useAuth } from "@/app/auth/AuthContext";
 import { Button } from "@/components/primitives/button";
 import { PageHint } from "@/components/PageHint";
@@ -110,18 +111,17 @@ const urgentEntityKey = (item: FeedItemDto) => {
   return `id:${item.id}`;
 };
 
-const isUrgentItemInteractable = (
+export const isUrgentItemInteractable = (
   item: FeedItemDto,
   isGovernorActive: boolean,
   viewerAddress?: string,
 ) => {
   if (item.actionable !== true) return false;
   if (item.stage === "build") {
-    const viewer = viewerAddress?.trim().toLowerCase();
-    const proposer = (item.proposerId ?? item.proposer ?? "")
-      .trim()
-      .toLowerCase();
-    return Boolean(viewer && proposer && viewer === proposer);
+    return addressesReferToSameIdentity(
+      viewerAddress,
+      item.proposerId ?? item.proposer,
+    );
   }
   if ((item.stage === "pool" || item.stage === "vote") && !isGovernorActive) {
     if (item.href?.includes("/referendum")) return true;

@@ -17,13 +17,10 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
-
-function normalizeAddress(value: string): string {
-  return value.trim().toLowerCase();
-}
 
 const FactionInitiative: React.FC = () => {
   const { id, initiativeId } = useParams();
@@ -60,10 +57,8 @@ const FactionInitiative: React.FC = () => {
 
   const viewerMembership = useMemo(() => {
     if (!viewerAddress) return null;
-    return memberships.find(
-      (membership) =>
-        normalizeAddress(membership.address) ===
-        normalizeAddress(viewerAddress),
+    return memberships.find((membership) =>
+      addressesReferToSameIdentity(membership.address, viewerAddress),
     );
   }, [memberships, viewerAddress]);
 
@@ -73,10 +68,12 @@ const FactionInitiative: React.FC = () => {
     viewerMembership?.role === "steward";
 
   const initiatives = useMemo(() => {
-    const viewer = normalizeAddress(viewerAddress ?? "");
     return initiativesRaw.filter((initiative) => {
       if (initiative.status !== "draft") return true;
-      return normalizeAddress(initiative.ownerAddress) === viewer;
+      return addressesReferToSameIdentity(
+        initiative.ownerAddress,
+        viewerAddress,
+      );
     });
   }, [initiativesRaw, viewerAddress]);
 
@@ -87,9 +84,9 @@ const FactionInitiative: React.FC = () => {
   const canEditActiveInitiative = useMemo(() => {
     if (!activeInitiative) return false;
     if (canModerate) return true;
-    return (
-      normalizeAddress(activeInitiative.ownerAddress) ===
-      normalizeAddress(viewerAddress ?? "")
+    return addressesReferToSameIdentity(
+      activeInitiative.ownerAddress,
+      viewerAddress,
     );
   }, [activeInitiative, canModerate, viewerAddress]);
 
