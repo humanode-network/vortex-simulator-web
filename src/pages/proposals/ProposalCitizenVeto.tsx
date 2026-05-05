@@ -15,7 +15,9 @@ import {
   apiProposalCitizenVetoPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { calculateCitizenVetoSupportPercent } from "@/lib/proposalVetoUi";
 import type {
   CitizenVetoProposalPageDto,
   ProposalTimelineItemDto,
@@ -120,13 +122,14 @@ const ProposalCitizenVeto: React.FC = () => {
     proposal.eligibleCitizens > 0
       ? Math.round((castVotes / proposal.eligibleCitizens) * 100)
       : 0;
-  const vetoPercent =
-    proposal.eligibleCitizens > 0
-      ? Math.round((proposal.votes.veto / proposal.eligibleCitizens) * 100)
-      : 0;
-  const viewerIsProposer =
-    auth.address?.trim().toLowerCase() ===
-    proposal.proposerId.trim().toLowerCase();
+  const vetoPercent = calculateCitizenVetoSupportPercent({
+    vetoVotes: proposal.votes.veto,
+    eligibleCitizens: proposal.eligibleCitizens,
+  });
+  const viewerIsProposer = addressesReferToSameIdentity(
+    auth.address,
+    proposal.proposerId,
+  );
   const stageLinks = id
     ? {
         vote: proposal.voteRoute,

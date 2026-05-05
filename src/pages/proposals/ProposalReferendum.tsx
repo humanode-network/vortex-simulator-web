@@ -17,6 +17,7 @@ import {
   apiProposalTimeline,
   apiReferendumVote,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type {
   ChamberProposalPageDto,
@@ -137,9 +138,10 @@ const ProposalReferendum: React.FC = () => {
   const yesPercentOfQuorum =
     engaged > 0 ? Math.round((yesTotal / engaged) * 100) : 0;
   const passingNeededPercent = 66.6;
-  const viewerIsProposer =
-    auth.address?.trim().toLowerCase() ===
-    proposal.proposerId.trim().toLowerCase();
+  const viewerIsProposer = addressesReferToSameIdentity(
+    auth.address,
+    proposal.proposerId,
+  );
 
   const [filledSlots, totalSlots] = proposal.formationEligible
     ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))

@@ -21,6 +21,7 @@ import {
   apiHuman,
   apiMyGovernance,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type {
   GetMyGovernanceResponse,
@@ -251,7 +252,7 @@ const HumanNode: React.FC = () => {
   );
 
   const showShortBadge = !isAddressName && !isGenericName;
-  const isSelfProfile = Boolean(auth.address && profile.id === auth.address);
+  const isSelfProfile = addressesReferToSameIdentity(auth.address, profile.id);
 
   const handleDelegateHere = async (chamberId: string) => {
     if (!id) return;
@@ -437,8 +438,10 @@ const HumanNode: React.FC = () => {
             {delegationCards.map((item) => {
               const viewerItem =
                 viewerDelegationByChamber.get(item.chamberId) ?? null;
-              const viewerAlreadyDelegatesHere =
-                viewerItem?.delegateeAddress === profile.id;
+              const viewerAlreadyDelegatesHere = addressesReferToSameIdentity(
+                viewerItem?.delegateeAddress,
+                profile.id,
+              );
               const canManage =
                 !isSelfProfile &&
                 manageableChambers.some(

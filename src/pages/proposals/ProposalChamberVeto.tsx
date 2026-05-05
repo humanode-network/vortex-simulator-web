@@ -15,6 +15,7 @@ import {
   apiProposalChamberVetoPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type {
@@ -116,9 +117,10 @@ const ProposalChamberVeto: React.FC = () => {
     );
   }
 
-  const viewerIsProposer =
-    auth.address?.trim().toLowerCase() ===
-    proposal.proposerId.trim().toLowerCase();
+  const viewerIsProposer = addressesReferToSameIdentity(
+    auth.address,
+    proposal.proposerId,
+  );
   const stageLinks = id
     ? {
         vote: proposal.voteRoute,

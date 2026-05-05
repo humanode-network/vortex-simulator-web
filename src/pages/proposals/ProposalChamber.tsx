@@ -20,6 +20,7 @@ import {
   apiProposalChamberPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { formatDateTime } from "@/lib/dateTime";
 import type {
@@ -161,9 +162,10 @@ const ProposalChamber: React.FC = () => {
       ? proposal.milestoneIndex
       : null;
   const referendumVote = proposal.voteKind === "referendum";
-  const viewerIsProposer =
-    auth.address?.trim().toLowerCase() ===
-    proposal.proposerId.trim().toLowerCase();
+  const viewerIsProposer = addressesReferToSameIdentity(
+    auth.address,
+    proposal.proposerId,
+  );
   const scoreLabel =
     proposal.scoreLabel === "MM" || milestoneVoteIndex !== null
       ? "MM"

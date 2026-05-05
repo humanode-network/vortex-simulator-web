@@ -47,6 +47,7 @@ import { formatDate, formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { useAuth } from "@/app/auth/AuthContext";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
@@ -234,7 +235,9 @@ const Chamber: React.FC = () => {
 
   const isMember = useMemo(() => {
     if (!address || !data) return false;
-    return data.governors.some((gov) => gov.id === address);
+    return data.governors.some((gov) =>
+      addressesReferToSameIdentity(gov.id, address),
+    );
   }, [address, data]);
 
   const canWrite = useMemo(() => {

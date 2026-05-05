@@ -15,12 +15,9 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
-
-function normalizeAddress(value: string): string {
-  return value.trim().toLowerCase();
-}
 
 const FactionInitiativeCreate: React.FC = () => {
   const { id } = useParams();
@@ -62,8 +59,7 @@ const FactionInitiativeCreate: React.FC = () => {
     return (faction.memberships ?? []).some(
       (membership) =>
         membership.isActive &&
-        normalizeAddress(membership.address) ===
-          normalizeAddress(viewerAddress),
+        addressesReferToSameIdentity(membership.address, viewerAddress),
     );
   }, [faction, viewerAddress]);
 

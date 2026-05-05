@@ -16,6 +16,7 @@ import {
   apiProposalFormationPage,
   apiProposalTimeline,
 } from "@/lib/apiClient";
+import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { useAuth } from "@/app/auth/AuthContext";
 import type {
@@ -123,10 +124,10 @@ const ProposalFormation: React.FC = () => {
     project.nextMilestoneIndex ??
     (milestones.total > 0 ? milestones.filled + 1 : undefined);
   const pendingMilestone = project.pendingMilestoneIndex ?? undefined;
-  const viewerAddress = auth.address?.trim().toLowerCase();
-  const proposerAddress = project.proposer.trim().toLowerCase();
-  const isProposerViewer =
-    Boolean(viewerAddress) && viewerAddress === proposerAddress;
+  const isProposerViewer = addressesReferToSameIdentity(
+    auth.address,
+    project.proposer,
+  );
   const canJoinProject =
     project.projectState !== "ready_to_finish" &&
     project.projectState !== "completed" &&
