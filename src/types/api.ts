@@ -477,18 +477,8 @@ export type GetClockResponse = {
   eraSeconds: number;
   nextEraAt: string;
   activeGovernors: number;
-  currentEraRollup?: {
-    era: number;
-    rolledAt: string;
-    requiredTotal: number;
-    requirements: {
-      poolVotes: number;
-      chamberVotes: number;
-      courtActions: number;
-      formationActions: number;
-    };
-    activeGovernorsNextEra: number;
-  };
+  activeGovernorSource?: "prior_rollup" | "snapshot" | "fallback";
+  activeGovernorSourceEra?: number | null;
 };
 
 export type ProposalStageDatumDto = {
