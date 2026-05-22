@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   formatProposalStageTransitionMessage,
   shouldNavigateToCanonicalRoute,
-} from "../../src/pages/proposals/useProposalStageSync.ts";
+} from "../../src/pages/proposals/hooks/useProposalStageSync.ts";
 
 test("shouldNavigateToCanonicalRoute prevents redirect loops on same path", () => {
   assert.equal(

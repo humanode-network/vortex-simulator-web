@@ -1,40 +1,27 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { Card } from "@/components/primitives/card";
-import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
-import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
-import { StatusPill } from "@/components/StatusPill";
 import { PageHint } from "@/components/PageHint";
-import { Kicker } from "@/components/Kicker";
-import { TierLabel } from "@/components/TierLabel";
-import { ToggleGroup } from "@/components/ToggleGroup";
 import { SectionHeader } from "@/components/SectionHeader";
-import { StatTile } from "@/components/StatTile";
-import { ActivityTile } from "@/components/ActivityTile";
-import { AddressInline } from "@/components/AddressInline";
 import { apiHuman } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 import { buildTierRequirementItems } from "@/lib/tierProgress";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { CmEconomyPanel } from "@/components/CmEconomyPanel";
-import { Check, Copy } from "lucide-react";
 import {
-  ACTIVITY_FILTERS,
-  DETAIL_TILE_CLASS,
   PROOF_META,
-  PROOF_TILE_CLASS,
   type ActivityFilter,
   activityMatches,
-  normalizeDetailValue,
   shortAddress,
   shouldShowDetail,
 } from "@/lib/profileUi";
-
-const chamberLabel = (chamberId: string): string =>
-  chamberId === "general" ? "General chamber" : chamberId;
+import { ProfileActivityProjectsSection } from "./components/ProfileActivityProjectsSection";
+import { ProfileDelegationSection } from "./components/ProfileDelegationSection";
+import { ProfileDetailsProofsSection } from "./components/ProfileDetailsProofsSection";
+import { ProfileHero } from "./components/ProfileHero";
+import { ProfileTierProgressSection } from "./components/ProfileTierProgressSection";
 
 type ProfileProps = {
   showHint?: boolean;
@@ -193,114 +180,21 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         </Card>
       ) : null}
 
-      <Surface
-        as="section"
-        variant="panel"
-        radius="2xl"
-        shadow="card"
-        className="p-6"
-      >
-        <div className="grid items-center gap-6 lg:grid-cols-[auto_minmax(0,1fr)_auto]">
-          <div className="flex justify-center lg:justify-start">
-            <AvatarPlaceholder
-              initials={profile?.name?.substring(0, 2).toUpperCase() ?? "—"}
-              size="lg"
-            />
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <h1 className="text-2xl font-semibold text-text sm:text-3xl">
-              {headerTitle}
-            </h1>
-            {headerAddress ? (
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
-                {showShortBadge ? (
-                  <Badge variant="muted">{shortAddress(headerAddress)}</Badge>
-                ) : null}
-                <button
-                  type="button"
-                  className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
-                  onClick={() => handleCopy(headerAddress)}
-                  aria-label={copied ? "Copied" : "Copy address"}
-                  title={copied ? "Copied" : "Copy address"}
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            ) : null}
-          </div>
-          <div className="flex flex-col items-center gap-2 text-sm lg:items-end">
-            <StatusPill
-              label="Governor"
-              value={profile?.governorActive ? "Active" : "Not active"}
-              active={profile?.governorActive ?? false}
-            />
-            <StatusPill
-              label="Human node"
-              value={profile?.humanNodeActive ? "Active" : "Not active"}
-              active={profile?.humanNodeActive ?? false}
-            />
-          </div>
-        </div>
-      </Surface>
+      <ProfileHero
+        copied={copied}
+        headerAddress={headerAddress}
+        headerTitle={headerTitle}
+        onCopyAddress={() => handleCopy(headerAddress)}
+        profile={profile}
+        shortAddressLabel={shortAddress(headerAddress)}
+        showShortBadge={showShortBadge}
+        visibleHeroStats={visibleHeroStats}
+      />
 
-      {visibleHeroStats.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {visibleHeroStats.map((stat) => (
-            <Surface
-              key={stat.label}
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="px-4 py-3 text-center"
-            >
-              <Kicker align="center">
-                {stat.label === "ACM" ? (
-                  <HintLabel termId="acm" termText="ACM" />
-                ) : stat.label === "MM" ? (
-                  <HintLabel termId="meritocratic_measure" termText="MM" />
-                ) : (
-                  stat.label
-                )}
-              </Kicker>
-              <p className="text-xl font-semibold text-text">{stat.value}</p>
-            </Surface>
-          ))}
-        </div>
-      ) : null}
-
-      <section className="space-y-4">
-        <SectionHeader>Details &amp; Proofs</SectionHeader>
-        <div className="grid gap-3 text-left sm:grid-cols-2 lg:grid-cols-3">
-          {visibleDetails.map((detail) => (
-            <StatTile
-              key={detail.label}
-              label={detail.label}
-              value={
-                detail.label === "Tier" ? (
-                  <TierLabel tier={detail.value} />
-                ) : (
-                  normalizeDetailValue(detail.label, detail.value)
-                )
-              }
-              className={DETAIL_TILE_CLASS}
-              valueClassName="text-xl"
-            />
-          ))}
-          {proofTiles.map((tile) => (
-            <StatTile
-              key={tile.key}
-              label={tile.label}
-              value={tile.value}
-              className={PROOF_TILE_CLASS}
-              valueClassName="text-xl"
-            />
-          ))}
-        </div>
-      </section>
+      <ProfileDetailsProofsSection
+        proofTiles={proofTiles}
+        visibleDetails={visibleDetails}
+      />
 
       <CmEconomyPanel
         totals={cmTotals}
@@ -309,190 +203,22 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         mmValue="—"
       />
 
-      {delegationChambers.length > 0 ? (
-        <section className="space-y-4">
-          <SectionHeader>Delegation</SectionHeader>
-          <div className="grid gap-4 md:grid-cols-2">
-            {delegationChambers.map((item) => (
-              <Surface
-                key={item.chamberId}
-                variant="panelAlt"
-                radius="xl"
-                shadow="tile"
-                className="space-y-3 px-4 py-4"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Kicker>{chamberLabel(item.chamberId)}</Kicker>
-                  <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                    Current delegate
-                  </p>
-                  {item.delegateeAddress ? (
-                    <AddressInline
-                      address={item.delegateeAddress}
-                      textClassName="text-sm text-text"
-                    />
-                  ) : (
-                    <p className="text-sm text-text">No delegate set</p>
-                  )}
-                </div>
-                {item.inboundDelegators.length > 0 ? (
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                      Delegated by
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {item.inboundDelegators.map((delegator) => (
-                        <Badge key={delegator} variant="muted">
-                          {shortAddress(delegator)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </Surface>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <ProfileDelegationSection delegationChambers={delegationChambers} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4">
-          <div className="space-y-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <SectionHeader>Governance activity</SectionHeader>
-              {historyHref ? (
-                <Link
-                  to={historyHref}
-                  className="text-sm font-semibold text-primary hover:underline sm:self-auto"
-                >
-                  View full history
-                </Link>
-              ) : null}
-            </div>
-            <ToggleGroup
-              value={activityFilter}
-              onValueChange={(val) =>
-                setActivityFilter((val as typeof activityFilter) || "all")
-              }
-              options={ACTIVITY_FILTERS.map((opt) => ({
-                value: opt.value,
-                label: opt.label,
-              }))}
-            />
-            {filteredActions.length ? (
-              <div className="grid max-h-none grid-cols-1 gap-3 overflow-visible pr-0 sm:grid-cols-2 lg:max-h-72 lg:overflow-y-auto lg:pr-2 xl:grid-cols-3">
-                {filteredActions.map((action) => (
-                  <ActivityTile
-                    key={`${action.title}-${action.timestamp}`}
-                    action={action}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">No activity to show yet.</p>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <SectionHeader>Formation projects</SectionHeader>
-            {profile?.projects?.length ? (
-              <div className="space-y-3">
-                {profile.projects.map((project) => (
-                  <Surface
-                    key={project.title}
-                    variant="panelAlt"
-                    radius="xl"
-                    className="px-4 py-3"
-                  >
-                    <div className="flex flex-col gap-1 text-center">
-                      <p className="text-sm font-semibold text-text">
-                        {project.title}
-                      </p>
-                      <Kicker align="center">{project.status}</Kicker>
-                    </div>
-                    <p className="text-center text-sm text-muted">
-                      {project.summary}
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-2 pt-2">
-                      {project.chips.map((chip) => (
-                        <Badge key={chip} variant="outline">
-                          {chip}
-                        </Badge>
-                      ))}
-                    </div>
-                  </Surface>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted">
-                Not participating in Formation right now.
-              </p>
-            )}
-          </div>
-        </div>
+        <ProfileActivityProjectsSection
+          activityFilter={activityFilter}
+          filteredActions={filteredActions}
+          historyHref={historyHref}
+          onActivityFilterChange={setActivityFilter}
+          projects={profile?.projects ?? []}
+        />
 
         <div className="flex flex-col gap-4">
-          {tierProgress ? (
-            <section className="space-y-3">
-              <SectionHeader>Tier progress</SectionHeader>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Surface
-                  variant="panelAlt"
-                  radius="2xl"
-                  shadow="tile"
-                  className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
-                >
-                  <Kicker align="center">Current tier</Kicker>
-                  <p className="text-xl font-semibold text-text">
-                    <TierLabel tier={tierProgress.tier} />
-                  </p>
-                </Surface>
-                <Surface
-                  variant="panelAlt"
-                  radius="2xl"
-                  shadow="tile"
-                  className="flex h-full flex-col items-center justify-center px-4 py-4 text-center"
-                >
-                  <Kicker align="center">Next tier</Kicker>
-                  <p className="text-xl font-semibold text-text">
-                    {tierProgress.nextTier ? (
-                      <TierLabel tier={tierProgress.nextTier} />
-                    ) : (
-                      "Max tier"
-                    )}
-                  </p>
-                </Surface>
-              </div>
-              {requirementItems.length > 0 ? (
-                <div className="grid gap-3 text-center sm:grid-cols-2">
-                  {requirementItems.map((item) => (
-                    <Surface
-                      key={item.key}
-                      variant="panelAlt"
-                      radius="xl"
-                      shadow="tile"
-                      className="flex h-24 flex-col items-center justify-between px-3 py-3"
-                    >
-                      <Kicker align="center">{item.label}</Kicker>
-                      <p className="text-lg font-semibold text-text">
-                        {item.done} / {item.required}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {item.percent}% complete
-                      </p>
-                    </Surface>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted">
-                  You have reached the highest available tier.
-                </p>
-              )}
-            </section>
-          ) : null}
+          <ProfileTierProgressSection
+            requirementItems={requirementItems}
+            tierProgress={tierProgress}
+          />
           <section className="space-y-3">
             <SectionHeader>History</SectionHeader>
             {(profile?.history ?? []).length ? (

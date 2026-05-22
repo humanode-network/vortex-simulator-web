@@ -1,48 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { Button } from "@/components/primitives/button";
-import { Tabs } from "@/components/primitives/tabs";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
-import { formatTime, toTimestampMs } from "@/lib/dateTime";
-import { formatLoadError } from "@/lib/errorFormatting";
+import { toTimestampMs } from "@/lib/dateTime";
 import {
-  requiredTierForProposalType,
-  isTierEligible,
-} from "@/lib/proposalTypes";
-import { TierLabel } from "@/components/TierLabel";
-import {
-  apiChambers,
-  apiMyGovernance,
-  apiProposalDraft,
   apiProposalDraftDelete,
   apiProposalDraftSave,
-  apiProposalStatus,
   apiProposalSubmitToPool,
 } from "@/lib/apiClient";
-import type { ChamberDto, TierProgressDto } from "@/types/api";
-import { BudgetStep } from "./proposalCreation/steps/BudgetStep";
-import { EssentialsStep } from "./proposalCreation/steps/EssentialsStep";
-import { PlanStep } from "./proposalCreation/steps/PlanStep";
-import { ReviewStep } from "./proposalCreation/steps/ReviewStep";
+import { ProposalCreationLineageMessage } from "./proposalCreation/ProposalCreationMessages";
+import { ProposalCreationStepCard } from "./proposalCreation/ProposalCreationStepCard";
+import { ProposalCreationToolbar } from "./proposalCreation/ProposalCreationToolbar";
 import {
   clearDraftStorage,
   loadDraft,
-  normalizeDraft,
-  loadPresetId,
   loadServerDraftId,
   loadStep,
-  loadTemplateId,
   persistDraft,
-  persistPresetId,
   persistServerDraftId,
   persistStep,
   persistTemplateId,
@@ -54,52 +30,30 @@ import {
   type ProposalDraftForm,
   type StepKey,
 } from "./proposalCreation/types";
-import { getWizardTemplate } from "./proposalCreation/templates/registry";
-import type {
-  WizardComputed,
-  WizardTemplate,
-} from "./proposalCreation/templates/types";
 import {
   DEFAULT_PRESET_ID,
   PROPOSAL_PRESETS,
-  applyPresetToDraft,
-  getProposalPreset,
-  inferPresetIdFromDraft,
 } from "./proposalCreation/presets/registry";
+import {
+  useProposalDraftHydration,
+  type ProposalDraftHydrationResult,
+} from "./proposalCreation/useProposalDraftHydration";
+import { useProposalCreationComputed } from "./proposalCreation/useProposalCreationComputed";
+import { useProposalCreationPreset } from "./proposalCreation/useProposalCreationPreset";
+import { useProposalCreationReferenceData } from "./proposalCreation/useProposalCreationReferenceData";
 
 const ProposalCreation: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [draft, setDraft] = useState<ProposalDraftForm>(() => loadDraft());
-  const presetInitialized = useRef(false);
-  const skipNextPresetApply = useRef(false);
-  const [presetId, setPresetId] = useState<string>(() => {
-    const storedDraft = loadDraft();
-    const inferred = inferPresetIdFromDraft(storedDraft);
-    const storedPreset = loadPresetId();
-    if (storedPreset) {
-      const knownStoredPreset = PROPOSAL_PRESETS.find(
-        (preset) => preset.id === storedPreset,
-      );
-      const inferredPreset = getProposalPreset(inferred);
-      if (
-        knownStoredPreset &&
-        knownStoredPreset.templateId === inferredPreset.templateId
-      ) {
-        return storedPreset;
-      }
-    }
-    return inferred;
-  });
-  const [templateKind, setTemplateKind] = useState<"project" | "system">(() => {
-    const storedTemplateId = loadTemplateId();
-    if (storedTemplateId === "project" || storedTemplateId === "system") {
-      return storedTemplateId;
-    }
-    const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
-    return preset?.templateId ?? "project";
-  });
+  const {
+    presetId,
+    setPresetId,
+    setTemplateKind,
+    skipNextApply: skipNextPresetApply,
+    templateKind,
+  } = useProposalCreationPreset(setDraft);
   const [attemptedNext, setAttemptedNext] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [serverDraftId, setServerDraftId] = useState<string | null>(() =>
@@ -109,56 +63,38 @@ const ProposalCreation: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [loadingDraftId, setLoadingDraftId] = useState<string | null>(null);
-  const [loadDraftError, setLoadDraftError] = useState<string | null>(null);
-  const [chambers, setChambers] = useState<ChamberDto[]>([]);
-  const [tierProgress, setTierProgress] = useState<TierProgressDto | null>(
-    null,
-  );
+  const { chamberOptions, chambers, tierProgress } =
+    useProposalCreationReferenceData({
+      authEnabled: auth.enabled,
+      authenticated: auth.authenticated,
+    });
   const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
   const requestedResubmitsProposalId = (
     searchParams.get("resubmitsProposalId") ?? ""
   ).trim();
-
-  useEffect(() => {
-    const preset = PROPOSAL_PRESETS.find((item) => item.id === presetId);
-    if (!preset) {
-      persistPresetId("");
-      return;
-    }
-    if (skipNextPresetApply.current) {
-      skipNextPresetApply.current = false;
-      persistPresetId(preset.id);
-      return;
-    }
-    if (preset.templateId !== templateKind) {
-      persistPresetId("");
-      setPresetId("");
-      return;
-    }
-    setDraft((prev) => {
-      const shouldSoftApply = !presetInitialized.current;
-      presetInitialized.current = true;
-      if (shouldSoftApply) {
-        const seeded = { ...prev, presetId: preset.id };
-        if (preset.templateId === "system") {
-          return {
-            ...seeded,
-            chamberId: "general",
-            metaGovernance: seeded.metaGovernance ?? preset.metaGovernance,
-          };
-        }
-        return seeded;
-      }
-
-      let next = applyPresetToDraft(prev, preset);
-      if (preset.templateId === "system") {
-        next = { ...next, chamberId: "general" };
-      }
-      return next;
-    });
-    persistPresetId(preset.id);
-  }, [presetId, templateKind]);
+  const handleDraftLoaded = useCallback(
+    ({
+      draft: nextDraft,
+      draftId,
+      presetId: nextPresetId,
+      templateKind: nextTemplateKind,
+    }: ProposalDraftHydrationResult) => {
+      skipNextPresetApply();
+      setTemplateKind(nextTemplateKind);
+      setPresetId(nextPresetId);
+      setDraft(nextDraft);
+      setServerDraftId(draftId);
+      setSavedAt(Date.now());
+      setSaveError(null);
+      setSubmitError(null);
+    },
+    [setPresetId, setTemplateKind, skipNextPresetApply],
+  );
+  const { loadDraftError, loadingDraftId } = useProposalDraftHydration({
+    navigate,
+    onDraftLoaded: handleDraftLoaded,
+    requestedDraftId,
+  });
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -175,165 +111,27 @@ const ProposalCreation: React.FC = () => {
         ? stepParam
         : loadStep();
 
-  const budgetTotal = useMemo(() => {
-    if (draft.formationEligible !== false) {
-      return draft.timeline.reduce((sum, item) => {
-        const n = Number(item.budgetHmnd);
-        if (!Number.isFinite(n) || n <= 0) return sum;
-        return sum + n;
-      }, 0);
-    }
-    return draft.budgetItems.reduce((sum, item) => {
-      const n = Number(item.amount);
-      if (!Number.isFinite(n) || n <= 0) return sum;
-      return sum + n;
-    }, 0);
-  }, [draft.formationEligible, draft.timeline, draft.budgetItems]);
-
-  const baseTemplate = useMemo<WizardTemplate>(
-    () => getWizardTemplate(templateKind),
-    [templateKind],
-  );
-  const template = useMemo<WizardTemplate>(() => {
-    if (baseTemplate.id !== "project" || draft.formationEligible !== false) {
-      return baseTemplate;
-    }
-    return {
-      ...baseTemplate,
-      stepOrder: ["essentials", "plan", "review"],
-      stepTabLabels: {
-        ...baseTemplate.stepTabLabels,
-        essentials: "1 · Essentials",
-        plan: "2 · Plan",
-        review: "3 · Review",
-      },
-      getNextStep(step: StepKey, computed: WizardComputed) {
-        if (step === "essentials")
-          return computed.essentialsValid ? "plan" : null;
-        if (step === "plan") return computed.planValid ? "review" : null;
-        return null;
-      },
-      getPrevStep(step: StepKey) {
-        if (step === "review") return "plan";
-        if (step === "plan") return "essentials";
-        return null;
-      },
-    };
-  }, [baseTemplate, draft.formationEligible]);
+  const {
+    budgetTotal,
+    computed,
+    currentTier,
+    guardedComputed,
+    requiredTier,
+    selectedChamber,
+    template,
+    tierBlocked,
+    tierEligible,
+  } = useProposalCreationComputed({
+    chambers,
+    draft,
+    templateKind,
+    tierProgress,
+  });
   useEffect(() => {
     persistTemplateId(template.id);
   }, [template.id]);
 
-  const computed = useMemo(() => {
-    return template.compute(draft, { budgetTotal });
-  }, [draft, budgetTotal, template]);
-
-  const requiredTier = requiredTierForProposalType(draft.proposalType);
-  const currentTier = tierProgress?.tier ?? null;
-  const tierEligible =
-    currentTier && isTierEligible(currentTier, requiredTier) ? true : false;
-  const tierBlocked = Boolean(currentTier) && !tierEligible;
-  const guardedComputed = useMemo(
-    () => ({
-      ...computed,
-      essentialsValid: computed.essentialsValid && !tierBlocked,
-      canSubmit: computed.canSubmit && !tierBlocked,
-    }),
-    [computed, tierBlocked],
-  );
-
   const step: StepKey = desiredStep;
-
-  const chamberOptions = useMemo(() => {
-    return [...chambers]
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((chamber) => ({ value: chamber.id, label: chamber.name }));
-  }, [chambers]);
-
-  const selectedChamber = useMemo(() => {
-    return chambers.find((c) => c.id === draft.chamberId) ?? null;
-  }, [chambers, draft.chamberId]);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await apiChambers();
-        if (!active) return;
-        setChambers(res.items);
-      } catch {
-        if (!active) return;
-        setChambers([]);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!requestedDraftId) {
-      setLoadingDraftId(null);
-      setLoadDraftError(null);
-      return;
-    }
-    let active = true;
-    setLoadingDraftId(requestedDraftId);
-    setLoadDraftError(null);
-    (async () => {
-      try {
-        const detail = await apiProposalDraft(requestedDraftId);
-        if (!active) return;
-        if (detail.submittedProposalId) {
-          try {
-            const status = await apiProposalStatus(detail.submittedProposalId);
-            if (!active) return;
-            navigate(status.canonicalRoute, { replace: true });
-          } catch {
-            if (!active) return;
-            navigate(`/app/proposals/${detail.submittedProposalId}/pp`, {
-              replace: true,
-            });
-          }
-          return;
-        }
-        if (!detail.editableForm) {
-          throw new Error("Draft payload unavailable for editing.");
-        }
-
-        const normalized = normalizeDraft(detail.editableForm);
-        const nextTemplateKind =
-          detail.editableForm.templateId ??
-          (detail.editableForm.metaGovernance ? "system" : "project");
-        const nextPresetId =
-          detail.editableForm.presetId ?? inferPresetIdFromDraft(normalized);
-        const nextDraftId = detail.id ?? requestedDraftId;
-
-        skipNextPresetApply.current = true;
-        setTemplateKind(nextTemplateKind);
-        setPresetId(nextPresetId);
-        setDraft(normalized);
-        setServerDraftId(nextDraftId);
-        setSavedAt(Date.now());
-        setSaveError(null);
-        setSubmitError(null);
-        persistTemplateId(nextTemplateKind);
-        persistPresetId(nextPresetId);
-        persistDraft(normalized);
-        persistServerDraftId(nextDraftId);
-      } catch (error) {
-        if (!active) return;
-        setLoadDraftError((error as Error).message);
-      } finally {
-        if (!active) return;
-        setLoadingDraftId(null);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [navigate, requestedDraftId]);
 
   useEffect(() => {
     if (requestedDraftId) return;
@@ -346,27 +144,6 @@ const ProposalCreation: React.FC = () => {
       };
     });
   }, [requestedDraftId, requestedResubmitsProposalId]);
-
-  useEffect(() => {
-    if (!auth.enabled || !auth.authenticated) {
-      setTierProgress(null);
-      return;
-    }
-    let active = true;
-    (async () => {
-      try {
-        const res = await apiMyGovernance();
-        if (!active) return;
-        setTierProgress(res.tier ?? null);
-      } catch {
-        if (!active) return;
-        setTierProgress(null);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [auth.authenticated, auth.enabled]);
 
   useEffect(() => {
     if (searchParams.get("step") === step) return;
@@ -478,223 +255,97 @@ const ProposalCreation: React.FC = () => {
   const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
   const submitDisabled = !guardedComputed.canSubmit || !canAct || tierBlocked;
 
+  const submitProposal = async () => {
+    if (!canAct || tierBlocked || submitting) return;
+    setSubmitError(null);
+    setSaving(false);
+    setSaveError(null);
+    setSubmitting(true);
+    try {
+      let draftId = serverDraftId;
+      if (!draftId) {
+        const saved = await apiProposalDraftSave({
+          form: draftToApiForm(draft, {
+            templateId: template.id,
+          }),
+        });
+        draftId = saved.draftId;
+        setServerDraftId(draftId);
+        persistServerDraftId(draftId);
+      } else {
+        await apiProposalDraftSave({
+          draftId,
+          form: draftToApiForm(draft, {
+            templateId: template.id,
+          }),
+        });
+      }
+      const res = await apiProposalSubmitToPool({ draftId });
+      clearDraftStorage();
+      navigate(`/app/proposals/${res.proposalId}/pp`);
+    } catch (error) {
+      setSubmitError(formatProposalSubmitError(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
-      {draft.resubmitsProposalId ? (
-        <Card className="border-dashed px-4 py-4 text-sm text-muted">
-          This draft is marked as a reconsideration of decision lineage{" "}
-          <span className="font-mono text-xs text-text">
-            {draft.resubmitsProposalId}
-          </span>
-          . Submit it only if you intend this proposal to count as the same
-          decision lineage.
-        </Card>
-      ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/app/proposals">Back to proposals</Link>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={saveDraftNow}
-            disabled={saving || submitting}
-          >
-            {saving ? "Saving…" : "Save draft"}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={resetDraft}>
-            Reset draft
-          </Button>
-          {savedAt ? (
-            <span className="text-xs text-muted">
-              Saved {formatTime(savedAt)}
-            </span>
-          ) : null}
-          {serverDraftId ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link to={`/app/proposals/drafts/${serverDraftId}`}>
-                View draft
-              </Link>
-            </Button>
-          ) : null}
-        </div>
+      <ProposalCreationLineageMessage
+        resubmitsProposalId={draft.resubmitsProposalId}
+      />
+      <ProposalCreationToolbar
+        onBackToProposalsHref="/app/proposals"
+        onResetDraft={resetDraft}
+        onSaveDraft={() => void saveDraftNow()}
+        onStepChange={goToStep}
+        savedAt={savedAt}
+        saving={saving}
+        serverDraftId={serverDraftId}
+        step={step}
+        submitting={submitting}
+        template={template}
+        tierBlocked={tierBlocked}
+      />
 
-        <Tabs
-          value={step}
-          onValueChange={(value) => {
-            if (!isStepKey(value) && value !== "review") return;
-            if (tierBlocked && value !== "essentials") return;
-            goToStep(value as StepKey);
-          }}
-          options={template.stepOrder.map((key) => ({
-            value: key,
-            label: template.stepTabLabels[key],
-          }))}
-          className="w-full max-w-xl justify-between"
-        />
-      </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-2xl font-semibold text-text">
-            Create proposal · {template.stepTitles[step]}
-          </CardTitle>
-          <p className="text-sm text-muted">
-            Changes autosave locally. Eligible human nodes can save drafts to
-            the simulation backend (see Drafts).
-          </p>
-        </CardHeader>
-
-        <CardContent className="space-y-5 text-sm text-text">
-          {saveError ? (
-            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-muted">
-              {formatLoadError(saveError)}
-            </div>
-          ) : null}
-          {loadingDraftId ? (
-            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-muted">
-              Loading draft for editing…
-            </div>
-          ) : null}
-          {loadDraftError ? (
-            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
-              Draft load failed: {formatLoadError(loadDraftError)}
-            </div>
-          ) : null}
-          {submitError ? (
-            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
-              Submit failed: {formatLoadError(submitError)}
-            </div>
-          ) : null}
-          {tierBlocked ? (
-            <div className="rounded-xl border border-dashed border-border bg-panel-alt px-4 py-3 text-xs text-destructive">
-              Selected proposal type requires <TierLabel tier={requiredTier} />
-              . Your tier is <TierLabel tier={currentTier ?? "Nominee"} />.
-              Choose an eligible type to continue.
-            </div>
-          ) : null}
-
-          {step === "essentials" ? (
-            <EssentialsStep
-              attemptedNext={attemptedNext}
-              chamberOptions={chamberOptions}
-              draft={draft}
-              setDraft={setDraft}
-              templateId={templateKind}
-              onTemplateChange={(next) => {
-                setTemplateKind(next);
-                if (presetId !== "") setPresetId("");
-              }}
-              presetId={presetId}
-              presets={PROPOSAL_PRESETS}
-              onPresetChange={(nextPresetId) => {
-                setPresetId(nextPresetId);
-              }}
-              textareaClassName={textareaClassName}
-              requiredTier={requiredTier}
-              currentTier={currentTier}
-              tierEligible={tierEligible}
-            />
-          ) : null}
-
-          {step === "plan" ? (
-            <PlanStep
-              attemptedNext={attemptedNext}
-              draft={draft}
-              setDraft={setDraft}
-              formationEligible={draft.formationEligible}
-              mode={template.id}
-              textareaClassName={textareaClassName}
-            />
-          ) : null}
-
-          {step === "budget" ? (
-            <BudgetStep
-              attemptedNext={attemptedNext}
-              budgetTotal={budgetTotal}
-              budgetValid={computed.budgetValid}
-              draft={draft}
-              formationEligible={draft.formationEligible}
-              setDraft={setDraft}
-            />
-          ) : null}
-
-          {step === "review" ? (
-            <ReviewStep
-              budgetTotal={budgetTotal}
-              canAct={canAct}
-              canSubmit={guardedComputed.canSubmit}
-              draft={draft}
-              formationEligible={draft.formationEligible}
-              mode={template.id}
-              proposerAddress={auth.address ?? null}
-              selectedChamber={selectedChamber}
-              setDraft={setDraft}
-              textareaClassName={textareaClassName}
-            />
-          ) : null}
-
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <Button variant="ghost" onClick={onBack} disabled={submitting}>
-              {step === "essentials" ? "Cancel" : "Back"}
-            </Button>
-            <div className="flex items-center gap-2">
-              {step === "review" ? (
-                <Button
-                  disabled={submitDisabled || submitting}
-                  title={
-                    tierBlocked
-                      ? `Not eligible for this proposal type. Required tier: ${requiredTier}.`
-                      : SIM_AUTH_ENABLED && !canAct
-                        ? "Connect and verify as an eligible human node to submit."
-                        : undefined
-                  }
-                  onClick={async () => {
-                    if (!canAct || tierBlocked || submitting) return;
-                    setSubmitError(null);
-                    setSaving(false);
-                    setSaveError(null);
-                    setSubmitting(true);
-                    try {
-                      let draftId = serverDraftId;
-                      if (!draftId) {
-                        const saved = await apiProposalDraftSave({
-                          form: draftToApiForm(draft, {
-                            templateId: template.id,
-                          }),
-                        });
-                        draftId = saved.draftId;
-                        setServerDraftId(draftId);
-                        persistServerDraftId(draftId);
-                      } else {
-                        await apiProposalDraftSave({
-                          draftId,
-                          form: draftToApiForm(draft, {
-                            templateId: template.id,
-                          }),
-                        });
-                      }
-                      const res = await apiProposalSubmitToPool({ draftId });
-                      clearDraftStorage();
-                      navigate(`/app/proposals/${res.proposalId}/pp`);
-                    } catch (error) {
-                      setSubmitError(formatProposalSubmitError(error));
-                    } finally {
-                      setSubmitting(false);
-                    }
-                  }}
-                >
-                  {submitting ? "Submitting…" : "Submit proposal"}
-                </Button>
-              ) : (
-                <Button onClick={onNext}>Next</Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ProposalCreationStepCard
+        attemptedNext={attemptedNext}
+        budgetTotal={budgetTotal}
+        canAct={canAct}
+        chamberOptions={chamberOptions}
+        computed={computed}
+        currentTier={currentTier}
+        draft={draft}
+        guardedComputed={guardedComputed}
+        loadDraftError={loadDraftError}
+        loadingDraftId={loadingDraftId}
+        onBack={onBack}
+        onNext={onNext}
+        onPresetChange={setPresetId}
+        onSubmit={() => void submitProposal()}
+        onTemplateChange={(next) => {
+          setTemplateKind(next);
+          if (presetId !== "") setPresetId("");
+        }}
+        presetId={presetId}
+        presets={PROPOSAL_PRESETS}
+        proposerAddress={auth.address ?? null}
+        requiredTier={requiredTier}
+        saveError={saveError}
+        selectedChamber={selectedChamber}
+        setDraft={setDraft}
+        step={step}
+        submitDisabled={submitDisabled}
+        submitError={submitError}
+        submitting={submitting}
+        template={template}
+        templateKind={templateKind}
+        textareaClassName={textareaClassName}
+        tierBlocked={tierBlocked}
+        tierEligible={tierEligible}
+      />
     </div>
   );
 };

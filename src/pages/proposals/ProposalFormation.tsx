@@ -1,130 +1,67 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Surface } from "@/components/Surface";
-import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
-import { Button } from "@/components/primitives/button";
-import {
-  ProposalSummaryCard,
-  ProposalTeamMilestonesCard,
-  ProposalTimelineCard,
-} from "@/components/ProposalSections";
 import {
   apiFormationJoin,
   apiFormationMilestoneSubmit,
   apiFormationProjectFinish,
   apiProposalFormationPage,
-  apiProposalTimeline,
 } from "@/lib/apiClient";
-import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
-import { formatLoadError } from "@/lib/errorFormatting";
+import { viewerIsProposalAuthor } from "@/lib/proposalUi";
+import { parseRatio } from "@/lib/dtoParsers";
 import { useAuth } from "@/app/auth/AuthContext";
-import type {
-  FormationProposalPageDto,
-  ProposalTimelineItemDto,
-} from "@/types/api";
 import {
   useProposalStageSync,
   useProposalTransitionNotice,
-} from "./useProposalStageSync";
+} from "./hooks/useProposalStageSync";
 import { ProposalDeliberation } from "./ProposalDeliberation";
+import { ProposalPageLoadingState } from "./shared/ProposalPageLoadingState";
+import { ProposalTimelineSection } from "./shared/ProposalTimelineSection";
+import { useProposalPageData } from "./hooks/useProposalPageData";
+import { ProposalPageShell } from "./shared/ProposalPageShell";
+import { ProposalFormationActions } from "./formation/ProposalFormationActions";
+import { ProposalFormationStatus } from "./formation/ProposalFormationStatus";
+import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState<FormationProposalPageDto | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
-  const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
-  const [timelineError, setTimelineError] = useState<string | null>(null);
+  const {
+    loadError,
+    page: project,
+    setPage: setProject,
+    timeline,
+    timelineError,
+  } = useProposalPageData({
+    id,
+    loadPage: apiProposalFormationPage,
+    pageErrorFallback: "Failed to load proposal",
+  });
   const auth = useAuth();
   const syncProposalStage = useProposalStageSync(id);
   const transitionNotice = useProposalTransitionNotice();
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-    (async () => {
-      try {
-        const [pageResult, timelineResult] = await Promise.allSettled([
-          apiProposalFormationPage(id),
-          apiProposalTimeline(id),
-        ]);
-        if (!active) return;
-        if (pageResult.status === "fulfilled") {
-          setProject(pageResult.value);
-          setLoadError(null);
-        } else {
-          setProject(null);
-          setLoadError(pageResult.reason?.message ?? "Failed to load proposal");
-        }
-        if (timelineResult.status === "fulfilled") {
-          setTimeline(timelineResult.value.items);
-          setTimelineError(null);
-        } else {
-          setTimeline([]);
-          setTimelineError(
-            timelineResult.reason?.message ?? "Failed to load timeline",
-          );
-        }
-      } catch (error) {
-        if (!active) return;
-        setProject(null);
-        setLoadError((error as Error).message);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [id]);
 
   if (!project) {
     return (
-      <div className="flex flex-col gap-6">
-        <PageHint pageId="proposals" />
-        {transitionNotice ? (
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            {transitionNotice}
-          </Surface>
-        ) : null}
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {loadError
-            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
-            : "Loading proposal…"}
-        </Surface>
-      </div>
+      <ProposalPageLoadingState
+        fallbackMessage="Loading proposal…"
+        loadError={loadError}
+        transitionNotice={transitionNotice}
+        unavailableFallback="Failed to load proposal."
+        unavailableLabel="Proposal unavailable"
+      />
     );
   }
 
-  const parseRatio = (value: string): { filled: number; total: number } => {
-    const matches = value.match(/\d+/g) ?? [];
-    const filledRaw = matches[0];
-    const totalRaw = matches[1];
-    if (!filledRaw || !totalRaw) return { filled: 0, total: 0 };
-    const filled = Number.parseInt(filledRaw, 10);
-    const total = Number.parseInt(totalRaw, 10);
-    return {
-      filled: Number.isFinite(filled) ? filled : 0,
-      total: Number.isFinite(total) ? total : 0,
-    };
-  };
-
-  const milestones = parseRatio(project.milestones);
+  const milestoneRatio = parseRatio(project.milestones);
+  const milestones = { filled: milestoneRatio.a, total: milestoneRatio.b };
   const nextMilestone =
     project.nextMilestoneIndex ??
     (milestones.total > 0 ? milestones.filled + 1 : undefined);
   const pendingMilestone = project.pendingMilestoneIndex ?? undefined;
-  const isProposerViewer = addressesReferToSameIdentity(
+  const isProposerViewer = viewerIsProposalAuthor(
     auth.address,
     project.proposer,
   );
@@ -171,18 +108,7 @@ const ProposalFormation: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHint pageId="proposals" />
-      {transitionNotice ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {transitionNotice}
-        </Surface>
-      ) : null}
+    <ProposalPageShell transitionNotice={transitionNotice}>
       <ProposalPageHeader
         title={project.title}
         stage={stageForHeader}
@@ -190,131 +116,47 @@ const ProposalFormation: React.FC = () => {
         proposer={project.proposer}
       />
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-text">Formation actions</h2>
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="space-y-3 p-4"
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button
-              type="button"
-              size="lg"
-              disabled={
-                !auth.authenticated ||
-                !auth.eligible ||
-                actionBusy ||
-                isProposerViewer ||
-                !canJoinProject
-              }
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id) return;
-                  await apiFormationJoin({ proposalId: id });
-                })
-              }
-            >
-              Join project
-            </Button>
+      <ProposalFormationActions
+        actionBusy={actionBusy}
+        actionError={actionError}
+        authStatus={auth}
+        canFinishProject={canFinishProject}
+        canJoinProject={canJoinProject}
+        canOpenMilestoneVote={canOpenMilestoneVote}
+        canSubmitMilestone={canSubmitMilestone}
+        isProposerViewer={isProposerViewer}
+        nextMilestone={nextMilestone}
+        onFinishProject={() =>
+          void runAction(async () => {
+            if (!id) return;
+            await apiFormationProjectFinish({ proposalId: id });
+          })
+        }
+        onJoinProject={() =>
+          void runAction(async () => {
+            if (!id) return;
+            await apiFormationJoin({ proposalId: id });
+          })
+        }
+        onOpenMilestoneVote={() => {
+          if (!id) return;
+          navigate(`/app/proposals/${id}/chamber`);
+        }}
+        onSubmitMilestone={() =>
+          void runAction(async () => {
+            if (!id || !nextMilestone) return;
+            await apiFormationMilestoneSubmit({
+              proposalId: id,
+              milestoneIndex: nextMilestone,
+            });
+          })
+        }
+        pendingMilestone={pendingMilestone}
+      />
 
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={!canSubmitMilestone}
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id || !nextMilestone) return;
-                  await apiFormationMilestoneSubmit({
-                    proposalId: id,
-                    milestoneIndex: nextMilestone,
-                  });
-                })
-              }
-            >
-              Submit M{nextMilestone ?? "—"}
-            </Button>
+      <ProposalFormationStatus stageData={project.stageData} />
 
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={!canOpenMilestoneVote}
-              onClick={() => {
-                if (!id) return;
-                navigate(`/app/proposals/${id}/chamber`);
-              }}
-            >
-              Vote in chamber M{pendingMilestone ?? "—"}
-            </Button>
-
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={!canFinishProject}
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id) return;
-                  await apiFormationProjectFinish({ proposalId: id });
-                })
-              }
-            >
-              Finish Project
-            </Button>
-          </div>
-
-          {auth.loading ? (
-            <p className="text-xs text-muted">Checking wallet status…</p>
-          ) : !auth.authenticated ? (
-            <p className="text-xs text-muted">Connect a wallet to act.</p>
-          ) : isProposerViewer ? (
-            <p className="text-xs text-muted">
-              Proposer is counted in team slots by default.
-            </p>
-          ) : auth.authenticated && !auth.eligible ? (
-            <p className="text-xs text-muted">
-              Wallet is connected, but not active (gated).
-            </p>
-          ) : null}
-
-          {canOpenMilestoneVote ? (
-            <p className="text-xs text-muted">
-              Milestone continuation/release voting is done in the Chamber vote
-              stage.
-            </p>
-          ) : null}
-
-          {actionError ? (
-            <p className="text-xs text-destructive" role="status">
-              {formatLoadError(actionError)}
-            </p>
-          ) : null}
-        </Surface>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-text">Project status</h2>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {project.stageData.map((entry) => (
-            <Surface
-              key={entry.title}
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="p-4"
-            >
-              <p className="text-sm font-semibold text-muted">{entry.title}</p>
-              <p className="text-xs text-muted">{entry.description}</p>
-              <p className="text-lg font-semibold text-text">{entry.value}</p>
-            </Surface>
-          ))}
-        </div>
-      </section>
-
-      <ProposalSummaryCard
+      <ProposalDetailsSections
         summary={project.summary}
         stats={[
           { label: "Budget ask", value: project.budget },
@@ -326,9 +168,6 @@ const ProposalFormation: React.FC = () => {
         executionPlan={project.executionPlan}
         budgetScope={project.budgetScope}
         attachments={project.attachments}
-      />
-
-      <ProposalTeamMilestonesCard
         teamLocked={project.lockedTeam}
         openSlots={project.openSlots}
         milestonesDetail={project.milestonesDetail}
@@ -336,19 +175,12 @@ const ProposalFormation: React.FC = () => {
 
       <ProposalDeliberation proposalId={id} />
 
-      {timelineError ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          Timeline unavailable: {formatLoadError(timelineError)}
-        </Surface>
-      ) : (
-        <ProposalTimelineCard items={timeline} proposalId={id} />
-      )}
-    </div>
+      <ProposalTimelineSection
+        error={timelineError}
+        items={timeline}
+        proposalId={id}
+      />
+    </ProposalPageShell>
   );
 };
 

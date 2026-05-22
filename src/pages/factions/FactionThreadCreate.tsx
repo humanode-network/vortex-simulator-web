@@ -2,22 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { Input } from "@/components/primitives/input";
+import { Card } from "@/components/primitives/card";
 import {
   apiFaction,
   apiFactionThreadCreate,
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
-import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { findViewerFactionMembership } from "@/lib/factionUi";
 import type { FactionDto } from "@/types/api";
+import { FactionThreadCreateCard } from "./components/FactionThreadCreateCard";
 
 const FactionThreadCreate: React.FC = () => {
   const { id, channelId } = useParams();
@@ -54,14 +49,9 @@ const FactionThreadCreate: React.FC = () => {
   }, [id]);
 
   const viewerMembership = useMemo(() => {
-    if (!faction || !viewerAddress) return null;
-    return (
-      (faction.memberships ?? []).find(
-        (membership) =>
-          addressesReferToSameIdentity(membership.address, viewerAddress) &&
-          membership.isActive,
-      ) ?? null
-    );
+    return findViewerFactionMembership(faction?.memberships, viewerAddress, {
+      activeOnly: true,
+    });
   }, [faction, viewerAddress]);
 
   const channel = useMemo(() => {
@@ -124,60 +114,19 @@ const FactionThreadCreate: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Create thread</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted">
-            Channel:{" "}
-            <span className="font-medium text-text">{channel.title}</span>
-          </p>
-
-          {!canCreate ? (
-            <p className="text-sm text-destructive">
-              You cannot create a thread in this channel.
-            </p>
-          ) : null}
-
-          {error ? (
-            <p className="text-sm text-destructive">{formatLoadError(error)}</p>
-          ) : null}
-
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Thread title"
-          />
-          <textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            rows={6}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            placeholder="Thread body"
-          />
-
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              disabled={
-                !canCreate ||
-                submitting ||
-                title.trim().length < 2 ||
-                body.trim().length < 2
-              }
-              onClick={onSubmit}
-            >
-              Create thread
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/app/factions/${id}/channels/${channelId}`}>
-                Cancel
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <FactionThreadCreateCard
+        body={body}
+        canCreate={canCreate}
+        channelId={channelId}
+        channelTitle={channel.title}
+        error={error}
+        factionId={id}
+        onBodyChange={setBody}
+        onSubmit={() => void onSubmit()}
+        onTitleChange={setTitle}
+        submitting={submitting}
+        title={title}
+      />
     </div>
   );
 };
