@@ -33,3 +33,15 @@ export function formatProposalSubmitError(error: unknown): string {
 
   return details.message ?? (error as Error).message ?? "Submit failed.";
 }
+
+export function formatProposalActionError(
+  error: unknown,
+  fallbackMessage = "Action failed.",
+): string {
+  const payloadMessage = getApiErrorPayload(error)?.error?.message;
+  if (payloadMessage && payloadMessage.trim().length > 0) {
+    return payloadMessage;
+  }
+  const fallback = error instanceof Error ? error.message : fallbackMessage;
+  return fallback.replace(/^HTTP\s+\d{3}:\s*/i, "").trim() || fallbackMessage;
+}

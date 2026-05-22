@@ -11,10 +11,8 @@ import type {
   CitizenVetoProposalPageDto,
   CmSummaryDto,
   CourtCaseDetailDto,
-  FactionDto,
   FormationProposalPageDto,
   ProposalFinishedPageDto,
-  GetFactionsResponse,
   GetChamberResponse,
   GetChambersResponse,
   GetClockResponse,
@@ -36,117 +34,17 @@ import type {
   ProposalStatusDto,
   PoolProposalPageDto,
 } from "@/types/api";
+export * from "@/lib/api/factions";
+export {
+  apiGet,
+  apiPost,
+  getApiErrorPayload,
+  type ApiError,
+  type ApiErrorPayload,
+} from "@/lib/api/http";
 
-type ApiClientRuntimeConfig = {
-  apiBaseUrl?: string;
-  apiHeaders?: Record<string, string>;
-  apiCredentials?: RequestCredentials;
-};
-
-declare global {
-  interface Window {
-    __VORTEX_CONFIG__?: ApiClientRuntimeConfig;
-  }
-}
-
-export type ApiErrorPayload = {
-  error?: {
-    message?: string;
-    code?: string;
-    [key: string]: unknown;
-  };
-};
-
-export type ApiError = Error & {
-  data?: ApiErrorPayload;
-  status?: number;
-};
-
-export function getApiErrorPayload(error: unknown): ApiErrorPayload | null {
-  if (!error || typeof error !== "object") return null;
-  const data = (error as ApiError).data;
-  if (!data || typeof data !== "object") return null;
-  return data as ApiErrorPayload;
-}
-
-const envApiBaseUrl =
-  import.meta.env.RSBUILD_PUBLIC_API_BASE_URL ??
-  import.meta.env.VITE_API_BASE_URL ??
-  "";
-
-function getRuntimeConfig(): ApiClientRuntimeConfig | undefined {
-  if (typeof window === "undefined") return undefined;
-  return window.__VORTEX_CONFIG__;
-}
-
-function getApiBaseUrl(): string {
-  const runtimeConfig = getRuntimeConfig();
-  return runtimeConfig?.apiBaseUrl ?? envApiBaseUrl ?? "";
-}
-
-function getApiCredentials(): RequestCredentials {
-  const runtimeConfig = getRuntimeConfig();
-  return runtimeConfig?.apiCredentials ?? "include";
-}
-
-function getApiHeaders(): Record<string, string> {
-  const runtimeConfig = getRuntimeConfig();
-  return runtimeConfig?.apiHeaders ?? {};
-}
-
-function resolveApiUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
-  const apiBaseUrl = getApiBaseUrl();
-  if (!apiBaseUrl) return path;
-  const base = apiBaseUrl.replace(/\/$/, "");
-  const suffix = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${suffix}`;
-}
-
-async function readJsonResponse<T>(res: Response): Promise<T> {
-  const contentType = res.headers.get("content-type") ?? "";
-  const isJson = contentType.toLowerCase().includes("application/json");
-  const body = isJson ? ((await res.json()) as unknown) : await res.text();
-  if (!res.ok) {
-    const payload = (body as ApiErrorPayload | null) ?? null;
-    const rawMessage =
-      payload?.error?.message ??
-      (typeof body === "string" && body.trim() ? body : null) ??
-      res.statusText;
-    const message = `HTTP ${res.status}${rawMessage ? `: ${rawMessage}` : ""}`;
-    const error = new Error(message) as ApiError;
-    if (payload) error.data = payload;
-    error.status = res.status;
-    throw error;
-  }
-  return body as T;
-}
-
-export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(resolveApiUrl(path), {
-    credentials: getApiCredentials(),
-    headers: getApiHeaders(),
-  });
-  return await readJsonResponse<T>(res);
-}
-
-export async function apiPost<T>(
-  path: string,
-  body: unknown,
-  init?: { headers?: HeadersInit },
-): Promise<T> {
-  const res = await fetch(resolveApiUrl(path), {
-    method: "POST",
-    credentials: getApiCredentials(),
-    headers: {
-      ...getApiHeaders(),
-      "content-type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    body: JSON.stringify(body),
-  });
-  return await readJsonResponse<T>(res);
-}
+import { apiGet, apiPost } from "@/lib/api/http";
+import { apiCommand } from "@/lib/api/command";
 
 export type ApiMeResponse =
   | { authenticated: false }
@@ -321,20 +219,14 @@ export async function apiCitizenVetoVote(input: {
   choice: CitizenVetoVoteChoice;
   counts: { veto: number; keep: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "veto.citizen.vote",
-      payload: {
-        proposalId: input.proposalId,
-        choice: input.choice,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "veto.citizen.vote",
+    payload: {
+      proposalId: input.proposalId,
+      choice: input.choice,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export type PoolVoteDirection = "up" | "down";
@@ -350,17 +242,11 @@ export async function apiPoolVote(input: {
   direction: PoolVoteDirection;
   counts: { upvotes: number; downvotes: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "pool.vote",
-      payload: { proposalId: input.proposalId, direction: input.direction },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "pool.vote",
+    payload: { proposalId: input.proposalId, direction: input.direction },
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export type ChamberVoteChoice = "yes" | "no" | "abstain";
@@ -379,23 +265,17 @@ export async function apiChamberVote(input: {
   choice: ChamberVoteChoice;
   counts: { yes: number; no: number; abstain: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "chamber.vote",
-      payload: {
-        proposalId: input.proposalId,
-        choice: input.choice,
-        ...(input.choice === "yes" && typeof input.score === "number"
-          ? { score: input.score }
-          : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "chamber.vote",
+    payload: {
+      proposalId: input.proposalId,
+      choice: input.choice,
+      ...(input.choice === "yes" && typeof input.score === "number"
+        ? { score: input.score }
+        : {}),
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiChamberMultiplierSubmit(input: {
@@ -414,20 +294,14 @@ export async function apiChamberMultiplierSubmit(input: {
     nextMultiplierTimes10: number;
   } | null;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "chamber.multiplier.submit",
-      payload: {
-        chamberId: input.chamberId,
-        multiplierTimes10: input.multiplierTimes10,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "chamber.multiplier.submit",
+    payload: {
+      chamberId: input.chamberId,
+      multiplierTimes10: input.multiplierTimes10,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiChamberThreadCreate(input: {
@@ -440,21 +314,15 @@ export async function apiChamberThreadCreate(input: {
   type: "chamber.thread.create";
   thread: ChamberThreadDto;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "chamber.thread.create",
-      payload: {
-        chamberId: input.chamberId,
-        title: input.title,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "chamber.thread.create",
+    payload: {
+      chamberId: input.chamberId,
+      title: input.title,
+      body: input.body,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiChamberThreadReply(input: {
@@ -469,21 +337,15 @@ export async function apiChamberThreadReply(input: {
   message: ChamberThreadMessageDto;
   replies: number;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "chamber.thread.reply",
-      payload: {
-        chamberId: input.chamberId,
-        threadId: input.threadId,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "chamber.thread.reply",
+    payload: {
+      chamberId: input.chamberId,
+      threadId: input.threadId,
+      body: input.body,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalThreadCreate(input: {
@@ -498,22 +360,16 @@ export async function apiProposalThreadCreate(input: {
   proposalId: string;
   thread: ProposalThreadDto;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.thread.create",
-      payload: {
-        proposalId: input.proposalId,
-        category: input.category ?? "general",
-        title: input.title,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "proposal.thread.create",
+    payload: {
+      proposalId: input.proposalId,
+      category: input.category ?? "general",
+      title: input.title,
+      body: input.body,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalThreadReply(input: {
@@ -529,21 +385,15 @@ export async function apiProposalThreadReply(input: {
   message: ProposalThreadMessageDto;
   replies: number;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.thread.reply",
-      payload: {
-        proposalId: input.proposalId,
-        threadId: input.threadId,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "proposal.thread.reply",
+    payload: {
+      proposalId: input.proposalId,
+      threadId: input.threadId,
+      body: input.body,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalThreadTransition(input: {
@@ -557,21 +407,15 @@ export async function apiProposalThreadTransition(input: {
   proposalId: string;
   thread: { id: string; status: ProposalThreadDto["status"] };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.thread.transition",
-      payload: {
-        proposalId: input.proposalId,
-        threadId: input.threadId,
-        status: input.status,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "proposal.thread.transition",
+    payload: {
+      proposalId: input.proposalId,
+      threadId: input.threadId,
+      status: input.status,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiChamberChatPost(input: {
@@ -583,20 +427,14 @@ export async function apiChamberChatPost(input: {
   type: "chamber.chat.post";
   message: ChamberChatMessageDto;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "chamber.chat.post",
-      payload: {
-        chamberId: input.chamberId,
-        message: input.message,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "chamber.chat.post",
+    payload: {
+      chamberId: input.chamberId,
+      message: input.message,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiFormationJoin(input: {
@@ -609,20 +447,14 @@ export async function apiFormationJoin(input: {
   proposalId: string;
   teamSlots: { filled: number; total: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "formation.join",
-      payload: {
-        proposalId: input.proposalId,
-        ...(input.role ? { role: input.role } : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "formation.join",
+    payload: {
+      proposalId: input.proposalId,
+      ...(input.role ? { role: input.role } : {}),
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiFormationMilestoneSubmit(input: {
@@ -637,21 +469,15 @@ export async function apiFormationMilestoneSubmit(input: {
   milestoneIndex: number;
   milestones: { completed: number; total: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "formation.milestone.submit",
-      payload: {
-        proposalId: input.proposalId,
-        milestoneIndex: input.milestoneIndex,
-        ...(input.note ? { note: input.note } : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "formation.milestone.submit",
+    payload: {
+      proposalId: input.proposalId,
+      milestoneIndex: input.milestoneIndex,
+      ...(input.note ? { note: input.note } : {}),
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiFormationMilestoneRequestUnlock(input: {
@@ -665,20 +491,14 @@ export async function apiFormationMilestoneRequestUnlock(input: {
   milestoneIndex: number;
   milestones: { completed: number; total: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "formation.milestone.requestUnlock",
-      payload: {
-        proposalId: input.proposalId,
-        milestoneIndex: input.milestoneIndex,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "formation.milestone.requestUnlock",
+    payload: {
+      proposalId: input.proposalId,
+      milestoneIndex: input.milestoneIndex,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiFormationMilestoneVote(input: {
@@ -704,24 +524,18 @@ export async function apiFormationMilestoneVote(input: {
   pendingMilestoneIndex: number | null;
   milestones: { completed: number; total: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "formation.milestone.vote",
-      payload: {
-        proposalId: input.proposalId,
-        milestoneIndex: input.milestoneIndex,
-        choice: input.choice,
-        ...(input.choice === "yes" && typeof input.score === "number"
-          ? { score: input.score }
-          : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "formation.milestone.vote",
+    payload: {
+      proposalId: input.proposalId,
+      milestoneIndex: input.milestoneIndex,
+      choice: input.choice,
+      ...(input.choice === "yes" && typeof input.score === "number"
+        ? { score: input.score }
+        : {}),
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiFormationProjectFinish(input: {
@@ -734,19 +548,13 @@ export async function apiFormationProjectFinish(input: {
   projectState: "completed";
   milestones: { completed: number; total: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "formation.project.finish",
-      payload: {
-        proposalId: input.proposalId,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "formation.project.finish",
+    payload: {
+      proposalId: input.proposalId,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 export async function apiProposalChamberPage(
   id: string,
@@ -790,17 +598,11 @@ export async function apiReferendumVote(input: {
   counts: { yes: number; no: number; abstain: number };
   systemReset?: boolean;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "referendum.vote",
-      payload: { proposalId: input.proposalId, choice: input.choice },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "referendum.vote",
+    payload: { proposalId: input.proposalId, choice: input.choice },
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiChamberVetoVote(input: {
@@ -816,21 +618,15 @@ export async function apiChamberVetoVote(input: {
   choice: ChamberVetoVoteChoice;
   counts: { veto: number; keep: number; abstain: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "veto.chamber.vote",
-      payload: {
-        proposalId: input.proposalId,
-        chamberId: input.chamberId,
-        choice: input.choice,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "veto.chamber.vote",
+    payload: {
+      proposalId: input.proposalId,
+      chamberId: input.chamberId,
+      choice: input.choice,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalFormationPage(
@@ -865,17 +661,11 @@ export async function apiCourtReport(input: {
   reports: number;
   status: "jury" | "live" | "ended";
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "court.case.report",
-      payload: { caseId: input.caseId },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "court.case.report",
+    payload: { caseId: input.caseId },
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiCourtVerdict(input: {
@@ -890,17 +680,11 @@ export async function apiCourtVerdict(input: {
   status: "jury" | "live" | "ended";
   totals: { guilty: number; notGuilty: number };
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "court.case.verdict",
-      payload: { caseId: input.caseId, verdict: input.verdict },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "court.case.verdict",
+    payload: { caseId: input.caseId, verdict: input.verdict },
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiHumans(): Promise<GetHumansResponse> {
@@ -909,568 +693,6 @@ export async function apiHumans(): Promise<GetHumansResponse> {
 
 export async function apiHuman(id: string): Promise<HumanNodeProfileDto> {
   return await apiGet<HumanNodeProfileDto>(`/api/humans/${id}`);
-}
-
-export async function apiFactions(): Promise<GetFactionsResponse> {
-  return await apiGet<GetFactionsResponse>("/api/factions");
-}
-
-export async function apiFaction(id: string): Promise<FactionDto> {
-  return await apiGet<FactionDto>(`/api/factions/${id}`);
-}
-
-export async function apiFactionCreate(input: {
-  name: string;
-  description: string;
-  focus?: string;
-  visibility?: "public" | "private";
-  goals?: string[];
-  tags?: string[];
-  cofounders?: string[];
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.create";
-  faction: { id: string; name: string };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.create",
-      payload: {
-        name: input.name,
-        description: input.description,
-        ...(input.focus ? { focus: input.focus } : {}),
-        ...(input.visibility ? { visibility: input.visibility } : {}),
-        ...(input.goals && input.goals.length > 0
-          ? { goals: input.goals }
-          : {}),
-        ...(input.tags && input.tags.length > 0 ? { tags: input.tags } : {}),
-        ...(input.cofounders && input.cofounders.length > 0
-          ? { cofounders: input.cofounders }
-          : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionUpdate(input: {
-  factionId: string;
-  name?: string;
-  description?: string;
-  focus?: string;
-  visibility?: "public" | "private";
-  goals?: string[];
-  tags?: string[];
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.update";
-  factionId: string;
-  updated: boolean;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.update",
-      payload: {
-        factionId: input.factionId,
-        ...(input.name ? { name: input.name } : {}),
-        ...(input.description ? { description: input.description } : {}),
-        ...(input.focus ? { focus: input.focus } : {}),
-        ...(input.visibility ? { visibility: input.visibility } : {}),
-        ...(input.goals ? { goals: input.goals } : {}),
-        ...(input.tags ? { tags: input.tags } : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionDelete(input: {
-  factionId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.delete";
-  factionId: string;
-  status: "archived";
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.delete",
-      payload: {
-        factionId: input.factionId,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionMemberRoleSet(input: {
-  factionId: string;
-  address: string;
-  role: "founder" | "steward" | "member";
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.member.role.set";
-  factionId: string;
-  member: { address: string; role: "founder" | "steward" | "member" };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.member.role.set",
-      payload: {
-        factionId: input.factionId,
-        address: input.address,
-        role: input.role,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionJoin(input: {
-  factionId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.join";
-  factionId: string;
-  joined: boolean;
-  pending: boolean;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.join",
-      payload: {
-        factionId: input.factionId,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionJoinRequestApprove(input: {
-  factionId: string;
-  address: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.join.request.approve";
-  factionId: string;
-  address: string;
-  accepted: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.join.request.approve",
-      payload: { factionId: input.factionId, address: input.address },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionJoinRequestDecline(input: {
-  factionId: string;
-  address: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.join.request.decline";
-  factionId: string;
-  address: string;
-  declined: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.join.request.decline",
-      payload: { factionId: input.factionId, address: input.address },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionLeave(input: {
-  factionId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.leave";
-  factionId: string;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.leave",
-      payload: {
-        factionId: input.factionId,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionCofounderInviteAccept(input: {
-  factionId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.cofounder.invite.accept";
-  factionId: string;
-  accepted: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.cofounder.invite.accept",
-      payload: { factionId: input.factionId },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionCofounderInviteDecline(input: {
-  factionId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.cofounder.invite.decline";
-  factionId: string;
-  declined: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.cofounder.invite.decline",
-      payload: { factionId: input.factionId },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionCofounderInviteCancel(input: {
-  factionId: string;
-  address: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.cofounder.invite.cancel";
-  factionId: string;
-  address: string;
-  canceled: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.cofounder.invite.cancel",
-      payload: { factionId: input.factionId, address: input.address },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionChannelCreate(input: {
-  factionId: string;
-  title: string;
-  slug?: string;
-  writeScope?: "stewards" | "members";
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.channel.create";
-  factionId: string;
-  channel: { id: string; title: string };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.channel.create",
-      payload: {
-        factionId: input.factionId,
-        title: input.title,
-        ...(input.slug ? { slug: input.slug } : {}),
-        ...(input.writeScope ? { writeScope: input.writeScope } : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionChannelLock(input: {
-  factionId: string;
-  channelId: string;
-  isLocked: boolean;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.channel.lock";
-  factionId: string;
-  channel: { id: string; isLocked: boolean };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.channel.lock",
-      payload: {
-        factionId: input.factionId,
-        channelId: input.channelId,
-        isLocked: input.isLocked,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionThreadCreate(input: {
-  factionId: string;
-  channelId: string;
-  title: string;
-  body: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.thread.create";
-  factionId: string;
-  thread: { id: string; title: string };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.thread.create",
-      payload: {
-        factionId: input.factionId,
-        channelId: input.channelId,
-        title: input.title,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionThreadReply(input: {
-  factionId: string;
-  threadId: string;
-  body: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.thread.reply";
-  factionId: string;
-  threadId: string;
-  messageId: string;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.thread.reply",
-      payload: {
-        factionId: input.factionId,
-        threadId: input.threadId,
-        body: input.body,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionThreadTransition(input: {
-  factionId: string;
-  threadId: string;
-  status: "open" | "resolved" | "locked";
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.thread.transition";
-  factionId: string;
-  thread: { id: string; status: "open" | "resolved" | "locked" };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.thread.transition",
-      payload: {
-        factionId: input.factionId,
-        threadId: input.threadId,
-        status: input.status,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionThreadDelete(input: {
-  factionId: string;
-  threadId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.thread.delete";
-  factionId: string;
-  threadId: string;
-  deleted: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.thread.delete",
-      payload: {
-        factionId: input.factionId,
-        threadId: input.threadId,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionThreadReplyDelete(input: {
-  factionId: string;
-  threadId: string;
-  messageId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.thread.reply.delete";
-  factionId: string;
-  threadId: string;
-  messageId: string;
-  deleted: true;
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.thread.reply.delete",
-      payload: {
-        factionId: input.factionId,
-        threadId: input.threadId,
-        messageId: input.messageId,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionInitiativeCreate(input: {
-  factionId: string;
-  title: string;
-  intent?: string;
-  checklist?: string[];
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.initiative.create";
-  factionId: string;
-  initiative: { id: string; title: string };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.initiative.create",
-      payload: {
-        factionId: input.factionId,
-        title: input.title,
-        ...(input.intent ? { intent: input.intent } : {}),
-        ...(input.checklist ? { checklist: input.checklist } : {}),
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
-}
-
-export async function apiFactionInitiativeTransition(input: {
-  factionId: string;
-  initiativeId: string;
-  status: "draft" | "active" | "blocked" | "done" | "archived";
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "faction.initiative.transition";
-  factionId: string;
-  initiative: {
-    id: string;
-    status: "draft" | "active" | "blocked" | "done" | "archived";
-  };
-}> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "faction.initiative.transition",
-      payload: {
-        factionId: input.factionId,
-        initiativeId: input.initiativeId,
-        status: input.status,
-      },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
 }
 
 export async function apiFormation(): Promise<GetFormationResponse> {
@@ -1493,19 +715,13 @@ export async function apiLegitimacyObjectSet(input: {
   type: "legitimacy.object.set";
   legitimacy: GetMyGovernanceResponse["legitimacy"];
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "legitimacy.object.set",
-      payload: {
-        active: input.active,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "legitimacy.object.set",
+    payload: {
+      active: input.active,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiDelegationSet(input: {
@@ -1520,20 +736,14 @@ export async function apiDelegationSet(input: {
   delegateeAddress: string;
   updatedAt: string;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "delegation.set",
-      payload: {
-        chamberId: input.chamberId,
-        delegateeAddress: input.delegateeAddress,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "delegation.set",
+    payload: {
+      chamberId: input.chamberId,
+      delegateeAddress: input.delegateeAddress,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiDelegationClear(input: {
@@ -1546,19 +756,13 @@ export async function apiDelegationClear(input: {
   delegatorAddress: string;
   cleared: boolean;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "delegation.clear",
-      payload: {
-        chamberId: input.chamberId,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "delegation.clear",
+    payload: {
+      chamberId: input.chamberId,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiCmMe(): Promise<CmSummaryDto> {
@@ -1639,20 +843,14 @@ export async function apiProposalDraftSave(input: {
   draftId: string;
   updatedAt: string;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.draft.save",
-      payload: {
-        ...(input.draftId ? { draftId: input.draftId } : {}),
-        form: input.form,
-      },
-      idempotencyKey: input.idempotencyKey,
+  return await apiCommand({
+    type: "proposal.draft.save",
+    payload: {
+      ...(input.draftId ? { draftId: input.draftId } : {}),
+      form: input.form,
     },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalDraftDelete(input: {
@@ -1664,17 +862,11 @@ export async function apiProposalDraftDelete(input: {
   draftId: string;
   deleted: boolean;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.draft.delete",
-      payload: { draftId: input.draftId },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "proposal.draft.delete",
+    payload: { draftId: input.draftId },
+    idempotencyKey: input.idempotencyKey,
+  });
 }
 
 export async function apiProposalSubmitToPool(input: {
@@ -1686,15 +878,9 @@ export async function apiProposalSubmitToPool(input: {
   draftId: string;
   proposalId: string;
 }> {
-  return await apiPost(
-    "/api/command",
-    {
-      type: "proposal.submitToPool",
-      payload: { draftId: input.draftId },
-      idempotencyKey: input.idempotencyKey,
-    },
-    input.idempotencyKey
-      ? { headers: { "idempotency-key": input.idempotencyKey } }
-      : undefined,
-  );
+  return await apiCommand({
+    type: "proposal.submitToPool",
+    payload: { draftId: input.draftId },
+    idempotencyKey: input.idempotencyKey,
+  });
 }

@@ -7,6 +7,7 @@ import {
   parseCommaNumber,
   parsePercent,
   parseRatio,
+  parseRatioPair,
 } from "../../src/lib/dtoParsers.ts";
 import type { ChamberDto, FormationProposalPageDto } from "../../src/types/api";
 
@@ -20,6 +21,8 @@ test("parsePercent and parseRatio normalize values", () => {
   expect(parsePercent("45%")).toBe(45);
   expect(parsePercent("bad")).toBe(0);
   expect(parseRatio("3/8")).toEqual({ a: 3, b: 8 });
+  expect(parseRatio("3 / 8 slots")).toEqual({ a: 3, b: 8 });
+  expect(parseRatioPair("3 / 8 slots")).toEqual({ left: 3, right: 8 });
   expect(parseRatio("bad")).toEqual({ a: 0, b: 0 });
 });
 

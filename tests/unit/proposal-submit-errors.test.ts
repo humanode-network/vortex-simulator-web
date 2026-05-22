@@ -1,6 +1,9 @@
 import { test, expect } from "@rstest/core";
 
-import { formatProposalSubmitError } from "../../src/lib/proposalSubmitErrors.ts";
+import {
+  formatProposalActionError,
+  formatProposalSubmitError,
+} from "../../src/lib/proposalSubmitErrors.ts";
 import { formatProposalType } from "../../src/lib/proposalTypes.ts";
 
 test("formats proposal type labels", () => {
@@ -47,4 +50,28 @@ test("formats chamber submit eligibility errors", () => {
 test("falls back to error message when payload is missing", () => {
   const error = new Error("Submit failed");
   expect(formatProposalSubmitError(error)).toBe("Submit failed");
+});
+
+test("formats proposal action errors from API payloads", () => {
+  const error = {
+    data: {
+      error: {
+        code: "proposal_pool_vote_rule",
+        message: "You cannot vote on your own proposal.",
+      },
+    },
+  };
+  expect(formatProposalActionError(error, "Vote failed.")).toBe(
+    "You cannot vote on your own proposal.",
+  );
+});
+
+test("formats proposal action errors from HTTP-prefixed fallbacks", () => {
+  expect(
+    formatProposalActionError(
+      new Error("HTTP 409: Pool vote already recorded."),
+      "Vote failed.",
+    ),
+  ).toBe("Pool vote already recorded.");
+  expect(formatProposalActionError(null, "Vote failed.")).toBe("Vote failed.");
 });

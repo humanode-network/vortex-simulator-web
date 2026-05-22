@@ -13,15 +13,18 @@ export function parsePercent(value: string): number {
 }
 
 export function parseRatio(value: string): { a: number; b: number } {
-  const parts = value
-    .split("/")
-    .map((part) => Number.parseInt(part.trim(), 10));
-  if (parts.length !== 2) return { a: 0, b: 0 };
-  const [a, b] = parts;
+  const matches = value.match(/\d+/g) ?? [];
+  const a = Number.parseInt(matches[0] ?? "", 10);
+  const b = Number.parseInt(matches[1] ?? "", 10);
   return {
     a: Number.isFinite(a) ? a : 0,
     b: Number.isFinite(b) ? b : 0,
   };
+}
+
+export function parseRatioPair(value: string): { left: number; right: number } {
+  const { a, b } = parseRatio(value);
+  return { left: a, right: b };
 }
 
 export function getChamberNumericStats(chamber: ChamberDto) {

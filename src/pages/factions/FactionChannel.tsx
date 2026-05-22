@@ -1,16 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 
-import { AddressInline } from "@/components/AddressInline";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { Input } from "@/components/primitives/input";
-import { Select } from "@/components/primitives/select";
+import { Card, CardContent } from "@/components/primitives/card";
 import {
   apiFaction,
   apiFactionThreadReply,
@@ -18,10 +10,11 @@ import {
   apiMe,
   getApiErrorPayload,
 } from "@/lib/apiClient";
-import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
-import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { findViewerFactionMembership } from "@/lib/factionUi";
 import type { FactionDto } from "@/types/api";
+import { FactionThreadDetailCard } from "./components/FactionThreadDetailCard";
+import { FactionThreadListCard } from "./components/FactionThreadListCard";
 
 const FactionChannel: React.FC = () => {
   const { id, channelId, threadId } = useParams();
@@ -60,10 +53,7 @@ const FactionChannel: React.FC = () => {
   const threads = faction?.threads ?? [];
 
   const viewerMembership = useMemo(() => {
-    if (!viewerAddress) return null;
-    return memberships.find((membership) =>
-      addressesReferToSameIdentity(membership.address, viewerAddress),
-    );
+    return findViewerFactionMembership(memberships, viewerAddress);
   }, [memberships, viewerAddress]);
 
   const viewerRole = viewerMembership?.isActive ? viewerMembership.role : null;
@@ -164,157 +154,45 @@ const FactionChannel: React.FC = () => {
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle>Threads</CardTitle>
-            {canPost ? (
-              <Button asChild size="sm">
-                <Link
-                  to={`/app/factions/${faction.id}/channels/${channel.id}/threads/new`}
-                >
-                  Create thread
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {channelThreads.length === 0 ? (
-            <p className="text-sm text-muted">No threads yet.</p>
-          ) : (
-            channelThreads.map((thread) => (
-              <div
-                key={thread.id}
-                className="rounded-md border border-border text-sm"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <Link
-                    to={`/app/factions/${faction.id}/channels/${channel.id}/threads/${thread.id}`}
-                    className="min-w-0 flex-1 px-3 py-2 hover:bg-panel-alt/50"
-                  >
-                    <p className="text-sm font-semibold text-text hover:underline">
-                      {thread.title}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {thread.status} · replies {thread.replies} · updated{" "}
-                      {formatDateTime(thread.updatedAt)}
-                    </p>
-                  </Link>
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <FactionThreadListCard
+        canPost={canPost}
+        channelId={channel.id}
+        factionId={faction.id}
+        threads={channelThreads}
+      />
 
       {threadId ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Thread</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {!activeThread ? (
-              <p className="text-sm text-muted">
-                Thread not found in this channel.
-              </p>
-            ) : (
-              <>
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-text">
-                    {activeThread.title}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {activeThread.status} · replies {activeThread.replies}
-                  </p>
-                  <AddressInline
-                    address={activeThread.authorAddress}
-                    className="text-text"
-                    textClassName="text-xs [overflow-wrap:anywhere] break-words"
-                  />
-                </div>
-
-                <p className="text-sm text-muted">{activeThread.body}</p>
-
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <p className="text-xs font-semibold text-muted">Replies</p>
-                  {(activeThread.messages ?? []).length === 0 ? (
-                    <p className="text-sm text-muted">No replies yet.</p>
-                  ) : (
-                    (activeThread.messages ?? []).map((message) => (
-                      <div
-                        key={message.id}
-                        className="space-y-1 rounded-md border border-border px-3 py-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <AddressInline
-                            address={message.authorAddress}
-                            className="text-text"
-                            textClassName="text-xs [overflow-wrap:anywhere] break-words"
-                          />
-                          <span className="text-xs text-muted">
-                            {formatDateTime(message.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted">{message.body}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {canModerate ? (
-                  <Select
-                    value={activeThread.status}
-                    onChange={(event) =>
-                      runAction(async () => {
-                        await apiFactionThreadTransition({
-                          factionId: faction.id,
-                          threadId: activeThread.id,
-                          status: event.target.value as
-                            | "open"
-                            | "resolved"
-                            | "locked",
-                        });
-                      })
-                    }
-                  >
-                    <option value="open">Open</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="locked">Locked</option>
-                  </Select>
-                ) : null}
-
-                {canPost ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={threadReplyBody}
-                      onChange={(event) =>
-                        setThreadReplyBody(event.target.value)
-                      }
-                      placeholder="Write a reply"
-                    />
-                    <Button
-                      size="sm"
-                      disabled={mutating || !threadReplyBody.trim()}
-                      onClick={() =>
-                        runAction(async () => {
-                          await apiFactionThreadReply({
-                            factionId: faction.id,
-                            threadId: activeThread.id,
-                            body: threadReplyBody.trim(),
-                          });
-                          setThreadReplyBody("");
-                        })
-                      }
-                    >
-                      Reply
-                    </Button>
-                  </div>
-                ) : null}
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <FactionThreadDetailCard
+          canModerate={canModerate}
+          canPost={canPost}
+          mutating={mutating}
+          onReply={() =>
+            activeThread
+              ? runAction(async () => {
+                  await apiFactionThreadReply({
+                    factionId: faction.id,
+                    threadId: activeThread.id,
+                    body: threadReplyBody.trim(),
+                  });
+                  setThreadReplyBody("");
+                })
+              : undefined
+          }
+          onReplyBodyChange={setThreadReplyBody}
+          onStatusChange={(status) =>
+            activeThread
+              ? runAction(async () => {
+                  await apiFactionThreadTransition({
+                    factionId: faction.id,
+                    threadId: activeThread.id,
+                    status,
+                  });
+                })
+              : undefined
+          }
+          replyBody={threadReplyBody}
+          thread={activeThread}
+        />
       ) : null}
     </div>
   );

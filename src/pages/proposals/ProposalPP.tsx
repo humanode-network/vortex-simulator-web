@@ -1,161 +1,75 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
 
-import { Surface } from "@/components/Surface";
-import { StatTile } from "@/components/StatTile";
-import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
-import { Modal } from "@/components/Modal";
+import { apiPoolVote, apiProposalPoolPage } from "@/lib/apiClient";
 import {
-  ProposalSummaryCard,
-  ProposalTeamMilestonesCard,
-  ProposalTimelineCard,
-} from "@/components/ProposalSections";
-import { HintLabel } from "@/components/Hint";
-import {
-  apiPoolVote,
-  apiProposalPoolPage,
-  apiProposalTimeline,
-  getApiErrorPayload,
-} from "@/lib/apiClient";
-import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
-import { formatLoadError } from "@/lib/errorFormatting";
-import type { PoolProposalPageDto, ProposalTimelineItemDto } from "@/types/api";
+  getProposalPoolVotingGate,
+  proposalFormationSummaryStats,
+  viewerIsProposalAuthor,
+} from "@/lib/proposalUi";
+import { formatProposalActionError } from "@/lib/proposalSubmitErrors";
 import { useAuth } from "@/app/auth/AuthContext";
 import {
   useProposalStageSync,
   useProposalTransitionNotice,
-} from "./useProposalStageSync";
+} from "./hooks/useProposalStageSync";
 import { ProposalDeliberation } from "./ProposalDeliberation";
+import { ProposalPageLoadingState } from "./shared/ProposalPageLoadingState";
+import { ProposalTimelineSection } from "./shared/ProposalTimelineSection";
+import { useProposalPageData } from "./hooks/useProposalPageData";
+import { ProposalPageShell } from "./shared/ProposalPageShell";
+import {
+  ProposalPoolRulesModal,
+  type PoolVoteAction,
+} from "./pool/ProposalPoolRulesModal";
+import { ProposalPoolAttentionStats } from "./pool/ProposalPoolAttentionStats";
+import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 
 const ProposalPP: React.FC = () => {
   const { id } = useParams();
-  const [proposal, setProposal] = useState<PoolProposalPageDto | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [voteSubmitting, setVoteSubmitting] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [rulesChecked, setRulesChecked] = useState(false);
-  const [pendingAction, setPendingAction] = useState<
-    "upvote" | "downvote" | null
-  >(null);
-  const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
-  const [timelineError, setTimelineError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PoolVoteAction | null>(
+    null,
+  );
+  const {
+    loadError,
+    page: proposal,
+    setPage: setProposal,
+    timeline,
+    timelineError,
+  } = useProposalPageData({
+    id,
+    loadPage: apiProposalPoolPage,
+    pageErrorFallback: "Failed to load proposal",
+  });
   const auth = useAuth();
   const syncProposalStage = useProposalStageSync(id);
   const transitionNotice = useProposalTransitionNotice();
 
-  const formatPoolVoteError = (error: unknown): string => {
-    const payloadMessage = getApiErrorPayload(error)?.error?.message;
-    if (payloadMessage && payloadMessage.trim().length > 0) {
-      return payloadMessage;
-    }
-    const fallback = (error as Error)?.message ?? "Vote failed.";
-    return fallback.replace(/^HTTP\s+\d{3}:\s*/i, "").trim() || "Vote failed.";
-  };
-
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-    (async () => {
-      try {
-        const [pageResult, timelineResult] = await Promise.allSettled([
-          apiProposalPoolPage(id),
-          apiProposalTimeline(id),
-        ]);
-        if (!active) return;
-        if (pageResult.status === "fulfilled") {
-          setProposal(pageResult.value);
-          setLoadError(null);
-        } else {
-          setProposal(null);
-          setLoadError(pageResult.reason?.message ?? "Failed to load proposal");
-        }
-        if (timelineResult.status === "fulfilled") {
-          setTimeline(timelineResult.value.items);
-          setTimelineError(null);
-        } else {
-          setTimeline([]);
-          setTimelineError(
-            timelineResult.reason?.message ?? "Failed to load timeline",
-          );
-        }
-      } catch (error) {
-        if (!active) return;
-        setProposal(null);
-        setLoadError((error as Error).message);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
   if (!proposal) {
     return (
-      <div className="flex flex-col gap-6">
-        <PageHint pageId="proposals" />
-        {transitionNotice ? (
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            {transitionNotice}
-          </Surface>
-        ) : null}
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {loadError
-            ? `Proposal unavailable: ${formatLoadError(loadError, "Failed to load proposal.")}`
-            : "Loading proposal…"}
-        </Surface>
-      </div>
+      <ProposalPageLoadingState
+        fallbackMessage="Loading proposal…"
+        loadError={loadError}
+        transitionNotice={transitionNotice}
+        unavailableFallback="Failed to load proposal."
+        unavailableLabel="Proposal unavailable"
+      />
     );
   }
 
-  const [filledSlots, totalSlots] = proposal.formationEligible
-    ? proposal.teamSlots.split("/").map((v) => Number(v.trim()))
-    : [0, 0];
-  const openSlots = Math.max(totalSlots - filledSlots, 0);
-  const viewerIsProposer = addressesReferToSameIdentity(
+  const viewerIsProposer = viewerIsProposalAuthor(
     auth.address,
     proposal.proposerId,
   );
-  const formationSummaryStats = proposal.formationEligible
-    ? [
-        { label: "Budget ask", value: proposal.budget },
-        {
-          label: "Formation",
-          value: "Yes",
-        },
-        {
-          label: "Team slots",
-          value: `${proposal.teamSlots} (open: ${openSlots})`,
-        },
-        {
-          label: "Milestones",
-          value: `${proposal.milestones} milestones planned`,
-        },
-      ]
-    : [];
+  const formationSummaryStats = proposalFormationSummaryStats(proposal);
 
-  const votingAllowed =
-    !viewerIsProposer &&
-    (!auth.enabled || (auth.authenticated && auth.eligible && !auth.loading));
-  const votingDisabledReason = viewerIsProposer
-    ? "You cannot vote on your own proposal."
-    : auth.enabled && auth.loading
-      ? "Checking wallet status…"
-      : auth.enabled && !auth.authenticated
-        ? "Connect your wallet to vote."
-        : (auth.gateReason ?? "Only active human nodes can vote.");
+  const votingGate = getProposalPoolVotingGate({ auth, viewerIsProposer });
 
   const activeGovernors = Math.max(1, proposal.activeGovernors);
   const engaged = proposal.upvotes + proposal.downvotes;
@@ -172,20 +86,34 @@ const ProposalPP: React.FC = () => {
       proposal.upvoteFloor > 0 ? proposal.upvotes / proposal.upvoteFloor : 0,
     ) * upvoteFloorFractionPercent,
   );
+  const handleConfirmPoolVote = async () => {
+    if (!id || !pendingAction) return;
+    setVoteSubmitting(true);
+    setVoteError(null);
+    try {
+      await apiPoolVote({
+        proposalId: id,
+        direction: pendingAction === "upvote" ? "up" : "down",
+        idempotencyKey: crypto.randomUUID(),
+      });
+      const redirected = await syncProposalStage();
+      if (redirected) {
+        setShowRules(false);
+        return;
+      }
+      const next = await apiProposalPoolPage(id);
+      setProposal(next);
+      setShowRules(false);
+    } catch (error) {
+      setVoteError(formatProposalActionError(error, "Vote failed."));
+    } finally {
+      setVoteSubmitting(false);
+      void syncProposalStage();
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHint pageId="proposals" />
-      {transitionNotice ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {transitionNotice}
-        </Surface>
-      ) : null}
+    <ProposalPageShell transitionNotice={transitionNotice}>
       <div className="grid items-start gap-4">
         <ProposalPageHeader
           title={proposal.title}
@@ -200,8 +128,8 @@ const ProposalPP: React.FC = () => {
               tone="accent"
               icon="▲"
               label="Upvote"
-              disabled={!votingAllowed}
-              title={votingAllowed ? undefined : votingDisabledReason}
+              disabled={!votingGate.allowed}
+              title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {
                 setPendingAction("upvote");
                 setRulesChecked(false);
@@ -214,8 +142,8 @@ const ProposalPP: React.FC = () => {
               tone="destructive"
               icon="▼"
               label="Downvote"
-              disabled={!votingAllowed}
-              title={votingAllowed ? undefined : votingDisabledReason}
+              disabled={!votingGate.allowed}
+              title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {
                 setPendingAction("downvote");
                 setRulesChecked(false);
@@ -238,50 +166,15 @@ const ProposalPP: React.FC = () => {
           </div>
         </ProposalPageHeader>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-text">
-            Quorum of attention
-          </h2>
-          <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-2">
-            <StatTile
-              label={
-                <HintLabel
-                  termId="quorum_of_attention"
-                  termText="Attention quorum"
-                  suffix=" (%)"
-                />
-              }
-              value={
-                <>
-                  {attentionPercent}% / {attentionNeededPercent}%
-                </>
-              }
-              variant="panel"
-              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-              valueClassName="text-2xl font-semibold"
-            />
-            <StatTile
-              label={
-                <HintLabel
-                  termId="upvote_floor"
-                  termText="Upvote floor"
-                  suffix=" (%)"
-                />
-              }
-              value={
-                <>
-                  {upvoteFloorProgressPercent}% / {upvoteFloorFractionPercent}%
-                </>
-              }
-              variant="panel"
-              className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-              valueClassName="text-2xl font-semibold"
-            />
-          </div>
-        </section>
+        <ProposalPoolAttentionStats
+          attentionNeededPercent={attentionNeededPercent}
+          attentionPercent={attentionPercent}
+          upvoteFloorFractionPercent={upvoteFloorFractionPercent}
+          upvoteFloorProgressPercent={upvoteFloorProgressPercent}
+        />
       </div>
 
-      <ProposalSummaryCard
+      <ProposalDetailsSections
         summary={proposal.summary}
         stats={formationSummaryStats}
         overview={proposal.overview}
@@ -290,138 +183,37 @@ const ProposalPP: React.FC = () => {
         attachments={proposal.attachments}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
+        teamLocked={
+          proposal.formationEligible ? proposal.teamLocked : undefined
+        }
+        openSlots={
+          proposal.formationEligible ? proposal.openSlotNeeds : undefined
+        }
+        milestonesDetail={
+          proposal.formationEligible ? proposal.milestonesDetail : undefined
+        }
       />
-
-      {proposal.formationEligible ? (
-        <ProposalTeamMilestonesCard
-          teamLocked={proposal.teamLocked}
-          openSlots={proposal.openSlotNeeds}
-          milestonesDetail={proposal.milestonesDetail}
-        />
-      ) : null}
 
       <ProposalDeliberation proposalId={id} />
 
-      <Modal
+      <ProposalPoolRulesModal
+        checked={rulesChecked}
+        error={voteError}
         open={showRules}
         onOpenChange={setShowRules}
-        ariaLabel="Pool rules"
-        contentClassName="max-w-xl"
-      >
-        <Surface
-          variant="panel"
-          radius="2xl"
-          shadow="popover"
-          className="p-6 text-text"
-        >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-lg font-semibold">Pool rules</p>
-            <button
-              type="button"
-              className="text-sm text-muted hover:text-text"
-              onClick={() => setShowRules(false)}
-            >
-              Close
-            </button>
-          </div>
-          <div className="space-y-2 text-sm text-muted">
-            <ul className="list-disc space-y-1 pl-4">
-              {proposal.rules.map((rule) => (
-                <li key={rule}>{rule}</li>
-              ))}
-            </ul>
-          </div>
-          <Surface
-            variant="panelAlt"
-            radius="xl"
-            shadow="control"
-            className="mt-4 flex items-center gap-2 px-3 py-2"
-          >
-            <input
-              id="rules-confirm"
-              type="checkbox"
-              className="h-4 w-4 accent-primary"
-              checked={rulesChecked}
-              onChange={(e) => setRulesChecked(e.target.checked)}
-            />
-            <label htmlFor="rules-confirm" className="text-sm text-text">
-              I read the proposal and know the rules
-            </label>
-          </Surface>
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-text hover:bg-panel-alt"
-              onClick={() => setShowRules(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={!rulesChecked || voteSubmitting || !pendingAction}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                !rulesChecked || voteSubmitting || !pendingAction
-                  ? "cursor-not-allowed bg-muted text-primary-foreground opacity-60"
-                  : pendingAction === "downvote"
-                    ? "border-2 border-destructive bg-destructive text-destructive-foreground hover:opacity-95"
-                    : "border-2 border-accent bg-accent text-accent-foreground hover:opacity-95"
-              }`}
-              onClick={async () => {
-                if (!id || !pendingAction) return;
-                setVoteSubmitting(true);
-                setVoteError(null);
-                try {
-                  await apiPoolVote({
-                    proposalId: id,
-                    direction: pendingAction === "upvote" ? "up" : "down",
-                    idempotencyKey: crypto.randomUUID(),
-                  });
-                  const redirected = await syncProposalStage();
-                  if (redirected) {
-                    setShowRules(false);
-                    return;
-                  }
-                  const next = await apiProposalPoolPage(id);
-                  setProposal(next);
-                  setShowRules(false);
-                } catch (error) {
-                  setVoteError(formatPoolVoteError(error));
-                } finally {
-                  setVoteSubmitting(false);
-                  void syncProposalStage();
-                }
-              }}
-            >
-              {pendingAction === "downvote"
-                ? voteSubmitting
-                  ? "Submitting…"
-                  : "Confirm downvote"
-                : voteSubmitting
-                  ? "Submitting…"
-                  : "Confirm upvote"}
-            </button>
-          </div>
-          {voteError ? (
-            <p className="mt-3 text-sm text-destructive">
-              {formatLoadError(voteError)}
-            </p>
-          ) : null}
-        </Surface>
-      </Modal>
+        onCheckedChange={setRulesChecked}
+        onConfirm={handleConfirmPoolVote}
+        pendingAction={pendingAction}
+        rules={proposal.rules}
+        submitting={voteSubmitting}
+      />
 
-      {timelineError ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          Timeline unavailable: {formatLoadError(timelineError)}
-        </Surface>
-      ) : (
-        <ProposalTimelineCard items={timeline} proposalId={id} />
-      )}
-    </div>
+      <ProposalTimelineSection
+        error={timelineError}
+        items={timeline}
+        proposalId={id}
+      />
+    </ProposalPageShell>
   );
 };
 

@@ -1,119 +1,57 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
 
-import { PageHint } from "@/components/PageHint";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
-import {
-  ProposalSummaryCard,
-  ProposalTimelineCard,
-} from "@/components/ProposalSections";
-import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
-import { VoteButton } from "@/components/VoteButton";
 import {
   apiCitizenVetoVote,
   apiProposalCitizenVetoPage,
-  apiProposalTimeline,
 } from "@/lib/apiClient";
-import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
+import { viewerIsProposalAuthor } from "@/lib/proposalUi";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { calculateCitizenVetoSupportPercent } from "@/lib/proposalVetoUi";
-import type {
-  CitizenVetoProposalPageDto,
-  ProposalTimelineItemDto,
-} from "@/types/api";
 import {
   useProposalStageSync,
   useProposalTransitionNotice,
-} from "./useProposalStageSync";
+} from "./hooks/useProposalStageSync";
 import { useAuth } from "@/app/auth/AuthContext";
 import { ProposalDeliberation } from "./ProposalDeliberation";
+import { ProposalPageLoadingState } from "./shared/ProposalPageLoadingState";
+import { ProposalTimelineSection } from "./shared/ProposalTimelineSection";
+import { useProposalPageData } from "./hooks/useProposalPageData";
+import { ProposalPageShell } from "./shared/ProposalPageShell";
+import { ProposalCitizenVetoActions } from "./veto/ProposalCitizenVetoActions";
+import { ProposalCitizenVetoStats } from "./veto/ProposalCitizenVetoStats";
+import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 
 const ProposalCitizenVeto: React.FC = () => {
   const { id } = useParams();
-  const [proposal, setProposal] = useState<CitizenVetoProposalPageDto | null>(
-    null,
-  );
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const auth = useAuth();
-  const [timeline, setTimeline] = useState<ProposalTimelineItemDto[]>([]);
-  const [timelineError, setTimelineError] = useState<string | null>(null);
+  const {
+    loadError,
+    page: proposal,
+    reloadPage: loadPage,
+    timeline,
+    timelineError,
+  } = useProposalPageData({
+    id,
+    loadPage: apiProposalCitizenVetoPage,
+    pageErrorFallback: "Failed to load citizen veto",
+  });
   const syncProposalStage = useProposalStageSync(id);
   const transitionNotice = useProposalTransitionNotice();
 
-  const loadPage = useCallback(async () => {
-    if (!id) return;
-    const page = await apiProposalCitizenVetoPage(id);
-    setProposal(page);
-    setLoadError(null);
-  }, [id]);
-
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-    (async () => {
-      try {
-        const [pageResult, timelineResult] = await Promise.allSettled([
-          apiProposalCitizenVetoPage(id),
-          apiProposalTimeline(id),
-        ]);
-        if (!active) return;
-        if (pageResult.status === "fulfilled") {
-          setProposal(pageResult.value);
-          setLoadError(null);
-        } else {
-          setProposal(null);
-          setLoadError(
-            pageResult.reason?.message ?? "Failed to load citizen veto",
-          );
-        }
-        if (timelineResult.status === "fulfilled") {
-          setTimeline(timelineResult.value.items);
-          setTimelineError(null);
-        } else {
-          setTimeline([]);
-          setTimelineError(
-            timelineResult.reason?.message ?? "Failed to load timeline",
-          );
-        }
-      } catch (error) {
-        if (!active) return;
-        setProposal(null);
-        setLoadError((error as Error).message);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
   if (!proposal) {
     return (
-      <div className="flex flex-col gap-6">
-        <PageHint pageId="proposals" />
-        {transitionNotice ? (
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            {transitionNotice}
-          </Surface>
-        ) : null}
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {loadError
-            ? `Citizen veto unavailable: ${formatLoadError(loadError, "Failed to load citizen veto.")}`
-            : "Loading citizen veto…"}
-        </Surface>
-      </div>
+      <ProposalPageLoadingState
+        fallbackMessage="Loading citizen veto…"
+        loadError={loadError}
+        transitionNotice={transitionNotice}
+        unavailableFallback="Failed to load citizen veto."
+        unavailableLabel="Citizen veto unavailable"
+      />
     );
   }
 
@@ -126,7 +64,7 @@ const ProposalCitizenVeto: React.FC = () => {
     vetoVotes: proposal.votes.veto,
     eligibleCitizens: proposal.eligibleCitizens,
   });
-  const viewerIsProposer = addressesReferToSameIdentity(
+  const viewerIsProposer = viewerIsProposalAuthor(
     auth.address,
     proposal.proposerId,
   );
@@ -138,9 +76,6 @@ const ProposalCitizenVeto: React.FC = () => {
       }
     : undefined;
   const vetoWindowOpen = proposal.timeLeft !== "Ended";
-  const currentVote = proposal.viewer.currentVote;
-  const vetoRecorded = currentVote === "veto";
-  const keepRecorded = currentVote === "keep";
 
   const handleVote = async (choice: "veto" | "keep") => {
     if (
@@ -167,19 +102,7 @@ const ProposalCitizenVeto: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHint pageId="proposals" />
-      {transitionNotice ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          {transitionNotice}
-        </Surface>
-      ) : null}
-
+    <ProposalPageShell transitionNotice={transitionNotice}>
       <ProposalPageHeader
         title={`${proposal.title} — Citizen veto`}
         stage="citizen_veto"
@@ -188,100 +111,13 @@ const ProposalCitizenVeto: React.FC = () => {
         proposer={proposal.proposer}
         stageLinks={stageLinks}
       >
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="mx-auto max-w-3xl px-5 py-4 text-sm text-muted"
-        >
-          <p className="font-semibold text-text">Citizen Veto</p>
-          <p className="mt-2">
-            {viewerIsProposer
-              ? "You proposed this decision, so you cannot vote in its Citizen Veto."
-              : proposal.viewer.eligible
-                ? proposal.viewer.currentVote === "veto"
-                  ? "Only Citizens captured when this veto window opened can vote here. Your current vote is Veto."
-                  : proposal.viewer.currentVote === "keep"
-                    ? "Only Citizens captured when this veto window opened can vote here. Your current vote is Keep."
-                    : "Only Citizens captured when this veto window opened can vote here. Cast Veto to send the decision back for reconsideration, or Keep to leave it in place."
-                : "Only Citizens captured when this veto window opened can vote here. You were not in that group for this proposal."}
-          </p>
-          <p className="mt-2 text-xs text-muted">
-            {vetoWindowOpen
-              ? "If Veto reaches the threshold before this window ends, the proposal returns to the proposer for reconsideration."
-              : "This veto window has ended."}
-          </p>
-        </Surface>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <VoteButton
-            tone="destructive"
-            label={
-              submitting
-                ? "Casting veto..."
-                : vetoRecorded
-                  ? "Veto cast"
-                  : "Veto"
-            }
-            className={
-              vetoRecorded
-                ? "bg-[var(--destructive)] text-[var(--destructive-foreground)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]"
-                : undefined
-            }
-            disabled={
-              submitting ||
-              !vetoWindowOpen ||
-              vetoRecorded ||
-              !proposal.viewer.eligible ||
-              viewerIsProposer
-            }
-            title={
-              viewerIsProposer
-                ? "You cannot vote on your own proposal."
-                : vetoRecorded
-                  ? "Your citizen veto is already recorded."
-                  : !vetoWindowOpen
-                    ? "Veto window ended."
-                    : !proposal.viewer.eligible
-                      ? "Only Citizens captured when this veto window opened can vote here."
-                      : undefined
-            }
-            onClick={() => handleVote("veto")}
-          />
-          <VoteButton
-            tone="neutral"
-            label={
-              submitting
-                ? "Casting keep..."
-                : keepRecorded
-                  ? "Keep cast"
-                  : "Keep"
-            }
-            className={
-              keepRecorded
-                ? "bg-[var(--panel-alt)] text-[var(--text)] ring-1 ring-[var(--border-strong)] hover:bg-[var(--panel-alt)]"
-                : undefined
-            }
-            disabled={
-              submitting ||
-              !vetoWindowOpen ||
-              keepRecorded ||
-              !proposal.viewer.eligible ||
-              viewerIsProposer
-            }
-            title={
-              viewerIsProposer
-                ? "You cannot vote on your own proposal."
-                : keepRecorded
-                  ? "Your citizen keep vote is already recorded."
-                  : !vetoWindowOpen
-                    ? "Veto window ended."
-                    : !proposal.viewer.eligible
-                      ? "Only Citizens captured when this veto window opened can vote here."
-                      : undefined
-            }
-            onClick={() => handleVote("keep")}
-          />
-        </div>
+        <ProposalCitizenVetoActions
+          onVote={handleVote}
+          submitting={submitting}
+          vetoWindowOpen={vetoWindowOpen}
+          viewer={proposal.viewer}
+          viewerIsProposer={viewerIsProposer}
+        />
         {submitError ? (
           <Surface
             variant="panelAlt"
@@ -294,77 +130,19 @@ const ProposalCitizenVeto: React.FC = () => {
         ) : null}
       </ProposalPageHeader>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-text">Citizen veto window</h2>
-        {castVotes === 0 ? (
-          <Surface
-            variant="panelAlt"
-            radius="2xl"
-            shadow="tile"
-            className="px-5 py-4 text-sm text-muted"
-          >
-            No Citizen Veto votes yet.
-          </Surface>
-        ) : null}
-        <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile
-            label="Time left"
-            value={proposal.timeLeft}
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="text-2xl font-semibold"
-          />
-          <StatTile
-            label="Participation"
-            value={
-              <>
-                <span>
-                  {castVotes} / {proposal.quorumNeeded}
-                </span>
-                <span className="text-xs font-semibold text-muted">
-                  {quorumPercent}% of eligible Citizens
-                </span>
-              </>
-            }
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
-          />
-          <StatTile
-            label="Veto threshold"
-            value={
-              <>
-                <span>
-                  {proposal.votes.veto} / {proposal.vetoNeeded}
-                </span>
-                <span className="text-xs font-semibold text-muted">
-                  {vetoPercent}% of eligible Citizens
-                </span>
-              </>
-            }
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
-          />
-          <StatTile
-            label="Attempts left"
-            value={
-              <>
-                <span>{proposal.attemptsRemaining}</span>
-                <span className="text-xs font-semibold text-muted">
-                  {proposal.attemptsUsed} of{" "}
-                  {proposal.attemptsUsed + proposal.attemptsRemaining} used
-                </span>
-              </>
-            }
-            variant="panel"
-            className="flex min-h-24 flex-col items-center justify-center gap-1 py-4"
-            valueClassName="flex flex-col items-center gap-1 text-2xl font-semibold"
-          />
-        </div>
-      </section>
+      <ProposalCitizenVetoStats
+        attemptsRemaining={proposal.attemptsRemaining}
+        attemptsUsed={proposal.attemptsUsed}
+        castVotes={castVotes}
+        quorumNeeded={proposal.quorumNeeded}
+        quorumPercent={quorumPercent}
+        timeLeft={proposal.timeLeft}
+        vetoNeeded={proposal.vetoNeeded}
+        vetoPercent={vetoPercent}
+        vetoVotes={proposal.votes.veto}
+      />
 
-      <ProposalSummaryCard
+      <ProposalDetailsSections
         summary={proposal.summary}
         stats={[]}
         overview={proposal.overview}
@@ -377,19 +155,12 @@ const ProposalCitizenVeto: React.FC = () => {
 
       <ProposalDeliberation proposalId={id} />
 
-      {timelineError ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
-          Timeline unavailable: {formatLoadError(timelineError)}
-        </Surface>
-      ) : (
-        <ProposalTimelineCard items={timeline} proposalId={id} />
-      )}
-    </div>
+      <ProposalTimelineSection
+        error={timelineError}
+        items={timeline}
+        proposalId={id}
+      />
+    </ProposalPageShell>
   );
 };
 
