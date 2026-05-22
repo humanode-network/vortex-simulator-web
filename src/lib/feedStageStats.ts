@@ -21,8 +21,7 @@ export function getFeedPoolStats(poolPage: PoolProposalPageDto) {
       poolPage.upvoteFloor > 0 ? poolPage.upvotes / poolPage.upvoteFloor : 0,
     ) * upvoteFloorFractionPercent,
   );
-  const meetsAttention =
-    engaged / activeGovernors >= poolPage.attentionQuorum;
+  const meetsAttention = engaged / activeGovernors >= poolPage.attentionQuorum;
   const meetsUpvoteFloor = poolPage.upvotes >= poolPage.upvoteFloor;
   const engagedNeeded = Math.ceil(poolPage.attentionQuorum * activeGovernors);
 
@@ -48,9 +47,7 @@ export function getFeedChamberStats(chamberPage: ChamberProposalPageDto) {
   const totalVotes = yesTotal + noTotal + abstainTotal;
 
   const engaged = chamberPage.engagedGovernors;
-  const quorumNeeded = Math.ceil(
-    activeGovernors * chamberPage.attentionQuorum,
-  );
+  const quorumNeeded = Math.ceil(activeGovernors * chamberPage.attentionQuorum);
   const quorumPercent = Math.round((engaged / activeGovernors) * 100);
   const quorumNeededPercent = Math.round(chamberPage.attentionQuorum * 100);
   const yesPercentOfQuorum =
@@ -82,9 +79,7 @@ export function getFeedChamberStats(chamberPage: ChamberProposalPageDto) {
   };
 }
 
-export function getFeedFormationStats(
-  formationPage: FormationProposalPageDto,
-) {
+export function getFeedFormationStats(formationPage: FormationProposalPageDto) {
   const progressRaw = Number.parseInt(
     formationPage.progress.replace("%", ""),
     10,

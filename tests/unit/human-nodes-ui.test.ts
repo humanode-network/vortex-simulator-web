@@ -63,9 +63,7 @@ const profile = (
   ...overrides,
 });
 
-const governance = (
-  chamberIds: string[],
-): GetMyGovernanceResponse =>
+const governance = (chamberIds: string[]): GetMyGovernanceResponse =>
   ({
     delegation: {
       chambers: chamberIds.map((chamberId, index) => ({
@@ -81,7 +79,9 @@ const governance = (
 
 test("isLikelyHumanodeAddress identifies long hm addresses only", () => {
   expect(
-    isLikelyHumanodeAddress("hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs"),
+    isLikelyHumanodeAddress(
+      "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs",
+    ),
   ).toBe(true);
   expect(isLikelyHumanodeAddress("Human Node")).toBe(false);
   expect(isLikelyHumanodeAddress("hm-short")).toBe(false);

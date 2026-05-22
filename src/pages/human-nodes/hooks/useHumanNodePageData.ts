@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { apiHuman, apiMyGovernance } from "@/lib/apiClient";
-import type {
-  GetMyGovernanceResponse,
-  HumanNodeProfileDto,
-} from "@/types/api";
+import type { GetMyGovernanceResponse, HumanNodeProfileDto } from "@/types/api";
 
 export function useHumanNodePageData(profileId: string | undefined) {
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);

@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/primitives/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/primitives/card";
 import { HintLabel } from "@/components/Hint";
 import { Kicker } from "@/components/Kicker";
 import { Surface } from "@/components/Surface";

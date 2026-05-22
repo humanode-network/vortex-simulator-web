@@ -88,7 +88,8 @@ export const FactionHero: React.FC<FactionHeroProps> = ({
               </Badge>
             </div>
           ) : null}
-          {viewerJoinRequest?.status === "pending" && !viewerMembershipActive ? (
+          {viewerJoinRequest?.status === "pending" &&
+          !viewerMembershipActive ? (
             <div className="mt-3">
               <Badge variant="outline">
                 Private faction join request pending

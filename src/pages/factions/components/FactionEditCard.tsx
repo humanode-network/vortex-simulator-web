@@ -93,7 +93,9 @@ export function FactionEditCard({
           <Button
             size="sm"
             disabled={
-              mutating || name.trim().length < 2 || description.trim().length < 2
+              mutating ||
+              name.trim().length < 2 ||
+              description.trim().length < 2
             }
             onClick={onSave}
           >

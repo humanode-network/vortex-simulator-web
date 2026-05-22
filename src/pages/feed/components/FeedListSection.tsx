@@ -4,7 +4,11 @@ import { cn } from "@/lib/utils";
 import { ExpandableCard } from "@/components/ExpandableCard";
 import { StageChip } from "@/components/StageChip";
 import { formatDateTime } from "@/lib/dateTime";
-import { feedItemKey, hasFinishedRoute, proposalIdFromHref } from "@/lib/feedUi";
+import {
+  feedItemKey,
+  hasFinishedRoute,
+  proposalIdFromHref,
+} from "@/lib/feedUi";
 import {
   getFeedChamberStats,
   getFeedFormationStats,
@@ -23,14 +27,8 @@ type FeedListSectionProps = {
     string,
     import("@/types/api").ChamberProposalPageDto | undefined
   >;
-  chamberVetoPagesById: Record<
-    string,
-    ChamberVetoProposalPageDto | undefined
-  >;
-  citizenVetoPagesById: Record<
-    string,
-    CitizenVetoProposalPageDto | undefined
-  >;
+  chamberVetoPagesById: Record<string, ChamberVetoProposalPageDto | undefined>;
+  citizenVetoPagesById: Record<string, CitizenVetoProposalPageDto | undefined>;
   expandedKey: string | null;
   feedListRef: RefObject<HTMLDivElement | null>;
   finishedPagesById: Record<string, ProposalFinishedPageDto | undefined>;

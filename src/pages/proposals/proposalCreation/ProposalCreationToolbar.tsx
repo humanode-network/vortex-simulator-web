@@ -51,7 +51,9 @@ export function ProposalCreationToolbar({
           Reset draft
         </Button>
         {savedAt ? (
-          <span className="text-xs text-muted">Saved {formatTime(savedAt)}</span>
+          <span className="text-xs text-muted">
+            Saved {formatTime(savedAt)}
+          </span>
         ) : null}
         {serverDraftId ? (
           <Button asChild variant="ghost" size="sm">

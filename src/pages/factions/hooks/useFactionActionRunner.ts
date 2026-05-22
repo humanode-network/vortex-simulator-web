@@ -6,7 +6,9 @@ type UseFactionActionRunnerInput = {
   reload: () => Promise<void>;
 };
 
-export function useFactionActionRunner({ reload }: UseFactionActionRunnerInput) {
+export function useFactionActionRunner({
+  reload,
+}: UseFactionActionRunnerInput) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [mutating, setMutating] = useState(false);
 

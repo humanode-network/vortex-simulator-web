@@ -15,11 +15,7 @@ export type HumanNodesTierFilter =
   | "legate"
   | "consul"
   | "citizen";
-export type HumanNodesStatusFilter =
-  | "all"
-  | "governor"
-  | "human"
-  | "inactive";
+export type HumanNodesStatusFilter = "all" | "governor" | "human" | "inactive";
 export type HumanNodesCmRange = "all" | "0-50" | "50-200" | "200+";
 
 export type HumanNodesFilters = {
@@ -60,8 +56,7 @@ export function filterHumanNodes(input: {
     .filter((node) => {
       const factionName =
         factionsById[node.factionId]?.name?.toLowerCase() ?? "";
-      const chamberName =
-        chambersById[node.chamber]?.name?.toLowerCase() ?? "";
+      const chamberName = chambersById[node.chamber]?.name?.toLowerCase() ?? "";
       const matchesTerm =
         node.name.toLowerCase().includes(term) ||
         node.role.toLowerCase().includes(term) ||
@@ -135,7 +130,9 @@ export function getHumanNodeVisibleHeroStats(
   });
 }
 
-export function getHumanNodeCmTotals(heroStats: HumanNodeProfileDto["heroStats"]) {
+export function getHumanNodeCmTotals(
+  heroStats: HumanNodeProfileDto["heroStats"],
+) {
   return heroStats.reduce(
     (acc, stat) => {
       const label = stat.label.trim().toUpperCase();

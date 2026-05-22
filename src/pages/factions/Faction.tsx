@@ -2,10 +2,7 @@ import { Link, useParams } from "react-router";
 
 import { PageHint } from "@/components/PageHint";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/primitives/card";
+import { Card, CardContent } from "@/components/primitives/card";
 import {
   apiFactionChannelCreate,
   apiFactionChannelLock,

@@ -18,10 +18,7 @@ type FactionMembersSectionProps = {
   canManageMembers: boolean;
   memberships: FactionMember[];
   mutating: boolean;
-  onRoleSet: (
-    address: string,
-    role: "founder" | "steward" | "member",
-  ) => void;
+  onRoleSet: (address: string, role: "founder" | "steward" | "member") => void;
   viewerAddress: string | null;
 };
 

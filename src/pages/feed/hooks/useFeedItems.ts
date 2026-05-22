@@ -5,10 +5,7 @@ import { feedItemKey, toUrgentItems } from "@/lib/feedUi";
 import { apiFeed } from "@/lib/apiClient";
 import type { FeedItemDto } from "@/types/api";
 import type { FeedScope } from "../components/FeedControls";
-import {
-  FEED_MAX_PAGE_SIZE,
-  FEED_MIN_PAGE_SIZE,
-} from "./useFeedPageSize";
+import { FEED_MAX_PAGE_SIZE, FEED_MIN_PAGE_SIZE } from "./useFeedPageSize";
 
 const URGENT_STAGE_LIMIT = FEED_MAX_PAGE_SIZE * 2;
 

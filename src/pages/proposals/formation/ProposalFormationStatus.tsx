@@ -5,8 +5,8 @@ type ProposalFormationStatusProps = {
   stageData: FormationProposalPageDto["stageData"];
 };
 
-export const ProposalFormationStatus: React.FC<ProposalFormationStatusProps> = ({
-  stageData,
-}) => {
+export const ProposalFormationStatus: React.FC<
+  ProposalFormationStatusProps
+> = ({ stageData }) => {
   return <ProposalStageStatus title="Project status" stageData={stageData} />;
 };

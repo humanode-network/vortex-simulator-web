@@ -226,7 +226,9 @@ const ProposalChamber: React.FC = () => {
         attachments={proposal.attachments}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
-        teamLocked={proposal.formationEligible ? proposal.teamLocked : undefined}
+        teamLocked={
+          proposal.formationEligible ? proposal.teamLocked : undefined
+        }
         openSlots={
           proposal.formationEligible ? proposal.openSlotNeeds : undefined
         }

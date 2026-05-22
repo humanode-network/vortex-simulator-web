@@ -10,9 +10,7 @@ import { Select } from "@/components/primitives/select";
 import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
 
-type FactionInitiative = NonNullable<
-  FactionDto["initiativesDetailed"]
->[number];
+type FactionInitiative = NonNullable<FactionDto["initiativesDetailed"]>[number];
 
 type FactionInitiativeStatus =
   | "draft"

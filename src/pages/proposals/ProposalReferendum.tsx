@@ -2,10 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
-import {
-  apiProposalReferendumPage,
-  apiReferendumVote,
-} from "@/lib/apiClient";
+import { apiProposalReferendumPage, apiReferendumVote } from "@/lib/apiClient";
 import {
   getProposalOrdinaryVoteGate,
   proposalFormationSummaryStats,
@@ -89,7 +86,7 @@ const ProposalReferendum: React.FC = () => {
         citizen_veto: `/app/proposals/${id}/citizen-veto`,
         chamber_veto: `/app/proposals/${id}/chamber-veto`,
       }
-      : undefined;
+    : undefined;
   const vetoWindowOpen = proposal.timeLeft !== "Ended";
   const ordinaryVoteGate = getProposalOrdinaryVoteGate({
     submitting,
@@ -198,7 +195,9 @@ const ProposalReferendum: React.FC = () => {
         attachments={proposal.attachments}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
-        teamLocked={proposal.formationEligible ? proposal.teamLocked : undefined}
+        teamLocked={
+          proposal.formationEligible ? proposal.teamLocked : undefined
+        }
         openSlots={
           proposal.formationEligible ? proposal.openSlotNeeds : undefined
         }

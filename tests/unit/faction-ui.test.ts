@@ -45,17 +45,17 @@ test("active faction membership helpers honor inactive rows", () => {
 });
 
 test("getFactionViewerPermissions derives founder, steward, and join states", () => {
-  expect(getFactionViewerPermissions(memberships, genericAddress)).toMatchObject(
-    {
-      canJoin: false,
-      canLeave: true,
-      canManageMembers: false,
-      canModerateQueues: true,
-      isFounderAdmin: false,
-      viewerMembershipActive: true,
-      viewerRole: "steward",
-    },
-  );
+  expect(
+    getFactionViewerPermissions(memberships, genericAddress),
+  ).toMatchObject({
+    canJoin: false,
+    canLeave: true,
+    canManageMembers: false,
+    canModerateQueues: true,
+    isFounderAdmin: false,
+    viewerMembershipActive: true,
+    viewerRole: "steward",
+  });
 
   expect(
     getFactionViewerPermissions(

@@ -16,9 +16,7 @@ type ProposalPoolRulesModalProps = {
   submitting: boolean;
 };
 
-export const ProposalPoolRulesModal: React.FC<
-  ProposalPoolRulesModalProps
-> = ({
+export const ProposalPoolRulesModal: React.FC<ProposalPoolRulesModalProps> = ({
   checked,
   error,
   onCheckedChange,

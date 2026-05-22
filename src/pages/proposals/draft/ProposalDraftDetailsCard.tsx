@@ -137,9 +137,7 @@ export const ProposalDraftDetailsCard: React.FC<
                   shadow="control"
                   className="flex items-center justify-between px-3 py-2"
                 >
-                  <span className="font-semibold text-text">
-                    {member.name}
-                  </span>
+                  <span className="font-semibold text-text">{member.name}</span>
                   <span className="text-xs text-muted">{member.role}</span>
                 </Surface>
               ))}

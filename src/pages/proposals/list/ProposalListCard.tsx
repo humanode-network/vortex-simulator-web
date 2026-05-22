@@ -90,9 +90,7 @@ export function ProposalListCard({
         <>
           <StageChip
             stage={proposal.stage}
-            label={
-              proposal.summaryPill === "Finished" ? "Finished" : undefined
-            }
+            label={proposal.summaryPill === "Finished" ? "Finished" : undefined}
           />
           <Badge variant="muted" size="sm">
             {proposal.chamber.replace(/\s*chamber\s*$/i, "")}

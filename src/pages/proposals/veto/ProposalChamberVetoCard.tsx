@@ -7,10 +7,7 @@ import type { ChamberVetoProposalPageDto } from "@/types/api";
 
 type ChamberVetoCardProps = {
   chamber: ChamberVetoProposalPageDto["chambers"][number];
-  onVote: (
-    chamberId: string,
-    choice: "veto" | "keep" | "abstain",
-  ) => void;
+  onVote: (chamberId: string, choice: "veto" | "keep" | "abstain") => void;
   submitting: boolean;
   vetoWindowOpen: boolean;
   viewerIsProposer: boolean;
@@ -60,7 +57,12 @@ export function ProposalChamberVetoCard({
   });
 
   return (
-    <Surface variant="panelAlt" radius="2xl" shadow="tile" className="space-y-4 p-4">
+    <Surface
+      variant="panelAlt"
+      radius="2xl"
+      shadow="tile"
+      className="space-y-4 p-4"
+    >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-base font-semibold text-text">

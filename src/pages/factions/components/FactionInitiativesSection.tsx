@@ -10,9 +10,7 @@ import {
 } from "@/components/primitives/card";
 import type { FactionDto } from "@/types/api";
 
-type FactionInitiative = NonNullable<
-  FactionDto["initiativesDetailed"]
->[number];
+type FactionInitiative = NonNullable<FactionDto["initiativesDetailed"]>[number];
 
 type FactionInitiativesSectionProps = {
   factionId: string;

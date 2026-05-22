@@ -90,8 +90,6 @@ test("formatDayHourMinute formats time left", () => {
 });
 
 test("tier requirement and proposal-rights vocabulary stays stable", () => {
-  expect(requirementLabel.governorEras).toBe(
-    "Run a node as a governor (eras)",
-  );
+  expect(requirementLabel.governorEras).toBe("Run a node as a governor (eras)");
   expect(proposalRightsByTier.Citizen).toContain("DAO core");
 });

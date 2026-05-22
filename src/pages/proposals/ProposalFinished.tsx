@@ -84,7 +84,10 @@ const ProposalFinished: React.FC = () => {
         </Surface>
       </section>
 
-      <ProposalStageStatus title="Outcome status" stageData={proposal.stageData} />
+      <ProposalStageStatus
+        title="Outcome status"
+        stageData={proposal.stageData}
+      />
 
       <ProposalDetailsSections
         summary={proposal.summary}

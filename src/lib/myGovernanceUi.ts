@@ -9,7 +9,12 @@ export type GoverningStatus =
 
 export type TierProgress = NonNullable<GetMyGovernanceResponse["tier"]>;
 
-export type TierKey = "Nominee" | "Ecclesiast" | "Legate" | "Consul" | "Citizen";
+export type TierKey =
+  | "Nominee"
+  | "Ecclesiast"
+  | "Legate"
+  | "Consul"
+  | "Citizen";
 
 export const proposalRightsByTier: Record<TierKey, string[]> = {
   Nominee: ["Basic proposals"],

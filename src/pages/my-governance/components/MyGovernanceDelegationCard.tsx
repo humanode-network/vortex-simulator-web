@@ -13,8 +13,7 @@ import { Surface } from "@/components/Surface";
 import { formatChamberLabel } from "@/lib/chamberUi";
 import type { ChamberDto, GetMyGovernanceResponse } from "@/types/api";
 
-type DelegationItem =
-  GetMyGovernanceResponse["delegation"]["chambers"][number];
+type DelegationItem = GetMyGovernanceResponse["delegation"]["chambers"][number];
 
 type MyGovernanceDelegationCardProps = {
   chambers: ChamberDto[];
@@ -49,9 +48,7 @@ export function MyGovernanceDelegationCard({
               const pending =
                 delegationPendingByChamber[item.chamberId] ?? false;
               const currentValue =
-                delegationDrafts[item.chamberId] ??
-                item.delegateeAddress ??
-                "";
+                delegationDrafts[item.chamberId] ?? item.delegateeAddress ?? "";
 
               return (
                 <Surface
@@ -63,7 +60,9 @@ export function MyGovernanceDelegationCard({
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <Kicker>{formatChamberLabel(item.chamberId, chambers)}</Kicker>
+                      <Kicker>
+                        {formatChamberLabel(item.chamberId, chambers)}
+                      </Kicker>
                       <p className="mt-1 text-sm font-semibold text-text">
                         Current delegate
                       </p>

@@ -3,10 +3,7 @@ import { useParams } from "react-router";
 
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { VoteButton } from "@/components/VoteButton";
-import {
-  apiPoolVote,
-  apiProposalPoolPage,
-} from "@/lib/apiClient";
+import { apiPoolVote, apiProposalPoolPage } from "@/lib/apiClient";
 import {
   getProposalPoolVotingGate,
   proposalFormationSummaryStats,
@@ -132,9 +129,7 @@ const ProposalPP: React.FC = () => {
               icon="▲"
               label="Upvote"
               disabled={!votingGate.allowed}
-              title={
-                votingGate.allowed ? undefined : votingGate.disabledReason
-              }
+              title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {
                 setPendingAction("upvote");
                 setRulesChecked(false);
@@ -148,9 +143,7 @@ const ProposalPP: React.FC = () => {
               icon="▼"
               label="Downvote"
               disabled={!votingGate.allowed}
-              title={
-                votingGate.allowed ? undefined : votingGate.disabledReason
-              }
+              title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {
                 setPendingAction("downvote");
                 setRulesChecked(false);
@@ -190,7 +183,9 @@ const ProposalPP: React.FC = () => {
         attachments={proposal.attachments}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
-        teamLocked={proposal.formationEligible ? proposal.teamLocked : undefined}
+        teamLocked={
+          proposal.formationEligible ? proposal.teamLocked : undefined
+        }
         openSlots={
           proposal.formationEligible ? proposal.openSlotNeeds : undefined
         }

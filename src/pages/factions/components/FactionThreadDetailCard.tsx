@@ -41,7 +41,9 @@ export function FactionThreadDetailCard({
       </CardHeader>
       <CardContent className="space-y-3">
         {!thread ? (
-          <p className="text-sm text-muted">Thread not found in this channel.</p>
+          <p className="text-sm text-muted">
+            Thread not found in this channel.
+          </p>
         ) : (
           <>
             <div className="space-y-1">

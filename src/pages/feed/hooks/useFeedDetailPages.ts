@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { feedItemKey, hasFinishedRoute, proposalIdFromHref } from "@/lib/feedUi";
+import {
+  feedItemKey,
+  hasFinishedRoute,
+  proposalIdFromHref,
+} from "@/lib/feedUi";
 import {
   apiProposalChamberPage,
   apiProposalChamberVetoPage,

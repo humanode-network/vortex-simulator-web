@@ -96,9 +96,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
         </Surface>
       ) : item.stage === "pool" && poolPage && poolStats ? (
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-text">
-            Quorum of attention
-          </p>
+          <p className="text-sm font-semibold text-text">Quorum of attention</p>
 
           <Surface
             variant="panelAlt"
@@ -417,7 +415,11 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
       item.summaryPill === "Cofounder invitation" &&
       item.actionable ? (
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" disabled={inviteActionBusy} onClick={onInviteAccept}>
+          <Button
+            size="sm"
+            disabled={inviteActionBusy}
+            onClick={onInviteAccept}
+          >
             Accept
           </Button>
           <Button
