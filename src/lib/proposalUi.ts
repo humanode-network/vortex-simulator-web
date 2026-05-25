@@ -30,6 +30,11 @@ type ProposalPoolVotingGateInput = {
 };
 
 type ProposalOrdinaryVoteGateInput = {
+  auth?: {
+    authenticated: boolean;
+    enabled: boolean;
+    loading: boolean;
+  };
   closedReason?: string;
   submitting: boolean;
   viewerIsProposer: boolean;
@@ -54,18 +59,19 @@ export function getProposalPoolVotingGate({
 }: ProposalPoolVotingGateInput): { allowed: boolean; disabledReason: string } {
   const allowed =
     !viewerIsProposer &&
-    (!auth.enabled || (auth.authenticated && auth.eligible && !auth.loading));
+    (!auth.enabled || (auth.authenticated && !auth.loading));
   const disabledReason = viewerIsProposer
     ? "You cannot vote on your own proposal."
     : auth.enabled && auth.loading
       ? "Checking wallet status…"
       : auth.enabled && !auth.authenticated
         ? "Connect your wallet to vote."
-        : (auth.gateReason ?? "Only active human nodes can vote.");
+        : "Only chamber Governors can vote. Active Governors are counted for quorum.";
   return { allowed, disabledReason };
 }
 
 export function getProposalOrdinaryVoteGate({
+  auth,
   closedReason = "Ordinary voting is closed.",
   submitting,
   viewerIsProposer,
@@ -74,13 +80,20 @@ export function getProposalOrdinaryVoteGate({
   disabled: boolean;
   title: string | undefined;
 } {
+  const authBlocked = Boolean(
+    auth?.enabled && (auth.loading || !auth.authenticated),
+  );
   return {
-    disabled: submitting || votingClosed || viewerIsProposer,
+    disabled: submitting || votingClosed || viewerIsProposer || authBlocked,
     title: viewerIsProposer
       ? "You cannot vote on your own proposal."
       : votingClosed
         ? closedReason
-        : undefined,
+        : auth?.enabled && auth.loading
+          ? "Checking wallet status…"
+          : auth?.enabled && !auth.authenticated
+            ? "Connect your wallet to vote."
+            : undefined,
   };
 }
 

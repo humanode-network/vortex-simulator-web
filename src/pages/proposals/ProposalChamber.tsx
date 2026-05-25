@@ -75,6 +75,7 @@ const ProposalChamber: React.FC = () => {
     viewerAddress: auth.address,
   });
   const ordinaryVoteGate = getProposalOrdinaryVoteGate({
+    auth,
     closedReason:
       "Ordinary chamber voting is closed. Only veto actions remain in this window.",
     submitting,

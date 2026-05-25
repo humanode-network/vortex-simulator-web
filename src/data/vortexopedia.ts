@@ -1379,11 +1379,11 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     name: "Governing threshold",
     category: "governance",
     short:
-      "Action quota and uptime requirement per era to remain an active governor counted in quorums.",
+      "Previous-era action quota used to decide who is counted as an active governor in quorums.",
     long: [
-      "A governor is active if bioauthenticated, node ran 164/168 epochs, and required actions were met in the previous era.",
+      "A governor is active for quorum purposes when the required governing actions were met in the previous era.",
       "Required actions per era include upvoting/downvoting proposals or voting on chamber proposals in Vortex.",
-      "Meeting the threshold keeps the governor eligible to be counted in quorums for the upcoming era.",
+      "Current node liveness does not remove an Active Governor status already earned from the previous era.",
     ],
     tags: ["threshold", "quorum", "activity", "governor"],
     related: [
@@ -1393,7 +1393,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "quorum_of_attention",
     ],
     examples: [
-      "If the action threshold is met and uptime is 164/168 epochs, the governor is counted as active in the next era’s quorum.",
+      "If the previous-era action threshold is met, the governor is counted as active in the next era’s quorum.",
     ],
     stages: ["global"],
     links: [
@@ -1414,7 +1414,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are comfortably above the governing threshold pace for the current era. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "Ahead means you have already met (or are well on track to exceed) the era’s action threshold early, leaving a buffer for the rest of the era.",
-      "Staying Ahead typically requires continuing normal participation (pool votes and chamber votes) while maintaining node uptime.",
+      "Staying Ahead typically requires continuing normal participation through pool votes and chamber votes.",
       "This status is based on your completed actions vs required actions for the current governing era, not on proposal outcomes.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
@@ -1449,7 +1449,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are on pace to meet the governing threshold for the era. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "Stable means your completed actions are at or near the required threshold pace, and you are not currently trending toward inactivity for the next era.",
-      "If you stay Stable through the era (and maintain uptime), you remain counted as an active governor for quorum calculations in the next era.",
+      "If you stay Stable through the era, you remain counted as an active governor for quorum calculations in the next era.",
       "This status summarizes action progress for the current era; it can change as time passes and requirements are assessed.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
@@ -1519,7 +1519,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       "You are unlikely to meet the governing threshold without immediate additional actions. Status scale: Ahead → Stable → Falling behind → At risk → Losing status.",
     long: [
       "At risk means your current action count is far enough below the era requirement that you may lose active governor status for the next era if you do not act.",
-      "To improve: complete additional required actions (pool votes and chamber votes) before the era ends and maintain node uptime.",
+      "To improve: complete additional required actions, such as pool votes and chamber votes, before the era ends.",
       "This status summarizes your action deficit; it does not imply slashing or permanent removal—only loss of active quorum eligibility in the next era.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
@@ -1555,7 +1555,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     long: [
       "Losing status indicates a severe shortfall against the era action threshold and/or insufficient remaining time to realistically catch up.",
       "If this remains at era close, you may not be counted as an active governor for quorum calculations in the next era.",
-      "To recover, complete the highest-impact required actions immediately and maintain node uptime; otherwise you transition out of active quorum eligibility.",
+      "To recover, complete the highest-impact required actions immediately; otherwise you transition out of active quorum eligibility.",
     ],
     tags: ["status", "governance", "threshold", "governor", "activity"],
     related: [
