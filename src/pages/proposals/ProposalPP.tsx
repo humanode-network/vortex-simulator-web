@@ -128,6 +128,7 @@ const ProposalPP: React.FC = () => {
               tone="accent"
               icon="▲"
               label="Upvote"
+              requiresEligibility={false}
               disabled={!votingGate.allowed}
               title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {
@@ -142,6 +143,7 @@ const ProposalPP: React.FC = () => {
               tone="destructive"
               icon="▼"
               label="Downvote"
+              requiresEligibility={false}
               disabled={!votingGate.allowed}
               title={votingGate.allowed ? undefined : votingGate.disabledReason}
               onClick={() => {

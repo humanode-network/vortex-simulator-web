@@ -187,7 +187,7 @@ test("getProposalChamberPageDerivation handles referendum and milestone titles",
   });
 });
 
-test("getProposalPoolVotingGate blocks proposers and wallet gate states", () => {
+test("getProposalPoolVotingGate blocks proposers and wallet connection states", () => {
   expect(
     getProposalPoolVotingGate({
       viewerIsProposer: true,
@@ -245,12 +245,13 @@ test("getProposalPoolVotingGate blocks proposers and wallet gate states", () => 
       },
     }),
   ).toEqual({
-    allowed: false,
-    disabledReason: "Custom gate reason.",
+    allowed: true,
+    disabledReason:
+      "Only chamber Governors can vote. Active Governors are counted for quorum.",
   });
 });
 
-test("getProposalPoolVotingGate allows eligible or auth-disabled voters", () => {
+test("getProposalPoolVotingGate allows authenticated or auth-disabled voters", () => {
   expect(
     getProposalPoolVotingGate({
       viewerIsProposer: false,
@@ -263,7 +264,8 @@ test("getProposalPoolVotingGate allows eligible or auth-disabled voters", () => 
     }),
   ).toEqual({
     allowed: true,
-    disabledReason: "Only active human nodes can vote.",
+    disabledReason:
+      "Only chamber Governors can vote. Active Governors are counted for quorum.",
   });
 
   expect(
@@ -278,7 +280,8 @@ test("getProposalPoolVotingGate allows eligible or auth-disabled voters", () => 
     }),
   ).toEqual({
     allowed: true,
-    disabledReason: "Only active human nodes can vote.",
+    disabledReason:
+      "Only chamber Governors can vote. Active Governors are counted for quorum.",
   });
 });
 
@@ -311,11 +314,31 @@ test("getProposalOrdinaryVoteGate blocks submit, proposer, and closed states", (
     disabled: true,
     title: "Ordinary chamber voting is closed.",
   });
+
+  expect(
+    getProposalOrdinaryVoteGate({
+      auth: {
+        enabled: true,
+        loading: false,
+        authenticated: false,
+      },
+      submitting: false,
+      viewerIsProposer: false,
+    }),
+  ).toEqual({
+    disabled: true,
+    title: "Connect your wallet to vote.",
+  });
 });
 
 test("getProposalOrdinaryVoteGate allows open non-proposer votes", () => {
   expect(
     getProposalOrdinaryVoteGate({
+      auth: {
+        enabled: true,
+        loading: false,
+        authenticated: true,
+      },
       submitting: false,
       viewerIsProposer: false,
     }),

@@ -28,6 +28,7 @@ export function ProposalOrdinaryVoteActions({
       <VoteButton
         tone="accent"
         label="Vote yes"
+        requiresEligibility={false}
         disabled={gate.disabled}
         title={gate.title}
         onClick={() => onVote("yes", score?.value)}
@@ -56,6 +57,7 @@ export function ProposalOrdinaryVoteActions({
       <VoteButton
         tone="destructive"
         label="Vote no"
+        requiresEligibility={false}
         disabled={gate.disabled}
         title={gate.title}
         onClick={() => onVote("no")}
@@ -63,6 +65,7 @@ export function ProposalOrdinaryVoteActions({
       <VoteButton
         tone="neutral"
         label="Abstain"
+        requiresEligibility={false}
         disabled={gate.disabled}
         title={gate.title}
         onClick={() => onVote("abstain")}
