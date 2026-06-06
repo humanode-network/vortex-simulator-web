@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 import { apiProposalReferendumPage, apiReferendumVote } from "@/lib/apiClient";
 import {
   getProposalOrdinaryVoteGate,
@@ -146,6 +147,7 @@ const ProposalReferendum: React.FC = () => {
       <ProposalPageHeader
         title={`${proposal.title} — Referendum`}
         stage="vote"
+        proposalId={id}
         showFormationStage={false}
         chamber="System-wide referendum"
         proposer={proposal.proposer}
@@ -165,7 +167,7 @@ const ProposalReferendum: React.FC = () => {
       </ProposalPageHeader>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-text">Referendum quorum</h2>
+        <SectionHeader>Referendum quorum</SectionHeader>
         <ProposalVoteStatsGrid
           abstainPercentOfTotal={abstainPercentOfTotal}
           abstainTotal={abstainTotal}

@@ -1,8 +1,6 @@
 import type { RefObject } from "react";
 
-import { cn } from "@/lib/utils";
-import { ExpandableCard } from "@/components/ExpandableCard";
-import { StageChip } from "@/components/StageChip";
+import { GlassyRecordCard } from "@/components/GlassyRecordCard";
 import { formatDateTime } from "@/lib/dateTime";
 import {
   feedItemKey,
@@ -66,7 +64,8 @@ export function FeedListSection({
     <section
       ref={feedListRef}
       aria-live="polite"
-      className="flex flex-col gap-4"
+      className="feed-stream"
+      aria-label="Governance feed records"
     >
       {sortedFeed.map((item, index) => {
         const itemKey = feedItemKey(item);
@@ -107,23 +106,25 @@ export function FeedListSection({
           chamberVetoPage?.stats ??
           item.stats ??
           [];
+        const expanded = expandedKey === itemKey;
+        const rail =
+          expanded || item.actionable
+            ? "action"
+            : index < 3
+              ? "recent"
+              : "idle";
 
         return (
-          <ExpandableCard
+          <GlassyRecordCard
             key={itemKey}
-            expanded={expandedKey === itemKey}
+            expanded={expanded}
             onToggle={() => onToggle(itemKey)}
-            className={cn(index < 3 ? "border-primary" : "border-border")}
+            rail={rail}
             meta={item.meta}
+            stage={item.stage}
             title={item.title}
-            right={
-              <>
-                <span className="text-xs text-muted">
-                  {formatDateTime(item.timestamp)}
-                </span>
-                <StageChip stage={item.stage} />
-              </>
-            }
+            summary={item.summary}
+            dateText={formatDateTime(item.timestamp)}
           >
             <FeedExpandedContent
               chamberPage={chamberPage}
@@ -141,7 +142,7 @@ export function FeedListSection({
               poolPage={poolPage}
               poolStats={poolStats}
             />
-          </ExpandableCard>
+          </GlassyRecordCard>
         );
       })}
     </section>

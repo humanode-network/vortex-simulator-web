@@ -1,11 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { PageHint } from "@/components/PageHint";
 import { PageHeader } from "@/components/PageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Kicker } from "@/components/Kicker";
 import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
@@ -81,7 +77,7 @@ const FullHistory: React.FC = () => {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle>All actions</CardTitle>
+            <SectionHeader>All actions</SectionHeader>
             <ButtonLink to={`/app/human-nodes/${id ?? ""}`}>
               Back to profile
             </ButtonLink>

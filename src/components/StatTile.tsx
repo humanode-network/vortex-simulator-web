@@ -11,7 +11,7 @@ type StatTileProps = {
   valueClassName?: string;
   align?: "center" | "left";
   radius?: "xl" | "2xl";
-  variant?: "panel" | "panelAlt";
+  variant?: "panel" | "panelAlt" | "glass";
 };
 
 /**
@@ -26,7 +26,7 @@ export const StatTile: React.FC<StatTileProps> = ({
   valueClassName,
   align = "center",
   radius = "xl",
-  variant = "panelAlt",
+  variant = "glass",
 }) => {
   const alignClasses = align === "left" ? "text-left" : "text-center";
   return (

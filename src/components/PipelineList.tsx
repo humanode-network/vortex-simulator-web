@@ -10,15 +10,19 @@ type Pipeline = {
 
 type PipelineListProps = {
   pipeline: Pipeline;
+  surface?: "panelAlt" | "glass";
 };
 
 const badgeClass =
-  "rounded-full border border-[var(--accent)] bg-panel px-2 py-0.5 text-[0.8rem] font-semibold text-[var(--accent)]";
+  "rounded-full border border-[var(--accent)] bg-[color:var(--control-glass-bg)] px-2 py-0.5 text-[0.8rem] font-semibold text-[var(--accent)] supports-[backdrop-filter]:backdrop-blur-md";
 
-export const PipelineList: React.FC<PipelineListProps> = ({ pipeline }) => {
+export const PipelineList: React.FC<PipelineListProps> = ({
+  pipeline,
+  surface = "glass",
+}) => {
   return (
     <Surface
-      variant="panelAlt"
+      variant={surface}
       borderStyle="dashed"
       radius="2xl"
       shadow="tile"

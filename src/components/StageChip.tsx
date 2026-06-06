@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { Chip } from "@/components/Chip";
 import { HintLabel } from "@/components/Hint";
 import {
   stageChipKindForStage,
@@ -8,20 +9,20 @@ import {
   type Stage,
   type StageChipKind,
 } from "@/types/stages";
+import "./StageChip.css";
 
 const chipClasses: Record<StageChipKind, string> = {
-  proposal_pool: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
-  chamber_vote: "bg-[color:var(--accent)]/15 text-[var(--accent)]",
-  citizen_veto: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
-  chamber_veto:
-    "bg-[color:var(--danger)]/16 text-[color:var(--danger)] ring-1 ring-[color:var(--danger)]/20",
-  formation: "bg-[color:var(--primary)]/12 text-primary",
-  passed: "bg-[color:var(--ok)]/20 text-[color:var(--ok)]",
-  failed: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
-  thread: "bg-panel-alt text-muted",
-  courts: "bg-[color:var(--accent-warm)]/15 text-[var(--accent-warm)]",
-  faction: "bg-panel-alt text-muted",
-  system: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]",
+  proposal_pool: "stage-chip--proposal-pool",
+  chamber_vote: "stage-chip--chamber-vote",
+  citizen_veto: "stage-chip--citizen-veto",
+  chamber_veto: "stage-chip--chamber-veto",
+  formation: "stage-chip--formation",
+  passed: "stage-chip--passed",
+  failed: "stage-chip--failed",
+  thread: "stage-chip--thread",
+  courts: "stage-chip--courts",
+  faction: "stage-chip--faction",
+  system: "stage-chip--system",
 };
 
 const hintByKind: Partial<Record<StageChipKind, string>> = {
@@ -42,14 +43,8 @@ export function StageChip({ stage, label, className }: StageChipProps) {
   const content = label ?? stageLabelForStage(stage);
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide",
-        chipClasses[kind],
-        className,
-      )}
-    >
+    <Chip className={cn("stage-chip", chipClasses[kind], className)}>
       {termId ? <HintLabel termId={termId}>{content}</HintLabel> : content}
-    </span>
+    </Chip>
   );
 }

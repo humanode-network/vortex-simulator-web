@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Surface } from "@/components/Surface";
 import {
   apiChamberVetoVote,
@@ -101,6 +102,7 @@ const ProposalChamberVeto: React.FC = () => {
       <ProposalPageHeader
         title={`${proposal.title} — Chamber veto`}
         stage="chamber_veto"
+        proposalId={id}
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
@@ -154,7 +156,7 @@ const ProposalChamberVeto: React.FC = () => {
       />
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-text">Per-chamber votes</h2>
+        <SectionHeader>Per-chamber votes</SectionHeader>
         <div className="grid gap-3 xl:grid-cols-2">
           {proposal.chambers.map((chamber) => (
             <ProposalChamberVetoCard

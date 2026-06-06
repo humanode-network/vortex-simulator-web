@@ -50,7 +50,7 @@ type DiscussionThreadMessage = {
 };
 
 const textareaClassName =
-  "min-h-[96px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";
+  "min-h-[96px] w-full resize-y rounded-xl border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition supports-[backdrop-filter]:backdrop-blur-md hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60";
 
 type ThreadCategoryFilterProps<TValue extends string> = {
   options: Array<DiscussionOption<TValue>>;

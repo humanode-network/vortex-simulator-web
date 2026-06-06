@@ -16,6 +16,7 @@ const buttonVariants = cva(
           "bg-[var(--panel)] text-[var(--primary)] border border-[var(--primary)] shadow-[var(--shadow-control)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] focus-visible:ring-[var(--primary)] focus-visible:ring-offset-[var(--panel)]",
       },
       size: {
+        compact: "h-8 min-w-16 px-3 text-xs",
         sm: "h-9 px-3 text-sm",
         md: "h-10 px-4 text-base",
         lg: "h-11 px-5 text-lg",

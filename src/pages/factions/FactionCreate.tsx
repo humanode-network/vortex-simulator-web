@@ -2,13 +2,9 @@ import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { Kicker } from "@/components/Kicker";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { apiFactionCreate, getApiErrorPayload } from "@/lib/apiClient";
@@ -206,7 +202,7 @@ const FactionCreate: React.FC = () => {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="space-y-2">
             <Kicker>Phase 67</Kicker>
-            <CardTitle>Create faction</CardTitle>
+            <SectionHeader>Create faction</SectionHeader>
             <p className="text-sm text-muted">
               Factions coordinate members, initiatives, and discussion before
               formal governance actions.

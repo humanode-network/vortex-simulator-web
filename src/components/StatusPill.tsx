@@ -20,7 +20,7 @@ export const StatusPill: React.FC<StatusPillProps> = ({
 }) => {
   return (
     <Surface
-      variant="panelAlt"
+      variant="glass"
       radius="full"
       shadow="control"
       className={cn(

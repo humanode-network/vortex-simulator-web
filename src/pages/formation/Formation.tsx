@@ -1,30 +1,48 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Button } from "@/components/primitives/button";
-import { Card, CardContent, CardHeader } from "@/components/primitives/card";
-import { Badge } from "@/components/primitives/badge";
-import { Link } from "react-router";
+import type { ReactNode } from "react";
+
 import { SearchBar } from "@/components/SearchBar";
 import { MetricTile } from "@/components/MetricTile";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
-import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { AddressInline } from "@/components/AddressInline";
 import { apiFormation } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { cn } from "@/lib/utils";
 import type {
   FormationCategoryDto as Category,
   FormationProjectDto,
   FormationStageDto as Stage,
   GetFormationResponse,
 } from "@/types/api";
+import {
+  FormationProjectCard,
+  formationProjectCardFromDto,
+} from "./components/FormationProjectCard";
 
-const stageLabel: Record<Stage, string> = {
-  live: "Live",
-  gathering: "Gathering team",
-  completed: "Completed",
-};
+function FormationLoadingMessage({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "danger" | "neutral";
+}) {
+  return (
+    <Surface
+      borderStyle="dashed"
+      className={cn(
+        "px-4 py-6 text-center text-sm",
+        tone === "danger" ? "text-destructive" : "text-muted",
+      )}
+      radius="2xl"
+      shadow="tile"
+      variant="glass"
+    >
+      {children}
+    </Surface>
+  );
+}
 
 const Formation: React.FC = () => {
   const [data, setData] = useState<GetFormationResponse | null>(null);
@@ -64,7 +82,10 @@ const Formation: React.FC = () => {
         project.title.toLowerCase().includes(term) ||
         project.proposer.toLowerCase().includes(term) ||
         project.summary.toLowerCase().includes(term) ||
-        project.focus.toLowerCase().includes(term);
+        project.focus.toLowerCase().includes(term) ||
+        (project.chamberTitle ?? project.chamber ?? "")
+          .toLowerCase()
+          .includes(term);
       const matchesStage =
         stageFilter === "any" ? true : project.stage === stageFilter;
       const matchesCategory =
@@ -74,17 +95,15 @@ const Formation: React.FC = () => {
   }, [projects, search, stageFilter, categoryFilter]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="formation-page flex flex-col gap-6">
       <PageHint pageId="formation" />
       {data === null ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          Loading Formation…
-        </Card>
+        <FormationLoadingMessage>Loading Formation…</FormationLoadingMessage>
       ) : null}
       {loadError ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
+        <FormationLoadingMessage tone="danger">
           Formation unavailable: {formatLoadError(loadError)}
-        </Card>
+        </FormationLoadingMessage>
       ) : null}
       {data !== null && projects.length === 0 && !loadError ? (
         <NoDataYetBar label="Formation projects" />
@@ -141,84 +160,20 @@ const Formation: React.FC = () => {
 
       <section
         aria-live="polite"
-        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        className="formation-project-grid"
         data-formation-list={filteredProjects.length}
       >
         {filteredProjects.map((project) => (
-          <Card key={project.id}>
-            <CardHeader className="flex items-center justify-between pb-2">
-              <div>
-                <Kicker>{project.focus}</Kicker>
-                <h3 className="text-lg font-semibold text-text">
-                  {project.title}
-                </h3>
-              </div>
-              <Badge variant="outline" className="text-xs font-semibold">
-                {stageLabel[project.stage]}
-              </Badge>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-text">{project.summary}</p>
-              <div className="grid gap-2 text-sm text-text">
-                <Surface
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="control"
-                  className="px-3 py-2"
-                >
-                  <Kicker>Budget</Kicker>
-                  <p className="font-semibold">{project.budget}</p>
-                </Surface>
-                <Surface
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="control"
-                  className="px-3 py-2"
-                >
-                  <Kicker>Milestones</Kicker>
-                  <p className="font-semibold">{project.milestones}</p>
-                </Surface>
-                <Surface
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="control"
-                  className="px-3 py-2"
-                >
-                  <Kicker>Team slots</Kicker>
-                  <p className="font-semibold">{project.teamSlots}</p>
-                </Surface>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-sm text-muted">
-                <span className="inline-flex min-w-0 items-center gap-2">
-                  <span>Proposer:</span>
-                  <AddressInline
-                    address={project.proposer}
-                    className="min-w-0"
-                    textClassName="text-sm font-semibold text-text"
-                  />
-                </span>
-                <Button asChild size="sm">
-                  <Link
-                    to={
-                      project.stage === "completed"
-                        ? `/app/proposals/${project.id ?? "project"}/finished`
-                        : `/app/proposals/${project.id ?? "project"}/formation`
-                    }
-                  >
-                    {project.stage === "completed"
-                      ? "Open finished"
-                      : "Open project"}
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <FormationProjectCard
+            key={project.id}
+            project={formationProjectCardFromDto(project)}
+          />
         ))}
         {projects.length > 0 && filteredProjects.length === 0 && (
           <Surface
             variant="panel"
             borderStyle="dashed"
-            className="px-4 py-8 text-center text-sm text-muted md:col-span-2 xl:col-span-3"
+            className="px-4 py-8 text-center text-sm text-muted"
           >
             No Formation projects match the current filters.
           </Surface>

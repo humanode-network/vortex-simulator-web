@@ -19,7 +19,7 @@ export const MetricTile: React.FC<MetricTileProps> = ({
       value={value}
       radius="2xl"
       align="center"
-      variant="panelAlt"
+      variant="glass"
       className={cn("px-4 py-5", className)}
       valueClassName="text-2xl"
     />

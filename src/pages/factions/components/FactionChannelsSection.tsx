@@ -1,12 +1,8 @@
 import { Link } from "react-router";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import type { FactionDto } from "@/types/api";
@@ -41,7 +37,7 @@ export function FactionChannelsSection({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Channels</CardTitle>
+        <SectionHeader>Channels</SectionHeader>
       </CardHeader>
       <CardContent className="space-y-3">
         {channels.length === 0 ? (

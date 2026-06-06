@@ -1,3 +1,4 @@
+import { SectionHeader } from "@/components/SectionHeader";
 import { Surface } from "@/components/Surface";
 
 type ProposalStageStatusEntry = {
@@ -17,7 +18,7 @@ export const ProposalStageStatus: React.FC<ProposalStageStatusProps> = ({
 }) => {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-text">{title}</h2>
+      <SectionHeader>{title}</SectionHeader>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {stageData.map((entry) => (
           <Surface

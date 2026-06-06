@@ -1,4 +1,5 @@
 import { Surface } from "@/components/Surface";
+import { SectionHeader } from "@/components/SectionHeader";
 import {
   ThreadCategoryFilter,
   ThreadComposer,
@@ -41,7 +42,7 @@ export const ProposalDeliberation: React.FC<ProposalDeliberationProps> = ({
       className="p-5"
     >
       <header className="flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <h2 className="text-lg font-semibold text-text">Deliberation</h2>
+        <SectionHeader>Deliberation</SectionHeader>
         <div className="flex flex-wrap gap-2 text-xs text-muted">
           <span>{deliberation.threadCount} threads</span>
           <span>{deliberation.replyCount} replies</span>

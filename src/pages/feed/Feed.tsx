@@ -15,6 +15,7 @@ import { useFeedChamberFilters } from "./hooks/useFeedChamberFilters";
 import { useFeedDetailPages } from "./hooks/useFeedDetailPages";
 import { useFeedItems } from "./hooks/useFeedItems";
 import { useFeedPageSize } from "./hooks/useFeedPageSize";
+import "./Feed.css";
 
 const Feed: React.FC = () => {
   const auth = useAuth();
@@ -104,16 +105,10 @@ const Feed: React.FC = () => {
   }, [handleLoadMore, nextCursor]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="feed-page">
       <PageHint pageId="feed" />
-      {/* Governing threshold moved to MyGovernance */}
 
-      <FeedControls
-        chamberCount={(chamberFilters ?? []).length}
-        chambersLoading={chambersLoading}
-        feedScope={feedScope}
-        onFeedScopeChange={setFeedScope}
-      />
+      <FeedControls feedScope={feedScope} onFeedScopeChange={setFeedScope} />
 
       <FeedStatusMessages feedItems={feedItems} loadError={loadError} />
 

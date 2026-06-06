@@ -40,7 +40,7 @@ export const pageHints: Record<string, PageHintEntry> = {
       {
         heading: "Filters & sort",
         items: [
-          "Filter by tier, chamber, tags, ACM/MM minimums, and formation membership.",
+          "Filter by tier, chamber, tags, ACM minimums, and formation membership.",
           "Sort by ACM, tier, or name; toggle cards vs list view.",
           "Results are scrollable (cards: 4 visible; list: 16 visible) to keep layout tidy.",
         ],
@@ -48,9 +48,9 @@ export const pageHints: Record<string, PageHintEntry> = {
       {
         heading: "Cards & list",
         items: [
-          "Cards show headline stats (ACM/MM, tier, formation, status); list view compresses the same.",
+          "Cards show headline stats (ACM, tier, formation, status); list view compresses the same.",
           "Open a profile for proof toggles, activity, formation projects, and governance stats.",
-          "Hints on ACM/LCM/MM/tier/era explain terms in place.",
+          "Hints on ACM/tier/era explain terms in place.",
         ],
       },
     ],
@@ -81,13 +81,13 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "chambers",
     title: "Chambers",
     intro:
-      "Overview of specialization chambers: multipliers (M), governors, ACM/LCM, and pipelines.",
+      "Overview of specialization chambers: multipliers (M), governors, members' ACM, LCM, and pipelines.",
     sections: [
       {
         heading: "What you see",
         items: [
-          "Top metrics for chambers, governors, ACM, and live proposals.",
-          "Per-chamber cards with multipliers, governors, LCM/ACM, and pipeline counts (pool/vote/build).",
+          "Top metrics for chambers, governors, members' ACM, and live proposals.",
+          "Per-chamber cards with multipliers, governors, LCM, members' ACM, and pipeline counts (pool/vote/build).",
         ],
       },
       {
@@ -125,20 +125,20 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "factions",
     title: "Factions",
     intro:
-      "Browse factions, membership, votes, ACM, and goals. Open faction pages for initiatives and resources.",
+      "Browse factions, membership, votes, members' ACM, and goals. Open faction pages for initiatives and resources.",
     sections: [
       {
         heading: "What you see",
         items: [
-          "Cards with members, votes, ACM, focus blurbs, and tags.",
-          "Totals across factions (members, votes, ACM) plus search-as-you-type to filter cards.",
+          "Cards with members, votes, members' ACM, focus blurbs, and tags.",
+          "Totals across factions (members, votes, members' ACM) plus search-as-you-type to filter cards.",
         ],
       },
       {
         heading: "What you can do",
         items: [
           "Open a faction to see initiatives, roster, resources, and stance.",
-          "Use consistent blue buttons and hints to learn ACM/MM terms.",
+          "Use consistent blue buttons and hints to learn ACM terms.",
         ],
       },
     ],
@@ -176,7 +176,7 @@ export const pageHints: Record<string, PageHintEntry> = {
         heading: "Progression",
         items: [
           "Current tier, progress bar toward next tier, and prerequisites (uptime, activity).",
-          "Proposal rights available per tier; ACM/MM/tier hints explain terms in context.",
+          "ACM and tier hints explain terms in context.",
         ],
       },
     ],
@@ -190,9 +190,9 @@ export const pageHints: Record<string, PageHintEntry> = {
       {
         heading: "What you see",
         items: [
-          "Header with avatar, tier, ACM/MM, faction, and delegation share.",
+          "Header with avatar, tier, ACM, faction, and delegation share.",
           "Proof toggles (PoT/PoD/PoG), governance activity tiles, and project involvement.",
-          "Scrollable activity and formation lists; hints on ACM/LCM/MM/tier/era clarify terminology.",
+          "Scrollable activity and formation lists; hints on ACM/tier/era clarify terminology.",
         ],
       },
     ],
@@ -201,14 +201,14 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "faction",
     title: "Faction detail",
     intro:
-      "Detailed faction view: stance, members, votes/ACM, initiatives, roster, and resources.",
+      "Detailed faction view: stance, members, votes, members' ACM, initiatives, roster, and resources.",
     sections: [
       {
         heading: "What you see",
         items: [
-          "Hero header with faction name; stats tiles (members, votes, ACM, creator).",
+          "Hero header with faction name; stats tiles (members, votes, members' ACM, creator).",
           "Active initiatives with location/stage labels; resources/links for the faction.",
-          "Roster with roles and ACM/MM tags; open slots/threads vary by design.",
+          "Roster with roles and ACM tags; open slots/threads vary by design.",
         ],
       },
     ],

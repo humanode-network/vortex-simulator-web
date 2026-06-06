@@ -1,4 +1,5 @@
 import { HintLabel } from "@/components/Hint";
+import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 
 type ProposalPoolAttentionStatsProps = {
@@ -18,7 +19,7 @@ export const ProposalPoolAttentionStats: React.FC<
 }) => {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-text">Quorum of attention</h2>
+      <SectionHeader>Quorum of attention</SectionHeader>
       <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-2">
         <StatTile
           label={

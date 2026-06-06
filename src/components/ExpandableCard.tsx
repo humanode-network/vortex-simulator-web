@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { Card } from "@/components/primitives/card";
+import { GlassyCard } from "@/components/GlassyCard";
 import { Kicker } from "@/components/Kicker";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ type ExpandableCardProps = {
   right: ReactNode;
   children: ReactNode;
   className?: string;
+  surface?: "solid" | "glass";
 };
 
 export function ExpandableCard({
@@ -24,14 +26,13 @@ export function ExpandableCard({
   right,
   children,
   className,
+  surface = "solid",
 }: ExpandableCardProps) {
-  return (
-    <Card
-      className={cn("overflow-hidden border border-border bg-panel", className)}
-    >
+  const content = (
+    <>
       <button
         type="button"
-        className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-panel-alt sm:flex-row sm:items-center sm:justify-between"
+        className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-[color:var(--surface-glass-hover-bg)] sm:flex-row sm:items-center sm:justify-between"
         aria-expanded={expanded}
         onClick={onToggle}
       >
@@ -55,6 +56,12 @@ export function ExpandableCard({
           {children}
         </div>
       ) : null}
-    </Card>
+    </>
   );
+
+  if (surface === "glass") {
+    return <GlassyCard className={className}>{content}</GlassyCard>;
+  }
+
+  return <Card className={cn("overflow-hidden", className)}>{content}</Card>;
 }

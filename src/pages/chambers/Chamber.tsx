@@ -3,20 +3,20 @@ import { useParams, Link, useSearchParams } from "react-router";
 
 import { Button } from "@/components/primitives/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { Badge } from "@/components/primitives/badge";
+  GlassyCompactGrid,
+  GlassyCompactMetric,
+  GlassyCompactRow,
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+  GlassyTileHeading,
+} from "@/components/GlassySection";
+import { GlassyRecordCard } from "@/components/GlassyRecordCard";
 import { Input } from "@/components/primitives/input";
-import { Kicker } from "@/components/Kicker";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
-import { PageHeader } from "@/components/PageHeader";
 import { TierLabel } from "@/components/TierLabel";
-import { PipelineList } from "@/components/PipelineList";
-import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 import { AddressInline } from "@/components/AddressInline";
 import type {
   ChamberChatPeerDto,
@@ -48,6 +48,32 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { useAuth } from "@/app/auth/AuthContext";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
+import { formatChamberMultiplier } from "./components/ChamberVisuals";
+import type { ProposalStage } from "@/types/stages";
+
+const chamberProposalStageLabels: Record<ChamberProposalStageDto, string> = {
+  upcoming: "Proposal pool",
+  live: "Chamber vote",
+  ended: "Formation",
+};
+
+const chamberProposalRecordStage: Record<
+  ChamberProposalStageDto,
+  ProposalStage
+> = {
+  upcoming: "pool",
+  live: "vote",
+  ended: "build",
+};
+
+const chamberProposalStageCountKey: Record<
+  ChamberProposalStageDto,
+  "build" | "pool" | "vote"
+> = {
+  upcoming: "pool",
+  live: "vote",
+  ended: "build",
+};
 
 const Chamber: React.FC = () => {
   const { id } = useParams();
@@ -95,6 +121,9 @@ const Chamber: React.FC = () => {
 
   const [stageFilter, setStageFilter] =
     useState<ChamberProposalStageDto>("upcoming");
+  const [expandedProposalId, setExpandedProposalId] = useState<string | null>(
+    null,
+  );
   const [governorSearch, setGovernorSearch] = useState("");
   const requestedThreadId = searchParams.get("thread")?.trim() || null;
 
@@ -213,8 +242,6 @@ const Chamber: React.FC = () => {
     const chamber = data?.chamber;
     if (!chamber) return [];
     const items = [
-      { label: "Status", value: chamber.status },
-      { label: "Multiplier", value: chamber.multiplier.toFixed(1) },
       { label: "Created", value: formatDate(chamber.createdAt) },
       { label: "Origin", value: chamber.createdByProposalId ?? "Genesis" },
     ];
@@ -605,11 +632,6 @@ const Chamber: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="chamber" />
-      <PageHeader
-        eyebrow="Chamber detail"
-        title={<span className="capitalize">{chamberTitle}</span>}
-        description="Proposal status, governor roster, and forum activity for this chamber."
-      />
 
       {loadError ? (
         <Surface
@@ -621,224 +643,142 @@ const Chamber: React.FC = () => {
           Chamber unavailable: {formatLoadError(loadError)}
         </Surface>
       ) : null}
+      {!data && !loadError ? (
+        <GlassyTile className="px-5 py-4 text-sm text-muted">
+          Loading chamber…
+        </GlassyTile>
+      ) : null}
 
       {data ? (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-3">
-              <Kicker>Chamber profile</Kicker>
-              <CardTitle>Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-              {chamberMetaItems.map((item) => (
-                <Surface
-                  key={item.label}
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="tile"
-                  className="px-3 py-2"
-                >
-                  <Kicker className="text-text">{item.label}</Kicker>
-                  <p className="text-base font-semibold text-text">
-                    {item.value}
+        <GlassySection
+          title={<span className="capitalize">{chamberTitle}</span>}
+        >
+          <GlassyCompactGrid className="sm:grid-cols-2 lg:grid-cols-4">
+            <GlassyCompactMetric
+              label="Multiplier"
+              value={formatChamberMultiplier(data.chamber.multiplier)}
+            />
+            {chamberMetaItems.map((item) => (
+              <GlassyCompactMetric
+                key={item.label}
+                label={item.label}
+                value={item.value}
+              />
+            ))}
+            <GlassyCompactMetric
+              label="Governors"
+              value={chamberStats.governors}
+            />
+            <GlassyCompactMetric
+              label="Members' ACM"
+              value={chamberStats.acm}
+            />
+            <GlassyCompactMetric label="LCM" value={chamberStats.lcm} />
+            <GlassyCompactMetric label="MCM" value={chamberStats.mcm} />
+          </GlassyCompactGrid>
+        </GlassySection>
+      ) : null}
+
+      {data ? (
+        <GlassySection title="Chamber CM activity">
+          {cmData ? (
+            <div className="grid gap-3 lg:grid-cols-3">
+              <GlassyTile className="space-y-3">
+                <GlassyTileHeading>Top contributors</GlassyTileHeading>
+                {cmData.topContributors.length === 0 ? (
+                  <p className="m-0 text-sm text-muted">
+                    No CM contributions yet.
                   </p>
-                </Surface>
-              ))}
-            </CardContent>
-          </Card>
+                ) : (
+                  <ul className="m-0 space-y-2 p-0 text-sm text-text">
+                    {cmData.topContributors.slice(0, 5).map((entry) => (
+                      <li
+                        key={entry.address}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-[color:var(--surface-glass-border)] px-3 py-2"
+                      >
+                        <AddressInline
+                          address={entry.address}
+                          className="min-w-0 flex-1"
+                          textClassName="[overflow-wrap:anywhere] break-words"
+                        />
+                        <span className="text-xs text-muted">
+                          LCM {entry.lcm} · MCM {entry.mcm} · ACM contribution{" "}
+                          {entry.acm}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </GlassyTile>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <Kicker>Chamber stats</Kicker>
-              <CardTitle>Governance metrics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <StatGrid items={makeChamberStats(chamberStats)} />
-            </CardContent>
-          </Card>
+              <GlassyTile className="space-y-3">
+                <GlassyTileHeading>Multiplier submissions</GlassyTileHeading>
+                {cmData.submissions.length === 0 ? (
+                  <p className="m-0 text-sm text-muted">
+                    No multiplier submissions yet.
+                  </p>
+                ) : (
+                  <ul className="m-0 space-y-2 p-0 text-sm text-text">
+                    {cmData.submissions.slice(0, 5).map((entry) => (
+                      <li
+                        key={`${entry.address}-${entry.submittedAt}`}
+                        className="flex flex-col gap-1 rounded-[8px] border border-[color:var(--surface-glass-border)] px-3 py-2"
+                      >
+                        <AddressInline
+                          address={entry.address}
+                          className="min-w-0"
+                          textClassName="font-semibold [overflow-wrap:anywhere] break-words"
+                        />
+                        <span className="text-xs text-muted">
+                          M × {entry.multiplier} ·{" "}
+                          {formatDate(entry.submittedAt)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </GlassyTile>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <Kicker>Pipeline</Kicker>
-              <CardTitle>Proposal flow</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.pipeline ? (
-                <PipelineList pipeline={data.pipeline} />
-              ) : (
-                <Surface
-                  variant="panelAlt"
-                  radius="xl"
-                  borderStyle="dashed"
-                  className="px-3 py-4 text-center text-sm text-muted"
-                >
-                  No pipeline data yet.
-                </Surface>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              <GlassyTile className="space-y-3">
+                <GlassyTileHeading>Recent CM awards</GlassyTileHeading>
+                {cmData.history.length === 0 ? (
+                  <p className="m-0 text-sm text-muted">No CM awards yet.</p>
+                ) : (
+                  <ul className="m-0 space-y-2 p-0 text-sm text-text">
+                    {cmData.history.slice(0, 4).map((entry) => (
+                      <li
+                        key={`${entry.proposalId}-${entry.awardedAt}`}
+                        className="flex flex-col gap-1 rounded-[8px] border border-[color:var(--surface-glass-border)] px-3 py-2"
+                      >
+                        <span className="font-semibold">{entry.title}</span>
+                        <span className="text-xs text-muted">
+                          M × {entry.multiplier} · LCM {entry.lcm} · MCM{" "}
+                          {entry.mcm}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </GlassyTile>
+            </div>
+          ) : (
+            <Surface
+              variant="panelAlt"
+              radius="xl"
+              borderStyle="dashed"
+              className="px-4 py-4 text-center text-sm text-muted"
+            >
+              {cmError
+                ? `CM summary unavailable: ${formatLoadError(cmError)}`
+                : "Loading CM…"}
+            </Surface>
+          )}
+        </GlassySection>
       ) : null}
 
       {data ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <Kicker>CM economy</Kicker>
-            <CardTitle>Chamber CM summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {cmData ? (
-              <>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {[
-                    { label: "LCM", value: cmData.totals.lcm },
-                    { label: "MCM", value: cmData.totals.mcm },
-                    { label: "ACM", value: cmData.totals.acm },
-                    {
-                      label: "Avg multiplier",
-                      value:
-                        cmData.avgMultiplier === null
-                          ? "—"
-                          : `M × ${cmData.avgMultiplier.toFixed(2)}`,
-                    },
-                  ].map((tile) => (
-                    <Surface
-                      key={tile.label}
-                      variant="panelAlt"
-                      radius="xl"
-                      shadow="tile"
-                      className="px-3 py-3 text-center"
-                    >
-                      <Kicker align="center">{tile.label}</Kicker>
-                      <p className="text-base font-semibold text-text">
-                        {typeof tile.value === "number"
-                          ? tile.value.toLocaleString()
-                          : tile.value}
-                      </p>
-                    </Surface>
-                  ))}
-                </div>
-
-                <div className="grid gap-3 lg:grid-cols-3">
-                  <Surface
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="px-4 py-3"
-                  >
-                    <Kicker>Top contributors</Kicker>
-                    {cmData.topContributors.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted">
-                        No CM contributions yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2 text-sm text-text">
-                        {cmData.topContributors.slice(0, 5).map((entry) => (
-                          <li
-                            key={entry.address}
-                            className="flex flex-wrap items-center justify-between gap-2"
-                          >
-                            <AddressInline
-                              address={entry.address}
-                              className="min-w-0 flex-1"
-                              textClassName="[overflow-wrap:anywhere] break-words"
-                            />
-                            <span className="text-xs text-muted">
-                              LCM {entry.lcm} · MCM {entry.mcm} · ACM{" "}
-                              {entry.acm}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Surface>
-
-                  <Surface
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="px-4 py-3"
-                  >
-                    <Kicker>Multiplier submissions</Kicker>
-                    {cmData.submissions.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted">
-                        No multiplier submissions yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2 text-sm text-text">
-                        {cmData.submissions.slice(0, 5).map((entry) => (
-                          <li
-                            key={`${entry.address}-${entry.submittedAt}`}
-                            className="flex flex-col gap-1"
-                          >
-                            <AddressInline
-                              address={entry.address}
-                              className="min-w-0"
-                              textClassName="font-semibold [overflow-wrap:anywhere] break-words"
-                            />
-                            <span className="text-xs text-muted">
-                              M × {entry.multiplier} ·{" "}
-                              {formatDate(entry.submittedAt)}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Surface>
-
-                  <Surface
-                    variant="panelAlt"
-                    radius="xl"
-                    shadow="tile"
-                    className="px-4 py-3"
-                  >
-                    <Kicker>Recent CM awards</Kicker>
-                    {cmData.history.length === 0 ? (
-                      <p className="mt-2 text-sm text-muted">
-                        No CM awards yet.
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-2 text-sm text-text">
-                        {cmData.history.slice(0, 4).map((entry) => (
-                          <li
-                            key={`${entry.proposalId}-${entry.awardedAt}`}
-                            className="flex flex-col gap-1"
-                          >
-                            <span className="font-semibold">{entry.title}</span>
-                            <span className="text-xs text-muted">
-                              M × {entry.multiplier} · LCM {entry.lcm} · MCM{" "}
-                              {entry.mcm}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Surface>
-                </div>
-              </>
-            ) : (
-              <Surface
-                variant="panelAlt"
-                radius="xl"
-                borderStyle="dashed"
-                className="px-4 py-4 text-center text-sm text-muted"
-              >
-                {cmError
-                  ? `CM summary unavailable: ${formatLoadError(cmError)}`
-                  : "Loading CM…"}
-              </Surface>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-        <Card>
-          <CardHeader className="flex flex-col gap-4 pb-4">
-            <div>
-              <Kicker>Chamber vote</Kicker>
-              <CardTitle>Proposal status</CardTitle>
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+          <GlassySection title="Proposal status">
             <div
               className="flex w-full flex-wrap justify-center gap-2"
               role="tablist"
@@ -846,6 +786,8 @@ const Chamber: React.FC = () => {
             >
               {(data?.stageOptions ?? []).map((option) => {
                 const isSelected = stageFilter === option.value;
+                const countKey = chamberProposalStageCountKey[option.value];
+                const count = data.pipeline?.[countKey] ?? 0;
                 return (
                   <Button
                     key={option.value}
@@ -854,20 +796,26 @@ const Chamber: React.FC = () => {
                     size="sm"
                     aria-selected={isSelected}
                     variant="ghost"
-                    onClick={() => setStageFilter(option.value)}
+                    onClick={() => {
+                      setStageFilter(option.value);
+                      setExpandedProposalId(null);
+                    }}
                     className={
                       isSelected
                         ? "border-(--glass-border-strong) bg-(--btn-primary-active-bg) text-primary-foreground shadow-(--shadow-primary) filter-[saturate(1.35)]"
                         : "border-border bg-panel text-muted hover:text-primary"
                     }
                   >
-                    {option.label}
+                    <span>
+                      {chamberProposalStageLabels[option.value] ?? option.label}
+                    </span>
+                    <span className="ml-2 rounded-full bg-[color:var(--control-glass-bg)] px-2 py-0.5 text-xs">
+                      {count}
+                    </span>
                   </Button>
                 );
               })}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
             {filteredProposals.length === 0 ? (
               <Surface
                 variant="panelAlt"
@@ -885,26 +833,26 @@ const Chamber: React.FC = () => {
                     : proposal.stage === "live"
                       ? `/app/proposals/${proposal.id}/chamber`
                       : `/app/proposals/${proposal.id}/formation`);
+                const expanded = expandedProposalId === proposal.id;
                 return (
-                  <Surface key={proposal.id} variant="panelAlt" className="p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <Kicker>{proposal.meta}</Kicker>
-                        <h3 className="text-lg font-semibold text-text">
-                          {proposal.title}
-                        </h3>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        size="sm"
-                        className="font-semibold"
-                      >
-                        Lead {proposal.lead}
-                      </Badge>
-                    </div>
-                    <p className="mt-2 text-sm text-text">{proposal.summary}</p>
+                  <GlassyRecordCard
+                    key={proposal.id}
+                    dateText={proposal.timing}
+                    expanded={expanded}
+                    meta={proposal.meta}
+                    onToggle={() =>
+                      setExpandedProposalId((current) =>
+                        current === proposal.id ? null : proposal.id,
+                      )
+                    }
+                    rail={expanded ? "action" : "idle"}
+                    stage={chamberProposalRecordStage[proposal.stage]}
+                    summary={proposal.summary}
+                    title={proposal.title}
+                  >
                     {(() => {
                       const metaTiles = [
+                        { label: "Lead", value: proposal.lead },
                         { label: "Next step", value: proposal.nextStep },
                         { label: "Timing", value: proposal.timing },
                       ];
@@ -915,86 +863,90 @@ const Chamber: React.FC = () => {
                         });
                       }
                       const columns =
-                        metaTiles.length === 3
-                          ? "sm:grid-cols-3"
-                          : "sm:grid-cols-2";
+                        metaTiles.length === 4
+                          ? "sm:grid-cols-2 xl:grid-cols-4"
+                          : "sm:grid-cols-3";
                       return (
                         <div
-                          className={`mt-3 grid gap-2 text-sm text-muted ${columns}`}
+                          className={`grid gap-2 text-sm text-muted ${columns}`}
                         >
                           {metaTiles.map((tile) => (
-                            <Surface
+                            <GlassyKeyValue
                               key={tile.label}
-                              variant="panel"
-                              radius="xl"
-                              shadow="control"
-                              className="px-3 py-2"
-                            >
-                              <Kicker className="text-text">
-                                {tile.label}
-                              </Kicker>
-                              <p className="text-sm font-semibold text-text">
-                                {tile.value}
-                              </p>
-                            </Surface>
+                              className="glassy-key-value--stacked glassy-key-value--metric"
+                              label={tile.label}
+                              value={tile.value}
+                            />
                           ))}
                         </div>
                       );
                     })()}
-                    <div className="mt-3 flex justify-end">
+                    <div className="flex justify-end">
                       <Button asChild size="sm">
                         <Link to={proposalHref}>Open proposal</Link>
                       </Button>
                     </div>
-                  </Surface>
+                  </GlassyRecordCard>
                 );
               })
             )}
-          </CardContent>
-        </Card>
+          </GlassySection>
 
-        <Card>
-          <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <Kicker>Governors</Kicker>
-              <CardTitle>Chamber roster</CardTitle>
-            </div>
-            <span className="rounded-full border border-border bg-panel-alt px-3 py-1 text-sm font-semibold">
-              {data?.governors.length ?? 0}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <GlassySection
+            title={
+              <span className="flex w-full items-center justify-between gap-3">
+                <span>Chamber roster</span>
+                <GlassyStatusChip tone="neutral">
+                  {data?.governors.length ?? 0}
+                </GlassyStatusChip>
+              </span>
+            }
+          >
             <Input
               value={governorSearch}
               onChange={(event) => setGovernorSearch(event.target.value)}
               placeholder="Search governors"
             />
-            <ul className="max-h-none space-y-2 overflow-visible pr-0 text-sm text-text lg:max-h-[360px] lg:overflow-auto lg:pr-1">
+            <ul className="max-h-none space-y-2 overflow-visible p-0 pr-0 text-sm text-text lg:max-h-[360px] lg:overflow-auto lg:pr-1">
               {filteredGovernors.map((gov) => (
-                <Surface
-                  as="li"
-                  key={gov.id}
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="control"
-                  className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="font-semibold">{gov.name}</p>
-                    <p className="text-xs text-muted">
+                <li key={gov.id}>
+                  <GlassyCompactRow
+                    title={gov.name}
+                    actions={
+                      <Button asChild size="compact" variant="ghost">
+                        <Link to={`/app/human-nodes/${gov.id}`}>Profile</Link>
+                      </Button>
+                    }
+                  >
+                    <p className="m-0 text-xs text-muted">
                       <TierLabel tier={gov.tier} /> · {gov.focus}
                     </p>
-                    <p className="text-xs text-muted">
-                      Vote power {gov.effectiveVotingPower}
-                      {gov.delegatedWeight > 0
-                        ? ` · Carries +${gov.delegatedWeight} delegated`
-                        : ""}
-                    </p>
-                    <p className="text-xs text-muted">
-                      ACM {gov.acm.toLocaleString()} · LCM{" "}
-                      {gov.lcm.toLocaleString()} · MCM{" "}
-                      {gov.mcm.toLocaleString()}
-                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <GlassyKeyValue
+                        className="glassy-key-value--stacked glassy-key-value--metric"
+                        label="Vote power"
+                        value={
+                          gov.delegatedWeight > 0
+                            ? `${gov.effectiveVotingPower} (+${gov.delegatedWeight})`
+                            : gov.effectiveVotingPower
+                        }
+                      />
+                      <GlassyKeyValue
+                        className="glassy-key-value--stacked glassy-key-value--metric"
+                        label="Members' ACM"
+                        value={gov.acm.toLocaleString()}
+                      />
+                      <GlassyKeyValue
+                        className="glassy-key-value--stacked glassy-key-value--metric"
+                        label="LCM"
+                        value={gov.lcm.toLocaleString()}
+                      />
+                      <GlassyKeyValue
+                        className="glassy-key-value--stacked glassy-key-value--metric"
+                        label="MCM"
+                        value={gov.mcm.toLocaleString()}
+                      />
+                    </div>
                     {gov.delegateeAddress ? (
                       <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-muted">
                         <span>Delegates to</span>
@@ -1016,11 +968,8 @@ const Chamber: React.FC = () => {
                         ))}
                       </div>
                     ) : null}
-                  </div>
-                  <Button asChild size="sm" variant="ghost">
-                    <Link to={`/app/human-nodes/${gov.id}`}>Profile</Link>
-                  </Button>
-                </Surface>
+                  </GlassyCompactRow>
+                </li>
               ))}
               {filteredGovernors.length === 0 && (
                 <Surface
@@ -1034,155 +983,42 @@ const Chamber: React.FC = () => {
                 </Surface>
               )}
             </ul>
-          </CardContent>
-        </Card>
-      </div>
+          </GlassySection>
+        </div>
+      ) : null}
 
-      <Surface
-        as="section"
-        variant="panel"
-        radius="2xl"
-        shadow="card"
-        className="p-5"
-      >
-        <header className="mb-4 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <Kicker>Chamber forum</Kicker>
-            <h2 className="text-lg font-semibold text-text">Threads & chat</h2>
-          </div>
-        </header>
-
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-          <div className="space-y-4">
-            <Surface variant="panelAlt" className="p-4">
-              <header className="text-sm font-semibold text-text">
-                Start a thread
-              </header>
-              <form onSubmit={handleThreadCreate} className="mt-3 space-y-3">
-                <Input
-                  value={threadTitle}
-                  onChange={(event) => setThreadTitle(event.target.value)}
-                  placeholder="Thread title"
-                  disabled={!canWrite || threadBusy}
-                />
-                <textarea
-                  value={threadBody}
-                  onChange={(event) => setThreadBody(event.target.value)}
-                  placeholder="Write the opening post"
-                  disabled={!canWrite || threadBusy}
-                  className="min-h-[110px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
-                />
-                {threadError ? (
-                  <p className="text-sm text-destructive">
-                    {formatLoadError(threadError)}
-                  </p>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="submit"
-                    size="sm"
+      {data ? (
+        <GlassySection title="Threads & chat">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+            <div className="space-y-4">
+              <GlassyTile>
+                <GlassyTileHeading>Start a thread</GlassyTileHeading>
+                <form onSubmit={handleThreadCreate} className="mt-3 space-y-3">
+                  <Input
+                    value={threadTitle}
+                    onChange={(event) => setThreadTitle(event.target.value)}
+                    placeholder="Thread title"
                     disabled={!canWrite || threadBusy}
-                  >
-                    {threadBusy ? "Posting..." : "Post thread"}
-                  </Button>
-                  {!canWrite ? (
-                    <span className="text-xs text-muted">
-                      Read-only for non-members.
-                    </span>
-                  ) : null}
-                </div>
-              </form>
-            </Surface>
-
-            {threads.length === 0 ? (
-              <NoDataYetBar label="threads" />
-            ) : (
-              threads.map((thread) => (
-                <article key={thread.id} className="contents">
-                  <Surface variant="panelAlt" className="px-4 py-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-base font-semibold text-text">
-                          {thread.title}
-                        </h3>
-                        <p className="text-sm text-muted">
-                          {thread.author} · {thread.replies} replies · Updated{" "}
-                          {formatDateTime(thread.updated)}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleThreadSelect(thread.id)}
-                      >
-                        Open
-                      </Button>
-                    </div>
-                  </Surface>
-                </article>
-              ))
-            )}
-
-            {threadDetailError ? (
-              <Surface
-                variant="panelAlt"
-                radius="xl"
-                className="px-4 py-3 text-sm text-destructive"
-              >
-                {formatLoadError(threadDetailError)}
-              </Surface>
-            ) : null}
-
-            {activeThread ? (
-              <Surface variant="panelAlt" className="p-4">
-                <header className="mb-2 text-sm font-semibold text-text">
-                  {activeThread.thread.title}
-                </header>
-                <p className="text-sm text-muted">
-                  {activeThread.thread.author} ·{" "}
-                  {formatDateTime(activeThread.thread.createdAt)}
-                </p>
-                <p className="mt-3 text-sm text-text">
-                  {activeThread.thread.body}
-                </p>
-                <div className="mt-4 space-y-2 text-sm">
-                  {threadMessages.length === 0 ? (
-                    <p className="text-muted">No replies yet.</p>
-                  ) : (
-                    threadMessages.map((message) => (
-                      <Surface
-                        key={message.id}
-                        variant="panel"
-                        className="px-3 py-2"
-                      >
-                        <p className="text-xs text-muted">
-                          {message.author} · {formatDateTime(message.createdAt)}
-                        </p>
-                        <p className="text-sm text-text">{message.message}</p>
-                      </Surface>
-                    ))
-                  )}
-                </div>
-                <form onSubmit={handleThreadReply} className="mt-4 space-y-3">
-                  <textarea
-                    value={threadReplyBody}
-                    onChange={(event) => setThreadReplyBody(event.target.value)}
-                    placeholder="Write a reply"
-                    disabled={!canWrite || threadReplyBusy}
-                    className="min-h-[90px] w-full resize-y rounded-xl border border-border bg-panel-alt px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
                   />
-                  {threadReplyError ? (
+                  <textarea
+                    value={threadBody}
+                    onChange={(event) => setThreadBody(event.target.value)}
+                    placeholder="Write the opening post"
+                    disabled={!canWrite || threadBusy}
+                    className="min-h-[110px] w-full resize-y rounded-xl border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none supports-[backdrop-filter]:backdrop-blur-md"
+                  />
+                  {threadError ? (
                     <p className="text-sm text-destructive">
-                      {formatLoadError(threadReplyError)}
+                      {formatLoadError(threadError)}
                     </p>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       type="submit"
                       size="sm"
-                      disabled={!canWrite || threadReplyBusy}
+                      disabled={!canWrite || threadBusy}
                     >
-                      {threadReplyBusy ? "Posting..." : "Reply"}
+                      {threadBusy ? "Posting..." : "Post thread"}
                     </Button>
                     {!canWrite ? (
                       <span className="text-xs text-muted">
@@ -1191,60 +1027,163 @@ const Chamber: React.FC = () => {
                     ) : null}
                   </div>
                 </form>
-              </Surface>
-            ) : null}
-          </div>
+              </GlassyTile>
 
-          <Surface variant="panelAlt" className="p-4">
-            <header className="text-sm font-semibold text-text">
-              Chamber chat
-            </header>
-            <p className="text-xs text-muted">
-              Peers online: {chatPeers.length}
-            </p>
-            <div className="my-3 max-h-64 space-y-2 overflow-auto pr-2 text-sm">
-              {chatLog.length === 0 ? (
-                <p className="text-muted">No chat messages yet.</p>
+              {threads.length === 0 ? (
+                <NoDataYetBar label="threads" />
               ) : (
-                chatLog.map((entry) => (
-                  <p key={entry.id}>
-                    <strong>{entry.author}:</strong> {entry.message}
-                  </p>
+                threads.map((thread) => (
+                  <article key={thread.id} className="contents">
+                    <GlassyTile className="px-4 py-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <GlassyTileHeading>{thread.title}</GlassyTileHeading>
+                          <p className="m-0 text-sm text-muted">
+                            {thread.author} · {thread.replies} replies · Updated{" "}
+                            {formatDateTime(thread.updated)}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleThreadSelect(thread.id)}
+                        >
+                          Open
+                        </Button>
+                      </div>
+                    </GlassyTile>
+                  </article>
                 ))
               )}
+
+              {threadDetailError ? (
+                <Surface
+                  variant="panelAlt"
+                  radius="xl"
+                  className="px-4 py-3 text-sm text-destructive"
+                >
+                  {formatLoadError(threadDetailError)}
+                </Surface>
+              ) : null}
+
+              {activeThread ? (
+                <GlassyTile>
+                  <GlassyTileHeading>
+                    {activeThread.thread.title}
+                  </GlassyTileHeading>
+                  <p className="m-0 text-sm text-muted">
+                    {activeThread.thread.author} ·{" "}
+                    {formatDateTime(activeThread.thread.createdAt)}
+                  </p>
+                  <p className="mt-3 text-sm text-text">
+                    {activeThread.thread.body}
+                  </p>
+                  <div className="mt-4 space-y-2 text-sm">
+                    {threadMessages.length === 0 ? (
+                      <p className="text-muted">No replies yet.</p>
+                    ) : (
+                      threadMessages.map((message) => (
+                        <Surface
+                          key={message.id}
+                          variant="panel"
+                          className="px-3 py-2"
+                        >
+                          <p className="text-xs text-muted">
+                            {message.author} ·{" "}
+                            {formatDateTime(message.createdAt)}
+                          </p>
+                          <p className="text-sm text-text">{message.message}</p>
+                        </Surface>
+                      ))
+                    )}
+                  </div>
+                  <form onSubmit={handleThreadReply} className="mt-4 space-y-3">
+                    <textarea
+                      value={threadReplyBody}
+                      onChange={(event) =>
+                        setThreadReplyBody(event.target.value)
+                      }
+                      placeholder="Write a reply"
+                      disabled={!canWrite || threadReplyBusy}
+                      className="min-h-[90px] w-full resize-y rounded-xl border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none supports-[backdrop-filter]:backdrop-blur-md"
+                    />
+                    {threadReplyError ? (
+                      <p className="text-sm text-destructive">
+                        {formatLoadError(threadReplyError)}
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={!canWrite || threadReplyBusy}
+                      >
+                        {threadReplyBusy ? "Posting..." : "Reply"}
+                      </Button>
+                      {!canWrite ? (
+                        <span className="text-xs text-muted">
+                          Read-only for non-members.
+                        </span>
+                      ) : null}
+                    </div>
+                  </form>
+                </GlassyTile>
+              ) : null}
             </div>
-            <form
-              onSubmit={handleChatSend}
-              className="flex flex-col gap-2 sm:flex-row"
-            >
-              <Input
-                value={chatMessage}
-                onChange={(event) => setChatMessage(event.target.value)}
-                placeholder="Send a message"
-                disabled={!canWrite || chatBusy}
-              />
-              <Button type="submit" size="sm" disabled={!canWrite || chatBusy}>
-                {chatBusy ? "Sending..." : "Send"}
-              </Button>
-            </form>
-            {chatError ? (
-              <p className="mt-2 text-sm text-destructive">
-                {formatLoadError(chatError)}
+
+            <GlassyTile>
+              <GlassyTileHeading>Chamber chat</GlassyTileHeading>
+              <p className="m-0 text-xs text-muted">
+                Peers online: {chatPeers.length}
               </p>
-            ) : null}
-            {chatSignalError ? (
-              <p className="mt-2 text-xs text-destructive">
-                {formatLoadError(chatSignalError)}
-              </p>
-            ) : null}
-            {!canWrite ? (
-              <p className="mt-2 text-xs text-muted">
-                Read-only for non-members.
-              </p>
-            ) : null}
-          </Surface>
-        </div>
-      </Surface>
+              <div className="my-3 max-h-64 space-y-2 overflow-auto pr-2 text-sm">
+                {chatLog.length === 0 ? (
+                  <p className="text-muted">No chat messages yet.</p>
+                ) : (
+                  chatLog.map((entry) => (
+                    <p key={entry.id}>
+                      <strong>{entry.author}:</strong> {entry.message}
+                    </p>
+                  ))
+                )}
+              </div>
+              <form
+                onSubmit={handleChatSend}
+                className="flex flex-col gap-2 sm:flex-row"
+              >
+                <Input
+                  value={chatMessage}
+                  onChange={(event) => setChatMessage(event.target.value)}
+                  placeholder="Send a message"
+                  disabled={!canWrite || chatBusy}
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!canWrite || chatBusy}
+                >
+                  {chatBusy ? "Sending..." : "Send"}
+                </Button>
+              </form>
+              {chatError ? (
+                <p className="mt-2 text-sm text-destructive">
+                  {formatLoadError(chatError)}
+                </p>
+              ) : null}
+              {chatSignalError ? (
+                <p className="mt-2 text-xs text-destructive">
+                  {formatLoadError(chatSignalError)}
+                </p>
+              ) : null}
+              {!canWrite ? (
+                <p className="mt-2 text-xs text-muted">
+                  Read-only for non-members.
+                </p>
+              ) : null}
+            </GlassyTile>
+          </div>
+        </GlassySection>
+      ) : null}
     </div>
   );
 };

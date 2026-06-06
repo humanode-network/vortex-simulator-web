@@ -1,13 +1,9 @@
 import { AddressInline } from "@/components/AddressInline";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
 
@@ -49,7 +45,7 @@ export function FactionModerationQueues({
     <>
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Cofounder invitations</CardTitle>
+          <SectionHeader>Cofounder invitations</SectionHeader>
         </CardHeader>
         <CardContent className="space-y-2">
           {cofounderInvitations.length === 0 ? (
@@ -93,7 +89,7 @@ export function FactionModerationQueues({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Join requests</CardTitle>
+          <SectionHeader>Join requests</SectionHeader>
         </CardHeader>
         <CardContent className="space-y-2">
           {pendingJoinRequests.length === 0 ? (

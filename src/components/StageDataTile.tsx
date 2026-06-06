@@ -20,7 +20,7 @@ export function StageDataTile({
 }: StageDataTileProps) {
   return (
     <Surface
-      variant="panelAlt"
+      variant="glass"
       radius="xl"
       shadow="tile"
       className={cn("p-4", className)}

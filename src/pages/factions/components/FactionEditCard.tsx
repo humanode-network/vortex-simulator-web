@@ -1,10 +1,6 @@
+import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 
@@ -46,7 +42,7 @@ export function FactionEditCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Edit faction</CardTitle>
+        <SectionHeader>Edit faction</SectionHeader>
       </CardHeader>
       <CardContent className="space-y-3">
         <Input

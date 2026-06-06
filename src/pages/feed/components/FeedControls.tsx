@@ -10,22 +10,16 @@ const FEED_SCOPES: { value: FeedScope; label: string }[] = [
 ];
 
 type FeedControlsProps = {
-  chamberCount: number;
-  chambersLoading: boolean;
   feedScope: FeedScope;
   onFeedScopeChange: (scope: FeedScope) => void;
 };
 
 export function FeedControls({
-  chamberCount,
-  chambersLoading,
   feedScope,
   onFeedScopeChange,
 }: FeedControlsProps) {
-  const chamberScoped = feedScope === "chambers" || feedScope === "urgent";
-
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="feed-controls">
       <ToggleGroup
         value={feedScope}
         onValueChange={(value) => onFeedScopeChange(value as FeedScope)}
@@ -34,13 +28,20 @@ export function FeedControls({
           label: scope.label,
         }))}
       />
-      {chamberScoped && chambersLoading ? (
-        <span className="text-xs text-muted">Loading chambers…</span>
-      ) : chamberScoped ? (
-        <span className="text-xs text-muted">
-          {chamberCount} chamber{chamberCount === 1 ? "" : "s"}
+      <div className="feed-controls__legend" aria-label="Feed indicator legend">
+        <span className="feed-controls__legend-item">
+          <span className="feed-controls__legend-swatch feed-controls__legend-swatch--action" />
+          Action / open
         </span>
-      ) : null}
+        <span className="feed-controls__legend-item">
+          <span className="feed-controls__legend-swatch feed-controls__legend-swatch--recent" />
+          Recent
+        </span>
+        <span className="feed-controls__legend-item">
+          <span className="feed-controls__legend-swatch feed-controls__legend-swatch--idle" />
+          Standard
+        </span>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-const themes = ["sky", "light", "night"] as const;
+const themes = ["sky", "light", "night", "fire"] as const;
 export type Theme = (typeof themes)[number];
 
 const STORAGE_KEY = "vortex.theme";

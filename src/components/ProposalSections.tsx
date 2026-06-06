@@ -5,6 +5,7 @@ import {
   type AttachmentItem,
 } from "@/components/AttachmentList";
 import { AddressInline } from "@/components/AddressInline";
+import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
@@ -101,9 +102,7 @@ export function ProposalSummaryCard({
 
   return (
     <section className="space-y-3 text-sm text-muted">
-      {showSummaryHeader ? (
-        <h2 className="text-lg font-semibold text-text">Summary</h2>
-      ) : null}
+      {showSummaryHeader ? <SectionHeader>Summary</SectionHeader> : null}
       {showSummary && <p>{summary}</p>}
       {stats.length > 0 && (
         <div className="grid gap-2 text-sm text-text sm:grid-cols-2 lg:grid-cols-4">
@@ -154,7 +153,7 @@ export function ProposalTeamMilestonesCard({
 }: ProposalTeamMilestonesCardProps) {
   return (
     <section className="space-y-4 text-sm text-muted">
-      <h2 className="text-lg font-semibold text-text">Team & milestones</h2>
+      <SectionHeader>Team & milestones</SectionHeader>
       <div className="grid gap-3 lg:grid-cols-2">
         <TitledSurface title="Team (locked)">
           <ul className="space-y-2 text-sm text-muted">
@@ -280,7 +279,7 @@ export function ProposalTimelineCard({
 }: ProposalTimelineCardProps) {
   return (
     <section className="space-y-3 text-sm text-text">
-      <h2 className="text-lg font-semibold text-text">Timeline</h2>
+      <SectionHeader>Timeline</SectionHeader>
       <ul className="space-y-2 text-sm text-muted">
         {items.map((item) => (
           <Surface

@@ -2,6 +2,7 @@ import type { FC } from "react";
 import { Link } from "react-router";
 import { Surface } from "@/components/Surface";
 import { Kicker } from "@/components/Kicker";
+import { GlassyStatusChip } from "@/components/GlassySection";
 import { cn } from "@/lib/utils";
 import { ACTIVITY_TILE_CLASS, formatActivityTimestamp } from "@/lib/profileUi";
 import type { GovernanceActionDto } from "@/types/api";
@@ -18,21 +19,27 @@ export const ActivityTile: FC<ActivityTileProps> = ({ action, className }) => {
       radius="xl"
       shadow="tile"
       className={cn(
-        "space-y-1 px-3 py-3 text-center transition hover:-translate-y-0.5 hover:shadow-card",
+        "grid gap-2 px-3 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-card",
         ACTIVITY_TILE_CLASS,
         className,
       )}
     >
-      <Kicker align="center" className="line-clamp-1 text-primary">
-        {action.action}
-      </Kicker>
-      <p className="line-clamp-1 text-base font-semibold text-text">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <Kicker className="max-h-[1.3em] overflow-hidden text-primary">
+          {action.action}
+        </Kicker>
+        <GlassyStatusChip className="shrink-0 text-[0.66rem]">
+          {formatActivityTimestamp(action.timestamp)}
+        </GlassyStatusChip>
+      </div>
+      <p className="max-h-[2.7em] overflow-hidden text-sm leading-[1.35] font-semibold text-text">
         {action.title}
       </p>
-      <p className="line-clamp-2 text-xs text-muted">{action.context}</p>
-      <p className="line-clamp-2 text-xs text-muted">{action.detail}</p>
-      <p className="text-[11px] text-muted">
-        {formatActivityTimestamp(action.timestamp)}
+      <p className="max-h-[2.8em] overflow-hidden text-xs leading-[1.4] text-muted">
+        {action.context}
+      </p>
+      <p className="max-h-[2.8em] overflow-hidden text-xs leading-[1.4] text-muted">
+        {action.detail}
       </p>
     </Surface>
   );

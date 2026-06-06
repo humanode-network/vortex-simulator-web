@@ -16,7 +16,7 @@ export function ProposalFinishedSnapshot({
     <div className="space-y-3">
       <p className="text-sm font-semibold text-text">Outcome status</p>
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="px-5 py-4 text-sm text-muted"
@@ -42,7 +42,7 @@ export function ProposalCitizenVetoSnapshot({
     <div className="space-y-3">
       <p className="text-sm font-semibold text-text">Citizen veto snapshot</p>
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="px-5 py-4 text-sm text-muted"
@@ -66,7 +66,7 @@ export function ProposalChamberVetoSnapshot({
     <div className="space-y-3">
       <p className="text-sm font-semibold text-text">Chamber veto snapshot</p>
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="px-5 py-4 text-sm text-muted"
@@ -91,7 +91,7 @@ export function ProposalFormationSnapshot({
       <p className="text-sm font-semibold text-text">Execution snapshot</p>
 
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="space-y-3 px-5 py-4"

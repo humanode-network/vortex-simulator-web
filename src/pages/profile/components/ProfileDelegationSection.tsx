@@ -1,8 +1,12 @@
 import { AddressInline } from "@/components/AddressInline";
-import { SectionHeader } from "@/components/SectionHeader";
-import { Badge } from "@/components/primitives/badge";
-import { Kicker } from "@/components/Kicker";
-import { Surface } from "@/components/Surface";
+import {
+  GlassyCompactGrid,
+  GlassyCompactRow,
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import { formatChamberLabel } from "@/lib/chamberUi";
 import { shortAddress } from "@/lib/profileUi";
 import type { HumanNodeProfileDto } from "@/types/api";
@@ -10,62 +14,64 @@ import type { HumanNodeProfileDto } from "@/types/api";
 type DelegationChamber = HumanNodeProfileDto["delegation"]["chambers"][number];
 
 type ProfileDelegationSectionProps = {
+  className?: string;
   delegationChambers: DelegationChamber[];
 };
 
 export function ProfileDelegationSection({
+  className,
   delegationChambers,
 }: ProfileDelegationSectionProps) {
-  if (delegationChambers.length === 0) {
-    return null;
-  }
-
   return (
-    <section className="space-y-4">
-      <SectionHeader>Delegation</SectionHeader>
-      <div className="grid gap-4 md:grid-cols-2">
-        {delegationChambers.map((item) => (
-          <Surface
-            key={item.chamberId}
-            variant="panelAlt"
-            radius="xl"
-            shadow="tile"
-            className="space-y-3 px-4 py-4"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <Kicker>{formatChamberLabel(item.chamberId)}</Kicker>
-              <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                Current delegate
-              </p>
-              {item.delegateeAddress ? (
-                <AddressInline
-                  address={item.delegateeAddress}
-                  textClassName="text-sm text-text"
-                />
-              ) : (
-                <p className="text-sm text-text">No delegate set</p>
-              )}
-            </div>
-            {item.inboundDelegators.length > 0 ? (
-              <div className="space-y-1">
-                <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                  Delegated by
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {item.inboundDelegators.map((delegator) => (
-                    <Badge key={delegator} variant="muted">
-                      {shortAddress(delegator)}
-                    </Badge>
-                  ))}
+    <GlassySection className={className} title="Delegation">
+      {delegationChambers.length === 0 ? (
+        <GlassyTile className="px-4 py-3 text-sm text-muted">
+          No delegation records yet.
+        </GlassyTile>
+      ) : (
+        <GlassyCompactGrid className="h-full content-start">
+          {delegationChambers.map((item) => (
+            <GlassyCompactRow
+              key={item.chamberId}
+              title={formatChamberLabel(item.chamberId)}
+            >
+              <div className="grid gap-2.5">
+                <div className="glassy-compact-address">
+                  {item.delegateeAddress ? (
+                    <AddressInline
+                      address={item.delegateeAddress}
+                      textClassName="text-sm text-muted"
+                    />
+                  ) : (
+                    <p className="text-sm text-muted">No delegate set</p>
+                  )}
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <GlassyKeyValue
+                    className="glassy-key-value--stacked glassy-key-value--metric"
+                    label="Inbound"
+                    value={item.inboundWeight}
+                  />
+                  <GlassyKeyValue
+                    className="glassy-key-value--stacked glassy-key-value--metric"
+                    label="State"
+                    value={item.delegateeAddress ? "Delegating" : "Open"}
+                  />
+                </div>
+                {item.inboundDelegators.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {item.inboundDelegators.map((delegator) => (
+                      <GlassyStatusChip key={delegator}>
+                        {shortAddress(delegator)}
+                      </GlassyStatusChip>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </Surface>
-        ))}
-      </div>
-    </section>
+            </GlassyCompactRow>
+          ))}
+        </GlassyCompactGrid>
+      )}
+    </GlassySection>
   );
 }

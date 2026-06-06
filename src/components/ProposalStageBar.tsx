@@ -14,13 +14,88 @@ export type ProposalStage =
 
 type ProposalStageBarProps = {
   current: ProposalStage;
+  liveStage?: ProposalStage;
   showFormationStage?: boolean;
   className?: string;
   stageLinks?: Partial<Record<ProposalStage, string>>;
 };
 
+const stageOrder: ProposalStage[] = [
+  "draft",
+  "pool",
+  "vote",
+  "citizen_veto",
+  "chamber_veto",
+  "build",
+  "passed",
+  "failed",
+];
+
+function stageProgressIndex(stage: ProposalStage): number {
+  if (stage === "passed" || stage === "failed") return 6;
+  return stageOrder.indexOf(stage);
+}
+
+function stageRoute(proposalId: string, stage: ProposalStage): string | null {
+  if (stage === "draft") return null;
+  if (stage === "pool") return `/app/proposals/${proposalId}/pp`;
+  if (stage === "vote") return `/app/proposals/${proposalId}/chamber`;
+  if (stage === "citizen_veto")
+    return `/app/proposals/${proposalId}/citizen-veto`;
+  if (stage === "chamber_veto")
+    return `/app/proposals/${proposalId}/chamber-veto`;
+  if (stage === "build") return `/app/proposals/${proposalId}/formation`;
+  return `/app/proposals/${proposalId}/finished`;
+}
+
+function withSnapshotStage(href: string, stage: ProposalStage): string {
+  const separator = href.includes("?") ? "&" : "?";
+  return `${href}${separator}snapshotStage=${stage}`;
+}
+
+type BuildProposalStageLinksInput = {
+  canonicalRoute?: string;
+  liveStage: ProposalStage;
+  proposalId: string;
+  routeOverrides?: Partial<Record<ProposalStage, string>>;
+  showFormationStage?: boolean;
+};
+
+export function buildProposalStageLinks({
+  canonicalRoute,
+  liveStage,
+  proposalId,
+  routeOverrides,
+  showFormationStage = true,
+}: BuildProposalStageLinksInput): Partial<Record<ProposalStage, string>> {
+  const liveIndex = stageProgressIndex(liveStage);
+  const links: Partial<Record<ProposalStage, string>> = {};
+
+  for (const stage of stageOrder) {
+    if (stage === "draft") continue;
+    if (stage === "build" && !showFormationStage && liveStage !== "build") {
+      continue;
+    }
+    if (stageProgressIndex(stage) > liveIndex) continue;
+    if ((stage === "passed" || stage === "failed") && stage !== liveStage) {
+      continue;
+    }
+
+    const baseHref = routeOverrides?.[stage] ?? stageRoute(proposalId, stage);
+    if (!baseHref) continue;
+
+    links[stage] =
+      stage === liveStage
+        ? (canonicalRoute ?? baseHref)
+        : withSnapshotStage(baseHref, stage);
+  }
+
+  return links;
+}
+
 export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
   current,
+  liveStage,
   showFormationStage = true,
   className,
   stageLinks,
@@ -62,10 +137,11 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
     >
       {stages.map((stage) => {
         const active = stage.key === current;
+        const live = stage.key === liveStage;
         const href = stageLinks?.[stage.key];
         const activeClasses =
           stage.key === "draft"
-            ? "bg-panel text-text border border-border shadow-[var(--shadow-control)] ring-1 ring-inset ring-[color:var(--glass-border)]"
+            ? "border border-[color:var(--surface-glass-border)] bg-[color:var(--surface-glass-bg)] text-text shadow-[var(--shadow-control)] ring-1 ring-inset ring-[color:var(--surface-glass-ring)]"
             : stage.key === "pool"
               ? "bg-primary text-[var(--primary-foreground)]"
               : stage.key === "vote"
@@ -83,17 +159,34 @@ export const ProposalStageBar: React.FC<ProposalStageBarProps> = ({
           "min-w-0 basis-[calc(50%-0.25rem)] rounded-full px-3 py-2 text-center text-xs leading-tight font-semibold transition sm:flex-1 sm:basis-0",
           active
             ? activeClasses
-            : "border border-border bg-panel-alt [background-image:var(--card-grad)] bg-cover bg-no-repeat text-muted",
-          href ? "hover:border-border-strong hover:text-text" : "",
+            : "border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] text-muted supports-[backdrop-filter]:backdrop-blur-md",
+          live && !active ? "ring-2 ring-[color:var(--primary)]/35" : "",
+          href
+            ? "hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] hover:text-text"
+            : "",
         ].join(" ");
         const content = stage.render ?? stage.label;
+        const inner = (
+          <span className="flex min-w-0 flex-col items-center gap-0.5">
+            <span className="min-w-0 truncate">{content}</span>
+            {live ? (
+              <span className="rounded-full bg-[color:var(--primary-dim)] px-1.5 py-0.5 text-[0.6rem] leading-none text-text">
+                Live
+              </span>
+            ) : active ? (
+              <span className="rounded-full bg-[color:var(--surface-glass-bg)] px-1.5 py-0.5 text-[0.6rem] leading-none text-text">
+                Viewing
+              </span>
+            ) : null}
+          </span>
+        );
         return href ? (
           <Link key={stage.key} to={href} className={className}>
-            {content}
+            {inner}
           </Link>
         ) : (
           <div key={stage.key} className={className}>
-            {content}
+            {inner}
           </div>
         );
       })}

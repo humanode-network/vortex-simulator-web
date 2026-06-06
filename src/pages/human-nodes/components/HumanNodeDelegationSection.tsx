@@ -1,9 +1,13 @@
 import { AddressInline } from "@/components/AddressInline";
-import { SectionHeader } from "@/components/SectionHeader";
-import { Badge } from "@/components/primitives/badge";
+import {
+  GlassyCompactGrid,
+  GlassyCompactRow,
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import { Button } from "@/components/primitives/button";
-import { Kicker } from "@/components/Kicker";
-import { Surface } from "@/components/Surface";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatChamberLabel } from "@/lib/chamberUi";
 import { shortAddress } from "@/lib/profileUi";
@@ -14,6 +18,7 @@ type ViewerDelegation =
   GetMyGovernanceResponse["delegation"]["chambers"][number];
 
 type HumanNodeDelegationSectionProps = {
+  className?: string;
   delegationCards: DelegationCard[];
   delegationErrorByChamber: Record<string, string | null>;
   delegationPendingByChamber: Record<string, boolean>;
@@ -26,6 +31,7 @@ type HumanNodeDelegationSectionProps = {
 };
 
 export function HumanNodeDelegationSection({
+  className,
   delegationCards,
   delegationErrorByChamber,
   delegationPendingByChamber,
@@ -36,109 +42,113 @@ export function HumanNodeDelegationSection({
   profileId,
   viewerDelegationByChamber,
 }: HumanNodeDelegationSectionProps) {
-  if (delegationCards.length === 0) {
-    return null;
-  }
-
   return (
-    <section className="space-y-4">
-      <SectionHeader>Delegation</SectionHeader>
-      <div className="grid gap-4 md:grid-cols-2">
-        {delegationCards.map((item) => {
-          const viewerItem =
-            viewerDelegationByChamber.get(item.chamberId) ?? null;
-          const viewerAlreadyDelegatesHere = addressesReferToSameIdentity(
-            viewerItem?.delegateeAddress,
-            profileId,
-          );
-          const canManage =
-            !isSelfProfile &&
-            manageableChambers.some(
-              (chamber) => chamber.chamberId === item.chamberId,
+    <GlassySection className={className} title="Delegation">
+      {delegationCards.length === 0 ? (
+        <GlassyTile className="px-4 py-3 text-sm text-muted">
+          No delegation records yet.
+        </GlassyTile>
+      ) : (
+        <GlassyCompactGrid className="h-full content-start">
+          {delegationCards.map((item) => {
+            const viewerItem =
+              viewerDelegationByChamber.get(item.chamberId) ?? null;
+            const viewerAlreadyDelegatesHere = addressesReferToSameIdentity(
+              viewerItem?.delegateeAddress,
+              profileId,
             );
-          const pending = delegationPendingByChamber[item.chamberId] ?? false;
+            const canManage =
+              !isSelfProfile &&
+              manageableChambers.some(
+                (chamber) => chamber.chamberId === item.chamberId,
+              );
+            const pending = delegationPendingByChamber[item.chamberId] ?? false;
+            const error = delegationErrorByChamber[item.chamberId];
 
-          return (
-            <Surface
-              key={item.chamberId}
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="space-y-3 px-4 py-4"
-            >
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <Kicker>{formatChamberLabel(item.chamberId)}</Kicker>
-                <Badge variant="outline">Inbound {item.inboundWeight}</Badge>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                  Current delegate
-                </p>
-                {item.delegateeAddress ? (
-                  <AddressInline
-                    address={item.delegateeAddress}
-                    textClassName="text-sm text-text"
-                  />
-                ) : (
-                  <p className="text-sm text-text">No delegate set</p>
-                )}
-              </div>
-              {item.inboundDelegators.length > 0 ? (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                    Delegated by
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {item.inboundDelegators.map((delegator) => (
-                      <Badge key={delegator} variant="muted">
-                        {shortAddress(delegator)}
-                      </Badge>
-                    ))}
+            return (
+              <GlassyCompactRow
+                key={item.chamberId}
+                title={formatChamberLabel(item.chamberId)}
+              >
+                <div className="grid gap-2.5">
+                  <div className="glassy-compact-address">
+                    {item.delegateeAddress ? (
+                      <AddressInline
+                        address={item.delegateeAddress}
+                        textClassName="text-sm text-muted"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted">No delegate set</p>
+                    )}
                   </div>
-                </div>
-              ) : null}
-              {canManage ? (
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      disabled={pending || viewerAlreadyDelegatesHere}
-                      onClick={() => onDelegateHere(item.chamberId)}
-                    >
-                      {viewerAlreadyDelegatesHere
-                        ? "Delegated here"
-                        : "Delegate here"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={pending || !viewerAlreadyDelegatesHere}
-                      onClick={() => onClearDelegation(item.chamberId)}
-                    >
-                      Undelegate
-                    </Button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="Inbound"
+                      value={item.inboundWeight}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="State"
+                      value={item.delegateeAddress ? "Delegating" : "Open"}
+                    />
                   </div>
-                  {viewerItem?.delegateeAddress &&
-                  !viewerAlreadyDelegatesHere ? (
-                    <p className="text-xs text-muted">
-                      You currently delegate this chamber to{" "}
-                      <span className="font-semibold text-text">
-                        {shortAddress(viewerItem.delegateeAddress)}
-                      </span>
-                      .
-                    </p>
+
+                  {item.inboundDelegators.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {item.inboundDelegators.map((delegator) => (
+                        <GlassyStatusChip key={delegator}>
+                          {shortAddress(delegator)}
+                        </GlassyStatusChip>
+                      ))}
+                    </div>
                   ) : null}
-                  {delegationErrorByChamber[item.chamberId] ? (
-                    <p className="text-sm text-danger">
-                      {delegationErrorByChamber[item.chamberId]}
-                    </p>
+
+                  {canManage ? (
+                    <div className="grid gap-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          size="compact"
+                          disabled={pending || viewerAlreadyDelegatesHere}
+                          onClick={() => onDelegateHere(item.chamberId)}
+                        >
+                          {viewerAlreadyDelegatesHere
+                            ? "Delegated"
+                            : "Delegate"}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="compact"
+                          variant="outline"
+                          disabled={pending || !viewerAlreadyDelegatesHere}
+                          onClick={() => onClearDelegation(item.chamberId)}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                      {viewerItem?.delegateeAddress &&
+                      !viewerAlreadyDelegatesHere ? (
+                        <p className="m-0 text-xs text-muted">
+                          You delegate this chamber to{" "}
+                          <span className="font-semibold text-text">
+                            {shortAddress(viewerItem.delegateeAddress)}
+                          </span>
+                          .
+                        </p>
+                      ) : null}
+                      {error ? (
+                        <p className="m-0 text-sm text-danger">{error}</p>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : null}
-            </Surface>
-          );
-        })}
-      </div>
-    </section>
+              </GlassyCompactRow>
+            );
+          })}
+        </GlassyCompactGrid>
+      )}
+    </GlassySection>
   );
 }

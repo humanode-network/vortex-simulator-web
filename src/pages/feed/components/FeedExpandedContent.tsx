@@ -56,17 +56,12 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
 }) => {
   return (
     <section className="space-y-5">
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-text">Summary</p>
-        <p className="text-sm text-muted">{item.summary}</p>
-      </div>
-
       {finishedPage ? (
         <div className="space-y-3">
           <p className="text-sm font-semibold text-text">Outcome status</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="px-5 py-4 text-sm text-muted"
@@ -87,7 +82,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
         </div>
       ) : hasFinishedRoute(item.href) ? (
         <Surface
-          variant="panelAlt"
+          variant="glass"
           radius="2xl"
           shadow="tile"
           className="px-5 py-4 text-sm text-muted"
@@ -99,7 +94,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
           <p className="text-sm font-semibold text-text">Quorum of attention</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="flex flex-wrap items-center justify-center gap-4 px-6 py-5 text-lg font-semibold"
@@ -135,7 +130,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
           <p className="text-sm font-semibold text-text">Vote snapshot</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-3 px-5 py-4"
@@ -205,7 +200,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
             Citizen veto snapshot
           </p>
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-2 px-5 py-4"
@@ -236,7 +231,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
             Chamber veto snapshot
           </p>
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-2 px-5 py-4"
@@ -266,7 +261,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
           <p className="text-sm font-semibold text-text">Execution snapshot</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-3 px-5 py-4"
@@ -316,7 +311,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
           <p className="text-sm font-semibold text-text">Courts status</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-2 px-5 py-4"
@@ -336,7 +331,7 @@ export const FeedExpandedContent: React.FC<FeedExpandedContentProps> = ({
           <p className="text-sm font-semibold text-text">Thread snapshot</p>
 
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="space-y-2 px-5 py-4"

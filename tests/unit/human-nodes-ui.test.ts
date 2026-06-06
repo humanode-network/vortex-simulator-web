@@ -147,16 +147,19 @@ test("human node profile title and short badge handle generic names", () => {
   expect(shouldShowHumanNodeShortBadge(named)).toBe(true);
 });
 
-test("human node visible hero stats hide CM internals", () => {
+test("human node visible hero stats keep ACM and hide chamber CM internals", () => {
   expect(
     getHumanNodeVisibleHeroStats([
       { label: "Tier", value: "Citizen" },
       { label: "ACM", value: "100" },
       { label: "LCM", value: "10" },
+      { label: "MCM", value: "20" },
+      { label: "MM", value: "30" },
       { label: "Projects", value: "2" },
     ]),
   ).toEqual([
     { label: "Tier", value: "Citizen" },
+    { label: "ACM", value: "100" },
     { label: "Projects", value: "2" },
   ]);
 });

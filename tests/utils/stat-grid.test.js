@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import React from "react";
 import { test } from "@rstest/core";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router";
 
-import { makeChamberStats } from "@/components/StatGrid";
+import { StatGrid, makeChamberStats } from "@/components/StatGrid";
 
 test("makeChamberStats maps values to the expected slots", () => {
   const stats = {
@@ -21,4 +23,14 @@ test("makeChamberStats maps values to the expected slots", () => {
     assert.ok(React.isValidElement(item.label));
     assert.ok(typeof item.value === "string");
   }
+
+  const html = renderToStaticMarkup(
+    React.createElement(
+      MemoryRouter,
+      null,
+      React.createElement(StatGrid, { items }),
+    ),
+  );
+  assert.ok(html.includes("Members"));
+  assert.ok(html.includes("ACM"));
 });

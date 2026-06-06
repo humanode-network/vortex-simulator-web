@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Kicker } from "@/components/Kicker";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { VoteButton } from "@/components/VoteButton";
@@ -200,7 +201,7 @@ const Courtroom: React.FC = () => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Verdict</CardTitle>
+          <SectionHeader>Verdict</SectionHeader>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3">
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -271,7 +272,7 @@ const Courtroom: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Proceedings</CardTitle>
+            <SectionHeader>Proceedings</SectionHeader>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted">
             <Surface
@@ -333,7 +334,7 @@ const Courtroom: React.FC = () => {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Parties</CardTitle>
+              <SectionHeader>Parties</SectionHeader>
             </CardHeader>
             <CardContent className="space-y-2">
               {parties.length > 0 ? (
@@ -375,7 +376,7 @@ const Courtroom: React.FC = () => {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Jury</CardTitle>
+              <SectionHeader>Jury</SectionHeader>
             </CardHeader>
             <CardContent className="grid gap-2">
               {juryMembers.map((member) => (

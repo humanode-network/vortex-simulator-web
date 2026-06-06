@@ -3,17 +3,13 @@ import { Link } from "react-router";
 import { AddressInline } from "@/components/AddressInline";
 import { HintLabel } from "@/components/Hint";
 import { Kicker } from "@/components/Kicker";
+import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { TierLabel } from "@/components/TierLabel";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardFooter } from "@/components/primitives/card";
 import { Label } from "@/components/primitives/label";
 import { Select } from "@/components/primitives/select";
 import {
@@ -54,11 +50,11 @@ export function HumanNodesResultsCard({
   sortBy,
 }: HumanNodesResultsCardProps) {
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-2">
+    <section className="flex w-full flex-col gap-3">
+      <SectionHeader>
         <Kicker>Results ({filtered.length})</Kicker>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-0">
+      </SectionHeader>
+      <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Label htmlFor="sort" className="font-semibold">
@@ -109,15 +105,11 @@ export function HumanNodesResultsCard({
                     : `${formationProjects[0]} + ${
                         formationProjects.length - 1
                       }`;
-              const cmTotals = node.cmTotals ?? {
-                lcm: 0,
-                mcm: 0,
-                acm: node.acm,
-              };
               const tileItems = [
-                { label: "LCM", value: cmTotals.lcm.toString() },
-                { label: "MCM", value: cmTotals.mcm.toString() },
-                { label: "ACM", value: cmTotals.acm.toString() },
+                {
+                  label: "ACM",
+                  value: (node.cmTotals?.acm ?? node.acm).toString(),
+                },
                 {
                   label: "Tier",
                   value: (
@@ -254,12 +246,6 @@ export function HumanNodesResultsCard({
                           </HintLabel>{" "}
                           {node.cmTotals?.acm ?? node.acm}
                         </Badge>
-                        <Badge size="sm" variant="outline">
-                          LCM {node.cmTotals?.lcm ?? 0}
-                        </Badge>
-                        <Badge size="sm" variant="outline">
-                          MCM {node.cmTotals?.mcm ?? 0}
-                        </Badge>
                         {node.formationCapable && (
                           <Badge size="sm" variant="outline">
                             Active node
@@ -278,7 +264,7 @@ export function HumanNodesResultsCard({
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

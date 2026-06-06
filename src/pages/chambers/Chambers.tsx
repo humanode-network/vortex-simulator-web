@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-
-import { HintLabel } from "@/components/Hint";
-import { PageHint } from "@/components/PageHint";
-import { SearchBar } from "@/components/SearchBar";
-import { MetricTile } from "@/components/MetricTile";
-import { AppCard } from "@/components/AppCard";
-import { Badge } from "@/components/primitives/badge";
-import { StatGrid, makeChamberStats } from "@/components/StatGrid";
-import { PipelineList } from "@/components/PipelineList";
-import { Button } from "@/components/primitives/button";
 import { Link } from "react-router";
+
+import { AppCard } from "@/components/AppCard";
+import { HintLabel } from "@/components/Hint";
 import { InlineHelp } from "@/components/InlineHelp";
+import { MetricTile } from "@/components/MetricTile";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { PageHint } from "@/components/PageHint";
+import { PipelineList } from "@/components/PipelineList";
+import { SearchBar } from "@/components/SearchBar";
+import { StatGrid, makeChamberStats } from "@/components/StatGrid";
+import { Surface } from "@/components/Surface";
+import { Badge } from "@/components/primitives/badge";
+import { Button } from "@/components/primitives/button";
 import { apiChambers, apiClock, apiHumans } from "@/lib/apiClient";
 import { getChamberNumericStats } from "@/lib/dtoParsers";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { ChamberDto } from "@/types/api";
-import { Surface } from "@/components/Surface";
 
 type Metric = {
   label: string;
@@ -26,7 +26,7 @@ type Metric = {
 const metricCards: Metric[] = [
   { label: "Total chambers", value: "—" },
   { label: "Governors / Active governors", value: "—" },
-  { label: "Total ACM", value: "—" },
+  { label: "Total members' ACM", value: "—" },
   { label: "Live proposals", value: "—" },
 ];
 
@@ -137,7 +137,7 @@ const Chambers: React.FC = () => {
         value: `${governors} / ${active}`,
       },
       {
-        label: "Total ACM",
+        label: "Total members' ACM",
         value: typeof totalAcm === "number" ? totalAcm.toLocaleString() : "—",
       },
       { label: "Live proposals", value: String(liveProposals) },
@@ -151,9 +151,9 @@ const Chambers: React.FC = () => {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {computedMetrics.map((metric) => {
             const label =
-              metric.label === "Total ACM" ? (
+              metric.label === "Total members' ACM" ? (
                 <>
-                  <span className="font-normal">Total</span>{" "}
+                  <span className="font-normal">Total members'</span>{" "}
                   <HintLabel termId="acm" termText="ACM" />
                 </>
               ) : (
@@ -215,7 +215,7 @@ const Chambers: React.FC = () => {
             options: [
               { value: "name", label: "Name (A–Z)" },
               { value: "governors", label: "Governors (desc)" },
-              { value: "acm", label: "ACM (desc)" },
+              { value: "acm", label: "Members' ACM (desc)" },
             ],
           },
         ]}

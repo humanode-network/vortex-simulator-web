@@ -1,12 +1,8 @@
 import { Link } from "react-router";
 
+import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
 
@@ -29,7 +25,7 @@ export function FactionThreadListCard({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle>Threads</CardTitle>
+          <SectionHeader>Threads</SectionHeader>
           {canPost ? (
             <Button asChild size="sm">
               <Link

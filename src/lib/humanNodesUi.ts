@@ -126,7 +126,7 @@ export function getHumanNodeVisibleHeroStats(
 ): HumanNodeProfileDto["heroStats"] {
   return heroStats.filter((stat) => {
     const label = stat.label.trim().toUpperCase();
-    return !["ACM", "LCM", "MCM", "MM"].includes(label);
+    return !["LCM", "MCM", "MM"].includes(label);
   });
 }
 
