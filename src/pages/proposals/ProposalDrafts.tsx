@@ -5,11 +5,13 @@ import { Button } from "@/components/primitives/button";
 import { Badge } from "@/components/primitives/badge";
 import { SearchBar } from "@/components/SearchBar";
 import { PageHint } from "@/components/PageHint";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiProposalDrafts } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
+import { proposalSummaryPreview } from "@/lib/textPreview";
 import type { ProposalDraftListItemDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
 
@@ -88,7 +90,7 @@ const ProposalDrafts: React.FC = () => {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-text">Drafts</h1>
+        <SectionHeader>Drafts</SectionHeader>
         <SearchBar
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -145,7 +147,9 @@ const ProposalDrafts: React.FC = () => {
                 <h2 className="text-lg font-semibold text-text">
                   {draft.title}
                 </h2>
-                <p className="text-sm text-muted">{draft.summary}</p>
+                <p className="max-h-[4.35em] overflow-hidden text-sm leading-[1.45] text-muted">
+                  {proposalSummaryPreview(draft.summary)}
+                </p>
               </div>
               <Badge variant="outline">{draft.chamber}</Badge>
             </div>

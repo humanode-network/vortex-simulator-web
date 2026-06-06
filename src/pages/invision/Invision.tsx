@@ -1,29 +1,124 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+  GlassyCompactGrid,
+  GlassyCompactMetric,
+  GlassyCompactRow,
+  GlassyKeyValue,
+  GlassyMetricTile,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import { HintLabel } from "@/components/Hint";
-import { SearchBar } from "@/components/SearchBar";
-import { Surface } from "@/components/Surface";
-import { PageHint } from "@/components/PageHint";
-import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { PageHint } from "@/components/PageHint";
 import { apiFactions, apiInvision } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
-import type { FactionDto, GetInvisionResponse } from "@/types/api";
+import type {
+  FactionDto,
+  GetInvisionResponse,
+  InvisionDecentralizationDto,
+  InvisionStabilityDto,
+  InvisionStabilityComponentDto,
+} from "@/types/api";
+
+type EngineDto = InvisionDecentralizationDto | InvisionStabilityDto;
+type StatusTone = "danger" | "neutral" | "ok" | "primary" | "warn";
+
+function toneForScore(tone: InvisionStabilityComponentDto["tone"]) {
+  if (tone === "critical") return "danger";
+  if (tone === "watch") return "primary";
+  return "ok";
+}
+
+function toneForConfidence(engine: EngineDto): StatusTone {
+  if (engine.confidenceBand === "High" || engine.confidence >= 75) return "ok";
+  if (engine.confidenceBand === "Medium" || engine.confidence >= 50) {
+    return "warn";
+  }
+  return "danger";
+}
+
+function toneForRiskStatus(status: string) {
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "critical") return "danger";
+  if (normalized === "ok" || normalized === "healthy") return "ok";
+  return "primary";
+}
+
+function EngineSection({
+  engine,
+  title,
+}: {
+  engine: EngineDto;
+  title: string;
+}) {
+  return (
+    <GlassySection className="h-full" title={title}>
+      <GlassyCompactGrid className="lg:grid-cols-3">
+        <GlassyCompactMetric label="Band" value={engine.band} />
+        <GlassyCompactMetric
+          label="Confidence"
+          value={
+            <GlassyStatusChip tone={toneForConfidence(engine)}>
+              {engine.confidence}% · {engine.confidenceBand}
+            </GlassyStatusChip>
+          }
+        />
+        <GlassyCompactMetric label="Timeframe" value={engine.windowLabel} />
+      </GlassyCompactGrid>
+
+      <GlassyCompactGrid className="lg:grid-cols-2">
+        {engine.components.map((component) => (
+          <GlassyCompactRow
+            key={component.label}
+            title={component.label}
+            actions={
+              <GlassyStatusChip tone={toneForScore(component.tone)}>
+                {component.score}%
+              </GlassyStatusChip>
+            }
+          >
+            <p className="m-0 text-xs text-muted">{component.detail}</p>
+          </GlassyCompactRow>
+        ))}
+      </GlassyCompactGrid>
+    </GlassySection>
+  );
+}
+
+function FactionCard({ faction }: { faction: FactionDto }) {
+  return (
+    <GlassyCompactRow
+      title={faction.name}
+      actions={
+        <GlassyStatusChip tone="neutral">
+          {faction.members} members
+        </GlassyStatusChip>
+      }
+    >
+      <p className="m-0 text-xs text-muted">{faction.description}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <GlassyKeyValue
+          className="glassy-key-value--stacked glassy-key-value--metric"
+          label="Members"
+          value={faction.members}
+        />
+        <GlassyKeyValue
+          className="glassy-key-value--stacked glassy-key-value--metric"
+          label={<HintLabel termId="acm" prefix="Members'" termText="ACM" />}
+          value={faction.acm}
+        />
+      </div>
+    </GlassyCompactRow>
+  );
+}
 
 const Invision: React.FC = () => {
   const [invision, setInvision] = useState<GetInvisionResponse | null>(null);
   const [factions, setFactions] = useState<FactionDto[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<{
-    factionSort: "members" | "acm";
-  }>({ factionSort: "members" });
-  const { factionSort } = filters;
 
   useEffect(() => {
     let active = true;
@@ -50,354 +145,130 @@ const Invision: React.FC = () => {
   }, []);
 
   const filteredFactions = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return [...(factions ?? [])]
-      .filter(
-        (f) =>
-          term.length === 0 ||
-          f.name.toLowerCase().includes(term) ||
-          f.description.toLowerCase().includes(term),
-      )
-      .sort((a, b) => {
-        if (factionSort === "members") return b.members - a.members;
-        return (
-          parseInt(b.acm.replace(/[,]/g, ""), 10) -
-          parseInt(a.acm.replace(/[,]/g, ""), 10)
-        );
-      });
-  }, [factions, search, factionSort]);
+    return [...(factions ?? [])].sort((a, b) => b.members - a.members);
+  }, [factions]);
 
   const hasInvisionContent =
     Boolean(invision?.governanceState.metrics.length) ||
     Boolean(invision?.economicIndicators.length) ||
-    Boolean(invision?.riskSignals.length) ||
-    Boolean(invision?.chamberProposals.length);
+    Boolean(invision?.riskSignals.length);
   const primaryGovernanceMetrics = (
     invision?.governanceState.metrics ?? []
   ).slice(0, 3);
   const secondaryGovernanceMetrics = (
     invision?.governanceState.metrics ?? []
   ).slice(3);
-  const decentralization = invision?.decentralization ?? null;
-  const stability = invision?.stability ?? null;
-  const stabilityToneClass = (tone: "positive" | "watch" | "critical") => {
-    if (tone === "critical") return "text-destructive";
-    if (tone === "watch") return "text-primary";
-    return "text-text";
-  };
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-5">
-        <PageHint pageId="invision" />
-        {invision === null && !loadError ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-            Loading Invision…
-          </Card>
-        ) : null}
-        {loadError ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-            Invision unavailable: {formatLoadError(loadError)}
-          </Card>
-        ) : null}
-        {invision !== null &&
-        factions !== null &&
-        factions.length === 0 &&
-        !hasInvisionContent &&
-        !loadError ? (
-          <NoDataYetBar label="Invision data" />
-        ) : null}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Surface
-            variant="panelAlt"
-            className="px-6 py-5 text-center sm:col-span-2 lg:col-span-3"
-          >
-            <Kicker align="center">System state</Kicker>
-            <h1 className="text-2xl font-semibold text-text">
-              {invision?.governanceState.label ?? "—"}
-            </h1>
-          </Surface>
+      <PageHint pageId="invision" />
+
+      {invision === null && !loadError ? (
+        <GlassyTile className="px-4 py-6 text-center text-sm text-muted">
+          Loading Invision…
+        </GlassyTile>
+      ) : null}
+
+      {loadError ? (
+        <GlassyTile className="px-4 py-6 text-center text-sm text-destructive">
+          Invision unavailable: {formatLoadError(loadError)}
+        </GlassyTile>
+      ) : null}
+
+      {invision !== null &&
+      factions !== null &&
+      factions.length === 0 &&
+      !hasInvisionContent &&
+      !loadError ? (
+        <NoDataYetBar label="Invision data" />
+      ) : null}
+
+      <GlassySection title="System state">
+        <GlassyTile className="px-6 py-5 text-center">
+          <p className="m-0 text-xs font-semibold text-muted uppercase">
+            Governance model
+          </p>
+          <h1 className="m-0 mt-1 text-2xl font-semibold text-text">
+            {invision?.governanceState.label ?? "—"}
+          </h1>
+        </GlassyTile>
+        <GlassyCompactGrid className="lg:grid-cols-3">
           {primaryGovernanceMetrics.map((metric) => (
-            <Surface
+            <GlassyMetricTile
               key={metric.label}
-              variant="panel"
-              className="px-4 py-4 text-center"
-            >
-              <Kicker align="center">{metric.label}</Kicker>
-              <p className="text-3xl font-semibold text-text">{metric.value}</p>
-            </Surface>
+              label={metric.label}
+              value={metric.value}
+            />
           ))}
+        </GlassyCompactGrid>
+      </GlassySection>
+
+      {secondaryGovernanceMetrics.length > 0 ? (
+        <GlassySection title="Governance signals">
+          <GlassyCompactGrid className="lg:grid-cols-3">
+            {secondaryGovernanceMetrics.map((metric) => (
+              <GlassyCompactMetric
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+              />
+            ))}
+          </GlassyCompactGrid>
+        </GlassySection>
+      ) : null}
+
+      {invision?.decentralization && invision.stability ? (
+        <div className="grid items-start gap-4 xl:grid-cols-2">
+          <EngineSection
+            engine={invision.decentralization}
+            title="Decentralization engine"
+          />
+          <EngineSection engine={invision.stability} title="Stability engine" />
         </div>
+      ) : null}
 
-        {secondaryGovernanceMetrics.length > 0 ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Governance signals</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-3">
-              {secondaryGovernanceMetrics.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="rounded-xl border border-border px-3 py-3"
-                >
-                  <Kicker>{metric.label}</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {metric.value}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ) : null}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+        <GlassySection className="h-full" title="Largest factions">
+          <GlassyCompactGrid>
+            {filteredFactions.map((faction) => (
+              <FactionCard key={faction.id} faction={faction} />
+            ))}
+          </GlassyCompactGrid>
+        </GlassySection>
 
-        {decentralization ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Decentralization engine</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-text">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Band</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {decentralization.band}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Confidence</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {decentralization.confidence}% ·{" "}
-                    {decentralization.confidenceBand}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Timeframe</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {decentralization.windowLabel}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {decentralization.components.map((component) => (
-                  <div
-                    key={component.label}
-                    className="rounded-xl border border-border px-3 py-3"
-                  >
-                    <Kicker>{component.label}</Kicker>
-                    <p
-                      className={`text-lg font-semibold ${stabilityToneClass(component.tone)}`}
-                    >
-                      {component.score}%
-                    </p>
-                    <p className="text-xs text-muted">{component.detail}</p>
-                  </div>
-                ))}
-              </div>
-
-              {decentralization.capsApplied.length > 0 ? (
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Active caps</Kicker>
-                  <div className="space-y-1 text-xs text-muted">
-                    {decentralization.capsApplied.map((cap) => (
-                      <p key={cap}>{cap}</p>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {stability ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Stability engine</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-text">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Band</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {stability.band}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Confidence</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {stability.confidence}% · {stability.confidenceBand}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Timeframe</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {stability.windowLabel}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {stability.components.map((component) => (
-                  <div
-                    key={component.label}
-                    className="rounded-xl border border-border px-3 py-3"
-                  >
-                    <Kicker>{component.label}</Kicker>
-                    <p
-                      className={`text-lg font-semibold ${stabilityToneClass(component.tone)}`}
-                    >
-                      {component.score}%
-                    </p>
-                    <p className="text-xs text-muted">{component.detail}</p>
-                  </div>
-                ))}
-              </div>
-
-              {stability.capsApplied.length > 0 ? (
-                <div className="rounded-xl border border-border px-3 py-3">
-                  <Kicker>Active caps</Kicker>
-                  <div className="space-y-1 text-xs text-muted">
-                    {stability.capsApplied.map((cap) => (
-                      <p key={cap}>{cap}</p>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <SearchBar
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search factions, blocs, proposals…"
-          ariaLabel="Search invision"
-          filtersConfig={[
-            {
-              key: "factionSort",
-              label: "Sort factions",
-              options: [
-                { value: "members", label: "Members (desc)" },
-                { value: "acm", label: "ACM (desc)" },
-              ],
-            },
-          ]}
-          filtersState={filters}
-          onFiltersChange={setFilters}
-        />
-
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle>Largest factions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 text-sm text-text sm:grid-cols-2">
-              {filteredFactions.map((faction) => (
-                <div key={faction.name} className="contents">
-                  <Surface variant="panelAlt" className="px-5 py-4">
-                    <p className="text-lg font-semibold text-text">
-                      {faction.name}
-                    </p>
-                    <Kicker className="text-primary">
-                      {faction.description}
-                    </Kicker>
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-                      <Surface
-                        variant="panel"
-                        radius="xl"
-                        shadow="control"
-                        className="px-2 py-2"
-                      >
-                        <Kicker align="center" className="text-[0.7rem]">
-                          Members
-                        </Kicker>
-                        <p className="text-lg font-semibold">
-                          {faction.members}
-                        </p>
-                      </Surface>
-                      <Surface
-                        variant="panel"
-                        radius="xl"
-                        shadow="control"
-                        className="px-2 py-2"
-                      >
-                        <Kicker align="center" className="text-[0.7rem]">
-                          <HintLabel termId="acm">ACM</HintLabel>
-                        </Kicker>
-                        <p className="text-lg font-semibold capitalize">
-                          {faction.acm}
-                        </p>
-                      </Surface>
-                    </div>
-                  </Surface>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle>Treasury & economy</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-text">
-              {(invision?.economicIndicators ?? []).map((indicator) => (
-                <div
-                  key={indicator.label}
-                  className="rounded-xl border border-border px-3 py-2"
-                >
-                  <Kicker>{indicator.label}</Kicker>
-                  <p className="text-lg font-semibold text-text">
-                    {indicator.value}
-                  </p>
-                  <p className="text-xs text-muted">{indicator.detail}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle>Risk dashboard</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm text-text sm:grid-cols-2">
-              {(invision?.riskSignals ?? []).map((signal) => (
-                <div
-                  key={signal.title}
-                  className="rounded-xl border border-border px-3 py-3"
-                >
-                  <Kicker>{signal.title}</Kicker>
-                  <p className="text-base font-semibold text-primary">
-                    {signal.status}
-                  </p>
-                  <p className="text-xs text-muted">{signal.detail}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle>General chamber proposals</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-text">
-              {(invision?.chamberProposals ?? []).map((proposal) => (
-                <div
-                  key={proposal.title}
-                  className="rounded-xl border border-border px-3 py-3"
-                >
-                  <p className="text-base font-semibold text-text">
-                    {proposal.title}
-                  </p>
-                  <Kicker className="text-primary">{proposal.effect}</Kicker>
-                  <p className="text-xs text-muted">{proposal.sponsors}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+        <GlassySection className="h-full" title="Treasury & economy">
+          <GlassyCompactGrid>
+            {(invision?.economicIndicators ?? []).map((indicator) => (
+              <GlassyCompactRow key={indicator.label} title={indicator.label}>
+                <GlassyKeyValue
+                  className="glassy-key-value--stacked glassy-key-value--metric"
+                  label="Value"
+                  value={indicator.value}
+                />
+                <p className="m-0 text-xs text-muted">{indicator.detail}</p>
+              </GlassyCompactRow>
+            ))}
+          </GlassyCompactGrid>
+        </GlassySection>
       </div>
+
+      <GlassySection title="Risk dashboard">
+        <GlassyCompactGrid className="lg:grid-cols-3">
+          {(invision?.riskSignals ?? []).map((signal) => (
+            <GlassyCompactRow
+              key={signal.title}
+              title={signal.title}
+              actions={
+                <GlassyStatusChip tone={toneForRiskStatus(signal.status)}>
+                  {signal.status}
+                </GlassyStatusChip>
+              }
+            >
+              <p className="m-0 text-xs text-muted">{signal.detail}</p>
+            </GlassyCompactRow>
+          ))}
+        </GlassyCompactGrid>
+      </GlassySection>
     </div>
   );
 };

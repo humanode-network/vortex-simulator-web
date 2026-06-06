@@ -7,6 +7,7 @@ import {
   apiFormationProjectFinish,
   apiProposalFormationPage,
 } from "@/lib/apiClient";
+import { getFormationActionVisibility } from "@/lib/formationActionsUi";
 import { viewerIsProposalAuthor } from "@/lib/proposalUi";
 import { parseRatio } from "@/lib/dtoParsers";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -56,36 +57,39 @@ const ProposalFormation: React.FC = () => {
   }
 
   const milestoneRatio = parseRatio(project.milestones);
+  const teamSlotRatio = parseRatio(project.teamSlots);
   const milestones = { filled: milestoneRatio.a, total: milestoneRatio.b };
+  const openRoleCount =
+    project.openSlots.length > 0
+      ? project.openSlots.length
+      : Math.max(teamSlotRatio.b - teamSlotRatio.a, 0);
   const nextMilestone =
     project.nextMilestoneIndex ??
     (milestones.total > 0 ? milestones.filled + 1 : undefined);
   const pendingMilestone = project.pendingMilestoneIndex ?? undefined;
   const isProposerViewer = viewerIsProposalAuthor(
     auth.address,
-    project.proposer,
+    project.proposerId || project.proposer,
   );
-  const canJoinProject =
-    project.projectState !== "ready_to_finish" &&
-    project.projectState !== "completed" &&
-    project.projectState !== "canceled";
-  const canSubmitMilestone =
-    auth.authenticated &&
-    auth.eligible &&
-    !actionBusy &&
-    project.projectState === "active" &&
-    typeof nextMilestone === "number" &&
-    nextMilestone > 0 &&
-    nextMilestone <= milestones.total;
-  const canOpenMilestoneVote =
-    project.projectState === "awaiting_milestone_vote" &&
-    typeof pendingMilestone === "number" &&
-    pendingMilestone > 0;
-  const canFinishProject =
-    auth.authenticated &&
-    isProposerViewer &&
-    !actionBusy &&
-    project.projectState === "ready_to_finish";
+  const viewerIsTeamMember = project.viewer?.isTeamMember ?? isProposerViewer;
+  const actionVisibility = getFormationActionVisibility({
+    actionBusy,
+    authenticated: auth.authenticated,
+    eligible: auth.eligible,
+    hasOpenRoles: openRoleCount > 0,
+    isProposerViewer: project.viewer?.isProposer ?? isProposerViewer,
+    nextMilestone:
+      typeof nextMilestone === "number" && nextMilestone <= milestones.total
+        ? nextMilestone
+        : undefined,
+    pendingMilestone,
+    projectState: project.projectState,
+    viewerCanFinishProject: project.viewer?.canFinishProject,
+    viewerCanJoin: project.viewer?.canJoin,
+    viewerCanOpenMilestoneVote: project.viewer?.canOpenMilestoneVote,
+    viewerCanSubmitMilestone: project.viewer?.canSubmitMilestone,
+    viewerIsTeamMember,
+  });
   const stageForHeader =
     project.projectState === "awaiting_milestone_vote" ? "vote" : "build";
 
@@ -112,49 +116,47 @@ const ProposalFormation: React.FC = () => {
       <ProposalPageHeader
         title={project.title}
         stage={stageForHeader}
+        proposalId={id}
         chamber={project.chamber}
         proposer={project.proposer}
       />
 
-      <ProposalFormationActions
-        actionBusy={actionBusy}
-        actionError={actionError}
-        authStatus={auth}
-        canFinishProject={canFinishProject}
-        canJoinProject={canJoinProject}
-        canOpenMilestoneVote={canOpenMilestoneVote}
-        canSubmitMilestone={canSubmitMilestone}
-        isProposerViewer={isProposerViewer}
-        nextMilestone={nextMilestone}
-        onFinishProject={() =>
-          void runAction(async () => {
-            if (!id) return;
-            await apiFormationProjectFinish({ proposalId: id });
-          })
-        }
-        onJoinProject={() =>
-          void runAction(async () => {
-            if (!id) return;
-            await apiFormationJoin({ proposalId: id });
-          })
-        }
-        onOpenMilestoneVote={() => {
-          if (!id) return;
-          navigate(`/app/proposals/${id}/chamber`);
-        }}
-        onSubmitMilestone={() =>
-          void runAction(async () => {
-            if (!id || !nextMilestone) return;
-            await apiFormationMilestoneSubmit({
-              proposalId: id,
-              milestoneIndex: nextMilestone,
-            });
-          })
-        }
-        pendingMilestone={pendingMilestone}
-      />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ProposalFormationStatus stageData={project.stageData} />
 
-      <ProposalFormationStatus stageData={project.stageData} />
+        <ProposalFormationActions
+          actionError={actionError}
+          authStatus={auth}
+          visibility={actionVisibility}
+          nextMilestone={nextMilestone}
+          onFinishProject={() =>
+            void runAction(async () => {
+              if (!id) return;
+              await apiFormationProjectFinish({ proposalId: id });
+            })
+          }
+          onJoinProject={() =>
+            void runAction(async () => {
+              if (!id) return;
+              await apiFormationJoin({ proposalId: id });
+            })
+          }
+          onOpenMilestoneVote={() => {
+            if (!id) return;
+            navigate(`/app/proposals/${id}/chamber`);
+          }}
+          onSubmitMilestone={() =>
+            void runAction(async () => {
+              if (!id || !nextMilestone) return;
+              await apiFormationMilestoneSubmit({
+                proposalId: id,
+                milestoneIndex: nextMilestone,
+              });
+            })
+          }
+          pendingMilestone={pendingMilestone}
+        />
+      </div>
 
       <ProposalDetailsSections
         summary={project.summary}

@@ -1,5 +1,4 @@
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { Surface } from "@/components/Surface";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { FeedItemDto } from "@/types/api";
 
@@ -15,24 +14,14 @@ export function FeedStatusMessages({
   return (
     <>
       {feedItems === null ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-muted"
-        >
+        <p role="status" className="feed-page__status">
           Loading feed…
-        </Surface>
+        </p>
       ) : null}
       {loadError ? (
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
-          className="px-5 py-4 text-sm text-destructive"
-        >
+        <p role="alert" className="feed-page__status feed-page__status--error">
           Feed unavailable: {formatLoadError(loadError)}
-        </Surface>
+        </p>
       ) : null}
 
       {feedItems !== null && feedItems.length === 0 && !loadError ? (

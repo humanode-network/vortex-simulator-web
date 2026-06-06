@@ -1,12 +1,8 @@
 import { AddressInline } from "@/components/AddressInline";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/primitives/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Select } from "@/components/primitives/select";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatDateTime } from "@/lib/dateTime";
@@ -36,7 +32,7 @@ export function FactionMembersSection({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Members</CardTitle>
+        <SectionHeader>Members</SectionHeader>
       </CardHeader>
       <CardContent className="space-y-2">
         {activeMemberships.length === 0 ? (

@@ -1,12 +1,18 @@
 /* Shell */
 .app-shell {
+  --app-sidebar-width: 260px;
   display: flex;
   min-height: 100vh;
   width: 100%;
 }
 
 .app-shell > .sidebar {
-  width: 260px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  align-self: flex-start;
+  width: var(--app-sidebar-width);
+  height: 100vh;
   flex-shrink: 0;
 }
 
@@ -17,6 +23,14 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.workspace > :not(.main-atmosphere) {
+  position: relative;
+  z-index: 1;
 }
 
 .workspace__top {
@@ -116,7 +130,10 @@
   }
 
   .app-shell > .sidebar {
+    position: relative;
+    top: auto;
     width: 100%;
+    height: auto;
   }
 
   .workspace {

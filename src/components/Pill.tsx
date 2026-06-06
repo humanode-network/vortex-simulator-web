@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Surface } from "@/components/Surface";
 
 type PillOwnProps = {
-  variant?: "panel" | "panelAlt";
+  variant?: "panel" | "panelAlt" | "glass";
   tone?: "muted" | "primary" | "default";
   size?: "xs" | "sm";
   className?: string;
@@ -45,15 +45,12 @@ export function Pill<C extends React.ElementType = "span">({
   return (
     <Surface
       as={as}
-      variant={variant}
+      variant={
+        variant === "panel" || variant === "panelAlt" ? "glass" : variant
+      }
       radius="full"
       shadow="control"
-      className={cn(
-        "border border-border tracking-wide",
-        sizeClass[size],
-        toneClass,
-        className,
-      )}
+      className={cn("tracking-wide", sizeClass[size], toneClass, className)}
       {...(rest as Omit<
         React.ComponentPropsWithoutRef<C>,
         SurfacePropKeys | "as"

@@ -1,3 +1,4 @@
+import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 
@@ -20,7 +21,7 @@ export const ProposalChamberVetoStats: React.FC<
 }) => {
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-text">Chamber veto window</h2>
+      <SectionHeader>Chamber veto window</SectionHeader>
       {voteCount === 0 ? (
         <Surface
           variant="panelAlt"

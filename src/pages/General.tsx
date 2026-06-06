@@ -43,7 +43,8 @@ const General: React.FC = () => {
             <div className="space-y-1">
               <p className="font-semibold text-text">Theme</p>
               <p className="text-sm text-muted">
-                Sky/Light affect the main UI; Night also darkens the sidebar.
+                Sky and Light keep the interface bright; Night and Fire darken
+                the whole simulator.
               </p>
             </div>
             <ToggleGroup
@@ -53,6 +54,7 @@ const General: React.FC = () => {
                 { value: "sky", label: "Sky" },
                 { value: "light", label: "Light" },
                 { value: "night", label: "Night" },
+                { value: "fire", label: "Fire" },
               ]}
             />
           </div>

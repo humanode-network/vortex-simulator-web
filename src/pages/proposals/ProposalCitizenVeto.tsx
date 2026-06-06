@@ -106,6 +106,7 @@ const ProposalCitizenVeto: React.FC = () => {
       <ProposalPageHeader
         title={`${proposal.title} — Citizen veto`}
         stage="citizen_veto"
+        proposalId={id}
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}

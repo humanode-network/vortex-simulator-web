@@ -1,106 +1,141 @@
 import { Link } from "react-router";
 
-import { ActivityTile } from "@/components/ActivityTile";
-import { SectionHeader } from "@/components/SectionHeader";
-import { Badge } from "@/components/primitives/badge";
-import { Kicker } from "@/components/Kicker";
-import { Surface } from "@/components/Surface";
+import { Button } from "@/components/primitives/button";
+import {
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import { ToggleGroup } from "@/components/ToggleGroup";
-import { ACTIVITY_FILTERS, type ActivityFilter } from "@/lib/profileUi";
+import {
+  ACTIVITY_FILTERS,
+  type ActivityFilter,
+  formatActivityTimestamp,
+} from "@/lib/profileUi";
+import {
+  FormationProjectCard,
+  formationProjectCardFromProfileProject,
+} from "@/pages/formation/components/FormationProjectCard";
 import type { HumanNodeProfileDto } from "@/types/api";
 
 type GovernanceAction = HumanNodeProfileDto["governanceActions"][number];
 type FormationProject = HumanNodeProfileDto["projects"][number];
 
-type ProfileActivityProjectsSectionProps = {
+type ProfileGovernanceActivitySectionProps = {
   activityFilter: ActivityFilter;
+  className?: string;
   filteredActions: GovernanceAction[];
   historyHref: string | null;
   onActivityFilterChange: (filter: ActivityFilter) => void;
+};
+
+type ProfileFormationProjectsSectionProps = {
+  className?: string;
   projects: FormationProject[];
 };
 
-export function ProfileActivityProjectsSection({
+export function ProfileGovernanceActivitySection({
   activityFilter,
+  className,
   filteredActions,
   historyHref,
   onActivityFilterChange,
-  projects,
-}: ProfileActivityProjectsSectionProps) {
+}: ProfileGovernanceActivitySectionProps) {
+  const filterOptions = ACTIVITY_FILTERS.map((opt) => ({
+    value: opt.value,
+    label: opt.label,
+  }));
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <SectionHeader>Governance activity</SectionHeader>
-          {historyHref ? (
-            <Link
-              to={historyHref}
-              className="text-sm font-semibold text-primary hover:underline sm:self-auto"
-            >
-              View full history
-            </Link>
-          ) : null}
-        </div>
+    <GlassySection className={className} title="Governance activity">
+      <div className="profile-activity-controls">
         <ToggleGroup
           value={activityFilter}
           onValueChange={(val) =>
             onActivityFilterChange((val as ActivityFilter) || "all")
           }
-          options={ACTIVITY_FILTERS.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
+          options={filterOptions}
+          className="profile-activity-controls__filters"
         />
-        {filteredActions.length ? (
-          <div className="grid max-h-none grid-cols-1 gap-3 overflow-visible pr-0 sm:grid-cols-2 lg:max-h-72 lg:overflow-y-auto lg:pr-2 xl:grid-cols-3">
-            {filteredActions.map((action) => (
-              <ActivityTile
-                key={`${action.title}-${action.timestamp}`}
-                action={action}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">No activity to show yet.</p>
-        )}
+        {historyHref ? (
+          <Button
+            asChild
+            className="profile-activity-controls__history"
+            size="compact"
+            variant="outline"
+          >
+            <Link to={historyHref}>Full History</Link>
+          </Button>
+        ) : null}
       </div>
-
-      <div className="space-y-3">
-        <SectionHeader>Formation projects</SectionHeader>
-        {projects.length ? (
-          <div className="space-y-3">
-            {projects.map((project) => (
-              <Surface
-                key={project.title}
-                variant="panelAlt"
-                radius="xl"
-                className="px-4 py-3"
-              >
-                <div className="flex flex-col gap-1 text-center">
-                  <p className="text-sm font-semibold text-text">
-                    {project.title}
+      {filteredActions.length ? (
+        <div className="grid gap-2">
+          {filteredActions.map((action) => {
+            const row = (
+              <GlassyTile className="profile-activity-row">
+                <GlassyStatusChip
+                  className="profile-activity-row__action"
+                  tone="primary"
+                >
+                  {action.action}
+                </GlassyStatusChip>
+                <div className="profile-activity-row__copy">
+                  <p className="profile-activity-row__title">{action.title}</p>
+                  <p className="profile-activity-row__context">
+                    {action.context}
                   </p>
-                  <Kicker align="center">{project.status}</Kicker>
+                  <p className="profile-activity-row__detail">
+                    {action.detail}
+                  </p>
                 </div>
-                <p className="text-center text-sm text-muted">
-                  {project.summary}
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 pt-2">
-                  {project.chips.map((chip) => (
-                    <Badge key={chip} variant="outline">
-                      {chip}
-                    </Badge>
-                  ))}
-                </div>
-              </Surface>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted">
-            Not participating in Formation right now.
-          </p>
-        )}
-      </div>
-    </div>
+                <GlassyStatusChip className="profile-activity-row__time">
+                  {formatActivityTimestamp(action.timestamp)}
+                </GlassyStatusChip>
+              </GlassyTile>
+            );
+
+            return action.href ? (
+              <Link
+                key={`${action.title}-${action.timestamp}`}
+                to={action.href}
+                className="block"
+              >
+                {row}
+              </Link>
+            ) : (
+              <div key={`${action.title}-${action.timestamp}`}>{row}</div>
+            );
+          })}
+        </div>
+      ) : (
+        <GlassyTile className="text-sm text-muted">
+          No activity to show yet.
+        </GlassyTile>
+      )}
+    </GlassySection>
+  );
+}
+
+export function ProfileFormationProjectsSection({
+  className,
+  projects,
+}: ProfileFormationProjectsSectionProps) {
+  return (
+    <GlassySection className={className} title="Formation projects">
+      {projects.length ? (
+        <div className="formation-project-grid formation-project-grid--pair">
+          {projects.map((project) => (
+            <FormationProjectCard
+              key={project.title}
+              project={formationProjectCardFromProfileProject(project)}
+            />
+          ))}
+        </div>
+      ) : (
+        <GlassyTile className="text-sm text-muted">
+          Not participating in Formation right now.
+        </GlassyTile>
+      )}
+    </GlassySection>
   );
 }

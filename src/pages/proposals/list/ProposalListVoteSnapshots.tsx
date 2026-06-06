@@ -16,7 +16,7 @@ export function ProposalPoolSnapshot({
       <p className="text-sm font-semibold text-text">Quorum of attention</p>
 
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="flex flex-wrap items-center justify-center gap-4 px-6 py-5 text-lg font-semibold"
@@ -69,7 +69,7 @@ export function ProposalChamberSnapshot({
       <p className="text-sm font-semibold text-text">Vote snapshot</p>
 
       <Surface
-        variant="panelAlt"
+        variant="glass"
         radius="2xl"
         shadow="tile"
         className="space-y-3 px-5 py-4"

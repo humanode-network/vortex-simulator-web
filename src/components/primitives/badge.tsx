@@ -18,9 +18,11 @@ export function Badge({
   };
   const variants = {
     default:
-      "bg-[var(--primary-dim)] text-[var(--primary)] border border-[var(--primary-dim)]",
-    outline: "border border-border bg-transparent text-text",
-    muted: "border border-border bg-panel-alt text-muted",
+      "border border-[color:var(--surface-glass-hover-border)] bg-[color:var(--primary-dim)] text-[var(--primary)]",
+    outline:
+      "border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] text-text supports-[backdrop-filter]:backdrop-blur-md",
+    muted:
+      "border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] text-muted supports-[backdrop-filter]:backdrop-blur-md",
   };
 
   return (

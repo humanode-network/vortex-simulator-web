@@ -102,10 +102,7 @@ export function SearchBar<
           aria-label={ariaLabel || placeholder}
           onFocus={() => setFiltersOpen(true)}
           onClick={() => setFiltersOpen(true)}
-          className={cn(
-            "w-full border border-border bg-panel-alt text-text",
-            inputClassName,
-          )}
+          className={cn("w-full text-text", inputClassName)}
         />
         {filtersOpen ? (
           <Surface
@@ -118,7 +115,7 @@ export function SearchBar<
             <div className="mt-4 flex justify-end gap-2">
               <Button
                 size="sm"
-                className="border border-accent bg-panel text-accent hover:bg-accent hover:text-accent-foreground"
+                variant="outline"
                 onClick={() => setFiltersOpen(false)}
               >
                 Close

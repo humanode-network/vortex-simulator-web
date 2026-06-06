@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Surface } from "@/components/Surface";
+import { useAuth } from "@/app/auth/AuthContext";
+import { GlassyTile } from "@/components/GlassySection";
 import { PageHint } from "@/components/PageHint";
 import {
   apiDelegationClear,
@@ -22,7 +23,6 @@ import { MyGovernanceDelegationCard } from "./my-governance/components/MyGoverna
 import { MyGovernanceLegitimacyCard } from "./my-governance/components/MyGovernanceLegitimacyCard";
 import { MyGovernanceProgressionCard } from "./my-governance/components/MyGovernanceProgressionCard";
 import { MyGovernanceThresholdCard } from "./my-governance/components/MyGovernanceThresholdCard";
-import { MyGovernanceVetoProcessCard } from "./my-governance/components/MyGovernanceVetoProcessCard";
 import { useMyGovernancePageData } from "./my-governance/hooks/useMyGovernancePageData";
 
 const MyGovernance: React.FC = () => {
@@ -35,15 +35,15 @@ const MyGovernance: React.FC = () => {
     Record<string, string | null>
   >({});
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  const auth = useAuth();
   const {
     chambers,
     clock,
     cmSummary,
-    delegationDrafts,
+    delegationGovernorsByChamber,
     gov,
     loadError,
     refreshGovernance,
-    updateDelegationDraft,
   } = useMyGovernancePageData();
 
   useEffect(() => {
@@ -71,10 +71,7 @@ const MyGovernance: React.FC = () => {
     return (
       <div className="flex flex-col gap-6">
         <PageHint pageId="my-governance" />
-        <Surface
-          variant="panelAlt"
-          radius="2xl"
-          shadow="tile"
+        <GlassyTile
           className={cn(
             "px-5 py-4 text-sm text-muted",
             loadError ? "text-destructive" : undefined,
@@ -83,7 +80,7 @@ const MyGovernance: React.FC = () => {
           {loadError
             ? `My governance unavailable: ${formatLoadError(loadError)}`
             : "Loading…"}
-        </Surface>
+        </GlassyTile>
       </div>
     );
   }
@@ -107,12 +104,14 @@ const MyGovernance: React.FC = () => {
     triggerThresholdPercent: 33.3,
   };
 
-  const handleDelegationSet = async (chamberId: string) => {
-    const delegateeAddress = delegationDrafts[chamberId]?.trim() ?? "";
+  const handleDelegationSet = async (
+    chamberId: string,
+    delegateeAddress: string,
+  ) => {
     if (!delegateeAddress) {
       setDelegationErrorByChamber((current) => ({
         ...current,
-        [chamberId]: "Enter an address to delegate to.",
+        [chamberId]: "Choose a governor to delegate to.",
       }));
       return;
     }
@@ -199,29 +198,33 @@ const MyGovernance: React.FC = () => {
 
       <MyGovernanceProgressionCard tierProgress={gov.tier} />
 
-      <MyGovernanceVetoProcessCard />
-
       <MyGovernanceChambersCard myChambers={myChambers} />
 
-      <MyGovernanceCmEconomyCard cmSummary={cmSummary} />
+      <div className="grid items-start gap-4 xl:grid-cols-3">
+        <MyGovernanceCmEconomyCard cmSummary={cmSummary} />
 
-      <MyGovernanceDelegationCard
-        chambers={chambers}
-        delegationChambers={gov.delegation.chambers}
-        delegationDrafts={delegationDrafts}
-        delegationErrorByChamber={delegationErrorByChamber}
-        delegationPendingByChamber={delegationPendingByChamber}
-        onClearDelegation={(chamberId) => void handleDelegationClear(chamberId)}
-        onSetDelegation={(chamberId) => void handleDelegationSet(chamberId)}
-        onUpdateDelegationDraft={updateDelegationDraft}
-      />
+        <MyGovernanceDelegationCard
+          chambers={chambers}
+          delegationChambers={gov.delegation.chambers}
+          delegationErrorByChamber={delegationErrorByChamber}
+          delegationGovernorsByChamber={delegationGovernorsByChamber}
+          delegationPendingByChamber={delegationPendingByChamber}
+          onClearDelegation={(chamberId) =>
+            void handleDelegationClear(chamberId)
+          }
+          onSetDelegation={(chamberId, delegateeAddress) =>
+            void handleDelegationSet(chamberId, delegateeAddress)
+          }
+          viewerAddress={auth.address}
+        />
 
-      <MyGovernanceLegitimacyCard
-        legitimacy={legitimacy}
-        legitimacyError={legitimacyError}
-        legitimacyPending={legitimacyPending}
-        onToggleLegitimacy={handleLegitimacyToggle}
-      />
+        <MyGovernanceLegitimacyCard
+          legitimacy={legitimacy}
+          legitimacyError={legitimacyError}
+          legitimacyPending={legitimacyPending}
+          onToggleLegitimacy={handleLegitimacyToggle}
+        />
+      </div>
     </div>
   );
 };

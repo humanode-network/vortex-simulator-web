@@ -1,0 +1,269 @@
+.stage-chip {
+  border: 1px solid var(--stage-chip-border);
+  background: var(--stage-chip-bg);
+  color: var(--stage-chip-text);
+}
+
+.stage-chip--proposal-pool {
+  --stage-chip-bg: #fff1dc;
+  --stage-chip-border: rgba(176, 102, 25, 0.2);
+  --stage-chip-text: #9a5519;
+}
+
+.stage-chip--chamber-vote {
+  --stage-chip-bg: #e6f0ff;
+  --stage-chip-border: rgba(79, 106, 215, 0.2);
+  --stage-chip-text: #405fc4;
+}
+
+.stage-chip--citizen-veto {
+  --stage-chip-bg: #fff0f3;
+  --stage-chip-border: rgba(209, 61, 93, 0.2);
+  --stage-chip-text: #b82d4e;
+}
+
+.stage-chip--chamber-veto {
+  --stage-chip-bg: #ffe7ec;
+  --stage-chip-border: rgba(209, 61, 93, 0.32);
+  --stage-chip-text: #a91f42;
+}
+
+.stage-chip--formation {
+  --stage-chip-bg: #f2eaff;
+  --stage-chip-border: rgba(130, 89, 210, 0.24);
+  --stage-chip-text: #6f47bf;
+}
+
+.stage-chip--passed {
+  --stage-chip-bg: #e7f8ef;
+  --stage-chip-border: rgba(35, 132, 83, 0.2);
+  --stage-chip-text: #197246;
+}
+
+.stage-chip--failed {
+  --stage-chip-bg: #fce8e8;
+  --stage-chip-border: rgba(199, 53, 53, 0.22);
+  --stage-chip-text: #af3030;
+}
+
+.stage-chip--thread {
+  --stage-chip-bg: #edf2f7;
+  --stage-chip-border: rgba(71, 85, 105, 0.18);
+  --stage-chip-text: #475569;
+}
+
+.stage-chip--courts {
+  --stage-chip-bg: #fff4cf;
+  --stage-chip-border: rgba(151, 113, 14, 0.22);
+  --stage-chip-text: #85610b;
+}
+
+.stage-chip--faction {
+  --stage-chip-bg: #ffeaf6;
+  --stage-chip-border: rgba(173, 69, 137, 0.22);
+  --stage-chip-text: #9c3c7b;
+}
+
+.stage-chip--system {
+  --stage-chip-bg: #eef2f6;
+  --stage-chip-border: rgba(75, 85, 99, 0.22);
+  --stage-chip-text: #4b5563;
+}
+
+:root[data-theme="light"] .stage-chip--proposal-pool {
+  --stage-chip-bg: #fff5e8;
+  --stage-chip-border: rgba(176, 102, 25, 0.22);
+  --stage-chip-text: #8f4f17;
+}
+
+:root[data-theme="light"] .stage-chip--chamber-vote {
+  --stage-chip-bg: #eaf2ff;
+  --stage-chip-border: rgba(79, 106, 215, 0.24);
+  --stage-chip-text: #3756bd;
+}
+
+:root[data-theme="light"] .stage-chip--citizen-veto {
+  --stage-chip-bg: #fff0f3;
+  --stage-chip-border: rgba(209, 61, 93, 0.24);
+  --stage-chip-text: #aa2948;
+}
+
+:root[data-theme="light"] .stage-chip--chamber-veto {
+  --stage-chip-bg: #ffe6ec;
+  --stage-chip-border: rgba(209, 61, 93, 0.34);
+  --stage-chip-text: #9e1d3d;
+}
+
+:root[data-theme="light"] .stage-chip--formation {
+  --stage-chip-bg: #f4ebff;
+  --stage-chip-border: rgba(130, 89, 210, 0.26);
+  --stage-chip-text: #6843b4;
+}
+
+:root[data-theme="light"] .stage-chip--passed {
+  --stage-chip-bg: #e8f8f0;
+  --stage-chip-border: rgba(35, 132, 83, 0.22);
+  --stage-chip-text: #176c42;
+}
+
+:root[data-theme="light"] .stage-chip--failed {
+  --stage-chip-bg: #fce8e8;
+  --stage-chip-border: rgba(199, 53, 53, 0.24);
+  --stage-chip-text: #a92e2e;
+}
+
+:root[data-theme="light"] .stage-chip--thread {
+  --stage-chip-bg: #f1f4f8;
+  --stage-chip-border: rgba(71, 85, 105, 0.2);
+  --stage-chip-text: #42526a;
+}
+
+:root[data-theme="light"] .stage-chip--courts {
+  --stage-chip-bg: #fff5d6;
+  --stage-chip-border: rgba(151, 113, 14, 0.24);
+  --stage-chip-text: #7c5a0a;
+}
+
+:root[data-theme="light"] .stage-chip--faction {
+  --stage-chip-bg: #ffedf7;
+  --stage-chip-border: rgba(173, 69, 137, 0.24);
+  --stage-chip-text: #933873;
+}
+
+:root[data-theme="light"] .stage-chip--system {
+  --stage-chip-bg: #f1f4f7;
+  --stage-chip-border: rgba(75, 85, 99, 0.24);
+  --stage-chip-text: #47515f;
+}
+
+:root[data-theme="night"] .stage-chip--proposal-pool {
+  --stage-chip-bg: rgba(244, 179, 127, 0.18);
+  --stage-chip-border: rgba(244, 179, 127, 0.34);
+  --stage-chip-text: #ffd3a7;
+}
+
+:root[data-theme="night"] .stage-chip--chamber-vote {
+  --stage-chip-bg: rgba(111, 168, 255, 0.18);
+  --stage-chip-border: rgba(111, 168, 255, 0.36);
+  --stage-chip-text: #a8ccff;
+}
+
+:root[data-theme="night"] .stage-chip--citizen-veto {
+  --stage-chip-bg: rgba(255, 99, 132, 0.16);
+  --stage-chip-border: rgba(255, 99, 132, 0.34);
+  --stage-chip-text: #ffb1c3;
+}
+
+:root[data-theme="night"] .stage-chip--chamber-veto {
+  --stage-chip-bg: rgba(255, 99, 132, 0.22);
+  --stage-chip-border: rgba(255, 99, 132, 0.46);
+  --stage-chip-text: #ffc3d0;
+}
+
+:root[data-theme="night"] .stage-chip--formation {
+  --stage-chip-bg: rgba(176, 132, 255, 0.18);
+  --stage-chip-border: rgba(176, 132, 255, 0.36);
+  --stage-chip-text: #d9c2ff;
+}
+
+:root[data-theme="night"] .stage-chip--passed {
+  --stage-chip-bg: rgba(74, 222, 128, 0.14);
+  --stage-chip-border: rgba(74, 222, 128, 0.32);
+  --stage-chip-text: #a7f3c6;
+}
+
+:root[data-theme="night"] .stage-chip--failed {
+  --stage-chip-bg: rgba(248, 113, 113, 0.16);
+  --stage-chip-border: rgba(248, 113, 113, 0.34);
+  --stage-chip-text: #fecaca;
+}
+
+:root[data-theme="night"] .stage-chip--thread {
+  --stage-chip-bg: rgba(148, 163, 184, 0.18);
+  --stage-chip-border: rgba(148, 163, 184, 0.34);
+  --stage-chip-text: #d7e0ea;
+}
+
+:root[data-theme="night"] .stage-chip--courts {
+  --stage-chip-bg: rgba(250, 204, 21, 0.15);
+  --stage-chip-border: rgba(250, 204, 21, 0.34);
+  --stage-chip-text: #fde68a;
+}
+
+:root[data-theme="night"] .stage-chip--faction {
+  --stage-chip-bg: rgba(244, 114, 182, 0.16);
+  --stage-chip-border: rgba(244, 114, 182, 0.36);
+  --stage-chip-text: #fbcfe8;
+}
+
+:root[data-theme="night"] .stage-chip--system {
+  --stage-chip-bg: rgba(203, 213, 225, 0.14);
+  --stage-chip-border: rgba(203, 213, 225, 0.3);
+  --stage-chip-text: #dbe5f0;
+}
+
+:root[data-theme="fire"] .stage-chip--proposal-pool {
+  --stage-chip-bg: rgba(255, 209, 102, 0.18);
+  --stage-chip-border: rgba(255, 209, 102, 0.38);
+  --stage-chip-text: #ffe0a3;
+}
+
+:root[data-theme="fire"] .stage-chip--chamber-vote {
+  --stage-chip-bg: rgba(255, 138, 31, 0.2);
+  --stage-chip-border: rgba(255, 138, 31, 0.42);
+  --stage-chip-text: #ffc17a;
+}
+
+:root[data-theme="fire"] .stage-chip--citizen-veto {
+  --stage-chip-bg: rgba(255, 45, 26, 0.17);
+  --stage-chip-border: rgba(255, 45, 26, 0.38);
+  --stage-chip-text: #ffaaa0;
+}
+
+:root[data-theme="fire"] .stage-chip--chamber-veto {
+  --stage-chip-bg: rgba(255, 45, 26, 0.24);
+  --stage-chip-border: rgba(255, 45, 26, 0.52);
+  --stage-chip-text: #ffc1b8;
+}
+
+:root[data-theme="fire"] .stage-chip--formation {
+  --stage-chip-bg: rgba(255, 94, 0, 0.2);
+  --stage-chip-border: rgba(255, 94, 0, 0.44);
+  --stage-chip-text: #ffbd8a;
+}
+
+:root[data-theme="fire"] .stage-chip--passed {
+  --stage-chip-bg: rgba(255, 207, 87, 0.16);
+  --stage-chip-border: rgba(255, 207, 87, 0.36);
+  --stage-chip-text: #ffe799;
+}
+
+:root[data-theme="fire"] .stage-chip--failed {
+  --stage-chip-bg: rgba(255, 61, 0, 0.2);
+  --stage-chip-border: rgba(255, 61, 0, 0.42);
+  --stage-chip-text: #ffb49c;
+}
+
+:root[data-theme="fire"] .stage-chip--thread {
+  --stage-chip-bg: rgba(216, 170, 130, 0.16);
+  --stage-chip-border: rgba(216, 170, 130, 0.34);
+  --stage-chip-text: #f0d2b8;
+}
+
+:root[data-theme="fire"] .stage-chip--courts {
+  --stage-chip-bg: rgba(255, 199, 87, 0.16);
+  --stage-chip-border: rgba(255, 199, 87, 0.36);
+  --stage-chip-text: #ffe6a1;
+}
+
+:root[data-theme="fire"] .stage-chip--faction {
+  --stage-chip-bg: rgba(255, 113, 67, 0.18);
+  --stage-chip-border: rgba(255, 113, 67, 0.38);
+  --stage-chip-text: #ffc1ad;
+}
+
+:root[data-theme="fire"] .stage-chip--system {
+  --stage-chip-bg: rgba(255, 226, 194, 0.13);
+  --stage-chip-border: rgba(255, 226, 194, 0.3);
+  --stage-chip-text: #f8d7b6;
+}

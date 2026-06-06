@@ -5,6 +5,8 @@
 
 html {
   font-size: 112.5%;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 :root {
@@ -27,7 +29,7 @@ html {
   --chart-3: var(--accent);
   --chart-4: var(--accent-warm);
   --chart-5: var(--primary-hover);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   /* Sidebar is intentionally decoupled from main UI colors. */
   --sidebar: var(--sidebar-bg);
   --sidebar-foreground: var(--sidebar-text);

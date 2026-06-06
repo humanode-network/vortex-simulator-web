@@ -36,7 +36,28 @@ test("CmEconomyPanel renders CM totals, chamber breakdown, and history", () => {
 
   assert.ok(html.includes("CM + MM"));
   assert.ok(html.includes("Alpha Chamber"));
-  assert.ok(html.includes("LCM 5"));
+  assert.ok(html.includes("LCM"));
+  assert.ok(html.includes("5"));
+  assert.ok(html.includes("Members"));
   assert.ok(html.includes("Alpha Proposal"));
   assert.ok(html.includes("MM"));
+  assert.ok(html.includes("glassy-compact-row"));
+});
+
+test("CmEconomyPanel personal scope shows ACM and MM without chamber CM totals", () => {
+  const html = renderToStaticMarkup(
+    createElement(CmEconomyPanel, {
+      totals: { lcm: 12, mcm: 8, acm: 20 },
+      chambers: [],
+      history: [],
+      mmValue: 20,
+      totalsScope: "personal",
+    }),
+  );
+
+  assert.ok(html.includes("CM + MM"));
+  assert.ok(html.includes("ACM"));
+  assert.ok(html.includes("MM"));
+  assert.equal(html.includes("MCM"), false);
+  assert.equal(html.includes("LCM"), false);
 });

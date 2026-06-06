@@ -1,15 +1,19 @@
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
+  buildProposalStageLinks,
   ProposalStageBar,
   type ProposalStage,
 } from "@/components/ProposalStageBar";
 import { AddressInline } from "@/components/AddressInline";
 import { StatTile } from "@/components/StatTile";
+import { apiProposalStatus } from "@/lib/apiClient";
+import type { ProposalStatusDto } from "@/types/api";
 
 type ProposalPageHeaderProps = {
   title: string;
   stage: ProposalStage;
+  proposalId?: string;
   showFormationStage?: boolean;
   chamber: string;
   proposer: string;
@@ -20,19 +24,61 @@ type ProposalPageHeaderProps = {
 export function ProposalPageHeader({
   title,
   stage,
+  proposalId,
   showFormationStage = true,
   chamber,
   proposer,
   stageLinks,
   children,
 }: ProposalPageHeaderProps) {
+  const [status, setStatus] = useState<ProposalStatusDto | null>(null);
+
+  useEffect(() => {
+    if (!proposalId) {
+      setStatus(null);
+      return;
+    }
+
+    let active = true;
+    void apiProposalStatus(proposalId)
+      .then((nextStatus) => {
+        if (active) setStatus(nextStatus);
+      })
+      .catch(() => {
+        if (active) setStatus(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [proposalId]);
+
+  const liveStage = status?.canonicalStage ?? stage;
+  const computedStageLinks = useMemo(() => {
+    if (!proposalId) return stageLinks;
+    return buildProposalStageLinks({
+      canonicalRoute: status?.canonicalRoute,
+      liveStage,
+      proposalId,
+      routeOverrides: stageLinks,
+      showFormationStage,
+    });
+  }, [
+    liveStage,
+    proposalId,
+    showFormationStage,
+    stageLinks,
+    status?.canonicalRoute,
+  ]);
+
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
       <ProposalStageBar
         current={stage}
+        liveStage={liveStage}
         showFormationStage={showFormationStage}
-        stageLinks={stageLinks}
+        stageLinks={computedStageLinks}
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <StatTile

@@ -15,7 +15,7 @@ export function TitledSurface({
   children,
   className,
   titleClassName,
-  variant = "panelAlt",
+  variant = "glass",
   ...props
 }: TitledSurfaceProps) {
   return (

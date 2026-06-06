@@ -7,6 +7,7 @@ import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
+import { buildTierRequirementItems } from "@/lib/tierProgress";
 import {
   PROOF_META,
   type ActivityFilter,
@@ -23,12 +24,16 @@ import {
   getHumanNodeVisibleHeroStats,
   shouldShowHumanNodeShortBadge,
 } from "@/lib/humanNodesUi";
-import { HumanNodeActivityProjectsSection } from "./components/HumanNodeActivityProjectsSection";
 import { HumanNodeDelegationSection } from "./components/HumanNodeDelegationSection";
 import { HumanNodeDetailsProofsSection } from "./components/HumanNodeDetailsProofsSection";
 import { HumanNodeHero } from "./components/HumanNodeHero";
 import { useHumanNodeDelegationActions } from "./hooks/useHumanNodeDelegationActions";
 import { useHumanNodePageData } from "./hooks/useHumanNodePageData";
+import {
+  ProfileFormationProjectsSection,
+  ProfileGovernanceActivitySection,
+} from "@/pages/profile/components/ProfileActivityProjectsSection";
+import { ProfileTierProgressSection } from "@/pages/profile/components/ProfileTierProgressSection";
 
 const HumanNode: React.FC = () => {
   const auth = useAuth();
@@ -88,11 +93,14 @@ const HumanNode: React.FC = () => {
     proofSections,
     governanceActions,
     projects,
+    tierProgress,
     cmHistory = [],
     cmChambers = [],
   } = profile;
   const headerTitle = getHumanNodeHeaderTitle(profile);
-  const visibleHeroStats = getHumanNodeVisibleHeroStats(heroStats ?? []);
+  const visibleHeroStats = getHumanNodeVisibleHeroStats(heroStats ?? []).filter(
+    (stat) => stat.label.trim().toUpperCase() !== "ACM",
+  );
   const proofKeys: ProofKeyDto[] = ["time", "devotion", "governance"];
   const proofCards = proofKeys
     .map((key) => ({
@@ -123,6 +131,7 @@ const HumanNode: React.FC = () => {
   const filteredActions = governanceActions.filter((action) =>
     activityMatches(action, activityFilter),
   );
+  const requirementItems = buildTierRequirementItems(tierProgress ?? null);
   const visibleDetails = quickDetails.filter((detail) =>
     shouldShowDetail(detail.label),
   );
@@ -165,32 +174,52 @@ const HumanNode: React.FC = () => {
         visibleDetails={visibleDetails}
       />
 
-      <CmEconomyPanel
-        totals={cmTotals}
-        chambers={cmChambers}
-        history={cmHistory}
-        mmValue="—"
-      />
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
+        <ProfileFormationProjectsSection
+          className="h-full"
+          projects={projects}
+        />
 
-      <HumanNodeDelegationSection
-        delegationCards={delegationCards}
-        delegationErrorByChamber={delegationErrorByChamber}
-        delegationPendingByChamber={delegationPendingByChamber}
-        isSelfProfile={isSelfProfile}
-        manageableChambers={manageableChambers}
-        onClearDelegation={(chamberId) => void handleClearDelegation(chamberId)}
-        onDelegateHere={(chamberId) => void handleDelegateHere(chamberId)}
-        profileId={profile.id}
-        viewerDelegationByChamber={viewerDelegationByChamber}
-      />
+        <ProfileTierProgressSection
+          className="h-full"
+          requirementItems={requirementItems}
+          tierProgress={tierProgress ?? null}
+        />
+      </div>
 
-      <HumanNodeActivityProjectsSection
-        activityFilter={activityFilter}
-        filteredActions={filteredActions}
-        historyHref={`/app/human-nodes/${id ?? ""}/history`}
-        onActivityFilterChange={setActivityFilter}
-        projects={projects}
-      />
+      <div className="grid items-stretch gap-4 xl:grid-cols-3">
+        <CmEconomyPanel
+          className="h-full"
+          totals={cmTotals}
+          chambers={cmChambers}
+          history={cmHistory}
+          mmValue={cmTotals.acm}
+          totalsScope="personal"
+        />
+
+        <HumanNodeDelegationSection
+          className="h-full"
+          delegationCards={delegationCards}
+          delegationErrorByChamber={delegationErrorByChamber}
+          delegationPendingByChamber={delegationPendingByChamber}
+          isSelfProfile={isSelfProfile}
+          manageableChambers={manageableChambers}
+          onClearDelegation={(chamberId) =>
+            void handleClearDelegation(chamberId)
+          }
+          onDelegateHere={(chamberId) => void handleDelegateHere(chamberId)}
+          profileId={profile.id}
+          viewerDelegationByChamber={viewerDelegationByChamber}
+        />
+
+        <ProfileGovernanceActivitySection
+          className="h-full"
+          activityFilter={activityFilter}
+          filteredActions={filteredActions}
+          historyHref={`/app/human-nodes/${id ?? ""}/history`}
+          onActivityFilterChange={setActivityFilter}
+        />
+      </div>
     </div>
   );
 };

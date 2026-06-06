@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/primitives/card";
 import { HintLabel } from "@/components/Hint";
-import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
-import { SectionHeader } from "@/components/SectionHeader";
 import { apiHuman } from "@/lib/apiClient";
 import type { HumanNodeProfileDto, ProofKeyDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -11,17 +9,25 @@ import { buildTierRequirementItems } from "@/lib/tierProgress";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { CmEconomyPanel } from "@/components/CmEconomyPanel";
 import {
+  getHumanNodeCmTotals,
+  getHumanNodeVisibleHeroStats,
+} from "@/lib/humanNodesUi";
+import {
   PROOF_META,
   type ActivityFilter,
   activityMatches,
   shortAddress,
   shouldShowDetail,
 } from "@/lib/profileUi";
-import { ProfileActivityProjectsSection } from "./components/ProfileActivityProjectsSection";
+import {
+  ProfileFormationProjectsSection,
+  ProfileGovernanceActivitySection,
+} from "./components/ProfileActivityProjectsSection";
 import { ProfileDelegationSection } from "./components/ProfileDelegationSection";
 import { ProfileDetailsProofsSection } from "./components/ProfileDetailsProofsSection";
 import { ProfileHero } from "./components/ProfileHero";
 import { ProfileTierProgressSection } from "./components/ProfileTierProgressSection";
+import "./Profile.css";
 
 type ProfileProps = {
   showHint?: boolean;
@@ -102,21 +108,10 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
   const requirementItems = buildTierRequirementItems(tierProgress);
   const cmHistory = profile?.cmHistory ?? [];
   const cmChambers = profile?.cmChambers ?? [];
-  const cmTotals = (profile?.heroStats ?? []).reduce(
-    (acc, stat) => {
-      const label = stat.label.trim().toUpperCase();
-      const numeric = Number(stat.value.replace(/[^0-9.-]/g, "")) || 0;
-      if (label === "LCM") acc.lcm = numeric;
-      if (label === "MCM") acc.mcm = numeric;
-      if (label === "ACM") acc.acm = numeric;
-      return acc;
-    },
-    { lcm: 0, mcm: 0, acm: 0 },
-  );
-  const visibleHeroStats = (profile?.heroStats ?? []).filter((stat) => {
-    const label = stat.label.trim().toUpperCase();
-    return !["ACM", "LCM", "MCM", "MM"].includes(label);
-  });
+  const cmTotals = getHumanNodeCmTotals(profile?.heroStats ?? []);
+  const visibleHeroStats = getHumanNodeVisibleHeroStats(
+    profile?.heroStats ?? [],
+  ).filter((stat) => stat.label.trim().toUpperCase() !== "ACM");
   const visibleDetails = (profile?.quickDetails ?? []).filter((detail) =>
     shouldShowDetail(detail.label),
   );
@@ -196,48 +191,41 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         visibleDetails={visibleDetails}
       />
 
-      <CmEconomyPanel
-        totals={cmTotals}
-        chambers={cmChambers}
-        history={cmHistory}
-        mmValue="—"
-      />
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
+        <ProfileFormationProjectsSection
+          className="h-full"
+          projects={profile?.projects ?? []}
+        />
 
-      <ProfileDelegationSection delegationChambers={delegationChambers} />
+        <ProfileTierProgressSection
+          className="h-full"
+          requirementItems={requirementItems}
+          tierProgress={tierProgress}
+        />
+      </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <ProfileActivityProjectsSection
+      <div className="grid items-stretch gap-4 xl:grid-cols-3">
+        <CmEconomyPanel
+          className="h-full"
+          totals={cmTotals}
+          chambers={cmChambers}
+          history={cmHistory}
+          mmValue={cmTotals.acm}
+          totalsScope="personal"
+        />
+
+        <ProfileDelegationSection
+          className="h-full"
+          delegationChambers={delegationChambers}
+        />
+
+        <ProfileGovernanceActivitySection
+          className="h-full"
           activityFilter={activityFilter}
           filteredActions={filteredActions}
           historyHref={historyHref}
           onActivityFilterChange={setActivityFilter}
-          projects={profile?.projects ?? []}
         />
-
-        <div className="flex flex-col gap-4">
-          <ProfileTierProgressSection
-            requirementItems={requirementItems}
-            tierProgress={tierProgress}
-          />
-          <section className="space-y-3">
-            <SectionHeader>History</SectionHeader>
-            {(profile?.history ?? []).length ? (
-              (profile?.history ?? []).map((entry) => (
-                <Surface
-                  key={entry}
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="tile"
-                  className="px-3 py-2 text-center text-sm text-text"
-                >
-                  {entry}
-                </Surface>
-              ))
-            ) : (
-              <p className="text-sm text-muted">No history yet.</p>
-            )}
-          </section>
-        </div>
       </div>
     </div>
   );

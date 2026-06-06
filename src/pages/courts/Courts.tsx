@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/primitives/button";
 import { SearchBar } from "@/components/SearchBar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Link } from "react-router";
 import { MetricTile } from "@/components/MetricTile";
 import { CourtStatusBadge } from "@/components/CourtStatusBadge";
 import { PageHint } from "@/components/PageHint";
+import { SectionHeader } from "@/components/SectionHeader";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiCourts } from "@/lib/apiClient";
 import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
@@ -137,7 +133,7 @@ const Courts: React.FC = () => {
         ) : (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Active courtrooms</CardTitle>
+              <SectionHeader>Active courtrooms</SectionHeader>
             </CardHeader>
             <CardContent className="space-y-3">
               {filtered.length === 0 ? (

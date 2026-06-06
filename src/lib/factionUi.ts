@@ -1,7 +1,17 @@
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
+import { proposalSummaryPreview } from "@/lib/textPreview";
 import type { FactionDto } from "@/types/api";
 
 export type FactionMembership = NonNullable<FactionDto["memberships"]>[number];
+
+export const FACTION_SUMMARY_PREVIEW_MAX = 280;
+
+export function factionSummaryPreview(
+  value: string,
+  maxLength = FACTION_SUMMARY_PREVIEW_MAX,
+): string {
+  return proposalSummaryPreview(value, maxLength);
+}
 
 export function findViewerFactionMembership(
   memberships: FactionMembership[] | null | undefined,

@@ -1,0 +1,211 @@
+:root {
+  --record-rail-idle: color-mix(in srgb, var(--border), var(--primary) 18%);
+  --record-rail-recent: var(--accent-warm);
+  --record-rail-action: var(--accent);
+}
+
+:root[data-theme="light"] {
+  --record-rail-idle: rgba(17, 24, 39, 0.18);
+  --record-rail-recent: #f4b37f;
+  --record-rail-action: #5bc2b5;
+}
+
+:root[data-theme="night"] {
+  --record-rail-idle: rgba(111, 168, 255, 0.28);
+  --record-rail-recent: rgba(244, 179, 127, 0.9);
+  --record-rail-action: rgba(91, 194, 181, 0.95);
+}
+
+:root[data-theme="fire"] {
+  --record-rail-idle: rgba(255, 138, 31, 0.28);
+  --record-rail-recent: rgba(255, 209, 102, 0.94);
+  --record-rail-action: rgba(255, 61, 0, 0.96);
+}
+
+.glassy-record-card {
+  --record-row-hover: color-mix(in srgb, var(--panel), var(--primary) 5%);
+  --record-row-open: color-mix(in srgb, var(--panel), var(--primary) 7%);
+  --record-title-hover: color-mix(in srgb, var(--accent), var(--primary) 20%);
+  --record-meta-bg: color-mix(in srgb, var(--panel-alt), var(--primary) 8%);
+  --record-meta-text: color-mix(in srgb, var(--muted), var(--primary) 20%);
+  --record-time-text: color-mix(in srgb, var(--muted), var(--primary) 12%);
+
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+:root[data-theme="light"] .glassy-record-card {
+  --record-row-hover: #f7faff;
+  --record-row-open: #f8fbff;
+  --record-title-hover: #4f6ad7;
+  --record-meta-bg: #f7faff;
+  --record-meta-text: #4f5f82;
+  --record-time-text: #6b7280;
+}
+
+:root[data-theme="night"] .glassy-record-card {
+  --record-row-hover: rgba(111, 168, 255, 0.06);
+  --record-row-open: rgba(111, 168, 255, 0.08);
+  --record-title-hover: #82b6ff;
+  --record-meta-bg: rgba(111, 168, 255, 0.09);
+  --record-meta-text: #d4def4;
+  --record-time-text: #a3a3a3;
+}
+
+:root[data-theme="fire"] .glassy-record-card {
+  --record-row-hover: rgba(255, 104, 0, 0.08);
+  --record-row-open: rgba(255, 104, 0, 0.12);
+  --record-title-hover: #ffb35c;
+  --record-meta-bg: rgba(255, 138, 31, 0.13);
+  --record-meta-text: #ffd2a2;
+  --record-time-text: #d8aa82;
+}
+
+.glassy-record-card::before {
+  content: "";
+  position: absolute;
+  top: 0.9rem;
+  bottom: 0.9rem;
+  left: 0;
+  width: 2px;
+  background: var(--record-rail-idle);
+}
+
+.glassy-record-card--recent::before {
+  background: var(--record-rail-recent);
+}
+
+.glassy-record-card--action::before,
+.glassy-record-card--open::before {
+  background: var(--record-rail-action);
+}
+
+.glassy-record-card--open {
+  background: var(--record-row-open);
+}
+
+.glassy-record-card__button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) 30rem;
+  gap: 1rem;
+  border: 0;
+  background: transparent;
+  padding: 0.82rem 1rem 0.82rem 0;
+  color: inherit;
+  text-align: left;
+}
+
+.glassy-record-card__button:hover {
+  background: var(--record-row-hover);
+}
+
+.glassy-record-card__button:hover .glassy-record-card__title {
+  color: var(--record-title-hover);
+}
+
+.glassy-record-card__copy,
+.glassy-record-card__aside {
+  min-width: 0;
+  display: flex;
+}
+
+.glassy-record-card__copy {
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.glassy-record-card__aside {
+  display: grid;
+  grid-template-columns: 8.75rem 8.75rem 8.75rem 1.25rem;
+  align-items: center;
+  justify-content: end;
+  gap: 0.65rem;
+}
+
+.glassy-record-card__titleRow {
+  min-width: 0;
+}
+
+.glassy-record-card__metaPill {
+  width: 100%;
+  justify-content: center;
+  color: var(--record-meta-text);
+  background: var(--record-meta-bg);
+  white-space: nowrap;
+}
+
+.glassy-record-card__title {
+  min-width: 0;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  transition: color 160ms ease;
+}
+
+.glassy-record-card__summary {
+  max-width: 52rem;
+  min-height: 1.45em;
+  max-height: 1.45em;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.glassy-record-card__stage {
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.glassy-record-card__time {
+  color: var(--record-time-text);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  font-weight: 700;
+  text-align: right;
+}
+
+.glassy-record-card__chevron {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--muted);
+  transition: transform 160ms ease;
+}
+
+.glassy-record-card__chevron--open {
+  transform: rotate(180deg);
+}
+
+.glassy-record-card__details {
+  padding: 0 1rem 1rem 0;
+}
+
+@media (max-width: 760px) {
+  .glassy-record-card__button {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .glassy-record-card__aside {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.25rem;
+    justify-content: stretch;
+  }
+
+  .glassy-record-card__time {
+    grid-column: 1 / 3;
+    white-space: normal;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glassy-record-card__title,
+  .glassy-record-card__chevron {
+    transition: none;
+  }
+}

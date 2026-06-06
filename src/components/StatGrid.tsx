@@ -11,15 +11,19 @@ type StatItem = {
 
 type StatGridProps = {
   items: StatItem[];
+  surface?: "panelAlt" | "glass";
 };
 
-export const StatGrid: React.FC<StatGridProps> = ({ items }) => {
+export const StatGrid: React.FC<StatGridProps> = ({
+  items,
+  surface = "panelAlt",
+}) => {
   return (
     <dl className="grid grid-cols-2 gap-3 text-center text-sm text-text">
       {items.map((item) => (
         <Surface
           key={typeof item.label === "string" ? item.label : `${item.value}`}
-          variant="panelAlt"
+          variant={surface}
           radius="xl"
           shadow="tile"
           className="flex flex-col items-center px-3 py-2 text-center"
@@ -55,7 +59,7 @@ export const makeChamberStats = (stats: {
   lcm: string;
 }): StatItem[] => [
   {
-    label: <HintLabel termId="acm">ACM</HintLabel>,
+    label: <HintLabel termId="acm" prefix="Members'" termText="ACM" />,
     value: stats.acm,
     tone: "primary",
   },

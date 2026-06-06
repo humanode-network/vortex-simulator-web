@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
@@ -12,6 +7,7 @@ import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { SectionHeader } from "@/components/SectionHeader";
 import {
   apiChambers,
   apiChamberMultiplierSubmit,
@@ -33,7 +29,6 @@ const CMPanel: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [submittingAll, setSubmittingAll] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -139,16 +134,6 @@ const CMPanel: React.FC = () => {
     }
   };
 
-  const nonMemberSuggestions = (chambers ?? []).filter((c) => !c.member);
-  const handleSubmitAll = async () => {
-    if (!chambers || nonMemberSuggestions.length === 0) return;
-    setSubmittingAll(true);
-    for (const chamber of nonMemberSuggestions) {
-      await handleSubmit(chamber.id);
-    }
-    setSubmittingAll(false);
-  };
-
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="cm-panel" />
@@ -172,7 +157,7 @@ const CMPanel: React.FC = () => {
       ) : null}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle>Overview</CardTitle>
+          <SectionHeader>Overview</SectionHeader>
         </CardHeader>
         <CardContent className="text-sm text-muted">
           Set your <HintLabel termId="cognitocratic_measure">CM</HintLabel>{" "}
@@ -182,11 +167,9 @@ const CMPanel: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Multipliers</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <section className="flex flex-col gap-3">
+        <SectionHeader>Multipliers</SectionHeader>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {(chambers ?? []).map((chamber) => (
             <Surface
               key={chamber.id}
@@ -244,18 +227,8 @@ const CMPanel: React.FC = () => {
               </div>
             </Surface>
           ))}
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          disabled={nonMemberSuggestions.length === 0 || submittingAll}
-          onClick={handleSubmitAll}
-        >
-          {submittingAll ? "Submitting…" : "Submit suggestions"}
-        </Button>
-      </div>
+        </div>
+      </section>
     </div>
   );
 };

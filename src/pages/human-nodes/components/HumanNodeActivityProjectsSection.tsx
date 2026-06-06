@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 
 import { ActivityTile } from "@/components/ActivityTile";
-import { SectionHeader } from "@/components/SectionHeader";
-import { Badge } from "@/components/primitives/badge";
-import { Kicker } from "@/components/Kicker";
-import { Surface } from "@/components/Surface";
+import { GlassySection, GlassyTile } from "@/components/GlassySection";
 import { ToggleGroup } from "@/components/ToggleGroup";
 import { ACTIVITY_FILTERS, type ActivityFilter } from "@/lib/profileUi";
+import {
+  FormationProjectCard,
+  formationProjectCardFromProfileProject,
+} from "@/pages/formation/components/FormationProjectCard";
 import type { HumanNodeProfileDto } from "@/types/api";
 
 type GovernanceAction = HumanNodeProfileDto["governanceActions"][number];
@@ -29,9 +30,8 @@ export function HumanNodeActivityProjectsSection({
 }: HumanNodeActivityProjectsSectionProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="space-y-3">
+      <GlassySection title="Governance activity">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <SectionHeader>Governance activity</SectionHeader>
           <Link
             to={historyHref}
             className="text-sm font-semibold text-primary hover:underline"
@@ -48,6 +48,7 @@ export function HumanNodeActivityProjectsSection({
             value: opt.value,
             label: opt.label,
           }))}
+          className="w-fit"
         />
         {filteredActions.length ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -59,45 +60,28 @@ export function HumanNodeActivityProjectsSection({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted">No activity to show yet.</p>
+          <GlassyTile className="text-sm text-muted">
+            No activity to show yet.
+          </GlassyTile>
         )}
-      </div>
+      </GlassySection>
 
-      <div className="space-y-3">
-        <SectionHeader>Formation projects</SectionHeader>
+      <GlassySection title="Formation projects">
         {projects.length === 0 ? (
-          <p className="text-sm text-muted">
+          <GlassyTile className="text-sm text-muted">
             Not participating in Formation right now.
-          </p>
+          </GlassyTile>
         ) : (
-          <div className="space-y-3">
+          <div className="formation-project-grid formation-project-grid--pair">
             {projects.map((project) => (
-              <Surface
+              <FormationProjectCard
                 key={project.title}
-                variant="panelAlt"
-                radius="xl"
-                shadow="tile"
-                className="px-4 py-3"
-              >
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-semibold text-text">
-                    {project.title}
-                  </p>
-                  <Kicker>{project.status}</Kicker>
-                </div>
-                <p className="text-sm text-muted">{project.summary}</p>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {project.chips.map((chip) => (
-                    <Badge key={chip} variant="outline">
-                      {chip}
-                    </Badge>
-                  ))}
-                </div>
-              </Surface>
+                project={formationProjectCardFromProfileProject(project)}
+              />
             ))}
           </div>
         )}
-      </div>
+      </GlassySection>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router";
 import { Button } from "@/components/primitives/button";
+import { SectionHeader } from "@/components/SectionHeader";
 import { Surface } from "@/components/Surface";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { apiProposalFinishedPage } from "@/lib/apiClient";
@@ -49,6 +50,7 @@ const ProposalFinished: React.FC = () => {
       <ProposalPageHeader
         title={proposal.title}
         stage={proposal.terminalStage}
+        proposalId={id}
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
@@ -71,9 +73,7 @@ const ProposalFinished: React.FC = () => {
       </ProposalPageHeader>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-text">
-          {proposal.terminalLabel}
-        </h2>
+        <SectionHeader>{proposal.terminalLabel}</SectionHeader>
         <Surface
           variant="panelAlt"
           radius="2xl"

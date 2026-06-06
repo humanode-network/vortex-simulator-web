@@ -5,7 +5,7 @@ import type { CourtCaseStatusDto } from "@/types/api";
 const statusClasses: Record<CourtCaseStatusDto, string> = {
   jury: "bg-[color:var(--accent)]/15 text-[var(--accent)]",
   live: "bg-[color:var(--pagehint)]/15 text-[color:var(--pagehint)]",
-  ended: "bg-panel-alt text-muted",
+  ended: "bg-[color:var(--control-glass-bg)] text-muted",
 };
 
 const statusLabels: Record<CourtCaseStatusDto, string> = {

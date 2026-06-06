@@ -16,7 +16,7 @@ type VoteButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> & {
 };
 
 const baseClasses =
-  "rounded-full border-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "rounded-full border font-semibold shadow-[var(--shadow-control)] transition-colors supports-[backdrop-filter]:backdrop-blur-md disabled:cursor-not-allowed disabled:opacity-60";
 
 const sizeClasses: Record<VoteButtonSize, string> = {
   sm: "min-w-[140px] px-6 py-2 text-sm",
@@ -25,10 +25,11 @@ const sizeClasses: Record<VoteButtonSize, string> = {
 
 const toneClasses: Record<VoteButtonTone, string> = {
   accent:
-    "border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]",
+    "border-[var(--accent)] bg-[color:var(--control-glass-bg)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]",
   destructive:
-    "border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]",
-  neutral: "border-border text-muted hover:bg-panel hover:text-text",
+    "border-[var(--destructive)] bg-[color:var(--control-glass-bg)] text-[var(--destructive)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]",
+  neutral:
+    "border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] text-muted hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] hover:text-text",
 };
 
 export function VoteButton({

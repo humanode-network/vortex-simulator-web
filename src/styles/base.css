@@ -4,8 +4,8 @@
   --bg: #f2f5ff; /* app shell background */
   --page: #eaf0ff; /* page container background */
   --bg-accent: #e8efff; /* navbar */
-  --panel: #f9fbff; /* main containers */
-  --panel-alt: #f2f7ff; /* tiles/inputs */
+  --panel: rgba(249, 251, 255, 0.78); /* main containers */
+  --panel-alt: rgba(242, 247, 255, 0.66); /* tiles/inputs */
   --text: #111827;
   --muted: #5d6475;
   /* Primary is derived from sidebar hue but intentionally less saturated. */
@@ -36,6 +36,13 @@
   --shadow-control: 0 10px 22px rgba(17, 24, 39, 0.08);
   --glass-border: rgba(255, 255, 255, 0.42);
   --glass-border-strong: rgba(255, 255, 255, 0.62);
+  --surface-glass-bg: rgba(249, 251, 255, 0.86);
+  --surface-glass-border: rgba(79, 106, 215, 0.24);
+  --surface-glass-ring: rgba(79, 106, 215, 0.16);
+  --surface-glass-hover-bg: rgba(249, 251, 255, 0.94);
+  --surface-glass-hover-border: rgba(79, 106, 215, 0.36);
+  --control-glass-bg: rgba(249, 251, 255, 0.76);
+  --control-glass-hover-bg: rgba(249, 251, 255, 0.9);
   --tint-primary: rgba(111, 168, 255, 0.06);
   --tint-primary-strong: rgba(111, 168, 255, 0.1);
 
@@ -82,14 +89,21 @@
   --bg: #ffffff;
   --page: #ffffff;
   --bg-accent: #ffffff;
-  --panel: #ffffff;
-  --panel-alt: #ffffff;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-alt: rgba(255, 255, 255, 0.68);
   --text: #111827;
   --muted: #6b7280;
   --border: rgba(17, 24, 39, 0.14);
   --veil: rgba(17, 24, 39, 0.45);
   --glass-border: rgba(255, 255, 255, 0.55);
   --glass-border-strong: rgba(255, 255, 255, 0.72);
+  --surface-glass-bg: rgba(255, 255, 255, 0.88);
+  --surface-glass-border: rgba(79, 106, 215, 0.22);
+  --surface-glass-ring: rgba(79, 106, 215, 0.16);
+  --surface-glass-hover-bg: rgba(255, 255, 255, 0.96);
+  --surface-glass-hover-border: rgba(79, 106, 215, 0.34);
+  --control-glass-bg: rgba(255, 255, 255, 0.78);
+  --control-glass-hover-bg: rgba(255, 255, 255, 0.92);
   --shadow-card: 0 18px 44px rgba(17, 24, 39, 0.09);
   --shadow-popover: 0 22px 60px rgba(17, 24, 39, 0.16);
   --shadow-tile: 0 14px 34px rgba(17, 24, 39, 0.09);
@@ -107,8 +121,8 @@
   --bg: #000000;
   --page: #000000;
   --bg-accent: #000000;
-  --panel: #000000;
-  --panel-alt: #000000;
+  --panel: rgba(6, 9, 14, 0.78);
+  --panel-alt: rgba(10, 14, 22, 0.68);
   --text: #f5f5f5;
   --muted: #a3a3a3;
   --primary-dim: rgba(111, 168, 255, 0.22);
@@ -118,6 +132,13 @@
   --veil: rgba(0, 0, 0, 0.7);
   --glass-border: rgba(255, 255, 255, 0.14);
   --glass-border-strong: rgba(255, 255, 255, 0.22);
+  --surface-glass-bg: rgba(6, 9, 14, 0.72);
+  --surface-glass-border: rgba(255, 255, 255, 0.12);
+  --surface-glass-ring: rgba(111, 168, 255, 0.24);
+  --surface-glass-hover-bg: rgba(12, 18, 28, 0.82);
+  --surface-glass-hover-border: rgba(111, 168, 255, 0.32);
+  --control-glass-bg: rgba(10, 14, 22, 0.72);
+  --control-glass-hover-bg: rgba(15, 22, 34, 0.82);
   --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.72);
   --shadow-popover: 0 22px 60px rgba(0, 0, 0, 0.82);
   --shadow-tile: 0 14px 34px rgba(0, 0, 0, 0.64);
@@ -140,6 +161,68 @@
   --sidebar-active-bg: rgba(111, 168, 255, 0.18);
   --sidebar-active-shadow: 0 10px 20px rgba(111, 168, 255, 0.18);
   --sidebar-active-shadow-strong: 0 14px 28px rgba(111, 168, 255, 0.22);
+}
+
+:root[data-theme="fire"] {
+  color-scheme: dark;
+  --bg: #080200;
+  --page: #0d0300;
+  --bg-accent: #120500;
+  --panel: rgba(26, 8, 2, 0.82);
+  --panel-alt: rgba(42, 13, 4, 0.68);
+  --text: #fff7ed;
+  --muted: #d8aa82;
+  --primary: #ff8a1f;
+  --primary-hover: #ffad45;
+  --secondary: #ffc857;
+  --accent: #ff3d00;
+  --accent-warm: #ffd166;
+  --primary-foreground: #160400;
+  --secondary-foreground: #160400;
+  --accent-foreground: #fff7ed;
+  --muted-foreground: var(--muted);
+  --destructive: #ff2d1a;
+  --destructive-foreground: #fff7ed;
+  --ok: #ffcf57;
+  --danger: var(--destructive);
+  --primary-dim: rgba(255, 138, 31, 0.24);
+  --cool-dim: rgba(255, 61, 0, 0.18);
+  --warm-dim: rgba(255, 209, 102, 0.24);
+  --border: rgba(255, 226, 194, 0.14);
+  --veil: rgba(7, 1, 0, 0.76);
+  --glass-border: rgba(255, 187, 104, 0.16);
+  --glass-border-strong: rgba(255, 187, 104, 0.28);
+  --surface-glass-bg: rgba(29, 8, 2, 0.74);
+  --surface-glass-border: rgba(255, 187, 104, 0.16);
+  --surface-glass-ring: rgba(255, 138, 31, 0.28);
+  --surface-glass-hover-bg: rgba(49, 15, 4, 0.84);
+  --surface-glass-hover-border: rgba(255, 138, 31, 0.42);
+  --control-glass-bg: rgba(38, 11, 3, 0.74);
+  --control-glass-hover-bg: rgba(59, 18, 5, 0.86);
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.78);
+  --shadow-popover: 0 22px 60px rgba(0, 0, 0, 0.86);
+  --shadow-tile: 0 14px 34px rgba(0, 0, 0, 0.7);
+  --shadow-control: 0 10px 22px rgba(0, 0, 0, 0.56);
+  --shadow-primary: 0 14px 34px rgba(255, 89, 0, 0.32);
+  --shadow-pagehint: 0 14px 30px rgba(255, 89, 0, 0.34);
+  --pagehint: #ff6a00;
+  --pagehint-hover: #ff8a1f;
+  --pagehint-dim: rgba(255, 106, 0, 0.26);
+  --pagehint-foreground: #160400;
+  --btn-primary-bg: rgba(255, 104, 0, 0.4);
+  --btn-primary-hover-bg: rgba(255, 122, 0, 0.78);
+  --btn-primary-active-bg: rgba(255, 138, 31, 0.94);
+
+  --sidebar-bg: #0b0200;
+  --sidebar-border: rgba(255, 187, 104, 0.16);
+  --sidebar-text: #fff7ed;
+  --sidebar-muted: #d8aa82;
+  --sidebar-primary: #ff9d2e;
+  --sidebar-primary-foreground: #160400;
+  --sidebar-primary-dim: rgba(255, 138, 31, 0.28);
+  --sidebar-active-bg: rgba(255, 104, 0, 0.18);
+  --sidebar-active-shadow: 0 10px 20px rgba(255, 89, 0, 0.18);
+  --sidebar-active-shadow-strong: 0 14px 28px rgba(255, 89, 0, 0.26);
 }
 
 *,
@@ -179,6 +262,69 @@ button[disabled] {
   background: var(--primary-dim);
 }
 
+/* Keeps older page-local bg-panel blocks inside the Phase 89 glass grammar. */
+:where(
+    div,
+    section,
+    article,
+    aside,
+    header,
+    footer,
+    main,
+    form
+  )[class*="bg-panel"][class*="border"] {
+  border-color: var(--surface-glass-border);
+  backdrop-filter: blur(14px) saturate(145%);
+}
+
+:where(
+    div,
+    section,
+    article,
+    aside,
+    header,
+    footer,
+    main,
+    form
+  )[class*="rounded-xl"][class*="border-border"],
+:where(
+    div,
+    section,
+    article,
+    aside,
+    header,
+    footer,
+    main,
+    form
+  )[class*="rounded-lg"][class*="border-border"],
+:where(
+    div,
+    section,
+    article,
+    aside,
+    header,
+    footer,
+    main,
+    form
+  )[class*="rounded-md"][class*="border-border"] {
+  border-color: var(--surface-glass-border);
+  background-color: var(--control-glass-bg);
+  backdrop-filter: blur(14px) saturate(145%);
+}
+
+:where(
+    div,
+    section,
+    article,
+    aside,
+    header,
+    footer,
+    main,
+    form
+  )[class*="hover:bg-panel"]:hover {
+  background-color: var(--surface-glass-hover-bg);
+}
+
 .skip-link {
   position: absolute;
   top: -40px;
@@ -195,7 +341,6 @@ button[disabled] {
 }
 
 .eyebrow {
-  letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 0.75rem;
   color: var(--muted);
@@ -209,7 +354,6 @@ h4,
 h5,
 h6 {
   font-weight: 600;
-  letter-spacing: -0.015em;
   color: var(--text);
 }
 
@@ -249,22 +393,5 @@ h3 {
   }
   100% {
     transform: translateX(260%) skewX(-18deg);
-  }
-}
-
-@keyframes guide-particle-float {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 22px, 0) scale(0.95);
-  }
-  12% {
-    opacity: 0.85;
-  }
-  60% {
-    opacity: 0.35;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(14px, -140px, 0) scale(0.6);
   }
 }

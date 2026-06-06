@@ -1,6 +1,4 @@
-import { Badge } from "@/components/primitives/badge";
-import { ExpandableCard } from "@/components/ExpandableCard";
-import { StageChip } from "@/components/StageChip";
+import { GlassyRecordCard } from "@/components/GlassyRecordCard";
 import { Surface } from "@/components/Surface";
 import { getFormationProgress } from "@/lib/dtoParsers";
 import {
@@ -82,31 +80,18 @@ export function ProposalListCard({
   const loadingMessage = getProposalListLoadingMessage(proposal);
 
   return (
-    <ExpandableCard
+    <GlassyRecordCard
       expanded={expanded}
       onToggle={onToggle}
+      rail={expanded ? "action" : "idle"}
+      meta={proposal.chamber}
+      stage={proposal.stage}
+      stageLabel={proposal.summaryPill === "Finished" ? "Finished" : undefined}
       title={proposal.title}
-      right={
-        <>
-          <StageChip
-            stage={proposal.stage}
-            label={proposal.summaryPill === "Finished" ? "Finished" : undefined}
-          />
-          <Badge variant="muted" size="sm">
-            {proposal.chamber.replace(/\s*chamber\s*$/i, "")}
-          </Badge>
-          <Badge variant="muted" size="sm">
-            {proposal.tier}
-          </Badge>
-        </>
-      }
+      summary={proposal.summary}
+      dateText={proposal.date}
     >
       <section className="space-y-5">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-text">Summary</p>
-          <p className="text-sm text-muted">{proposal.summary}</p>
-        </div>
-
         {finishedPage ? (
           <ProposalFinishedSnapshot
             itemKeyPrefix={`${proposal.id}-finished`}
@@ -150,7 +135,7 @@ export function ProposalListCard({
           />
         ) : loadingMessage ? (
           <Surface
-            variant="panelAlt"
+            variant="glass"
             radius="2xl"
             shadow="tile"
             className="px-5 py-4 text-sm text-muted"
@@ -177,6 +162,6 @@ export function ProposalListCard({
           tags={proposal.tags}
         />
       </section>
-    </ExpandableCard>
+    </GlassyRecordCard>
   );
 }

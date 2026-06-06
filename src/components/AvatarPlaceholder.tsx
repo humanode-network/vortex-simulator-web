@@ -24,7 +24,7 @@ export const AvatarPlaceholder: React.FC<AvatarPlaceholderProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full border-4 border-border bg-panel-alt font-semibold text-muted shadow-inner",
+        "flex items-center justify-center rounded-full border-4 border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] font-semibold text-muted shadow-inner supports-[backdrop-filter]:backdrop-blur-md",
         sizeClasses[size],
         className,
       )}

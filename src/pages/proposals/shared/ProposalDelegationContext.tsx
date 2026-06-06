@@ -1,4 +1,5 @@
 import { AddressInline } from "@/components/AddressInline";
+import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { formatDateTime } from "@/lib/dateTime";
@@ -59,7 +60,7 @@ export const ProposalDelegationContext: React.FC<
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-text">Delegation context</h2>
+      <SectionHeader>Delegation context</SectionHeader>
       <div className="grid gap-3 text-sm text-text sm:grid-cols-2 lg:grid-cols-3">
         <StatTile
           label="Vote weight source"

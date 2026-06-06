@@ -343,6 +343,8 @@ export type FormationStageDto = "live" | "gathering" | "completed";
 export type FormationProjectDto = {
   id: string;
   title: string;
+  chamber?: string;
+  chamberTitle?: string;
   focus: string;
   proposer: string;
   summary: string;
@@ -876,6 +878,15 @@ export type FormationProposalPageDto = {
   openSlots: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
   attachments: { id: string; title: string; href?: string }[];
+  viewer?: {
+    canExitTeam?: boolean;
+    canFinishProject?: boolean;
+    canJoin?: boolean;
+    canOpenMilestoneVote?: boolean;
+    canSubmitMilestone?: boolean;
+    isProposer: boolean;
+    isTeamMember: boolean;
+  };
   summary: string;
   overview: string;
   executionPlan: string[];
@@ -982,6 +993,16 @@ export type ProjectCardDto = {
   status: string;
   summary: string;
   chips: string[];
+  id?: string;
+  chamber?: string;
+  chamberTitle?: string;
+  focus?: string;
+  proposer?: string;
+  category?: FormationCategoryDto;
+  stage?: FormationStageDto;
+  budget?: string;
+  milestones?: string;
+  teamSlots?: string;
 };
 export type HumanDelegationChamberDto = {
   chamberId: string;

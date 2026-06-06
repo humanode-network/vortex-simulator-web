@@ -1,7 +1,12 @@
-import { Badge } from "@/components/primitives/badge";
-import { Surface } from "@/components/Surface";
-import { Kicker } from "@/components/Kicker";
-import { SectionHeader } from "@/components/SectionHeader";
+import {
+  GlassyCompactGrid,
+  GlassyCompactMetric,
+  GlassyCompactRow,
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import type {
   CmChamberBreakdownDto,
   CmHistoryItemDto,
@@ -9,104 +14,183 @@ import type {
 } from "@/types/api";
 
 type CmEconomyPanelProps = {
-  totals: CmTotalsDto;
   chambers: CmChamberBreakdownDto[];
   history: CmHistoryItemDto[];
+  className?: string;
   mmValue?: number | string;
+  totalsScope?: "full" | "personal";
   title?: string;
+  totals: CmTotalsDto;
 };
 
 export const CmEconomyPanel: React.FC<CmEconomyPanelProps> = ({
-  totals,
   chambers,
+  className,
   history,
   mmValue = "—",
-  title = "CM + MM",
+  totalsScope = "full",
+  title,
+  totals,
 }) => {
-  const tiles: Array<{ label: string; value: number | string }> = [
-    { label: "LCM", value: totals.lcm },
-    { label: "MCM", value: totals.mcm },
-    { label: "ACM", value: totals.acm },
-    { label: "MM", value: mmValue },
-  ];
+  const displayTitle = title ?? "CM + MM";
+  const personalMmValue = mmValue === "—" ? totals.acm : mmValue;
+  const tiles: Array<{ label: string; value: number | string }> =
+    totalsScope === "personal"
+      ? [
+          { label: "ACM", value: totals.acm },
+          { label: "MM", value: personalMmValue },
+        ]
+      : [
+          { label: "LCM", value: totals.lcm },
+          { label: "MCM", value: totals.mcm },
+          { label: "Members' ACM", value: totals.acm },
+          { label: "MM", value: mmValue },
+        ];
+  const formattedValue = (value: number | string) =>
+    typeof value === "number" ? value.toLocaleString() : value;
+
+  if (totalsScope === "personal") {
+    return (
+      <GlassySection className={className} title={displayTitle}>
+        <div className="grid h-full gap-2">
+          <GlassyCompactGrid>
+            {tiles.map((tile) => (
+              <GlassyCompactMetric
+                key={tile.label}
+                label={tile.label}
+                value={formattedValue(tile.value)}
+              />
+            ))}
+          </GlassyCompactGrid>
+          {chambers.length === 0 ? (
+            <GlassyTile className="px-4 py-3 text-sm text-muted">
+              No CM chambers yet.
+            </GlassyTile>
+          ) : (
+            <GlassyCompactGrid>
+              {chambers.map((chamber) => (
+                <GlassyCompactRow
+                  className="cm-economy-row"
+                  key={chamber.chamberId}
+                  title={chamber.chamberTitle}
+                  actions={
+                    <GlassyStatusChip tone="primary">
+                      M × {chamber.multiplier}
+                    </GlassyStatusChip>
+                  }
+                >
+                  <div className="cm-economy-row__metrics">
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="LCM"
+                      value={chamber.lcm}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="MCM"
+                      value={chamber.mcm}
+                    />
+                  </div>
+                </GlassyCompactRow>
+              ))}
+            </GlassyCompactGrid>
+          )}
+        </div>
+      </GlassySection>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <SectionHeader>{title}</SectionHeader>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <GlassySection className={className} title={displayTitle}>
+      <GlassyCompactGrid className="lg:grid-cols-4">
         {tiles.map((tile) => (
-          <Surface
+          <GlassyCompactMetric
             key={tile.label}
-            variant="panelAlt"
-            radius="xl"
-            shadow="tile"
-            className="px-4 py-3 text-center"
-          >
-            <Kicker align="center">{tile.label}</Kicker>
-            <p className="text-xl font-semibold text-text">
-              {typeof tile.value === "number"
-                ? tile.value.toLocaleString()
-                : tile.value}
-            </p>
-          </Surface>
+            label={tile.label}
+            value={formattedValue(tile.value)}
+          />
         ))}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <Surface
-          variant="panelAlt"
-          radius="xl"
-          shadow="tile"
-          className="px-4 py-3"
-        >
-          <Kicker>Chamber breakdown</Kicker>
-          {chambers.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">No CM chambers yet.</p>
-          ) : (
-            <ul className="mt-2 space-y-2 text-sm text-text">
-              {chambers.map((chamber) => (
-                <li key={chamber.chamberId} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">
-                      {chamber.chamberTitle}
-                    </span>
-                    <Badge variant="outline">M × {chamber.multiplier}</Badge>
-                  </div>
-                  <span className="text-xs text-muted">
-                    LCM {chamber.lcm} · MCM {chamber.mcm} · ACM {chamber.acm}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Surface>
+      </GlassyCompactGrid>
 
-        <Surface
-          variant="panelAlt"
-          radius="xl"
-          shadow="tile"
-          className="px-4 py-3"
-        >
-          <Kicker>Recent CM awards</Kicker>
-          {history.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">No CM awards yet.</p>
+      <div className="grid gap-3 md:grid-cols-2">
+        <GlassyTile className="grid gap-3">
+          <p className="glassy-tile-heading">Chamber breakdown</p>
+          {chambers.length === 0 ? (
+            <p className="text-sm text-muted">No CM chambers yet.</p>
           ) : (
-            <ul className="mt-2 space-y-2 text-sm text-text">
-              {history.slice(0, 5).map((item) => (
-                <li
-                  key={`${item.proposalId}-${item.awardedAt}`}
-                  className="flex flex-col gap-1"
+            <div className="grid gap-2">
+              {chambers.map((chamber) => (
+                <GlassyCompactRow
+                  key={chamber.chamberId}
+                  title={chamber.chamberTitle}
+                  actions={
+                    <GlassyStatusChip tone="primary">
+                      M × {chamber.multiplier}
+                    </GlassyStatusChip>
+                  }
                 >
-                  <span className="font-semibold">{item.title}</span>
-                  <span className="text-xs text-muted">
-                    {item.chamberId} · M × {item.multiplier} · LCM {item.lcm} ·
-                    MCM {item.mcm}
-                  </span>
-                </li>
+                  <div className="grid grid-cols-3 gap-2">
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="LCM"
+                      value={chamber.lcm}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="MCM"
+                      value={chamber.mcm}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="Members' ACM"
+                      value={chamber.acm}
+                    />
+                  </div>
+                </GlassyCompactRow>
               ))}
-            </ul>
+            </div>
           )}
-        </Surface>
+        </GlassyTile>
+
+        <GlassyTile className="grid gap-3">
+          <p className="glassy-tile-heading">Recent CM awards</p>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted">No CM awards yet.</p>
+          ) : (
+            <div className="grid gap-2">
+              {history.slice(0, 5).map((item) => (
+                <GlassyCompactRow
+                  key={`${item.proposalId}-${item.awardedAt}`}
+                  title={item.title}
+                  actions={
+                    <GlassyStatusChip tone="primary">
+                      M × {item.multiplier}
+                    </GlassyStatusChip>
+                  }
+                >
+                  <div className="grid grid-cols-3 gap-2">
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="Chamber"
+                      value={item.chamberId}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="LCM"
+                      value={item.lcm}
+                    />
+                    <GlassyKeyValue
+                      className="glassy-key-value--stacked glassy-key-value--metric"
+                      label="MCM"
+                      value={item.mcm}
+                    />
+                  </div>
+                </GlassyCompactRow>
+              ))}
+            </div>
+          )}
+        </GlassyTile>
       </div>
-    </div>
+    </GlassySection>
   );
 };

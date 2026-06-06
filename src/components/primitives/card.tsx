@@ -1,15 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Surface } from "@/components/Surface";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function Card({ className, ...props }: CardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-panel [background-image:var(--card-grad)] bg-cover bg-no-repeat shadow-(--shadow-card) ring-1 ring-(--glass-border) ring-inset",
-        className,
-      )}
+    <Surface
+      variant="glass"
+      radius="2xl"
+      shadow="card"
+      className={cn("overflow-hidden", className)}
       {...props}
     />
   );
@@ -28,7 +29,15 @@ export function CardTitle({
   className,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-lg font-semibold", className)} {...props} />;
+  return (
+    <h3
+      className={cn(
+        "text-base leading-tight font-semibold text-text",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardDescription({

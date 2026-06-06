@@ -15,6 +15,7 @@ import { StatTile } from "@/components/StatTile";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiFactions } from "@/lib/apiClient";
+import { factionSummaryPreview } from "@/lib/factionUi";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { FactionDto } from "@/types/api";
 
@@ -127,7 +128,9 @@ const Factions: React.FC = () => {
             <MetricTile label="Total factions" value={totals.totalFactions} />
             <MetricTile label="Members" value={totals.totalMembers} />
             <MetricTile
-              label={<HintLabel termId="acm" termText="ACM" />}
+              label={
+                <HintLabel termId="acm" prefix="Members'" termText="ACM" />
+              }
               value={totals.totalAcm}
             />
           </section>
@@ -151,7 +154,7 @@ const Factions: React.FC = () => {
                 label: "Sort by",
                 options: [
                   { value: "members", label: "Members (desc)" },
-                  { value: "acm", label: "ACM (desc)" },
+                  { value: "acm", label: "Members' ACM (desc)" },
                 ],
               },
             ]}
@@ -159,12 +162,9 @@ const Factions: React.FC = () => {
             onFiltersChange={setFilters}
           />
 
-          <section
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            aria-live="polite"
-          >
+          <section className="grid gap-5 lg:grid-cols-2" aria-live="polite">
             {filtered.length === 0 ? (
-              <Card className="border-dashed px-4 py-6 text-center text-sm text-muted md:col-span-2 xl:col-span-3">
+              <Card className="border-dashed px-4 py-6 text-center text-sm text-muted lg:col-span-2">
                 No factions match this filter set.
               </Card>
             ) : (
@@ -172,8 +172,8 @@ const Factions: React.FC = () => {
                 <Card key={faction.id} className="h-full">
                   <CardHeader className="pb-2">
                     <CardTitle>{faction.name}</CardTitle>
-                    <p className="line-clamp-2 min-h-10 text-sm text-muted">
-                      {faction.description}
+                    <p className="min-h-16 text-sm leading-relaxed text-muted">
+                      {factionSummaryPreview(faction.description)}
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-text">
@@ -185,7 +185,13 @@ const Factions: React.FC = () => {
                         valueClassName="text-lg"
                       />
                       <StatTile
-                        label={<HintLabel termId="acm" termText="ACM" />}
+                        label={
+                          <HintLabel
+                            termId="acm"
+                            prefix="Members'"
+                            termText="ACM"
+                          />
+                        }
                         value={faction.acm}
                         className="px-2 py-2"
                         valueClassName="text-lg"
@@ -218,11 +224,15 @@ const Factions: React.FC = () => {
                   <p className="text-sm font-semibold text-text">
                     {faction.name}
                   </p>
-                  <p className="text-xs text-muted">{faction.description}</p>
+                  <p className="text-xs text-muted">
+                    {factionSummaryPreview(faction.description)}
+                  </p>
                 </div>
                 <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
                   <Badge variant="outline">Members: {faction.members}</Badge>
-                  <Badge variant="outline">ACM: {faction.acm}</Badge>
+                  <Badge variant="outline">
+                    Members&apos; ACM: {faction.acm}
+                  </Badge>
                 </div>
                 <Button asChild size="sm">
                   <Link to={`/app/factions/${faction.id}`}>Open</Link>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import { HintLabel } from "@/components/Hint";
+import { SectionHeader } from "@/components/SectionHeader";
 import {
   apiChamberVote,
   apiCitizenVetoVote,
@@ -150,6 +151,7 @@ const ProposalChamber: React.FC = () => {
       <ProposalPageHeader
         title={chamberPage.chamberTitle}
         stage="vote"
+        proposalId={id}
         showFormationStage={proposal.formationEligible}
         chamber={proposal.chamber}
         proposer={proposal.proposer}
@@ -175,7 +177,7 @@ const ProposalChamber: React.FC = () => {
       </ProposalPageHeader>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-text">Voting quorum</h2>
+        <SectionHeader>Voting quorum</SectionHeader>
         <ProposalVoteStatsGrid
           abstainPercentOfTotal={chamberPage.abstainPercentOfTotal}
           abstainTotal={chamberPage.abstainTotal}

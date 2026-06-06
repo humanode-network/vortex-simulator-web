@@ -1,13 +1,9 @@
 import { Link } from "react-router";
 
+import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
 
@@ -30,7 +26,7 @@ export function FactionInitiativeListCard({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle>Initiative list</CardTitle>
+          <SectionHeader>Initiative list</SectionHeader>
           {canPost ? (
             <Button asChild size="sm">
               <Link to={`/app/factions/${factionId}/initiatives/new`}>

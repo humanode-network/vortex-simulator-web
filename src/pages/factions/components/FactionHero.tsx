@@ -1,5 +1,6 @@
 import { Kicker } from "@/components/Kicker";
 import { StatTile } from "@/components/StatTile";
+import { HintLabel } from "@/components/Hint";
 import { Badge } from "@/components/primitives/badge";
 import { Button } from "@/components/primitives/button";
 import { Card, CardContent } from "@/components/primitives/card";
@@ -105,7 +106,11 @@ export const FactionHero: React.FC<FactionHeroProps> = ({
           value={String(faction.members)}
           align="center"
         />
-        <StatTile label="ACM" value={String(faction.acm)} align="center" />
+        <StatTile
+          label={<HintLabel termId="acm" prefix="Members'" termText="ACM" />}
+          value={String(faction.acm)}
+          align="center"
+        />
         <StatTile
           label="Role"
           value={

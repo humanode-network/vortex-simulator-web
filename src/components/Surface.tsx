@@ -6,15 +6,20 @@ type PolymorphicRef<C extends React.ElementType> =
   React.ComponentPropsWithRef<C>["ref"];
 
 const surfaceVariants = cva(
-  "border border-border [background-image:var(--card-grad)] bg-cover bg-no-repeat ring-1 ring-inset ring-[color:var(--glass-border)]",
+  "border bg-cover bg-no-repeat ring-1 ring-inset transition-colors duration-150",
   {
     variants: {
       variant: {
-        panel: "bg-panel",
-        panelAlt: "bg-panel-alt",
+        panel:
+          "border-[color:var(--surface-glass-border)] bg-[color:var(--surface-glass-bg)] ring-[color:var(--surface-glass-ring)] hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--surface-glass-hover-bg)] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150",
+        panelAlt:
+          "border-[color:var(--surface-glass-border)] bg-[color:var(--surface-glass-bg)] ring-[color:var(--surface-glass-ring)] hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--surface-glass-hover-bg)] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150",
+        glass:
+          "border-[color:var(--surface-glass-border)] bg-[color:var(--surface-glass-bg)] ring-[color:var(--surface-glass-ring)] hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--surface-glass-hover-bg)] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150",
         transparent: "bg-transparent",
       },
       radius: {
+        md: "rounded-lg",
         xl: "rounded-xl",
         "2xl": "rounded-2xl",
         full: "rounded-full",

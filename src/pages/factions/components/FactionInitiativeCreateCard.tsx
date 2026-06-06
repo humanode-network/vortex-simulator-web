@@ -1,12 +1,8 @@
 import { Link } from "react-router";
 
+import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/primitives/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
+import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { formatLoadError } from "@/lib/errorFormatting";
 
@@ -40,7 +36,7 @@ export function FactionInitiativeCreateCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle>Create initiative</CardTitle>
+        <SectionHeader>Create initiative</SectionHeader>
       </CardHeader>
       <CardContent className="space-y-3">
         {!canCreate ? (

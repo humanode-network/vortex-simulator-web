@@ -7,6 +7,7 @@ import React, {
 } from "react";
 
 import {
+  apiHuman,
   apiMe,
   apiNonce,
   apiLogout,
@@ -208,13 +209,55 @@ export function useAuth(): AuthContextValue {
 
 export function AuthSidebarPanel() {
   const auth = useAuth();
+  const [activityState, setActivityState] = useState<{
+    governorActive: boolean;
+    humanNodeActive: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!auth.enabled || !auth.authenticated || !auth.address) {
+      setActivityState(null);
+      return;
+    }
+
+    const address = auth.address;
+    let active = true;
+    const syncActivity = async () => {
+      try {
+        const profile = await apiHuman(address);
+        if (!active) return;
+        setActivityState({
+          governorActive: profile.governorActive,
+          humanNodeActive: profile.humanNodeActive,
+        });
+      } catch {
+        if (!active) return;
+        setActivityState({ governorActive: false, humanNodeActive: false });
+      }
+    };
+
+    void syncActivity();
+    const timer = window.setInterval(() => {
+      void syncActivity();
+    }, 60_000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [auth.address, auth.authenticated, auth.enabled]);
+
   if (!auth.enabled) return null;
 
   const addressLabel = auth.address
     ? shortAddress(auth.address)
     : "Not connected";
-  const gateLabel =
-    auth.authenticated && auth.eligible ? "Active" : "Not active";
+  const humanNodeActive = Boolean(
+    auth.authenticated && activityState?.humanNodeActive,
+  );
+  const governorActive = Boolean(
+    auth.authenticated && activityState?.governorActive,
+  );
 
   const gateError =
     auth.authenticated && !auth.eligible
@@ -232,16 +275,29 @@ export function AuthSidebarPanel() {
         <span className="sidebar__authValue">{addressLabel}</span>
       </div>
       <div className="sidebar__authRow">
-        <span className="sidebar__authKicker">Status</span>
+        <span className="sidebar__authKicker">Human node</span>
         <span
           className={
-            auth.authenticated && auth.eligible
+            humanNodeActive
               ? "sidebar__authValue sidebar__authValue--ok"
               : "sidebar__authValue sidebar__authValue--warn"
           }
           title={auth.gateReason}
         >
-          {gateLabel}
+          {humanNodeActive ? "Active" : "Not active"}
+        </span>
+      </div>
+      <div className="sidebar__authRow">
+        <span className="sidebar__authKicker">Governor</span>
+        <span
+          className={
+            governorActive
+              ? "sidebar__authValue sidebar__authValue--ok"
+              : "sidebar__authValue sidebar__authValue--warn"
+          }
+          title={auth.gateReason}
+        >
+          {governorActive ? "Active" : "Not active"}
         </span>
       </div>
 
