@@ -52,7 +52,7 @@ export const CmEconomyPanel: React.FC<CmEconomyPanelProps> = ({
   if (totalsScope === "personal") {
     return (
       <GlassySection className={className} title={displayTitle}>
-        <div className="grid h-full gap-2">
+        <div className="grid content-start gap-2">
           <GlassyCompactGrid>
             {tiles.map((tile) => (
               <GlassyCompactMetric
