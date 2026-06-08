@@ -58,6 +58,8 @@ test("CmEconomyPanel personal scope shows ACM and MM without chamber CM totals",
   assert.ok(html.includes("CM + MM"));
   assert.ok(html.includes("ACM"));
   assert.ok(html.includes("MM"));
+  assert.ok(html.includes("grid content-start gap-2"));
+  assert.equal(html.includes("grid h-full gap-2"), false);
   assert.equal(html.includes("MCM"), false);
   assert.equal(html.includes("LCM"), false);
 });

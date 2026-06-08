@@ -8,6 +8,8 @@
   },
   "genesisUserTiers": {
     "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs": "Citizen",
-    "hmspQwDydCF6eGz3bdbFQNwDZiJeKCATcB1jC82trofPRfChB": "Consul"
+    "hmtDcubBjAXE4SnfXiXZdY1BWjAAuybLN98D7NYhnefxweEhv": "Citizen",
+    "hmspQwDydCF6eGz3bdbFQNwDZiJeKCATcB1jC82trofPRfChB": "Citizen",
+    "hmr1GRb1SRdDfJZmFaYh5L1RNev3dFcTVLGS2Rqqmk3Fbgj2W": "Consul"
   }
 }
