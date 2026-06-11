@@ -4,10 +4,7 @@
     { "id": "general", "title": "General", "multiplier": 1.2 }
   ],
   "genesisChamberMembers": {
-    "general": [
-      "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs",
-      "hmspQwDydCF6eGz3bdbFQNwDZiJeKCATcB1jC82trofPRfChB"
-    ]
+    "general": ["hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs"]
   },
   "genesisUserTiers": {
     "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs": "Citizen",
