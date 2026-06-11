@@ -362,6 +362,9 @@ export type GetFormationResponse = {
 export type InvisionGovernanceMetricDto = { label: string; value: string };
 export type InvisionGovernanceStateDto = {
   label: string;
+  tone?: "critical" | "watch" | "stable" | "strong" | "unknown";
+  summary?: string;
+  drivers?: string[];
   metrics: InvisionGovernanceMetricDto[];
 };
 export type InvisionStabilityComponentDto = {
