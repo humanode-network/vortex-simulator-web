@@ -51,15 +51,6 @@ function toneForRiskStatus(status: string) {
   return "primary";
 }
 
-function toneForSystemState(
-  tone?: GetInvisionResponse["governanceState"]["tone"],
-) {
-  if (tone === "critical") return "danger";
-  if (tone === "strong" || tone === "stable") return "ok";
-  if (tone === "watch") return "warn";
-  return "neutral";
-}
-
 function EngineSection({
   engine,
   title,
@@ -212,38 +203,13 @@ const Invision: React.FC = () => {
       ) : null}
 
       <GlassySection title="System state">
-        <GlassyTile className="px-6 py-5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0">
-              <p className="m-0 text-xs font-semibold text-muted uppercase">
-                Governance model
-              </p>
-              <h1 className="m-0 mt-1 text-2xl font-semibold text-text">
-                {invision?.governanceState.label ?? "—"}
-              </h1>
-              {invision?.governanceState.summary ? (
-                <p className="m-0 mt-2 max-w-3xl text-sm text-muted">
-                  {invision.governanceState.summary}
-                </p>
-              ) : null}
-            </div>
-            <GlassyStatusChip
-              tone={toneForSystemState(invision?.governanceState.tone)}
-            >
-              {invision?.governanceState.tone ?? "unknown"}
-            </GlassyStatusChip>
-          </div>
-          {(invision?.governanceState.drivers ?? []).length > 0 ? (
-            <GlassyCompactGrid className="mt-4 lg:grid-cols-3">
-              {(invision?.governanceState.drivers ?? []).map((driver) => (
-                <GlassyCompactMetric
-                  key={driver}
-                  label="Driver"
-                  value={driver}
-                />
-              ))}
-            </GlassyCompactGrid>
-          ) : null}
+        <GlassyTile className="px-6 py-5 text-center">
+          <p className="m-0 text-xs font-semibold text-muted uppercase">
+            Governance model
+          </p>
+          <h1 className="m-0 mt-1 text-2xl font-semibold text-text">
+            {invision?.governanceState.label ?? "—"}
+          </h1>
         </GlassyTile>
         <GlassyCompactGrid className="lg:grid-cols-3">
           {primaryGovernanceMetrics.map((metric) => (
