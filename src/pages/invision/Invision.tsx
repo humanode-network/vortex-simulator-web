@@ -32,12 +32,16 @@ function toneForScore(tone: InvisionStabilityComponentDto["tone"]) {
   return "ok";
 }
 
-function toneForConfidence(engine: EngineDto): StatusTone {
-  if (engine.confidenceBand === "High" || engine.confidence >= 75) return "ok";
-  if (engine.confidenceBand === "Medium" || engine.confidence >= 50) {
-    return "warn";
-  }
+function toneForHealthScore(score: number): StatusTone {
+  if (score >= 67) return "ok";
+  if (score >= 34) return "warn";
   return "danger";
+}
+
+function toneForMetricValue(value: string): StatusTone {
+  const percentValue = Number(value.replace("%", "").trim());
+  if (!Number.isFinite(percentValue)) return "neutral";
+  return toneForHealthScore(percentValue);
 }
 
 function toneForRiskStatus(status: string) {
@@ -56,12 +60,27 @@ function EngineSection({
 }) {
   return (
     <GlassySection className="h-full" title={title}>
-      <GlassyCompactGrid className="lg:grid-cols-3">
-        <GlassyCompactMetric label="Band" value={engine.band} />
+      <GlassyCompactGrid className="lg:grid-cols-4">
         <GlassyCompactMetric
-          label="Confidence"
+          label="Score"
           value={
-            <GlassyStatusChip tone={toneForConfidence(engine)}>
+            <GlassyStatusChip tone={toneForHealthScore(engine.score)}>
+              {engine.score}%
+            </GlassyStatusChip>
+          }
+        />
+        <GlassyCompactMetric
+          label={<HintLabel termId="invision_band">Band</HintLabel>}
+          value={
+            <GlassyStatusChip tone={toneForHealthScore(engine.score)}>
+              {engine.band}
+            </GlassyStatusChip>
+          }
+        />
+        <GlassyCompactMetric
+          label="Evidence coverage"
+          value={
+            <GlassyStatusChip tone="neutral">
               {engine.confidence}% · {engine.confidenceBand}
             </GlassyStatusChip>
           }
@@ -197,7 +216,11 @@ const Invision: React.FC = () => {
             <GlassyMetricTile
               key={metric.label}
               label={metric.label}
-              value={metric.value}
+              value={
+                <GlassyStatusChip tone={toneForMetricValue(metric.value)}>
+                  {metric.value}
+                </GlassyStatusChip>
+              }
             />
           ))}
         </GlassyCompactGrid>
