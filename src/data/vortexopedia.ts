@@ -1210,6 +1210,37 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     updated: "2025-12-04",
   },
   {
+    ref: 43.1,
+    id: "invision_band",
+    name: "Invision band",
+    category: "governance",
+    short:
+      "A readable health label for an Invision score, grouping the raw percentage into a low, medium, or high condition.",
+    long: [
+      "Invision engines calculate raw scores for system dimensions such as decentralization and stability.",
+      "The band translates that percentage into a quick status label so a user can scan the system without interpreting every component immediately.",
+      "The band does not replace the score. The score is the numerical result; the band is the human-readable bucket for that result.",
+    ],
+    tags: ["invision", "system_health", "score", "status", "band"],
+    related: [
+      "gradual_decentralization",
+      "constant_deterrence",
+      "legitimacy_referendum",
+    ],
+    examples: [
+      "A stability score of 28% can sit in a low band, while a score near 80% can sit in a high band.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision system health",
+    updated: "2026-06-19",
+  },
+  {
     ref: 44,
     id: "voter_apathy",
     name: "Voter apathy",

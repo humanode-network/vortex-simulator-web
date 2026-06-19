@@ -70,7 +70,7 @@ function EngineSection({
           }
         />
         <GlassyCompactMetric
-          label="Band"
+          label={<HintLabel termId="invision_band">Band</HintLabel>}
           value={
             <GlassyStatusChip tone={toneForHealthScore(engine.score)}>
               {engine.band}
