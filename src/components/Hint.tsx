@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
   Card,
@@ -12,6 +13,34 @@ import { getVortexopediaTerm } from "@/data/vortexopediaLookup";
 import "./Hint.css";
 
 type OverlayPosition = { x: number; y: number };
+
+const OVERLAY_WIDTH = 320;
+const OVERLAY_HEIGHT = 240;
+const OVERLAY_GAP = 10;
+const VIEWPORT_MARGIN = 12;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getAnchorPosition(element: HTMLElement): OverlayPosition {
+  const rect = element.getBoundingClientRect();
+  const maxLeft = window.innerWidth - OVERLAY_WIDTH - VIEWPORT_MARGIN;
+  const maxTop = window.innerHeight - OVERLAY_HEIGHT - VIEWPORT_MARGIN;
+
+  return {
+    x: clamp(
+      rect.left + rect.width / 2 - OVERLAY_WIDTH / 2,
+      VIEWPORT_MARGIN,
+      Math.max(VIEWPORT_MARGIN, maxLeft),
+    ),
+    y: clamp(
+      rect.bottom + OVERLAY_GAP,
+      VIEWPORT_MARGIN,
+      Math.max(VIEWPORT_MARGIN, maxTop),
+    ),
+  };
+}
 
 // Headless hover logic: track position, visibility, and “stable” state after dwell.
 const useHoverOverlay = (dwellMs: number) => {
@@ -74,29 +103,34 @@ const useHoverOverlay = (dwellMs: number) => {
 };
 
 type OverlayPortalProps = {
+  interactive: boolean;
   visible: boolean;
   position: OverlayPosition;
   children: React.ReactNode;
 };
 
-// Thin portal that positions content near the cursor.
+// Thin portal that positions content near the hovered term while escaping
+// clipping and stacking contexts created by page surfaces.
 const OverlayPortal: React.FC<OverlayPortalProps> = ({
+  interactive,
   visible,
   position,
   children,
 }) => {
-  if (!visible) return null;
-  return (
+  if (!visible || typeof document === "undefined") return null;
+  const overlay = (
     <div
-      className="fixed z-50 max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
+      className="fixed z-[100] max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
       style={{
-        top: Math.min(position.y + 12, window.innerHeight - 240),
-        left: Math.min(position.x + 12, window.innerWidth - 360),
+        top: position.y,
+        left: position.x,
+        pointerEvents: interactive ? "auto" : "none",
       }}
     >
       {children}
     </div>
   );
+  return createPortal(overlay, document.body);
 };
 
 type HintSurfaceProps = {
@@ -170,9 +204,7 @@ export const Hint: React.FC<HintProps> = ({
           "hint-trigger tracking-normal whitespace-pre-wrap normal-case",
           noUnderline && "no-underline",
         )}
-        onMouseEnter={(e) =>
-          overlay.showAt({ x: e.clientX ?? 0, y: e.clientY ?? 0 })
-        }
+        onMouseEnter={(e) => overlay.showAt(getAnchorPosition(e.currentTarget))}
         onMouseLeave={() => {
           overlay.setHovering(false);
           overlay.hide();
@@ -180,7 +212,11 @@ export const Hint: React.FC<HintProps> = ({
       >
         {children}
       </span>
-      <OverlayPortal visible={overlay.visible} position={overlay.position}>
+      <OverlayPortal
+        interactive={overlay.stable}
+        visible={overlay.visible}
+        position={overlay.position}
+      >
         <div
           onMouseEnter={() => overlay.setHovering(true)}
           onMouseLeave={() => {
