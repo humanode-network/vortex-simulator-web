@@ -204,9 +204,7 @@ export const Hint: React.FC<HintProps> = ({
           "hint-trigger tracking-normal whitespace-pre-wrap normal-case",
           noUnderline && "no-underline",
         )}
-        onMouseEnter={(e) =>
-          overlay.showAt(getAnchorPosition(e.currentTarget))
-        }
+        onMouseEnter={(e) => overlay.showAt(getAnchorPosition(e.currentTarget))}
         onMouseLeave={() => {
           overlay.setHovering(false);
           overlay.hide();
