@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
   Card,
@@ -41,6 +42,10 @@ const useHoverOverlay = (dwellMs: number) => {
     hoverTimer.current = window.setTimeout(() => setStable(true), dwellMs);
   };
 
+  const moveTo = (pos: OverlayPosition) => {
+    setPosition(pos);
+  };
+
   const hide = (force = false) => {
     if (!stable || force) {
       clearTimers();
@@ -69,11 +74,13 @@ const useHoverOverlay = (dwellMs: number) => {
       }
     },
     showAt,
+    moveTo,
     hide,
   };
 };
 
 type OverlayPortalProps = {
+  interactive: boolean;
   visible: boolean;
   position: OverlayPosition;
   children: React.ReactNode;
@@ -81,22 +88,25 @@ type OverlayPortalProps = {
 
 // Thin portal that positions content near the cursor.
 const OverlayPortal: React.FC<OverlayPortalProps> = ({
+  interactive,
   visible,
   position,
   children,
 }) => {
-  if (!visible) return null;
-  return (
+  if (!visible || typeof document === "undefined") return null;
+  const overlay = (
     <div
-      className="fixed z-50 max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
+      className="fixed z-[100] max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
       style={{
         top: Math.min(position.y + 12, window.innerHeight - 240),
         left: Math.min(position.x + 12, window.innerWidth - 360),
+        pointerEvents: interactive ? "auto" : "none",
       }}
     >
       {children}
     </div>
   );
+  return createPortal(overlay, document.body);
 };
 
 type HintSurfaceProps = {
@@ -173,6 +183,9 @@ export const Hint: React.FC<HintProps> = ({
         onMouseEnter={(e) =>
           overlay.showAt({ x: e.clientX ?? 0, y: e.clientY ?? 0 })
         }
+        onMouseMove={(e) =>
+          overlay.moveTo({ x: e.clientX ?? 0, y: e.clientY ?? 0 })
+        }
         onMouseLeave={() => {
           overlay.setHovering(false);
           overlay.hide();
@@ -180,7 +193,11 @@ export const Hint: React.FC<HintProps> = ({
       >
         {children}
       </span>
-      <OverlayPortal visible={overlay.visible} position={overlay.position}>
+      <OverlayPortal
+        interactive={overlay.stable}
+        visible={overlay.visible}
+        position={overlay.position}
+      >
         <div
           onMouseEnter={() => overlay.setHovering(true)}
           onMouseLeave={() => {
