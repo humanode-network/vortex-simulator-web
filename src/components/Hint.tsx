@@ -14,6 +14,34 @@ import "./Hint.css";
 
 type OverlayPosition = { x: number; y: number };
 
+const OVERLAY_WIDTH = 320;
+const OVERLAY_HEIGHT = 240;
+const OVERLAY_GAP = 10;
+const VIEWPORT_MARGIN = 12;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getAnchorPosition(element: HTMLElement): OverlayPosition {
+  const rect = element.getBoundingClientRect();
+  const maxLeft = window.innerWidth - OVERLAY_WIDTH - VIEWPORT_MARGIN;
+  const maxTop = window.innerHeight - OVERLAY_HEIGHT - VIEWPORT_MARGIN;
+
+  return {
+    x: clamp(
+      rect.left + rect.width / 2 - OVERLAY_WIDTH / 2,
+      VIEWPORT_MARGIN,
+      Math.max(VIEWPORT_MARGIN, maxLeft),
+    ),
+    y: clamp(
+      rect.bottom + OVERLAY_GAP,
+      VIEWPORT_MARGIN,
+      Math.max(VIEWPORT_MARGIN, maxTop),
+    ),
+  };
+}
+
 // Headless hover logic: track position, visibility, and “stable” state after dwell.
 const useHoverOverlay = (dwellMs: number) => {
   const [visible, setVisible] = useState(false);
@@ -40,10 +68,6 @@ const useHoverOverlay = (dwellMs: number) => {
     setStable(false);
     clearTimers();
     hoverTimer.current = window.setTimeout(() => setStable(true), dwellMs);
-  };
-
-  const moveTo = (pos: OverlayPosition) => {
-    setPosition(pos);
   };
 
   const hide = (force = false) => {
@@ -74,7 +98,6 @@ const useHoverOverlay = (dwellMs: number) => {
       }
     },
     showAt,
-    moveTo,
     hide,
   };
 };
@@ -86,7 +109,8 @@ type OverlayPortalProps = {
   children: React.ReactNode;
 };
 
-// Thin portal that positions content near the cursor.
+// Thin portal that positions content near the hovered term while escaping
+// clipping and stacking contexts created by page surfaces.
 const OverlayPortal: React.FC<OverlayPortalProps> = ({
   interactive,
   visible,
@@ -98,8 +122,8 @@ const OverlayPortal: React.FC<OverlayPortalProps> = ({
     <div
       className="fixed z-[100] max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
       style={{
-        top: Math.min(position.y + 12, window.innerHeight - 240),
-        left: Math.min(position.x + 12, window.innerWidth - 360),
+        top: position.y,
+        left: position.x,
         pointerEvents: interactive ? "auto" : "none",
       }}
     >
@@ -181,10 +205,7 @@ export const Hint: React.FC<HintProps> = ({
           noUnderline && "no-underline",
         )}
         onMouseEnter={(e) =>
-          overlay.showAt({ x: e.clientX ?? 0, y: e.clientY ?? 0 })
-        }
-        onMouseMove={(e) =>
-          overlay.moveTo({ x: e.clientX ?? 0, y: e.clientY ?? 0 })
+          overlay.showAt(getAnchorPosition(e.currentTarget))
         }
         onMouseLeave={() => {
           overlay.setHovering(false);
