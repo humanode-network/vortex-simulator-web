@@ -5,6 +5,7 @@ import {
   isUrgentItemInteractable,
   normalizeAppHref,
   proposalIdFromHref,
+  toLimitedUrgentItems,
   toUrgentItems,
   urgentEntityKey,
 } from "../../src/lib/feedUi";
@@ -58,4 +59,17 @@ test("urgent feed dedupes by entity and keeps newest item", () => {
 
   expect(urgentEntityKey(older)).toBe("proposal:p1");
   expect(toUrgentItems([older, newer], true)).toEqual([newer]);
+});
+
+test("limited urgent feed caps the filtered deduped result", () => {
+  const items: FeedItemDto[] = Array.from({ length: 4 }, (_, index) => ({
+    ...buildItem,
+    id: `item-${index}`,
+    href: `/app/proposals/p${index}/pp`,
+    stage: "pool",
+    timestamp: `2026-01-0${index + 1}T00:00:00.000Z`,
+  }));
+
+  expect(toLimitedUrgentItems(items, true, undefined, 2)).toHaveLength(2);
+  expect(toLimitedUrgentItems(items, true, undefined, 0)).toEqual([]);
 });

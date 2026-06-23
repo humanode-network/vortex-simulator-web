@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { apiClock, apiHuman, apiMyGovernance } from "@/lib/apiClient";
-import type { FeedScope } from "../components/FeedControls";
+import type { FeedScope } from "@/lib/feedScopeRouting";
 
 export function useFeedChamberFilters(input: {
   address?: string | null;
