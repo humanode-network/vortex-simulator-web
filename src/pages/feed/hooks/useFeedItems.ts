@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { toTimestampMs } from "@/lib/dateTime";
-import { feedItemKey, toUrgentItems } from "@/lib/feedUi";
+import { feedItemKey, toLimitedUrgentItems } from "@/lib/feedUi";
+import {
+  buildFeedRequestForScope,
+  buildUrgentFeedRequests,
+  feedScopeRequiresChambers,
+  feedScopeRequiresWallet,
+} from "@/lib/feedScopeRouting";
+import type { FeedScope } from "@/lib/feedScopeRouting";
 import { apiFeed } from "@/lib/apiClient";
 import type { FeedItemDto } from "@/types/api";
-import type { FeedScope } from "../components/FeedControls";
 import { FEED_MAX_PAGE_SIZE, FEED_MIN_PAGE_SIZE } from "./useFeedPageSize";
 
 const URGENT_STAGE_LIMIT = FEED_MAX_PAGE_SIZE * 2;
@@ -15,52 +21,21 @@ async function loadUrgentFeedItems(input: {
   limit: number;
   isGovernorActive: boolean;
 }): Promise<FeedItemDto[]> {
-  const [base, pool, vote, build, invites, system] = await Promise.all([
-    apiFeed({ chambers: input.chambers, limit: input.limit }),
-    apiFeed({
-      stage: "pool",
-      chambers: input.chambers,
-      limit: URGENT_STAGE_LIMIT,
-    }),
-    apiFeed({
-      stage: "vote",
-      chambers: input.chambers,
-      limit: URGENT_STAGE_LIMIT,
-    }),
-    input.address
-      ? apiFeed({
-          stage: "build",
-          actor: input.address,
-          limit: URGENT_STAGE_LIMIT,
-        })
-      : Promise.resolve({ items: [] as FeedItemDto[] }),
-    input.address
-      ? apiFeed({
-          actor: input.address,
-          stage: "faction",
-          limit: FEED_MIN_PAGE_SIZE,
-        })
-      : Promise.resolve({ items: [] as FeedItemDto[] }),
-    input.address
-      ? apiFeed({
-          actor: input.address,
-          stage: "system",
-          limit: URGENT_STAGE_LIMIT,
-        })
-      : Promise.resolve({ items: [] as FeedItemDto[] }),
-  ]);
+  const responses = await Promise.all(
+    buildUrgentFeedRequests({
+      address: input.address,
+      chamberFilters: input.chambers,
+      baseLimit: input.limit,
+      stageLimit: URGENT_STAGE_LIMIT,
+      factionLimit: FEED_MIN_PAGE_SIZE,
+    }).map((request) => apiFeed(request)),
+  );
 
-  return toUrgentItems(
-    [
-      ...base.items,
-      ...pool.items,
-      ...vote.items,
-      ...build.items,
-      ...invites.items,
-      ...system.items,
-    ],
+  return toLimitedUrgentItems(
+    responses.flatMap((response) => response.items),
     input.isGovernorActive,
     input.address,
+    input.limit,
   );
 }
 
@@ -90,19 +65,15 @@ export function useFeedItems({
   useEffect(() => {
     let active = true;
     const loadFeed = async () => {
-      if (feedScope !== "all" && !address) {
+      if (feedScopeRequiresWallet(feedScope) && !address) {
         setFeedItems([]);
         onLoadError("Connect a wallet to view your feed.");
         setNextCursor(null);
         return;
       }
+      if (feedScopeRequiresChambers(feedScope) && chambersLoading) return;
       if (
-        (feedScope === "chambers" || feedScope === "urgent") &&
-        chambersLoading
-      )
-        return;
-      if (
-        (feedScope === "chambers" || feedScope === "urgent") &&
+        feedScopeRequiresChambers(feedScope) &&
         chamberFilters &&
         chamberFilters.length === 0
       ) {
@@ -126,12 +97,14 @@ export function useFeedItems({
           onLoadError(null);
           return;
         }
-        const res = await apiFeed({
-          actor: feedScope === "my" ? (address ?? undefined) : undefined,
-          chambers:
-            feedScope === "chambers" ? (chamberFilters ?? []) : undefined,
-          limit: pageSize,
-        });
+        const res = await apiFeed(
+          buildFeedRequestForScope({
+            scope: feedScope,
+            address: address ?? undefined,
+            chamberFilters,
+            limit: pageSize,
+          }),
+        );
         if (!active) return;
         setFeedItems(res.items);
         setNextCursor(res.nextCursor ?? null);
@@ -167,27 +140,17 @@ export function useFeedItems({
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const res = await apiFeed({
-        cursor: nextCursor,
-        actor: feedScope === "my" ? (address ?? undefined) : undefined,
-        chambers:
-          feedScope === "chambers" || feedScope === "urgent"
-            ? (chamberFilters ?? [])
-            : undefined,
-        limit: pageSize,
-      });
-      const items =
-        feedScope === "urgent"
-          ? toUrgentItems(res.items, viewerGovernorActive, address ?? undefined)
-          : res.items;
+      const res = await apiFeed(
+        buildFeedRequestForScope({
+          scope: feedScope === "urgent" ? "all" : feedScope,
+          address: address ?? undefined,
+          chamberFilters,
+          cursor: nextCursor,
+          limit: pageSize,
+        }),
+      );
+      const items = res.items;
       setFeedItems((curr) => {
-        if (feedScope === "urgent") {
-          return toUrgentItems(
-            [...(curr ?? []), ...items],
-            viewerGovernorActive,
-            address ?? undefined,
-          );
-        }
         const existing = new Set((curr ?? []).map(feedItemKey));
         const nextItems = items.filter(
           (item) => !existing.has(feedItemKey(item)),
@@ -209,7 +172,6 @@ export function useFeedItems({
     nextCursor,
     onLoadError,
     pageSize,
-    viewerGovernorActive,
   ]);
 
   const dismissItem = useCallback((key: string) => {

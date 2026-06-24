@@ -77,15 +77,27 @@ export async function apiVerify(input: {
   );
 }
 
-export async function apiFeed(input?: {
+export type FeedQueryInput = {
   stage?: string;
+  excludeStages?: string[];
+  excludeEntityTypes?: string[];
   cursor?: string;
   actor?: string;
   chambers?: string[];
   limit?: number;
-}): Promise<GetFeedResponse> {
+};
+
+export async function apiFeed(
+  input?: FeedQueryInput,
+): Promise<GetFeedResponse> {
   const params = new URLSearchParams();
   if (input?.stage) params.set("stage", input.stage);
+  if (input?.excludeStages && input.excludeStages.length > 0) {
+    params.set("excludeStages", input.excludeStages.join(","));
+  }
+  if (input?.excludeEntityTypes && input.excludeEntityTypes.length > 0) {
+    params.set("excludeEntityTypes", input.excludeEntityTypes.join(","));
+  }
   if (input?.cursor) params.set("cursor", input.cursor);
   if (input?.actor) params.set("actor", input.actor);
   if (input?.chambers && input.chambers.length > 0) {

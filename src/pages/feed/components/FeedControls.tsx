@@ -1,13 +1,5 @@
 import { ToggleGroup } from "@/components/ToggleGroup";
-
-export type FeedScope = "urgent" | "my" | "chambers" | "all";
-
-const FEED_SCOPES: { value: FeedScope; label: string }[] = [
-  { value: "urgent", label: "Urgent" },
-  { value: "my", label: "My activity" },
-  { value: "chambers", label: "Chambers and factions" },
-  { value: "all", label: "All activity" },
-];
+import { FEED_SCOPES, type FeedScope } from "@/lib/feedScopeRouting";
 
 type FeedControlsProps = {
   feedScope: FeedScope;

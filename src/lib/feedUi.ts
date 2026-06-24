@@ -107,3 +107,17 @@ export const toUrgentItems = (
   }
   return Array.from(deduped.values());
 };
+
+export const toLimitedUrgentItems = (
+  items: FeedItemDto[],
+  isGovernorActive: boolean,
+  viewerAddress: string | undefined,
+  limit: number,
+): FeedItemDto[] => {
+  const safeLimit = Math.max(0, Math.floor(limit));
+  if (safeLimit === 0) return [];
+  return toUrgentItems(items, isGovernorActive, viewerAddress).slice(
+    0,
+    safeLimit,
+  );
+};

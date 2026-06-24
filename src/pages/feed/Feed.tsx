@@ -3,12 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PageHint } from "@/components/PageHint";
 import { factionIdFromHref, feedItemKey } from "@/lib/feedUi";
+import type { FeedScope } from "@/lib/feedScopeRouting";
 import {
   apiFactionCofounderInviteAccept,
   apiFactionCofounderInviteDecline,
 } from "@/lib/apiClient";
 import type { FeedItemDto } from "@/types/api";
-import { FeedControls, type FeedScope } from "./components/FeedControls";
+import { FeedControls } from "./components/FeedControls";
 import { FeedListSection } from "./components/FeedListSection";
 import { FeedStatusMessages } from "./components/FeedStatusMessages";
 import { useFeedChamberFilters } from "./hooks/useFeedChamberFilters";
