@@ -41,9 +41,14 @@ export function StageChip({ stage, label, className }: StageChipProps) {
   const kind: StageChipKind = stageChipKindForStage(stage);
   const termId = hintByKind[kind];
   const content = label ?? stageLabelForStage(stage);
+  const title =
+    typeof content === "string" ? content : stageLabelForStage(stage);
 
   return (
-    <Chip className={cn("stage-chip", chipClasses[kind], className)}>
+    <Chip
+      className={cn("stage-chip", chipClasses[kind], className)}
+      title={title}
+    >
       {termId ? <HintLabel termId={termId}>{content}</HintLabel> : content}
     </Chip>
   );

@@ -87,7 +87,7 @@
 .glassy-record-card__button {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) 30rem;
+  grid-template-columns: minmax(0, 1fr) minmax(28rem, 31rem);
   gap: 1rem;
   border: 0;
   background: transparent;
@@ -117,7 +117,9 @@
 
 .glassy-record-card__aside {
   display: grid;
-  grid-template-columns: 8.75rem 8.75rem 8.75rem 1.25rem;
+  grid-template-columns:
+    minmax(0, 10rem) minmax(0, 8.75rem) minmax(0, 7.75rem)
+    1.25rem;
   align-items: center;
   justify-content: end;
   gap: 0.65rem;
@@ -128,6 +130,7 @@
 }
 
 .glassy-record-card__metaPill {
+  min-width: 0;
   width: 100%;
   justify-content: center;
   color: var(--record-meta-text);
@@ -157,12 +160,16 @@
 }
 
 .glassy-record-card__stage {
+  min-width: 0;
   width: 100%;
   justify-content: center;
   white-space: nowrap;
 }
 
 .glassy-record-card__time {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--record-time-text);
   font-size: 0.72rem;
   white-space: nowrap;

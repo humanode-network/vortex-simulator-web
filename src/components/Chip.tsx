@@ -5,17 +5,24 @@ import { cn } from "@/lib/utils";
 type ChipProps = {
   children: ReactNode;
   className?: string;
+  title?: string;
 };
 
-export function Chip({ children, className }: ChipProps) {
+export function Chip({ children, className, title }: ChipProps) {
+  const resolvedTitle =
+    title ?? (typeof children === "string" ? children : undefined);
+
   return (
     <span
+      title={resolvedTitle}
       className={cn(
-        "inline-flex min-h-7 items-center rounded-full px-3.5 py-1 text-xs leading-none font-semibold tracking-wide",
+        "inline-flex min-h-7 max-w-full min-w-0 items-center justify-center overflow-hidden rounded-full px-3.5 py-1 text-xs leading-none font-semibold tracking-wide",
         className,
       )}
     >
-      {children}
+      <span className="block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+        {children}
+      </span>
     </span>
   );
 }
