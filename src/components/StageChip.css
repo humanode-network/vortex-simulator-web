@@ -1,7 +1,20 @@
 .stage-chip {
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--stage-chip-border);
   background: var(--stage-chip-bg);
   color: var(--stage-chip-text);
+}
+
+.stage-chip .hint-trigger,
+.stage-chip .hint-trigger > span,
+.stage-chip .hint-underline {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stage-chip--proposal-pool {
