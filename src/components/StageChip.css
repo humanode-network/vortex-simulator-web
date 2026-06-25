@@ -11,9 +11,7 @@
 .stage-chip .hint-underline {
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
   color: inherit;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

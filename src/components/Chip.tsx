@@ -16,11 +16,11 @@ export function Chip({ children, className, title }: ChipProps) {
     <span
       title={resolvedTitle}
       className={cn(
-        "inline-flex min-h-7 max-w-full min-w-0 items-center justify-center overflow-hidden rounded-full px-3.5 py-1 text-xs leading-none font-semibold tracking-wide",
+        "inline-flex min-h-7 max-w-full min-w-0 items-center justify-center rounded-full px-3.5 py-1 text-xs leading-none font-semibold tracking-wide",
         className,
       )}
     >
-      <span className="block max-w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+      <span className="block max-w-full min-w-0 whitespace-nowrap">
         {children}
       </span>
     </span>
