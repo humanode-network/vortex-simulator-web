@@ -35,10 +35,10 @@
 }
 
 :root[data-theme="light"] .glassy-record-card {
-  --record-row-hover: #f7faff;
-  --record-row-open: #f8fbff;
+  --record-row-hover: rgba(247, 250, 255, 0.24);
+  --record-row-open: rgba(248, 251, 255, 0.3);
   --record-title-hover: #4f6ad7;
-  --record-meta-bg: #f7faff;
+  --record-meta-bg: rgba(247, 250, 255, 0.34);
   --record-meta-text: #4f5f82;
   --record-time-text: #6b7280;
 }

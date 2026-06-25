@@ -4,8 +4,8 @@
   --bg: #f2f5ff; /* app shell background */
   --page: #eaf0ff; /* page container background */
   --bg-accent: #e8efff; /* navbar */
-  --panel: rgba(249, 251, 255, 0.78); /* main containers */
-  --panel-alt: rgba(242, 247, 255, 0.66); /* tiles/inputs */
+  --panel: rgba(249, 251, 255, 0.32); /* main containers */
+  --panel-alt: rgba(242, 247, 255, 0.22); /* tiles/inputs */
   --text: #111827;
   --muted: #5d6475;
   /* Primary is derived from sidebar hue but intentionally less saturated. */
@@ -36,13 +36,35 @@
   --shadow-control: 0 10px 22px rgba(17, 24, 39, 0.08);
   --glass-border: rgba(255, 255, 255, 0.42);
   --glass-border-strong: rgba(255, 255, 255, 0.62);
-  --surface-glass-bg: rgba(249, 251, 255, 0.86);
-  --surface-glass-border: rgba(79, 106, 215, 0.24);
-  --surface-glass-ring: rgba(79, 106, 215, 0.16);
-  --surface-glass-hover-bg: rgba(249, 251, 255, 0.94);
+  --surface-glass-bg: rgba(249, 251, 255, 0.18);
+  --surface-glass-border: rgba(79, 106, 215, 0.34);
+  --surface-glass-ring: rgba(79, 106, 215, 0.2);
+  --surface-glass-highlight: rgba(255, 255, 255, 0.18);
+  --surface-glass-tint: rgba(111, 168, 255, 0.1);
+  --surface-glass-background:
+    linear-gradient(180deg, var(--surface-glass-highlight), transparent 58%),
+    linear-gradient(135deg, var(--surface-glass-tint), transparent 66%),
+    var(--surface-glass-bg);
+  --surface-glass-hover-bg: rgba(249, 251, 255, 0.28);
+  --surface-glass-hover-background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-glass-highlight), white 14%),
+      transparent 58%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--surface-glass-tint), var(--primary) 16%),
+      transparent 66%
+    ),
+    var(--surface-glass-hover-bg);
   --surface-glass-hover-border: rgba(79, 106, 215, 0.36);
-  --control-glass-bg: rgba(249, 251, 255, 0.76);
-  --control-glass-hover-bg: rgba(249, 251, 255, 0.9);
+  --surface-ripple-core: rgba(111, 168, 255, 0.24);
+  --surface-ripple-soft: rgba(91, 194, 181, 0.12);
+  --surface-ripple-glint: rgba(255, 255, 255, 0.24);
+  --surface-ripple-opacity: 0.9;
+  --control-glass-bg: rgba(249, 251, 255, 0.26);
+  --control-glass-hover-bg: rgba(249, 251, 255, 0.36);
   --tint-primary: rgba(111, 168, 255, 0.06);
   --tint-primary-strong: rgba(111, 168, 255, 0.1);
 
@@ -89,21 +111,27 @@
   --bg: #ffffff;
   --page: #ffffff;
   --bg-accent: #ffffff;
-  --panel: rgba(255, 255, 255, 0.82);
-  --panel-alt: rgba(255, 255, 255, 0.68);
+  --panel: rgba(248, 250, 255, 0.28);
+  --panel-alt: rgba(241, 246, 255, 0.2);
   --text: #111827;
   --muted: #6b7280;
   --border: rgba(17, 24, 39, 0.14);
   --veil: rgba(17, 24, 39, 0.45);
   --glass-border: rgba(255, 255, 255, 0.55);
   --glass-border-strong: rgba(255, 255, 255, 0.72);
-  --surface-glass-bg: rgba(255, 255, 255, 0.88);
-  --surface-glass-border: rgba(79, 106, 215, 0.22);
-  --surface-glass-ring: rgba(79, 106, 215, 0.16);
-  --surface-glass-hover-bg: rgba(255, 255, 255, 0.96);
-  --surface-glass-hover-border: rgba(79, 106, 215, 0.34);
-  --control-glass-bg: rgba(255, 255, 255, 0.78);
-  --control-glass-hover-bg: rgba(255, 255, 255, 0.92);
+  --surface-glass-bg: rgba(248, 250, 255, 0.16);
+  --surface-glass-border: rgba(79, 106, 215, 0.34);
+  --surface-glass-ring: rgba(79, 106, 215, 0.22);
+  --surface-glass-highlight: rgba(255, 255, 255, 0.22);
+  --surface-glass-tint: rgba(111, 168, 255, 0.08);
+  --surface-glass-hover-bg: rgba(248, 250, 255, 0.28);
+  --surface-glass-hover-border: rgba(79, 106, 215, 0.46);
+  --surface-ripple-core: rgba(111, 168, 255, 0.22);
+  --surface-ripple-soft: rgba(91, 194, 181, 0.1);
+  --surface-ripple-glint: rgba(255, 255, 255, 0.26);
+  --surface-ripple-opacity: 0.9;
+  --control-glass-bg: rgba(248, 250, 255, 0.22);
+  --control-glass-hover-bg: rgba(248, 250, 255, 0.34);
   --shadow-card: 0 18px 44px rgba(17, 24, 39, 0.09);
   --shadow-popover: 0 22px 60px rgba(17, 24, 39, 0.16);
   --shadow-tile: 0 14px 34px rgba(17, 24, 39, 0.09);
@@ -135,8 +163,14 @@
   --surface-glass-bg: rgba(6, 9, 14, 0.72);
   --surface-glass-border: rgba(255, 255, 255, 0.12);
   --surface-glass-ring: rgba(111, 168, 255, 0.24);
+  --surface-glass-highlight: rgba(255, 255, 255, 0.08);
+  --surface-glass-tint: rgba(111, 168, 255, 0.06);
   --surface-glass-hover-bg: rgba(12, 18, 28, 0.82);
   --surface-glass-hover-border: rgba(111, 168, 255, 0.32);
+  --surface-ripple-core: rgba(111, 168, 255, 0.18);
+  --surface-ripple-soft: rgba(91, 194, 181, 0.08);
+  --surface-ripple-glint: rgba(255, 255, 255, 0.08);
+  --surface-ripple-opacity: 0.75;
   --control-glass-bg: rgba(10, 14, 22, 0.72);
   --control-glass-hover-bg: rgba(15, 22, 34, 0.82);
   --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.72);
@@ -195,8 +229,14 @@
   --surface-glass-bg: rgba(29, 8, 2, 0.74);
   --surface-glass-border: rgba(255, 187, 104, 0.16);
   --surface-glass-ring: rgba(255, 138, 31, 0.28);
+  --surface-glass-highlight: rgba(255, 209, 102, 0.09);
+  --surface-glass-tint: rgba(255, 104, 0, 0.08);
   --surface-glass-hover-bg: rgba(49, 15, 4, 0.84);
   --surface-glass-hover-border: rgba(255, 138, 31, 0.42);
+  --surface-ripple-core: rgba(255, 138, 31, 0.2);
+  --surface-ripple-soft: rgba(255, 61, 0, 0.1);
+  --surface-ripple-glint: rgba(255, 209, 102, 0.12);
+  --surface-ripple-opacity: 0.8;
   --control-glass-bg: rgba(38, 11, 3, 0.74);
   --control-glass-hover-bg: rgba(59, 18, 5, 0.86);
   --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.78);
