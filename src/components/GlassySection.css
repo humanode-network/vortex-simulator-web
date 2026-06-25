@@ -27,11 +27,11 @@
   --glassy-section-title: #1f2937;
   --glassy-section-rule: rgba(79, 106, 215, 0.28);
   --glassy-section-rule-soft: rgba(79, 106, 215, 0.05);
-  --glassy-tile-hover: #f7faff;
-  --glassy-tile-shine: rgba(255, 255, 255, 0.68);
+  --glassy-tile-hover: rgba(247, 250, 255, 0.26);
+  --glassy-tile-shine: rgba(255, 255, 255, 0.36);
   --glassy-metric-label: #5b6578;
   --glassy-metric-value: #27324a;
-  --glassy-status-bg: #f7faff;
+  --glassy-status-bg: rgba(247, 250, 255, 0.3);
   --glassy-status-border: rgba(79, 106, 215, 0.2);
   --glassy-status-text: #4f5f82;
   --glassy-progress-track: #edf3ff;

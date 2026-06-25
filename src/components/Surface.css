@@ -1,0 +1,54 @@
+.vortex-surface--glass {
+  position: relative;
+  isolation: isolate;
+  background: var(--surface-glass-background);
+}
+
+.vortex-surface--glass:hover {
+  background: var(--surface-glass-hover-background);
+}
+
+.vortex-surface--ripple {
+  overflow: hidden;
+}
+
+.vortex-surface--ripple::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 13rem at var(--surface-ripple-x, 50%) var(--surface-ripple-y, 50%),
+      var(--surface-ripple-core),
+      var(--surface-ripple-soft) 34%,
+      transparent 72%
+    ),
+    radial-gradient(
+      circle 4rem at var(--surface-ripple-x, 50%) var(--surface-ripple-y, 50%),
+      var(--surface-ripple-glint),
+      transparent 70%
+    );
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.vortex-surface--ripple > * {
+  position: relative;
+  z-index: 1;
+}
+
+.vortex-surface--ripple:hover::before {
+  opacity: var(--surface-ripple-opacity);
+}
+
+.vortex-surface--transparent {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vortex-surface--ripple::before {
+    transition: none;
+  }
+}
