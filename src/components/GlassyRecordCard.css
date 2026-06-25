@@ -117,10 +117,9 @@
 
 .glassy-record-card__aside {
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) minmax(
-      8.75rem,
-      9.5rem
-    ) 7.75rem 1.25rem;
+  grid-template-columns:
+    minmax(15rem, 1fr) minmax(8.75rem, 9.5rem)
+    7.75rem 1.25rem;
   align-items: center;
   justify-content: end;
   gap: 0.65rem;
