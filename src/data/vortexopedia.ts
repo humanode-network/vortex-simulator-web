@@ -1611,4 +1611,188 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     source: "App UX: governing status scale",
     updated: "2025-12-18",
   },
+  {
+    ref: 56,
+    id: "invision_stability_stable_band",
+    name: "Stable Invision band",
+    category: "governance",
+    short:
+      "A stability band meaning the system is closing decisions, avoiding stale backlog, and preserving continuity well enough to be considered operationally healthy.",
+    long: [
+      "Stable is the high stability bucket in Invision.",
+      "It means the stability engine sees enough decision closure, backlog health, delay health, Formation continuity, governor continuity, constitutional calm, and concentration health to treat the system as operationally sound.",
+      "Stable does not mean perfect. It means the current evidence does not show a serious governance-flow problem.",
+    ],
+    tags: ["invision", "stability", "system_health", "band"],
+    related: ["invision_band", "gradual_decentralization"],
+    examples: [
+      "If proposals are closing on time and live work is not stale, the stability engine can land in the Stable band.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision stability bands",
+    updated: "2026-06-26",
+  },
+  {
+    ref: 57,
+    id: "invision_stability_watch_band",
+    name: "Watch Invision band",
+    category: "governance",
+    short:
+      "A stability band meaning the system still operates, but one or more stability signals need attention before they become a serious failure mode.",
+    long: [
+      "Watch is the middle stability bucket in Invision.",
+      "It appears when the system is not broken, but signals such as stale live work, weak decision closure, Formation drag, or concentration pressure reduce confidence in the governance flow.",
+      "Watch is an attention state. It asks governors to inspect the components rather than assume the aggregate score is enough.",
+    ],
+    tags: ["invision", "stability", "system_health", "band", "watch"],
+    related: [
+      "invision_band",
+      "invision_stability_stable_band",
+      "invision_stability_unstable_band",
+    ],
+    examples: [
+      "A system with good legitimacy but a stale proposal backlog can fall into Watch.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision stability bands",
+    updated: "2026-06-26",
+  },
+  {
+    ref: 58,
+    id: "invision_stability_unstable_band",
+    name: "Unstable Invision band",
+    category: "governance",
+    short:
+      "A stability band meaning the current evidence points to a serious governance-flow problem, such as severe stale backlog, weak closure, or constitutional stress.",
+    long: [
+      "Unstable is the low stability bucket in Invision.",
+      "It means the stability engine sees enough pressure that the system should not be treated as healthy without intervention.",
+      "Typical causes include very stale votes, unresolved Formation work, low decision closure, legitimacy referendum pressure, or sharp concentration of active work.",
+    ],
+    tags: ["invision", "stability", "system_health", "band", "critical"],
+    related: ["invision_band", "invision_stability_watch_band"],
+    examples: [
+      "A system with many stale live items and low decision closure can land in Unstable.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision stability bands",
+    updated: "2026-06-26",
+  },
+  {
+    ref: 59,
+    id: "invision_decentralization_broad_band",
+    name: "Broad Invision band",
+    category: "governance",
+    short:
+      "A decentralization band meaning governance activity is spread across enough authors, chambers, factions, delegates, and execution leaders to look broadly distributed.",
+    long: [
+      "Broad is the high decentralization bucket in Invision.",
+      "It means no single center dominates the visible governance surface under the current evidence window.",
+      "Broad is about distribution of influence and workload, not whether every governor participates equally in every action.",
+    ],
+    tags: ["invision", "decentralization", "system_health", "band"],
+    related: [
+      "invision_band",
+      "gradual_decentralization",
+      "constant_deterrence",
+    ],
+    examples: [
+      "If proposal authorship, faction membership, chamber load, and execution leadership are distributed, decentralization can land in Broad.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision decentralization bands",
+    updated: "2026-06-26",
+  },
+  {
+    ref: 60,
+    id: "invision_decentralization_mixed_band",
+    name: "Mixed Invision band",
+    category: "governance",
+    short:
+      "A decentralization band meaning influence is neither broadly distributed nor dangerously concentrated; some surfaces are healthy while others show clustering.",
+    long: [
+      "Mixed is the middle decentralization bucket in Invision.",
+      "It means the system has both distributed and concentrated signals at the same time.",
+      "Users should inspect the component list to see whether concentration comes from proposal authorship, accepted proposals, chamber load, factions, execution leadership, or delegated influence.",
+    ],
+    tags: ["invision", "decentralization", "system_health", "band", "watch"],
+    related: [
+      "invision_band",
+      "invision_decentralization_broad_band",
+      "invision_decentralization_concentrated_band",
+    ],
+    examples: [
+      "A system can be Mixed when many governors author proposals, but one chamber or faction still dominates live work.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision decentralization bands",
+    updated: "2026-06-26",
+  },
+  {
+    ref: 61,
+    id: "invision_decentralization_concentrated_band",
+    name: "Concentrated Invision band",
+    category: "governance",
+    short:
+      "A decentralization band meaning too much visible governance influence or workload is clustered around too few centers.",
+    long: [
+      "Concentrated is the low decentralization bucket in Invision.",
+      "It indicates that one or a small number of authors, chambers, factions, delegates, or execution leaders dominate the measured governance surface.",
+      "Concentrated does not automatically mean abuse. It means the current distribution is structurally fragile and should be reviewed.",
+    ],
+    tags: [
+      "invision",
+      "decentralization",
+      "system_health",
+      "band",
+      "concentration",
+    ],
+    related: [
+      "invision_band",
+      "invision_decentralization_mixed_band",
+      "constant_deterrence",
+    ],
+    examples: [
+      "If one faction or chamber controls most visible activity, decentralization can land in Concentrated.",
+    ],
+    stages: ["global"],
+    links: [
+      {
+        label: "Invision",
+        url: "/app/invision",
+      },
+    ],
+    source: "App UX: Invision decentralization bands",
+    updated: "2026-06-26",
+  },
 ];
