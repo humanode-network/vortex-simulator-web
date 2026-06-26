@@ -25,6 +25,7 @@ import type {
 
 type EngineDto = InvisionDecentralizationDto | InvisionStabilityDto;
 type StatusTone = "danger" | "neutral" | "ok" | "primary" | "warn";
+type EngineBand = EngineDto["band"];
 
 function toneForScore(tone: InvisionStabilityComponentDto["tone"]) {
   if (tone === "critical") return "danger";
@@ -51,6 +52,23 @@ function toneForRiskStatus(status: string) {
   return "primary";
 }
 
+function invisionBandTermId(band: EngineBand): string {
+  switch (band) {
+    case "Stable":
+      return "invision_stability_stable_band";
+    case "Watch":
+      return "invision_stability_watch_band";
+    case "Unstable":
+      return "invision_stability_unstable_band";
+    case "Broad":
+      return "invision_decentralization_broad_band";
+    case "Mixed":
+      return "invision_decentralization_mixed_band";
+    case "Concentrated":
+      return "invision_decentralization_concentrated_band";
+  }
+}
+
 function EngineSection({
   engine,
   title,
@@ -73,7 +91,12 @@ function EngineSection({
           label={<HintLabel termId="invision_band">Band</HintLabel>}
           value={
             <GlassyStatusChip tone={toneForHealthScore(engine.score)}>
-              {engine.band}
+              <HintLabel
+                termId={invisionBandTermId(engine.band)}
+                underline={false}
+              >
+                {engine.band}
+              </HintLabel>
             </GlassyStatusChip>
           }
         />

@@ -46,8 +46,9 @@ test("Phase 89 static visual contract covers public entry routes", () => {
   assert.match(guide, /The two UX primitives: hints and stages/);
 
   assert.match(vortexopedia, /Search terms/);
-  assert.match(vortexopedia, /Showing 57 \/ 57 entries/);
+  assert.match(vortexopedia, /Showing 63 \/ 63 entries/);
   assert.match(vortexopedia, /Invision band/);
+  assert.match(vortexopedia, /Concentrated Invision band/);
   assert.match(vortexopedia, /Vortex/);
 });
 
