@@ -168,6 +168,102 @@ export type GetFactionsResponse = {
   };
 };
 
+export type InitiativeRoleDto = "admin" | "steward" | "member";
+export type InitiativeStatusDto = "active" | "paused" | "archived";
+export type InitiativeBoardCardStatusDto =
+  | "backlog"
+  | "doing"
+  | "proposal"
+  | "blocked"
+  | "done";
+export type InitiativeThreadStatusDto = "open" | "resolved" | "locked";
+export type InitiativeMembershipDto = {
+  address: string;
+  role: InitiativeRoleDto;
+  isActive: boolean;
+  joinedAt: string;
+};
+export type InitiativeBoardColumnDto = {
+  id: string;
+  key: InitiativeBoardCardStatusDto;
+  title: string;
+  sortOrder: number;
+};
+export type InitiativeBoardCardDto = {
+  id: string;
+  columnId: string;
+  title: string;
+  body: string;
+  status: InitiativeBoardCardStatusDto;
+  ownerAddress: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+export type InitiativeThreadMessageDto = {
+  id: string;
+  authorAddress: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+export type InitiativeReferenceDto = {
+  id: string;
+  title: string;
+};
+export type InitiativeThreadDto = {
+  id: string;
+  title: string;
+  body: string;
+  status: InitiativeThreadStatusDto;
+  authorAddress: string;
+  replies: number;
+  createdAt: string;
+  updatedAt: string;
+  messages?: InitiativeThreadMessageDto[];
+};
+export type InitiativeProposalLinkDto = {
+  proposalId: string;
+  title: string;
+  stage: ProposalStageDto;
+  href: string;
+};
+export type InitiativeDto = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  status: InitiativeStatusDto;
+  tags: string[];
+  createdByAddress: string;
+  createdAt: string;
+  updatedAt: string;
+  admins: string[];
+  stewards: string[];
+  memberCount: number;
+  boardCardCount?: number;
+  threadCount?: number;
+  proposalCount?: number;
+  viewerRole?: InitiativeRoleDto | null;
+  viewerCanAdmin?: boolean;
+  viewerCanSteward?: boolean;
+  boardColumns?: InitiativeBoardColumnDto[];
+  boardCards?: InitiativeBoardCardDto[];
+  threads?: InitiativeThreadDto[];
+  chatMessages?: InitiativeThreadMessageDto[];
+  memberships?: InitiativeMembershipDto[];
+  proposals?: InitiativeProposalLinkDto[];
+};
+export type GetInitiativesResponse = {
+  items: InitiativeDto[];
+  totals?: {
+    active: number;
+    paused: number;
+    archived: number;
+  };
+};
+
 export type ChamberProposalStageDto = "upcoming" | "live" | "ended";
 export type ChamberProposalDto = {
   id: string;
@@ -515,6 +611,7 @@ export type ProposalListItemDto = {
   href?: string;
   ctaPrimary: string;
   ctaSecondary: string;
+  initiative?: InitiativeReferenceDto;
 };
 export type GetProposalsResponse = { items: ProposalListItemDto[] };
 
@@ -556,6 +653,7 @@ export type ProposalStatusDto = {
     | "ready_to_finish"
     | "completed";
   pendingMilestoneIndex?: number | null;
+  initiative?: InitiativeReferenceDto;
   updatedAt: string;
 };
 
@@ -1054,6 +1152,7 @@ export type FeedItemDto = {
   stats?: FeedStatDto[];
   proposer?: string;
   proposerId?: string;
+  initiative?: InitiativeReferenceDto;
   ctaPrimary?: string;
   ctaSecondary?: string;
   href?: string;

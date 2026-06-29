@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 
+import { Chip } from "@/components/Chip";
 import {
   buildProposalStageLinks,
   ProposalStageBar,
@@ -74,6 +76,15 @@ export function ProposalPageHeader({
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
+      {status?.initiative ? (
+        <div className="flex justify-center">
+          <Link to={`/app/initiatives/${status.initiative.id}`}>
+            <Chip className="stage-chip stage-chip--system">
+              Initiative · {status.initiative.title}
+            </Chip>
+          </Link>
+        </div>
+      ) : null}
       <ProposalStageBar
         current={stage}
         liveStage={liveStage}

@@ -117,6 +117,11 @@ export function FeedListSection({
         return (
           <GlassyRecordCard
             key={itemKey}
+            association={
+              item.initiative
+                ? `Initiative · ${item.initiative.title}`
+                : undefined
+            }
             expanded={expanded}
             onToggle={() => onToggle(itemKey)}
             rail={rail}

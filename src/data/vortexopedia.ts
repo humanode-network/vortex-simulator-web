@@ -1795,4 +1795,39 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     source: "App UX: Invision decentralization bands",
     updated: "2026-06-26",
   },
+  {
+    ref: 62,
+    id: "initiative",
+    name: "Initiative",
+    category: "governance",
+    short:
+      "A public coordination workspace where active Human Nodes organize board work, discussion, and proposals without gaining extra governance power.",
+    long: [
+      "An Initiative is created by an active Human Node and operated by an admin, steward, and member roster.",
+      "Its board, durable threads, and chat support work before, during, and after proposal creation.",
+      "Admins and stewards can associate a proposal with an active Initiative. The association records provenance only: it does not change voting eligibility, quorum weight, chamber membership, CM, MM, tier progress, or proposal lifecycle.",
+      "System-wide Initiatives are distinct from faction initiatives. A faction initiative coordinates work inside one faction; a system-wide Initiative is a public Vortex workspace.",
+    ],
+    tags: [
+      "initiative",
+      "coordination",
+      "proposal",
+      "board",
+      "threads",
+      "provenance",
+    ],
+    related: ["proposal-pools", "formation", "faction", "human_node"],
+    examples: [
+      "A research Initiative can coordinate evidence and then visibly associate the resulting policy proposal.",
+    ],
+    stages: ["global", "pool", "chamber", "formation"],
+    links: [
+      {
+        label: "Initiatives",
+        url: "/app/initiatives",
+      },
+    ],
+    source: "Vortex Simulator Phase 90",
+    updated: "2026-06-27",
+  },
 ];

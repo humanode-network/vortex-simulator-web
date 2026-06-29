@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { apiChambers, apiMyGovernance } from "@/lib/apiClient";
-import type { ChamberDto, TierProgressDto } from "@/types/api";
+import { apiChambers, apiInitiatives, apiMyGovernance } from "@/lib/apiClient";
+import type { ChamberDto, InitiativeDto, TierProgressDto } from "@/types/api";
 
 type UseProposalCreationReferenceDataInput = {
   authEnabled: boolean;
@@ -16,6 +16,7 @@ export function useProposalCreationReferenceData({
   const [tierProgress, setTierProgress] = useState<TierProgressDto | null>(
     null,
   );
+  const [initiatives, setInitiatives] = useState<InitiativeDto[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -37,17 +38,30 @@ export function useProposalCreationReferenceData({
   useEffect(() => {
     if (!authEnabled || !authenticated) {
       setTierProgress(null);
+      setInitiatives([]);
       return;
     }
     let active = true;
     (async () => {
-      try {
-        const res = await apiMyGovernance();
-        if (!active) return;
-        setTierProgress(res.tier ?? null);
-      } catch {
-        if (!active) return;
-        setTierProgress(null);
+      const [governanceResult, initiativesResult] = await Promise.allSettled([
+        apiMyGovernance(),
+        apiInitiatives(),
+      ]);
+      if (!active) return;
+      setTierProgress(
+        governanceResult.status === "fulfilled"
+          ? (governanceResult.value.tier ?? null)
+          : null,
+      );
+      if (initiativesResult.status === "fulfilled") {
+        setInitiatives(
+          initiativesResult.value.items.filter(
+            (initiative) =>
+              initiative.status === "active" && initiative.viewerCanSteward,
+          ),
+        );
+      } else {
+        setInitiatives([]);
       }
     })();
     return () => {
@@ -62,9 +76,20 @@ export function useProposalCreationReferenceData({
       .map((chamber) => ({ value: chamber.id, label: chamber.name }));
   }, [chambers]);
 
+  const initiativeOptions = useMemo(() => {
+    return [...initiatives]
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .map((initiative) => ({
+        value: initiative.id,
+        label: initiative.title,
+      }));
+  }, [initiatives]);
+
   return {
     chamberOptions,
     chambers,
+    initiativeOptions,
+    initiatives,
     tierProgress,
   };
 }

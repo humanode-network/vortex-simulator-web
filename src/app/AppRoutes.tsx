@@ -36,6 +36,9 @@ import Landing from "../pages/Landing";
 import Paper from "../pages/Paper";
 import Guide from "../pages/Guide";
 import Settings from "../pages/settings/Settings";
+import Initiatives from "../pages/initiatives/Initiatives";
+import Initiative from "../pages/initiatives/Initiative";
+import InitiativeCreate from "../pages/initiatives/InitiativeCreate";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -110,6 +113,9 @@ const AppRoutes: React.FC = () => {
         <Route path="chambers" element={<Chambers />} />
         <Route path="chambers/:id" element={<Chamber />} />
         <Route path="formation" element={<Formation />} />
+        <Route path="initiatives" element={<Initiatives />} />
+        <Route path="initiatives/new" element={<InitiativeCreate />} />
+        <Route path="initiatives/:id" element={<Initiative />} />
         <Route path="invision" element={<Invision />} />
         <Route path="vortexopedia" element={<Vortexopedia />} />
         <Route path="settings" element={<Settings />} />

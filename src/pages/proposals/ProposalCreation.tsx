@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
+import { initiativeOptionsWithSelection } from "@/lib/initiativeUi";
 import { toTimestampMs } from "@/lib/dateTime";
 import {
   apiProposalDraftDelete,
@@ -63,11 +64,16 @@ const ProposalCreation: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { chamberOptions, chambers, tierProgress } =
-    useProposalCreationReferenceData({
-      authEnabled: auth.enabled,
-      authenticated: auth.authenticated,
-    });
+  const {
+    chamberOptions,
+    chambers,
+    initiativeOptions,
+    initiatives,
+    tierProgress,
+  } = useProposalCreationReferenceData({
+    authEnabled: auth.enabled,
+    authenticated: auth.authenticated,
+  });
   const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
   const requestedResubmitsProposalId = (
     searchParams.get("resubmitsProposalId") ?? ""
@@ -132,6 +138,23 @@ const ProposalCreation: React.FC = () => {
   }, [template.id]);
 
   const step: StepKey = desiredStep;
+
+  const selectedInitiative = useMemo(() => {
+    if (!draft.initiativeId) return null;
+    const initiative = initiatives.find(
+      (item) => item.id === draft.initiativeId,
+    );
+    return initiative
+      ? { id: initiative.id, title: initiative.title }
+      : {
+          id: draft.initiativeId,
+          title: "Unavailable or no longer managed",
+        };
+  }, [draft.initiativeId, initiatives]);
+  const visibleInitiativeOptions = useMemo(
+    () => initiativeOptionsWithSelection(initiativeOptions, draft.initiativeId),
+    [draft.initiativeId, initiativeOptions],
+  );
 
   useEffect(() => {
     if (requestedDraftId) return;
@@ -319,6 +342,7 @@ const ProposalCreation: React.FC = () => {
         currentTier={currentTier}
         draft={draft}
         guardedComputed={guardedComputed}
+        initiativeOptions={visibleInitiativeOptions}
         loadDraftError={loadDraftError}
         loadingDraftId={loadingDraftId}
         onBack={onBack}
@@ -335,6 +359,7 @@ const ProposalCreation: React.FC = () => {
         requiredTier={requiredTier}
         saveError={saveError}
         selectedChamber={selectedChamber}
+        selectedInitiative={selectedInitiative}
         setDraft={setDraft}
         step={step}
         submitDisabled={submitDisabled}

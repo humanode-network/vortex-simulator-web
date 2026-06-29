@@ -27,6 +27,7 @@ export function ReviewStep(props: {
   mode: "project" | "system";
   proposerAddress: string | null;
   selectedChamber: ChamberDto | null;
+  selectedInitiative?: { id: string; title: string } | null;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   textareaClassName: string;
 }) {
@@ -39,6 +40,7 @@ export function ReviewStep(props: {
     mode,
     proposerAddress,
     selectedChamber,
+    selectedInitiative,
     setDraft,
     textareaClassName,
   } = props;
@@ -97,6 +99,11 @@ export function ReviewStep(props: {
             <p className="mt-1 text-xs text-muted">
               Proposal type: {proposalTypeLabel[draft.proposalType]}
             </p>
+            {selectedInitiative ? (
+              <p className="mt-1 text-xs text-muted">
+                Initiative: {selectedInitiative.title}
+              </p>
+            ) : null}
           </div>
           {mode === "system" ? (
             <>

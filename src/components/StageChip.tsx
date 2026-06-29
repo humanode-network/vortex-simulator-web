@@ -22,6 +22,7 @@ const chipClasses: Record<StageChipKind, string> = {
   thread: "stage-chip--thread",
   courts: "stage-chip--courts",
   faction: "stage-chip--faction",
+  initiative: "stage-chip--initiative",
   system: "stage-chip--system",
 };
 
