@@ -50,6 +50,7 @@ const resourceFilesByRouter = {
   health: "api/resources/health.ts",
   humans: "api/resources/humans.ts",
   invision: "api/resources/invision.ts",
+  initiatives: "api/resources/initiatives.ts",
   myGovernance: "api/resources/myGovernance.ts",
   proposals: "api/resources/proposals.ts",
 };

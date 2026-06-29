@@ -61,6 +61,7 @@ export function EssentialsStep(props: {
   attemptedNext: boolean;
   chamberOptions: { value: string; label: string }[];
   draft: ProposalDraftForm;
+  initiativeOptions: { value: string; label: string }[];
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   templateId: "project" | "system";
   onTemplateChange: (templateId: "project" | "system") => void;
@@ -76,6 +77,7 @@ export function EssentialsStep(props: {
     attemptedNext,
     chamberOptions,
     draft,
+    initiativeOptions,
     setDraft,
     templateId,
     onTemplateChange,
@@ -479,6 +481,31 @@ export function EssentialsStep(props: {
             </p>
           ) : null}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="proposal-initiative">Initiative association</Label>
+        <Select
+          id="proposal-initiative"
+          value={draft.initiativeId ?? ""}
+          onChange={(e) =>
+            setDraft((prev) => ({
+              ...prev,
+              initiativeId: e.target.value || undefined,
+            }))
+          }
+        >
+          <option value="">No initiative</option>
+          {initiativeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+        <p className="text-xs text-muted">
+          Optional provenance tag. It does not change quorum, voting power, CM,
+          MM, chamber membership, or proposal lifecycle rules.
+        </p>
       </div>
 
       {isSystemProposal ? (

@@ -10,6 +10,7 @@ import {
   Gavel,
   Landmark,
   Lightbulb,
+  Network,
   Rocket,
   Scale,
   Settings,
@@ -49,6 +50,7 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
         { to: "/app/my-governance", label: "My governance", Icon: Gavel },
         { to: "/app/proposals", label: "Proposals", Icon: FileText },
         { to: "/app/formation", label: "Formation", Icon: Rocket },
+        { to: "/app/initiatives", label: "Initiatives", Icon: Network },
       ],
     },
     {

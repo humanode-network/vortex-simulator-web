@@ -35,6 +35,7 @@ import type {
   PoolProposalPageDto,
 } from "@/types/api";
 export * from "@/lib/api/factions";
+export * from "@/lib/api/initiatives";
 export {
   apiGet,
   apiPost,
@@ -803,6 +804,7 @@ export type ProposalDraftFormPayload = {
   templateId?: "project" | "system";
   presetId?: string;
   resubmitsProposalId?: string;
+  initiativeId?: string;
   formationEligible?: boolean;
   title: string;
   chamberId: string;

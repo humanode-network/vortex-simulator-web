@@ -22,6 +22,7 @@ type ProposalCreationStepCardProps = {
   currentTier: string | null;
   draft: ProposalDraftForm;
   guardedComputed: WizardComputed;
+  initiativeOptions: Array<{ value: string; label: string }>;
   loadDraftError: string | null;
   loadingDraftId: string | null;
   onBack: () => void;
@@ -33,6 +34,7 @@ type ProposalCreationStepCardProps = {
   requiredTier: string;
   saveError: string | null;
   selectedChamber: ChamberDto | null;
+  selectedInitiative?: { id: string; title: string } | null;
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   step: StepKey;
   submitDisabled: boolean;
@@ -57,6 +59,7 @@ export function ProposalCreationStepCard({
   currentTier,
   draft,
   guardedComputed,
+  initiativeOptions,
   loadDraftError,
   loadingDraftId,
   onBack,
@@ -70,6 +73,7 @@ export function ProposalCreationStepCard({
   requiredTier,
   saveError,
   selectedChamber,
+  selectedInitiative,
   setDraft,
   step,
   submitDisabled,
@@ -109,6 +113,7 @@ export function ProposalCreationStepCard({
             attemptedNext={attemptedNext}
             chamberOptions={chamberOptions}
             draft={draft}
+            initiativeOptions={initiativeOptions}
             setDraft={setDraft}
             templateId={templateKind}
             onTemplateChange={onTemplateChange}
@@ -154,6 +159,7 @@ export function ProposalCreationStepCard({
             mode={template.id}
             proposerAddress={proposerAddress}
             selectedChamber={selectedChamber}
+            selectedInitiative={selectedInitiative}
             setDraft={setDraft}
             textareaClassName={textareaClassName}
           />

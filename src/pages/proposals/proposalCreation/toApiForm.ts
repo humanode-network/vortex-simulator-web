@@ -32,6 +32,7 @@ export function draftToApiForm(
     ...(draft.resubmitsProposalId
       ? { resubmitsProposalId: draft.resubmitsProposalId }
       : {}),
+    ...(draft.initiativeId ? { initiativeId: draft.initiativeId } : {}),
     ...(typeof draft.formationEligible === "boolean"
       ? { formationEligible: draft.formationEligible }
       : {}),

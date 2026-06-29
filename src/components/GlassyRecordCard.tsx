@@ -11,6 +11,7 @@ import type { Stage } from "@/types/stages";
 import "./GlassyRecordCard.css";
 
 type GlassyRecordCardProps = {
+  association?: ReactNode;
   children: ReactNode;
   className?: string;
   dateText?: ReactNode;
@@ -25,6 +26,7 @@ type GlassyRecordCardProps = {
 };
 
 export function GlassyRecordCard({
+  association,
   children,
   className,
   dateText,
@@ -62,6 +64,11 @@ export function GlassyRecordCard({
             <span className="glassy-record-card__title">{title}</span>
           </span>
           <span className="glassy-record-card__summary">{renderedSummary}</span>
+          {association ? (
+            <Chip className="glassy-record-card__association">
+              {association}
+            </Chip>
+          ) : null}
         </span>
         <span className="glassy-record-card__aside">
           {meta ? (

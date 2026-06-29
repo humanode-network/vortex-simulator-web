@@ -29,6 +29,7 @@ export type ProposalDraftForm = {
   title: string;
   chamberId: string;
   resubmitsProposalId?: string;
+  initiativeId?: string;
   summary: string;
   what: string;
   why: string;
@@ -69,6 +70,7 @@ export const DEFAULT_DRAFT: ProposalDraftForm = {
   title: "",
   chamberId: "",
   resubmitsProposalId: undefined,
+  initiativeId: undefined,
   summary: "",
   what: "",
   why: "",

@@ -81,6 +81,11 @@ export function ProposalListCard({
 
   return (
     <GlassyRecordCard
+      association={
+        proposal.initiative
+          ? `Initiative · ${proposal.initiative.title}`
+          : undefined
+      }
       expanded={expanded}
       onToggle={onToggle}
       rail={expanded ? "action" : "idle"}

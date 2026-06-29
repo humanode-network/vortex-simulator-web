@@ -75,6 +75,12 @@
   --stage-chip-text: #9c3c7b;
 }
 
+.stage-chip--initiative {
+  --stage-chip-bg: #e6f7f4;
+  --stage-chip-border: rgba(30, 137, 122, 0.24);
+  --stage-chip-text: #197d70;
+}
+
 .stage-chip--system {
   --stage-chip-bg: #eef2f6;
   --stage-chip-border: rgba(75, 85, 99, 0.22);
@@ -139,6 +145,12 @@
   --stage-chip-bg: #ffedf7;
   --stage-chip-border: rgba(173, 69, 137, 0.24);
   --stage-chip-text: #933873;
+}
+
+:root[data-theme="light"] .stage-chip--initiative {
+  --stage-chip-bg: #e9f8f5;
+  --stage-chip-border: rgba(30, 137, 122, 0.28);
+  --stage-chip-text: #176f65;
 }
 
 :root[data-theme="light"] .stage-chip--system {
@@ -207,6 +219,12 @@
   --stage-chip-text: #fbcfe8;
 }
 
+:root[data-theme="night"] .stage-chip--initiative {
+  --stage-chip-bg: rgba(74, 222, 190, 0.15);
+  --stage-chip-border: rgba(74, 222, 190, 0.34);
+  --stage-chip-text: #a7f3df;
+}
+
 :root[data-theme="night"] .stage-chip--system {
   --stage-chip-bg: rgba(203, 213, 225, 0.14);
   --stage-chip-border: rgba(203, 213, 225, 0.3);
@@ -271,6 +289,12 @@
   --stage-chip-bg: rgba(255, 113, 67, 0.18);
   --stage-chip-border: rgba(255, 113, 67, 0.38);
   --stage-chip-text: #ffc1ad;
+}
+
+:root[data-theme="fire"] .stage-chip--initiative {
+  --stage-chip-bg: rgba(255, 181, 71, 0.16);
+  --stage-chip-border: rgba(255, 181, 71, 0.38);
+  --stage-chip-text: #ffd39a;
 }
 
 :root[data-theme="fire"] .stage-chip--system {

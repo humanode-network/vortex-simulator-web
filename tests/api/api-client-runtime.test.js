@@ -3,6 +3,9 @@ import { test } from "@rstest/core";
 
 import {
   apiChambers,
+  apiInitiative,
+  apiInitiativeBoardCardUpdate,
+  apiInitiativeUpdate,
   apiPoolVote,
   apiProposals,
 } from "../../src/lib/apiClient.ts";
@@ -113,4 +116,34 @@ test("apiGet throws a structured error for non-2xx responses", async () => {
 
   global.fetch = originalFetch;
   global.window = originalWindow;
+});
+
+test("initiative client preserves explicit empty edits and encodes detail ids", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  await apiInitiativeUpdate({
+    initiativeId: "initiative-1",
+    description: "",
+  });
+  await apiInitiativeBoardCardUpdate({
+    initiativeId: "initiative-1",
+    cardId: "card-1",
+    body: "",
+  });
+  await apiInitiative("initiative/with spaces");
+
+  assert.equal(JSON.parse(calls[0].init.body).payload.description, "");
+  assert.equal(JSON.parse(calls[1].init.body).payload.body, "");
+  assert.equal(calls[2].input, "/api/initiatives/initiative%2Fwith%20spaces");
+
+  global.fetch = originalFetch;
 });

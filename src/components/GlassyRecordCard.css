@@ -163,6 +163,19 @@
   overflow-wrap: anywhere;
 }
 
+.glassy-record-card__association {
+  align-self: flex-start;
+  max-width: 100%;
+  color: var(--record-meta-text);
+  background: var(--record-meta-bg);
+}
+
+.glassy-record-card__association > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .glassy-record-card__stage {
   width: 100%;
   min-width: 0;

@@ -21,6 +21,7 @@ export const feedStages = [
   "thread",
   "courts",
   "faction",
+  "initiative",
   "system",
 ] as const;
 
@@ -39,6 +40,7 @@ export type StageChipKind =
   | "thread"
   | "courts"
   | "faction"
+  | "initiative"
   | "system";
 
 export const stageToChipKind = {
@@ -52,6 +54,7 @@ export const stageToChipKind = {
   thread: "thread",
   courts: "courts",
   faction: "faction",
+  initiative: "initiative",
   system: "system",
 } as const satisfies Record<Stage, StageChipKind>;
 
@@ -66,6 +69,7 @@ export const stageLabel = {
   thread: "Thread",
   courts: "Courts",
   faction: "Faction",
+  initiative: "Initiative",
   system: "System",
 } as const satisfies Record<Stage, string>;
 
