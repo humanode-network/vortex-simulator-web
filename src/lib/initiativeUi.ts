@@ -120,13 +120,6 @@ export function initiativeDistinctDescription(
   return description.trim();
 }
 
-export function initiativeDescriptionParagraphs(description: string) {
-  return description
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, " ").trim())
-    .filter(Boolean);
-}
-
 export function initiativeOptionsWithSelection(
   options: Array<{ value: string; label: string }>,
   selectedId?: string,
