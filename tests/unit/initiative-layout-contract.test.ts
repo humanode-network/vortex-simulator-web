@@ -14,17 +14,24 @@ const boardSource = readFileSync(
   ),
   "utf8",
 );
+const headerActionSource = readFileSync(
+  join(
+    process.cwd(),
+    "src/pages/initiatives/components/InitiativeHeaderAction.tsx",
+  ),
+  "utf8",
+);
 
 test("Initiative header owns aligned edit and card creation actions", () => {
   assert.doesNotMatch(initiativeSource, /Back to initiatives/);
-  assert.doesNotMatch(initiativeSource, /<GlassyCard as="article"/);
   assert.doesNotMatch(initiativeSource, /Action plan/);
   assert.match(initiativeSource, />\s*Edit initiative\s*</);
   assert.match(initiativeSource, />\s*Create card\s*</);
-  assert.equal(
-    initiativeSource.match(/className=\{initiativeActionButtonClassName\}/g)
-      ?.length,
-    2,
-  );
+  assert.equal(initiativeSource.match(/<InitiativeHeaderAction/g)?.length, 2);
   assert.doesNotMatch(boardSource, /Create card|initiativeBoardCardCreatePath/);
+  assert.match(headerActionSource, /type="button"/);
+  assert.match(headerActionSource, /size="sm"/);
+  assert.match(headerActionSource, /variant="outline"/);
+  assert.match(headerActionSource, /className="w-36[^"]*opacity-90/);
+  assert.doesNotMatch(headerActionSource, /asChild/);
 });
