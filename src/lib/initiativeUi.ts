@@ -106,6 +106,20 @@ export function initiativeSummaryPreview(value: string, maxLength = 150) {
   return normalized.slice(0, cutAt).trim();
 }
 
+export function initiativeDistinctDescription(
+  summary: string,
+  description: string,
+) {
+  const normalizedSummary = summary.replace(/\s+/g, " ").trim();
+  const normalizedDescription = description.replace(/\s+/g, " ").trim();
+
+  if (!normalizedDescription || normalizedDescription === normalizedSummary) {
+    return "";
+  }
+
+  return description.trim();
+}
+
 export function initiativeOptionsWithSelection(
   options: Array<{ value: string; label: string }>,
   selectedId?: string,

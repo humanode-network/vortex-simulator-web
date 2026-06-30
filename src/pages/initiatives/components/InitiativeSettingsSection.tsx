@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { GlassySection } from "@/components/GlassySection";
 import { Textarea } from "@/components/Textarea";
@@ -24,18 +24,29 @@ export function InitiativeSettingsSection({
   const [description, setDescription] = useState(initiative.description);
   const [tags, setTags] = useState(initiative.tags.join(", "));
   const [status, setStatus] = useState<InitiativeStatusDto>(initiative.status);
+  const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const archivedReadOnly =
     initiative.status === "archived" && status !== "active";
 
-  useEffect(() => {
+  const resetDraft = useCallback(() => {
     setTitle(initiative.title);
     setSummary(initiative.summary);
     setDescription(initiative.description);
     setTags(initiative.tags.join(", "));
     setStatus(initiative.status);
   }, [initiative]);
+
+  useEffect(() => {
+    resetDraft();
+  }, [resetDraft]);
+
+  function cancelEditing() {
+    resetDraft();
+    setError(null);
+    setEditing(false);
+  }
 
   async function updateInitiative(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +63,7 @@ export function InitiativeSettingsSection({
         status,
       });
       await onChanged();
+      setEditing(false);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -59,8 +71,25 @@ export function InitiativeSettingsSection({
     }
   }
 
+  if (!editing) {
+    return (
+      <div className="flex justify-end">
+        <Button type="button" size="sm" onClick={() => setEditing(true)}>
+          Edit initiative
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <GlassySection title="Settings">
+    <GlassySection
+      title="Settings"
+      action={
+        <Button type="button" size="sm" variant="ghost" onClick={cancelEditing}>
+          Cancel
+        </Button>
+      }
+    >
       <form className="grid gap-3" onSubmit={updateInitiative}>
         <div className="grid gap-3 md:grid-cols-2">
           <Input

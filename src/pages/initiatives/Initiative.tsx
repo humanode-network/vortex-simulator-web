@@ -13,6 +13,7 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import {
   canManageInitiative,
   defaultInitiativeBoardColumns,
+  initiativeDistinctDescription,
   initiativeRoleLabel,
   initiativeStatusLabel,
   initiativeStatusTone,
@@ -70,6 +71,10 @@ const Initiative: React.FC = () => {
   const viewerRole = initiative.viewerRole
     ? initiativeRoleLabel[initiative.viewerRole]
     : "Observer";
+  const description = initiativeDistinctDescription(
+    initiative.summary,
+    initiative.description,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,7 +85,7 @@ const Initiative: React.FC = () => {
       <PageHeader
         title={initiative.title}
         titleClassName="text-2xl"
-        description={initiative.description || initiative.summary}
+        description={initiative.summary}
         descriptionClassName="max-w-4xl leading-relaxed"
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -91,6 +96,12 @@ const Initiative: React.FC = () => {
           </div>
         }
       />
+
+      {description ? (
+        <p className="max-w-4xl text-sm leading-relaxed whitespace-pre-line text-text">
+          {description}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
         <div className="flex flex-wrap gap-2">

@@ -5,6 +5,7 @@ import {
   defaultInitiativeBoardColumns,
   initiativeBoardCardCreatePath,
   initiativeCardsForColumn,
+  initiativeDistinctDescription,
   initiativeOptionsWithSelection,
   initiativePath,
   parseInitiativeTags,
@@ -105,4 +106,22 @@ test("initiative tags are normalized and deduplicated", () => {
   expect(
     parseInitiativeTags("research, governance, research,  governance "),
   ).toEqual(["research", "governance"]);
+});
+
+test("initiative descriptions omit empty and summary-equivalent content", () => {
+  expect(
+    initiativeDistinctDescription(
+      "Coordinate public work.",
+      " Coordinate   public work. ",
+    ),
+  ).toBe("");
+  expect(initiativeDistinctDescription("Coordinate public work.", "  ")).toBe(
+    "",
+  );
+  expect(
+    initiativeDistinctDescription(
+      "Coordinate public work.",
+      "Publish evidence and assign owners.",
+    ),
+  ).toBe("Publish evidence and assign owners.");
 });
