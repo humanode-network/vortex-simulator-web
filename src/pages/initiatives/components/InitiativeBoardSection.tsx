@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
@@ -26,6 +27,7 @@ type InitiativeBoardSectionProps = {
   columns: InitiativeBoardColumnDto[];
   initiativeId: string;
   onChanged: () => Promise<void> | void;
+  secondaryAction?: ReactNode;
 };
 
 export function InitiativeBoardSection({
@@ -34,6 +36,7 @@ export function InitiativeBoardSection({
   columns,
   initiativeId,
   onChanged,
+  secondaryAction,
 }: InitiativeBoardSectionProps) {
   const [updatingCardId, setUpdatingCardId] = useState<string | null>(null);
   const [confirmDeleteCardId, setConfirmDeleteCardId] = useState<string | null>(
@@ -84,12 +87,17 @@ export function InitiativeBoardSection({
     <GlassySection
       title="Board"
       action={
-        canManage ? (
-          <Button asChild size="sm">
-            <Link to={initiativeBoardCardCreatePath({ id: initiativeId })}>
-              Create card
-            </Link>
-          </Button>
+        secondaryAction || canManage ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {secondaryAction}
+            {canManage ? (
+              <Button asChild size="sm">
+                <Link to={initiativeBoardCardCreatePath({ id: initiativeId })}>
+                  Create card
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         ) : null
       }
     >

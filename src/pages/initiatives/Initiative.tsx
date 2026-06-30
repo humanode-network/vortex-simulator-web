@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 
 import { Chip } from "@/components/Chip";
@@ -30,6 +30,7 @@ import { useInitiativePageData } from "./hooks/useInitiativePageData";
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { initiative, loadError, reload } = useInitiativePageData(id);
+  const [editing, setEditing] = useState(false);
 
   const boardColumns = useMemo(() => {
     if (!initiative) return [];
@@ -124,8 +125,12 @@ const Initiative: React.FC = () => {
         <MetricTile label="Proposals" value={proposals.length} />
       </section>
 
-      {canAdmin ? (
-        <InitiativeSettingsSection initiative={initiative} onChanged={reload} />
+      {canAdmin && editing ? (
+        <InitiativeSettingsSection
+          initiative={initiative}
+          onChanged={reload}
+          onClose={() => setEditing(false)}
+        />
       ) : null}
       <InitiativeBoardSection
         cards={cards}
@@ -133,6 +138,18 @@ const Initiative: React.FC = () => {
         columns={boardColumns}
         initiativeId={initiative.id}
         onChanged={reload}
+        secondaryAction={
+          canAdmin && !editing ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setEditing(true)}
+            >
+              Edit initiative
+            </Button>
+          ) : null
+        }
       />
       <InitiativeThreadsSection
         canModerate={canManage}

@@ -13,18 +13,19 @@ import type { InitiativeDto, InitiativeStatusDto } from "@/types/api";
 type InitiativeSettingsSectionProps = {
   initiative: InitiativeDto;
   onChanged: () => Promise<void> | void;
+  onClose: () => void;
 };
 
 export function InitiativeSettingsSection({
   initiative,
   onChanged,
+  onClose,
 }: InitiativeSettingsSectionProps) {
   const [title, setTitle] = useState(initiative.title);
   const [summary, setSummary] = useState(initiative.summary);
   const [description, setDescription] = useState(initiative.description);
   const [tags, setTags] = useState(initiative.tags.join(", "));
   const [status, setStatus] = useState<InitiativeStatusDto>(initiative.status);
-  const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const archivedReadOnly =
@@ -45,7 +46,7 @@ export function InitiativeSettingsSection({
   function cancelEditing() {
     resetDraft();
     setError(null);
-    setEditing(false);
+    onClose();
   }
 
   async function updateInitiative(event: FormEvent<HTMLFormElement>) {
@@ -63,22 +64,12 @@ export function InitiativeSettingsSection({
         status,
       });
       await onChanged();
-      setEditing(false);
+      onClose();
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setSubmitting(false);
     }
-  }
-
-  if (!editing) {
-    return (
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setEditing(true)}>
-          Edit initiative
-        </Button>
-      </div>
-    );
   }
 
   return (
