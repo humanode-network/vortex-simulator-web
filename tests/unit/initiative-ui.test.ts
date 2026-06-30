@@ -5,6 +5,7 @@ import {
   defaultInitiativeBoardColumns,
   initiativeBoardCardCreatePath,
   initiativeCardsForColumn,
+  initiativeDescriptionParagraphs,
   initiativeDistinctDescription,
   initiativeOptionsWithSelection,
   initiativePath,
@@ -124,4 +125,17 @@ test("initiative descriptions omit empty and summary-equivalent content", () => 
       "Publish evidence and assign owners.",
     ),
   ).toBe("Publish evidence and assign owners.");
+});
+
+test("initiative descriptions preserve distinct paragraphs without blank rows", () => {
+  expect(
+    initiativeDescriptionParagraphs(
+      "Analyze voting patterns.\n\nCollect evidence.\n\nReport findings.",
+    ),
+  ).toEqual([
+    "Analyze voting patterns.",
+    "Collect evidence.",
+    "Report findings.",
+  ]);
+  expect(initiativeDescriptionParagraphs("")).toEqual([]);
 });

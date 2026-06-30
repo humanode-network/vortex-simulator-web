@@ -1,18 +1,22 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { Chip } from "@/components/Chip";
 import { GlassyCard } from "@/components/GlassyCard";
 import { GlassyStatusChip } from "@/components/GlassySection";
 import { MetricTile } from "@/components/MetricTile";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/primitives/button";
+import {
+  WorkspaceHeader,
+  WorkspaceHeaderAction,
+} from "@/components/WorkspaceHeader";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import {
   canManageInitiative,
   defaultInitiativeBoardColumns,
+  initiativeBoardCardCreatePath,
+  initiativeDescriptionParagraphs,
   initiativeDistinctDescription,
   initiativeRoleLabel,
   initiativeStatusLabel,
@@ -29,6 +33,7 @@ import { useInitiativePageData } from "./hooks/useInitiativePageData";
 
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { initiative, loadError, reload } = useInitiativePageData(id);
   const [editing, setEditing] = useState(false);
 
@@ -76,47 +81,62 @@ const Initiative: React.FC = () => {
     initiative.summary,
     initiative.description,
   );
+  const descriptionParagraphs = initiativeDescriptionParagraphs(description);
 
   return (
     <div className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="/app/initiatives">Back to initiatives</Link>
-      </Button>
-
-      <PageHeader
+      <WorkspaceHeader
         title={initiative.title}
-        titleClassName="text-2xl"
-        description={initiative.summary}
-        descriptionClassName="max-w-4xl leading-relaxed"
-        right={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+        summary={initiative.summary}
+        details={descriptionParagraphs}
+        actions={
+          canAdmin || canManage ? (
+            <>
+              {canAdmin ? (
+                <WorkspaceHeaderAction onClick={() => setEditing(true)}>
+                  Edit initiative
+                </WorkspaceHeaderAction>
+              ) : null}
+              {canManage ? (
+                <WorkspaceHeaderAction
+                  onClick={() =>
+                    navigate(
+                      initiativeBoardCardCreatePath({ id: initiative.id }),
+                    )
+                  }
+                >
+                  Create card
+                </WorkspaceHeaderAction>
+              ) : null}
+            </>
+          ) : undefined
+        }
+        markers={
+          <>
             <GlassyStatusChip tone={initiativeStatusTone(initiative.status)}>
               {initiativeStatusLabel[initiative.status]}
             </GlassyStatusChip>
-            <Chip className="stage-chip stage-chip--system">{viewerRole}</Chip>
-          </div>
+            <GlassyStatusChip tone="neutral">{viewerRole}</GlassyStatusChip>
+            {initiative.tags.length > 0 ? (
+              <span
+                aria-hidden="true"
+                className="mx-1 h-4 w-px bg-[color:var(--surface-glass-border)]"
+              />
+            ) : null}
+            {initiative.tags.map((tag) => (
+              <Chip key={tag} className="stage-chip stage-chip--system">
+                {tag}
+              </Chip>
+            ))}
+          </>
+        }
+        meta={
+          <>
+            <span>Created by {shortAddress(initiative.createdByAddress)}</span>
+            <span>Updated {formatDateTime(initiative.updatedAt)}</span>
+          </>
         }
       />
-
-      {description ? (
-        <p className="max-w-4xl text-sm leading-relaxed whitespace-pre-line text-text">
-          {description}
-        </p>
-      ) : null}
-
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
-        <div className="flex flex-wrap gap-2">
-          {initiative.tags.map((tag) => (
-            <Chip key={tag} className="stage-chip stage-chip--system">
-              {tag}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>Created by {shortAddress(initiative.createdByAddress)}</span>
-          <span>Updated {formatDateTime(initiative.updatedAt)}</span>
-        </div>
-      </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="Members" value={initiative.memberCount} />
@@ -138,18 +158,6 @@ const Initiative: React.FC = () => {
         columns={boardColumns}
         initiativeId={initiative.id}
         onChanged={reload}
-        secondaryAction={
-          canAdmin && !editing ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setEditing(true)}
-            >
-              Edit initiative
-            </Button>
-          ) : null
-        }
       />
       <InitiativeThreadsSection
         canModerate={canManage}
