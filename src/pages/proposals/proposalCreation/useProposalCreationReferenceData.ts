@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { apiChambers, apiInitiatives, apiMyGovernance } from "@/lib/apiClient";
 import type { ChamberDto, InitiativeDto, TierProgressDto } from "@/types/api";
+import { canManageInitiative } from "@/lib/initiativeUi";
 
 type UseProposalCreationReferenceDataInput = {
   authEnabled: boolean;
@@ -55,10 +56,7 @@ export function useProposalCreationReferenceData({
       );
       if (initiativesResult.status === "fulfilled") {
         setInitiatives(
-          initiativesResult.value.items.filter(
-            (initiative) =>
-              initiative.status === "active" && initiative.viewerCanSteward,
-          ),
+          initiativesResult.value.items.filter(canManageInitiative),
         );
       } else {
         setInitiatives([]);

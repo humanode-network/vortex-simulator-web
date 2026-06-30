@@ -152,6 +152,26 @@ export async function apiInitiativeBoardCardUpdate(input: {
   });
 }
 
+export async function apiInitiativeBoardCardDelete(input: {
+  initiativeId: string;
+  cardId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "initiative.board.card.delete";
+  initiativeId: string;
+  cardId: string;
+}> {
+  return await apiCommand({
+    type: "initiative.board.card.delete",
+    payload: {
+      initiativeId: input.initiativeId,
+      cardId: input.cardId,
+    },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
 export async function apiInitiativeThreadCreate(input: {
   initiativeId: string;
   title: string;

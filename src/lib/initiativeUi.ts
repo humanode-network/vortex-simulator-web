@@ -7,6 +7,16 @@ import type {
   InitiativeThreadStatusDto,
 } from "@/types/api";
 
+type InitiativePathIdentity = {
+  id: string;
+  slug?: string;
+};
+
+type InitiativeManageability = {
+  status: InitiativeStatusDto;
+  viewerCanSteward?: boolean;
+};
+
 export const initiativeRoleLabel: Record<InitiativeRoleDto, string> = {
   admin: "Admin",
   steward: "Steward",
@@ -39,6 +49,22 @@ export const initiativeBoardStatusLabel: Record<
   done: "Done",
 };
 
+export const initiativeBoardStatusOrder: InitiativeBoardCardStatusDto[] = [
+  "backlog",
+  "doing",
+  "proposal",
+  "blocked",
+  "done",
+];
+
+export const defaultInitiativeBoardColumns: InitiativeBoardColumnDto[] =
+  initiativeBoardStatusOrder.map((status, sortOrder) => ({
+    id: status,
+    key: status,
+    title: initiativeBoardStatusLabel[status],
+    sortOrder,
+  }));
+
 export function initiativeStatusTone(
   status: InitiativeStatusDto,
 ): "neutral" | "ok" | "warn" {
@@ -53,6 +79,23 @@ export function initiativeThreadStatusTone(
   if (status === "open") return "ok";
   if (status === "locked") return "warn";
   return "neutral";
+}
+
+export function initiativePath(initiative: InitiativePathIdentity): string {
+  const routeId = initiative.slug?.trim() || initiative.id;
+  return `/app/initiatives/${encodeURIComponent(routeId)}`;
+}
+
+export function initiativeBoardCardCreatePath(
+  initiative: InitiativePathIdentity,
+): string {
+  return `${initiativePath(initiative)}/board/new`;
+}
+
+export function canManageInitiative(
+  initiative: InitiativeManageability,
+): boolean {
+  return initiative.status === "active" && Boolean(initiative.viewerCanSteward);
 }
 
 export function initiativeSummaryPreview(value: string, maxLength = 150) {
@@ -87,7 +130,7 @@ export function initiativeCardsForColumn(
     (card) =>
       card.columnId === column.id ||
       card.columnId === column.key ||
-      (!card.columnId && card.status === column.key),
+      card.status === column.key,
   );
 
   return Array.from(

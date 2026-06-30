@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "@rstest/core";
 
@@ -19,6 +19,14 @@ function unique(values) {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
+function readWebApiSources() {
+  const apiDirectory = resolve(webRoot, "src/lib/api");
+  const moduleSources = readdirSync(apiDirectory)
+    .filter((filename) => filename.endsWith(".ts"))
+    .map((filename) => readFileSync(resolve(apiDirectory, filename), "utf8"));
+  return [readWeb("src/lib/apiClient.ts"), ...moduleSources].join("\n");
+}
+
 function extractServerCommandTypes() {
   const source = readServer("api/commandSchemas.ts");
   return new Set(
@@ -29,7 +37,7 @@ function extractServerCommandTypes() {
 }
 
 function extractClientCommandTypes() {
-  const source = readWeb("src/lib/apiClient.ts");
+  const source = readWebApiSources();
   return unique(
     [...source.matchAll(/type:\s*"([^"]+)"/g)].map((match) => match[1]),
   ).filter((type) => type.includes("."));
@@ -98,7 +106,7 @@ function extractServerRoutes() {
 }
 
 function extractClientRoutes() {
-  const source = readWeb("src/lib/apiClient.ts");
+  const source = readWebApiSources();
   const routes = [];
   const callRegex = /api(?:Get|Post)(?:<[^>]+>)?\(\s*([`'"])([\s\S]*?)\1/g;
   for (const match of source.matchAll(callRegex)) {
@@ -120,4 +128,22 @@ test("web API client only calls routes exposed by the server router", () => {
   const clientRoutes = extractClientRoutes();
   const missing = clientRoutes.filter((route) => !serverRoutes.has(route));
   assert.deepEqual(missing, []);
+});
+
+test("initiative board statuses stay aligned across server and web", () => {
+  const serverSource = readServer("api/commandSchemas.ts");
+  const webSource = readWeb("src/lib/initiativeUi.ts");
+  const serverBlock = serverSource.match(
+    /INITIATIVE_BOARD_STATUSES\s*=\s*\[([\s\S]*?)\]\s*as const/,
+  )?.[1];
+  const webBlock = webSource.match(
+    /initiativeBoardStatusOrder:[^=]+=\s*\[([\s\S]*?)\]/,
+  )?.[1];
+
+  assert.ok(serverBlock, "Server board status contract is missing");
+  assert.ok(webBlock, "Web board status contract is missing");
+
+  const values = (source) =>
+    [...source.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(values(webBlock), values(serverBlock));
 });
