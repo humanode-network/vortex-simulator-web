@@ -6,13 +6,13 @@ import { GlassyCard } from "@/components/GlassyCard";
 import { GlassyStatusChip } from "@/components/GlassySection";
 import { MetricTile } from "@/components/MetricTile";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/primitives/button";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import {
   canManageInitiative,
   defaultInitiativeBoardColumns,
-  initiativeBoardCardCreatePath,
   initiativeDistinctDescription,
   initiativeRoleLabel,
   initiativeStatusLabel,
@@ -26,8 +26,6 @@ import { InitiativeProposalsSection } from "./components/InitiativeProposalsSect
 import { InitiativeSettingsSection } from "./components/InitiativeSettingsSection";
 import { InitiativeThreadsSection } from "./components/InitiativeThreadsSection";
 import { useInitiativePageData } from "./hooks/useInitiativePageData";
-
-const initiativeActionButtonClassName = "min-w-32 opacity-90 hover:opacity-100";
 
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -81,77 +79,44 @@ const Initiative: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="grid gap-5 border-b border-[color:var(--surface-glass-border)] pb-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-        <div className="min-w-0 space-y-4">
-          <div className="max-w-4xl space-y-2">
-            <h1 className="text-2xl leading-tight font-semibold text-text sm:text-3xl">
-              {initiative.title}
-            </h1>
-            <p className="text-base leading-relaxed text-muted">
-              {initiative.summary}
-            </p>
-          </div>
+      <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Link to="/app/initiatives">Back to initiatives</Link>
+      </Button>
 
-          {description ? (
-            <p className="max-w-4xl text-sm leading-7 whitespace-pre-line text-text">
-              {description}
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        title={initiative.title}
+        titleClassName="text-2xl"
+        description={initiative.summary}
+        descriptionClassName="max-w-4xl leading-relaxed"
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <GlassyStatusChip tone={initiativeStatusTone(initiative.status)}>
               {initiativeStatusLabel[initiative.status]}
             </GlassyStatusChip>
-            <GlassyStatusChip tone="neutral">{viewerRole}</GlassyStatusChip>
-            {initiative.tags.length > 0 ? (
-              <span
-                aria-hidden="true"
-                className="mx-1 h-4 w-px bg-[color:var(--surface-glass-border)]"
-              />
-            ) : null}
-            {initiative.tags.length > 0
-              ? initiative.tags.map((tag) => (
-                  <Chip key={tag} className="stage-chip stage-chip--system">
-                    {tag}
-                  </Chip>
-                ))
-              : null}
+            <Chip className="stage-chip stage-chip--system">{viewerRole}</Chip>
           </div>
+        }
+      />
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-            <span>Created by {shortAddress(initiative.createdByAddress)}</span>
-            <span>Updated {formatDateTime(initiative.updatedAt)}</span>
-          </div>
+      {description ? (
+        <p className="max-w-4xl text-sm leading-relaxed whitespace-pre-line text-text">
+          {description}
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+        <div className="flex flex-wrap gap-2">
+          {initiative.tags.map((tag) => (
+            <Chip key={tag} className="stage-chip stage-chip--system">
+              {tag}
+            </Chip>
+          ))}
         </div>
-
-        {canAdmin || canManage ? (
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {canAdmin ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={initiativeActionButtonClassName}
-                onClick={() => setEditing(true)}
-              >
-                Edit initiative
-              </Button>
-            ) : null}
-            {canManage ? (
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className={initiativeActionButtonClassName}
-              >
-                <Link to={initiativeBoardCardCreatePath({ id: initiative.id })}>
-                  Create card
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-      </header>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span>Created by {shortAddress(initiative.createdByAddress)}</span>
+          <span>Updated {formatDateTime(initiative.updatedAt)}</span>
+        </div>
+      </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="Members" value={initiative.memberCount} />
@@ -173,6 +138,18 @@ const Initiative: React.FC = () => {
         columns={boardColumns}
         initiativeId={initiative.id}
         onChanged={reload}
+        secondaryAction={
+          canAdmin && !editing ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setEditing(true)}
+            >
+              Edit initiative
+            </Button>
+          ) : null
+        }
       />
       <InitiativeThreadsSection
         canModerate={canManage}

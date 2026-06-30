@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 
 import { GlassySection, GlassyStatusChip } from "@/components/GlassySection";
 import { Button } from "@/components/primitives/button";
@@ -9,6 +11,7 @@ import {
 } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import {
+  initiativeBoardCardCreatePath,
   initiativeBoardStatusLabel,
   initiativeCardsForColumn,
 } from "@/lib/initiativeUi";
@@ -24,6 +27,7 @@ type InitiativeBoardSectionProps = {
   columns: InitiativeBoardColumnDto[];
   initiativeId: string;
   onChanged: () => Promise<void> | void;
+  secondaryAction?: ReactNode;
 };
 
 export function InitiativeBoardSection({
@@ -32,6 +36,7 @@ export function InitiativeBoardSection({
   columns,
   initiativeId,
   onChanged,
+  secondaryAction,
 }: InitiativeBoardSectionProps) {
   const [updatingCardId, setUpdatingCardId] = useState<string | null>(null);
   const [confirmDeleteCardId, setConfirmDeleteCardId] = useState<string | null>(
@@ -79,7 +84,23 @@ export function InitiativeBoardSection({
   }
 
   return (
-    <GlassySection title="Board">
+    <GlassySection
+      title="Board"
+      action={
+        secondaryAction || canManage ? (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {secondaryAction}
+            {canManage ? (
+              <Button asChild size="sm">
+                <Link to={initiativeBoardCardCreatePath({ id: initiativeId })}>
+                  Create card
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        ) : null
+      }
+    >
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="grid gap-3 xl:grid-cols-5">
