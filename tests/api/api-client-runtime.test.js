@@ -4,6 +4,7 @@ import { test } from "@rstest/core";
 import {
   apiChambers,
   apiInitiative,
+  apiInitiativeBoardCardDelete,
   apiInitiativeBoardCardUpdate,
   apiInitiativeUpdate,
   apiPoolVote,
@@ -139,11 +140,22 @@ test("initiative client preserves explicit empty edits and encodes detail ids", 
     cardId: "card-1",
     body: "",
   });
+  await apiInitiativeBoardCardDelete({
+    initiativeId: "initiative-1",
+    cardId: "card-1",
+  });
   await apiInitiative("initiative/with spaces");
 
   assert.equal(JSON.parse(calls[0].init.body).payload.description, "");
   assert.equal(JSON.parse(calls[1].init.body).payload.body, "");
-  assert.equal(calls[2].input, "/api/initiatives/initiative%2Fwith%20spaces");
+  assert.deepEqual(JSON.parse(calls[2].init.body), {
+    type: "initiative.board.card.delete",
+    payload: {
+      initiativeId: "initiative-1",
+      cardId: "card-1",
+    },
+  });
+  assert.equal(calls[3].input, "/api/initiatives/initiative%2Fwith%20spaces");
 
   global.fetch = originalFetch;
 });

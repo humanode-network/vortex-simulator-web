@@ -6,6 +6,7 @@ import { GlassyStatusChip } from "@/components/GlassySection";
 import { Button } from "@/components/primitives/button";
 import { formatDateTime } from "@/lib/dateTime";
 import {
+  initiativePath,
   initiativeStatusLabel,
   initiativeStatusTone,
   initiativeSummaryPreview,
@@ -61,9 +62,7 @@ export function InitiativeCard({ initiative }: InitiativeCardProps) {
       </div>
 
       <Button asChild size="sm" className="mt-4 w-full">
-        <Link to={`/app/initiatives/${initiative.slug || initiative.id}`}>
-          Open initiative
-        </Link>
+        <Link to={initiativePath(initiative)}>Open initiative</Link>
       </Button>
     </GlassyCard>
   );

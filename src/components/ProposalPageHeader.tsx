@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { Chip } from "@/components/Chip";
+import { initiativePath } from "@/lib/initiativeUi";
 import {
   buildProposalStageLinks,
   ProposalStageBar,
@@ -78,7 +79,7 @@ export function ProposalPageHeader({
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
       {status?.initiative ? (
         <div className="flex justify-center">
-          <Link to={`/app/initiatives/${status.initiative.id}`}>
+          <Link to={initiativePath(status.initiative)}>
             <Chip className="stage-chip stage-chip--system">
               Initiative · {status.initiative.title}
             </Chip>

@@ -6,6 +6,7 @@ import { Surface } from "@/components/Surface";
 import "./GlassySection.css";
 
 type GlassySectionProps = {
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
   title: ReactNode;
@@ -63,13 +64,17 @@ type GlassyProgressBarProps = {
 };
 
 export function GlassySection({
+  action,
   children,
   className,
   title,
 }: GlassySectionProps) {
   return (
     <section className={cn("glassy-section", className)}>
-      <SectionHeader className="glassy-section__title">{title}</SectionHeader>
+      <div className="flex items-center justify-between gap-3">
+        <SectionHeader className="glassy-section__title">{title}</SectionHeader>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
       {children}
     </section>
   );

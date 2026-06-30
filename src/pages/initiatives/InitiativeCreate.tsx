@@ -10,7 +10,7 @@ import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { apiInitiativeCreate } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
-import { parseInitiativeTags } from "@/lib/initiativeUi";
+import { initiativePath, parseInitiativeTags } from "@/lib/initiativeUi";
 
 const InitiativeCreate: React.FC = () => {
   const auth = useAuth();
@@ -37,7 +37,7 @@ const InitiativeCreate: React.FC = () => {
         description: description.trim(),
         tags: parseInitiativeTags(tags),
       });
-      navigate(`/app/initiatives/${res.initiative.slug || res.initiative.id}`);
+      navigate(initiativePath(res.initiative));
     } catch (error) {
       setSubmitError((error as Error).message);
     } finally {

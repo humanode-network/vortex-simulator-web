@@ -38,6 +38,7 @@ import Guide from "../pages/Guide";
 import Settings from "../pages/settings/Settings";
 import Initiatives from "../pages/initiatives/Initiatives";
 import Initiative from "../pages/initiatives/Initiative";
+import InitiativeBoardCardCreate from "../pages/initiatives/InitiativeBoardCardCreate";
 import InitiativeCreate from "../pages/initiatives/InitiativeCreate";
 
 const AppRoutes: React.FC = () => {
@@ -115,6 +116,10 @@ const AppRoutes: React.FC = () => {
         <Route path="formation" element={<Formation />} />
         <Route path="initiatives" element={<Initiatives />} />
         <Route path="initiatives/new" element={<InitiativeCreate />} />
+        <Route
+          path="initiatives/:id/board/new"
+          element={<InitiativeBoardCardCreate />}
+        />
         <Route path="initiatives/:id" element={<Initiative />} />
         <Route path="invision" element={<Invision />} />
         <Route path="vortexopedia" element={<Vortexopedia />} />

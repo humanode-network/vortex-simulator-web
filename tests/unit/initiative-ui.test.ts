@@ -1,8 +1,12 @@
 import { expect, test } from "@rstest/core";
 
 import {
+  canManageInitiative,
+  defaultInitiativeBoardColumns,
+  initiativeBoardCardCreatePath,
   initiativeCardsForColumn,
   initiativeOptionsWithSelection,
+  initiativePath,
   parseInitiativeTags,
 } from "../../src/lib/initiativeUi";
 import type {
@@ -48,6 +52,38 @@ test("initiative board uses creation time as a stable sort-order tie break", () 
     card,
     laterCard,
   ]);
+});
+
+test("initiative board exposes every default column before cards exist", () => {
+  expect(defaultInitiativeBoardColumns.map((item) => item.key)).toEqual([
+    "backlog",
+    "doing",
+    "proposal",
+    "blocked",
+    "done",
+  ]);
+});
+
+test("initiative routes prefer encoded slugs and share the card-create path", () => {
+  const initiative = { id: "initiative-1", slug: "Public work / review" };
+  expect(initiativePath(initiative)).toBe(
+    "/app/initiatives/Public%20work%20%2F%20review",
+  );
+  expect(initiativeBoardCardCreatePath(initiative)).toBe(
+    "/app/initiatives/Public%20work%20%2F%20review/board/new",
+  );
+});
+
+test("initiative management requires an active workspace and steward authority", () => {
+  expect(
+    canManageInitiative({ status: "active", viewerCanSteward: true }),
+  ).toBe(true);
+  expect(
+    canManageInitiative({ status: "paused", viewerCanSteward: true }),
+  ).toBe(false);
+  expect(
+    canManageInitiative({ status: "active", viewerCanSteward: false }),
+  ).toBe(false);
 });
 
 test("proposal drafts retain an Initiative selection that is no longer available", () => {
