@@ -17,6 +17,20 @@ type InitiativeManageability = {
   viewerCanSteward?: boolean;
 };
 
+type InitiativeAuthState = {
+  enabled: boolean;
+  loading: boolean;
+  authenticated: boolean;
+  eligible: boolean;
+};
+
+type InitiativeViewerState = InitiativeManageability & {
+  viewerRole?: InitiativeRoleDto | null;
+  viewerCanAdmin?: boolean;
+  viewerCanJoin?: boolean;
+  viewerCanLeave?: boolean;
+};
+
 export const initiativeRoleLabel: Record<InitiativeRoleDto, string> = {
   admin: "Admin",
   steward: "Steward",
@@ -96,6 +110,23 @@ export function canManageInitiative(
   initiative: InitiativeManageability,
 ): boolean {
   return initiative.status === "active" && Boolean(initiative.viewerCanSteward);
+}
+
+export function getInitiativeViewerCapabilities(
+  initiative: InitiativeViewerState,
+  auth: InitiativeAuthState,
+) {
+  const canAct =
+    !auth.enabled || (auth.authenticated && auth.eligible && !auth.loading);
+  const isOperational = initiative.status === "active";
+
+  return {
+    canAdmin: canAct && Boolean(initiative.viewerCanAdmin),
+    canJoin: canAct && Boolean(initiative.viewerCanJoin),
+    canLeave: canAct && Boolean(initiative.viewerCanLeave),
+    canManage: canAct && canManageInitiative(initiative),
+    canParticipate: canAct && isOperational && initiative.viewerRole != null,
+  };
 }
 
 export function initiativeSummaryPreview(value: string, maxLength = 150) {

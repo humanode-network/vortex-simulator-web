@@ -23,7 +23,10 @@ test("Initiatives and factions share one workspace header grammar", () => {
   assert.doesNotMatch(header, /asChild/);
 
   assert.match(initiative, /<WorkspaceHeader/);
-  assert.equal(initiative.match(/<WorkspaceHeaderAction/g)?.length, 2);
+  assert.match(initiative, /Join initiative/);
+  assert.match(initiative, /Leave initiative/);
+  assert.match(initiative, /Edit initiative/);
+  assert.match(initiative, /Create card/);
   assert.doesNotMatch(initiative, /Back to initiatives|<PageHeader/);
   assert.doesNotMatch(board, /Create card|initiativeBoardCardCreatePath/);
 

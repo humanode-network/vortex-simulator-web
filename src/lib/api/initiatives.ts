@@ -5,6 +5,7 @@ import type {
   InitiativeRoleDto,
   InitiativeStatusDto,
   InitiativeThreadStatusDto,
+  InitiativeVisibilityDto,
 } from "@/types/api";
 import { apiCommand } from "./command";
 import { apiGet } from "./http";
@@ -23,6 +24,7 @@ export async function apiInitiativeCreate(input: {
   title: string;
   summary: string;
   description?: string;
+  visibility?: InitiativeVisibilityDto;
   tags?: string[];
   idempotencyKey?: string;
 }): Promise<{
@@ -38,6 +40,7 @@ export async function apiInitiativeCreate(input: {
       ...(input.description !== undefined
         ? { description: input.description }
         : {}),
+      ...(input.visibility ? { visibility: input.visibility } : {}),
       ...(input.tags && input.tags.length > 0 ? { tags: input.tags } : {}),
     },
     idempotencyKey: input.idempotencyKey,
@@ -49,6 +52,7 @@ export async function apiInitiativeUpdate(input: {
   title?: string;
   summary?: string;
   description?: string;
+  visibility?: InitiativeVisibilityDto;
   status?: InitiativeStatusDto;
   tags?: string[];
   idempotencyKey?: string;
@@ -67,9 +71,85 @@ export async function apiInitiativeUpdate(input: {
       ...(input.description !== undefined
         ? { description: input.description }
         : {}),
+      ...(input.visibility ? { visibility: input.visibility } : {}),
       ...(input.status ? { status: input.status } : {}),
       ...(input.tags ? { tags: input.tags } : {}),
     },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiInitiativeJoin(input: {
+  initiativeId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "initiative.join";
+  initiativeId: string;
+  joined: boolean;
+  pending: boolean;
+}> {
+  return await apiCommand({
+    type: "initiative.join",
+    payload: { initiativeId: input.initiativeId },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiInitiativeJoinRequestApprove(input: {
+  initiativeId: string;
+  address: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "initiative.join.request.approve";
+  initiativeId: string;
+  address: string;
+  accepted: boolean;
+}> {
+  return await apiCommand({
+    type: "initiative.join.request.approve",
+    payload: {
+      initiativeId: input.initiativeId,
+      address: input.address,
+    },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiInitiativeJoinRequestDecline(input: {
+  initiativeId: string;
+  address: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "initiative.join.request.decline";
+  initiativeId: string;
+  address: string;
+  accepted: boolean;
+}> {
+  return await apiCommand({
+    type: "initiative.join.request.decline",
+    payload: {
+      initiativeId: input.initiativeId,
+      address: input.address,
+    },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiInitiativeLeave(input: {
+  initiativeId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "initiative.leave";
+  initiativeId: string;
+  left: boolean;
+}> {
+  return await apiCommand({
+    type: "initiative.leave",
+    payload: { initiativeId: input.initiativeId },
     idempotencyKey: input.idempotencyKey,
   });
 }

@@ -42,6 +42,11 @@ export function InitiativeCard({ initiative }: InitiativeCardProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <GlassyStatusChip
+          tone={initiative.visibility === "public" ? "ok" : "neutral"}
+        >
+          {initiative.visibility === "public" ? "Public" : "Private"}
+        </GlassyStatusChip>
         {initiative.tags.slice(0, 4).map((tag) => (
           <Chip key={tag} className="stage-chip stage-chip--system">
             {tag}

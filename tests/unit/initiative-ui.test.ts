@@ -7,6 +7,7 @@ import {
   initiativeCardsForColumn,
   initiativeDescriptionParagraphs,
   initiativeDistinctDescription,
+  getInitiativeViewerCapabilities,
   initiativeOptionsWithSelection,
   initiativePath,
   parseInitiativeTags,
@@ -86,6 +87,65 @@ test("initiative management requires an active workspace and steward authority",
   expect(
     canManageInitiative({ status: "active", viewerCanSteward: false }),
   ).toBe(false);
+});
+
+test("initiative write capabilities require an eligible authenticated viewer", () => {
+  const initiative = {
+    status: "active" as const,
+    viewerRole: "steward" as const,
+    viewerCanAdmin: false,
+    viewerCanSteward: true,
+    viewerCanJoin: false,
+    viewerCanLeave: true,
+  };
+
+  expect(
+    getInitiativeViewerCapabilities(initiative, {
+      enabled: true,
+      loading: false,
+      authenticated: true,
+      eligible: false,
+    }),
+  ).toEqual({
+    canAdmin: false,
+    canJoin: false,
+    canLeave: false,
+    canManage: false,
+    canParticipate: false,
+  });
+
+  expect(
+    getInitiativeViewerCapabilities(initiative, {
+      enabled: true,
+      loading: false,
+      authenticated: true,
+      eligible: true,
+    }),
+  ).toEqual({
+    canAdmin: false,
+    canJoin: false,
+    canLeave: true,
+    canManage: true,
+    canParticipate: true,
+  });
+});
+
+test("initiative development mode can act without the auth gate", () => {
+  expect(
+    getInitiativeViewerCapabilities(
+      {
+        status: "active",
+        viewerRole: null,
+        viewerCanJoin: true,
+      },
+      {
+        enabled: false,
+        loading: false,
+        authenticated: false,
+        eligible: false,
+      },
+    ),
+  ).toMatchObject({ canJoin: true });
 });
 
 test("proposal drafts retain an Initiative selection that is no longer available", () => {

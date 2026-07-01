@@ -8,7 +8,11 @@ import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { apiInitiativeUpdate } from "@/lib/apiClient";
 import { initiativeStatusLabel, parseInitiativeTags } from "@/lib/initiativeUi";
-import type { InitiativeDto, InitiativeStatusDto } from "@/types/api";
+import type {
+  InitiativeDto,
+  InitiativeStatusDto,
+  InitiativeVisibilityDto,
+} from "@/types/api";
 
 type InitiativeSettingsSectionProps = {
   initiative: InitiativeDto;
@@ -26,6 +30,9 @@ export function InitiativeSettingsSection({
   const [description, setDescription] = useState(initiative.description);
   const [tags, setTags] = useState(initiative.tags.join(", "));
   const [status, setStatus] = useState<InitiativeStatusDto>(initiative.status);
+  const [visibility, setVisibility] = useState<InitiativeVisibilityDto>(
+    initiative.visibility,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const archivedReadOnly =
@@ -37,6 +44,7 @@ export function InitiativeSettingsSection({
     setDescription(initiative.description);
     setTags(initiative.tags.join(", "));
     setStatus(initiative.status);
+    setVisibility(initiative.visibility);
   }, [initiative]);
 
   useEffect(() => {
@@ -62,6 +70,7 @@ export function InitiativeSettingsSection({
         description: description.trim(),
         tags: parseInitiativeTags(tags),
         status,
+        visibility,
       });
       await onChanged();
       onClose();
@@ -105,7 +114,7 @@ export function InitiativeSettingsSection({
           placeholder="Initiative description"
           aria-label="Initiative description"
         />
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto]">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
           <Input
             disabled={archivedReadOnly}
             value={tags}
@@ -113,6 +122,17 @@ export function InitiativeSettingsSection({
             placeholder="Comma-separated tags"
             aria-label="Initiative tags"
           />
+          <Select
+            disabled={archivedReadOnly}
+            value={visibility}
+            onChange={(event) =>
+              setVisibility(event.target.value as InitiativeVisibilityDto)
+            }
+            aria-label="Initiative visibility"
+          >
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </Select>
           <Select
             value={status}
             onChange={(event) =>
