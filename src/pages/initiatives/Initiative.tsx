@@ -166,17 +166,17 @@ const Initiative: React.FC = () => {
         onChanged={reload}
         threads={threads}
       />
-      <InitiativeChatSection
-        canPost={canParticipate}
-        initiativeId={initiative.id}
-        messages={chatMessages}
-        onChanged={reload}
-      />
       <InitiativeProposalsSection proposals={proposals} />
       <InitiativeMembersSection
         canAdmin={isOperational && canAdmin}
         initiativeId={initiative.id}
         memberships={memberships}
+        onChanged={reload}
+      />
+      <InitiativeChatSection
+        canPost={canParticipate}
+        initiativeId={initiative.id}
+        messages={chatMessages}
         onChanged={reload}
       />
     </div>
