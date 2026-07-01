@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 
 import { GlassySection, GlassyStatusChip } from "@/components/GlassySection";
 import { Button } from "@/components/primitives/button";
@@ -10,7 +9,6 @@ import {
 } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import {
-  initiativeBoardCardCreatePath,
   initiativeBoardStatusLabel,
   initiativeCardsForColumn,
 } from "@/lib/initiativeUi";
@@ -81,18 +79,7 @@ export function InitiativeBoardSection({
   }
 
   return (
-    <GlassySection
-      title="Board"
-      action={
-        canManage ? (
-          <Button asChild size="sm">
-            <Link to={initiativeBoardCardCreatePath({ id: initiativeId })}>
-              Create card
-            </Link>
-          </Button>
-        ) : null
-      }
-    >
+    <GlassySection title="Board">
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="grid gap-3 xl:grid-cols-5">

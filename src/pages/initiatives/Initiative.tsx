@@ -1,18 +1,31 @@
-import { useMemo } from "react";
-import { Link, useParams } from "react-router";
+import { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 
+import { useAuth } from "@/app/auth/AuthContext";
 import { Chip } from "@/components/Chip";
 import { GlassyCard } from "@/components/GlassyCard";
 import { GlassyStatusChip } from "@/components/GlassySection";
 import { MetricTile } from "@/components/MetricTile";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { PageHeader } from "@/components/PageHeader";
-import { Button } from "@/components/primitives/button";
+import {
+  WorkspaceHeader,
+  WorkspaceHeaderAction,
+} from "@/components/WorkspaceHeader";
+import { useActionRunner } from "@/hooks/useActionRunner";
+import {
+  apiInitiativeJoin,
+  apiInitiativeJoinRequestApprove,
+  apiInitiativeJoinRequestDecline,
+  apiInitiativeLeave,
+} from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
 import {
-  canManageInitiative,
   defaultInitiativeBoardColumns,
+  getInitiativeViewerCapabilities,
+  initiativeBoardCardCreatePath,
+  initiativeDescriptionParagraphs,
+  initiativeDistinctDescription,
   initiativeRoleLabel,
   initiativeStatusLabel,
   initiativeStatusTone,
@@ -20,6 +33,7 @@ import {
 import { shortAddress } from "@/lib/profileUi";
 import { InitiativeBoardSection } from "./components/InitiativeBoardSection";
 import { InitiativeChatSection } from "./components/InitiativeChatSection";
+import { InitiativeJoinRequestsSection } from "./components/InitiativeJoinRequestsSection";
 import { InitiativeMembersSection } from "./components/InitiativeMembersSection";
 import { InitiativeProposalsSection } from "./components/InitiativeProposalsSection";
 import { InitiativeSettingsSection } from "./components/InitiativeSettingsSection";
@@ -28,7 +42,11 @@ import { useInitiativePageData } from "./hooks/useInitiativePageData";
 
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const auth = useAuth();
   const { initiative, loadError, reload } = useInitiativePageData(id);
+  const [editing, setEditing] = useState(false);
+  const { actionError, mutating, runAction } = useActionRunner({ reload });
 
   const boardColumns = useMemo(() => {
     if (!initiative) return [];
@@ -64,47 +82,118 @@ const Initiative: React.FC = () => {
   const proposals = initiative.proposals ?? [];
   const chatMessages = initiative.chatMessages ?? [];
   const isOperational = initiative.status === "active";
-  const canManage = canManageInitiative(initiative);
-  const canAdmin = Boolean(initiative.viewerCanAdmin);
-  const canParticipate = isOperational && initiative.viewerRole != null;
+  const {
+    canAdmin,
+    canJoin: viewerCanJoin,
+    canLeave: viewerCanLeave,
+    canManage,
+    canParticipate,
+  } = getInitiativeViewerCapabilities(initiative, auth);
+  const pendingJoinRequest = initiative.viewerJoinRequest?.status === "pending";
   const viewerRole = initiative.viewerRole
     ? initiativeRoleLabel[initiative.viewerRole]
     : "Observer";
+  const description = initiativeDistinctDescription(
+    initiative.summary,
+    initiative.description,
+  );
+  const descriptionParagraphs = initiativeDescriptionParagraphs(description);
 
   return (
     <div className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
-        <Link to="/app/initiatives">Back to initiatives</Link>
-      </Button>
-
-      <PageHeader
+      <WorkspaceHeader
         title={initiative.title}
-        titleClassName="text-2xl"
-        description={initiative.description || initiative.summary}
-        descriptionClassName="max-w-4xl leading-relaxed"
-        right={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+        summary={initiative.summary}
+        details={descriptionParagraphs}
+        actions={
+          canAdmin ||
+          canManage ||
+          viewerCanJoin ||
+          viewerCanLeave ||
+          pendingJoinRequest ? (
+            <>
+              {viewerCanJoin || pendingJoinRequest ? (
+                <WorkspaceHeaderAction
+                  disabled={mutating || pendingJoinRequest}
+                  onClick={() =>
+                    void runAction(async () => {
+                      await apiInitiativeJoin({ initiativeId: initiative.id });
+                    })
+                  }
+                >
+                  {pendingJoinRequest
+                    ? "Request pending"
+                    : initiative.visibility === "private"
+                      ? "Request to join"
+                      : "Join initiative"}
+                </WorkspaceHeaderAction>
+              ) : null}
+              {viewerCanLeave ? (
+                <WorkspaceHeaderAction
+                  disabled={mutating}
+                  onClick={() =>
+                    void runAction(async () => {
+                      await apiInitiativeLeave({ initiativeId: initiative.id });
+                    })
+                  }
+                >
+                  Leave initiative
+                </WorkspaceHeaderAction>
+              ) : null}
+              {canAdmin ? (
+                <WorkspaceHeaderAction onClick={() => setEditing(true)}>
+                  Edit initiative
+                </WorkspaceHeaderAction>
+              ) : null}
+              {canManage ? (
+                <WorkspaceHeaderAction
+                  onClick={() =>
+                    navigate(
+                      initiativeBoardCardCreatePath({ id: initiative.id }),
+                    )
+                  }
+                >
+                  Create card
+                </WorkspaceHeaderAction>
+              ) : null}
+            </>
+          ) : undefined
+        }
+        markers={
+          <>
             <GlassyStatusChip tone={initiativeStatusTone(initiative.status)}>
               {initiativeStatusLabel[initiative.status]}
             </GlassyStatusChip>
-            <Chip className="stage-chip stage-chip--system">{viewerRole}</Chip>
-          </div>
+            <GlassyStatusChip
+              tone={initiative.visibility === "public" ? "ok" : "neutral"}
+            >
+              {initiative.visibility === "public" ? "Public" : "Private"}
+            </GlassyStatusChip>
+            <GlassyStatusChip tone="neutral">{viewerRole}</GlassyStatusChip>
+            {initiative.tags.length > 0 ? (
+              <span
+                aria-hidden="true"
+                className="mx-1 h-4 w-px bg-[color:var(--surface-glass-border)]"
+              />
+            ) : null}
+            {initiative.tags.map((tag) => (
+              <Chip key={tag} className="stage-chip stage-chip--system">
+                {tag}
+              </Chip>
+            ))}
+          </>
+        }
+        meta={
+          <>
+            <span>Created by {shortAddress(initiative.createdByAddress)}</span>
+            <span>Updated {formatDateTime(initiative.updatedAt)}</span>
+          </>
         }
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
-        <div className="flex flex-wrap gap-2">
-          {initiative.tags.map((tag) => (
-            <Chip key={tag} className="stage-chip stage-chip--system">
-              {tag}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>Created by {shortAddress(initiative.createdByAddress)}</span>
-          <span>Updated {formatDateTime(initiative.updatedAt)}</span>
-        </div>
-      </div>
+      {actionError ? (
+        <p className="text-sm text-destructive">{actionError}</p>
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="Members" value={initiative.memberCount} />
@@ -113,9 +202,34 @@ const Initiative: React.FC = () => {
         <MetricTile label="Proposals" value={proposals.length} />
       </section>
 
-      {canAdmin ? (
-        <InitiativeSettingsSection initiative={initiative} onChanged={reload} />
+      {canAdmin && editing ? (
+        <InitiativeSettingsSection
+          initiative={initiative}
+          onChanged={reload}
+          onClose={() => setEditing(false)}
+        />
       ) : null}
+      <InitiativeJoinRequestsSection
+        canModerate={isOperational && canManage}
+        joinRequests={initiative.joinRequests ?? []}
+        mutating={mutating}
+        onApprove={(address) =>
+          void runAction(async () => {
+            await apiInitiativeJoinRequestApprove({
+              initiativeId: initiative.id,
+              address,
+            });
+          })
+        }
+        onDecline={(address) =>
+          void runAction(async () => {
+            await apiInitiativeJoinRequestDecline({
+              initiativeId: initiative.id,
+              address,
+            });
+          })
+        }
+      />
       <InitiativeBoardSection
         cards={cards}
         canManage={canManage}
@@ -130,17 +244,17 @@ const Initiative: React.FC = () => {
         onChanged={reload}
         threads={threads}
       />
-      <InitiativeChatSection
-        canPost={canParticipate}
-        initiativeId={initiative.id}
-        messages={chatMessages}
-        onChanged={reload}
-      />
       <InitiativeProposalsSection proposals={proposals} />
       <InitiativeMembersSection
         canAdmin={isOperational && canAdmin}
         initiativeId={initiative.id}
         memberships={memberships}
+        onChanged={reload}
+      />
+      <InitiativeChatSection
+        canPost={canParticipate}
+        initiativeId={initiative.id}
+        messages={chatMessages}
         onChanged={reload}
       />
     </div>

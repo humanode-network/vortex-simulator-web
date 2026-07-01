@@ -5,6 +5,9 @@ import {
   defaultInitiativeBoardColumns,
   initiativeBoardCardCreatePath,
   initiativeCardsForColumn,
+  initiativeDescriptionParagraphs,
+  initiativeDistinctDescription,
+  getInitiativeViewerCapabilities,
   initiativeOptionsWithSelection,
   initiativePath,
   parseInitiativeTags,
@@ -86,6 +89,65 @@ test("initiative management requires an active workspace and steward authority",
   ).toBe(false);
 });
 
+test("initiative write capabilities require an eligible authenticated viewer", () => {
+  const initiative = {
+    status: "active" as const,
+    viewerRole: "steward" as const,
+    viewerCanAdmin: false,
+    viewerCanSteward: true,
+    viewerCanJoin: false,
+    viewerCanLeave: true,
+  };
+
+  expect(
+    getInitiativeViewerCapabilities(initiative, {
+      enabled: true,
+      loading: false,
+      authenticated: true,
+      eligible: false,
+    }),
+  ).toEqual({
+    canAdmin: false,
+    canJoin: false,
+    canLeave: false,
+    canManage: false,
+    canParticipate: false,
+  });
+
+  expect(
+    getInitiativeViewerCapabilities(initiative, {
+      enabled: true,
+      loading: false,
+      authenticated: true,
+      eligible: true,
+    }),
+  ).toEqual({
+    canAdmin: false,
+    canJoin: false,
+    canLeave: true,
+    canManage: true,
+    canParticipate: true,
+  });
+});
+
+test("initiative development mode can act without the auth gate", () => {
+  expect(
+    getInitiativeViewerCapabilities(
+      {
+        status: "active",
+        viewerRole: null,
+        viewerCanJoin: true,
+      },
+      {
+        enabled: false,
+        loading: false,
+        authenticated: false,
+        eligible: false,
+      },
+    ),
+  ).toMatchObject({ canJoin: true });
+});
+
 test("proposal drafts retain an Initiative selection that is no longer available", () => {
   expect(
     initiativeOptionsWithSelection(
@@ -105,4 +167,35 @@ test("initiative tags are normalized and deduplicated", () => {
   expect(
     parseInitiativeTags("research, governance, research,  governance "),
   ).toEqual(["research", "governance"]);
+});
+
+test("initiative descriptions omit empty and summary-equivalent content", () => {
+  expect(
+    initiativeDistinctDescription(
+      "Coordinate public work.",
+      " Coordinate   public work. ",
+    ),
+  ).toBe("");
+  expect(initiativeDistinctDescription("Coordinate public work.", "  ")).toBe(
+    "",
+  );
+  expect(
+    initiativeDistinctDescription(
+      "Coordinate public work.",
+      "Publish evidence and assign owners.",
+    ),
+  ).toBe("Publish evidence and assign owners.");
+});
+
+test("initiative descriptions preserve distinct paragraphs without blank rows", () => {
+  expect(
+    initiativeDescriptionParagraphs(
+      "Analyze voting patterns.\n\nCollect evidence.\n\nReport findings.",
+    ),
+  ).toEqual([
+    "Analyze voting patterns.",
+    "Collect evidence.",
+    "Report findings.",
+  ]);
+  expect(initiativeDescriptionParagraphs("")).toEqual([]);
 });

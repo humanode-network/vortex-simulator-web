@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { GlassySection } from "@/components/GlassySection";
 import { Textarea } from "@/components/Textarea";
@@ -8,34 +8,54 @@ import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { apiInitiativeUpdate } from "@/lib/apiClient";
 import { initiativeStatusLabel, parseInitiativeTags } from "@/lib/initiativeUi";
-import type { InitiativeDto, InitiativeStatusDto } from "@/types/api";
+import type {
+  InitiativeDto,
+  InitiativeStatusDto,
+  InitiativeVisibilityDto,
+} from "@/types/api";
 
 type InitiativeSettingsSectionProps = {
   initiative: InitiativeDto;
   onChanged: () => Promise<void> | void;
+  onClose: () => void;
 };
 
 export function InitiativeSettingsSection({
   initiative,
   onChanged,
+  onClose,
 }: InitiativeSettingsSectionProps) {
   const [title, setTitle] = useState(initiative.title);
   const [summary, setSummary] = useState(initiative.summary);
   const [description, setDescription] = useState(initiative.description);
   const [tags, setTags] = useState(initiative.tags.join(", "));
   const [status, setStatus] = useState<InitiativeStatusDto>(initiative.status);
+  const [visibility, setVisibility] = useState<InitiativeVisibilityDto>(
+    initiative.visibility,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const archivedReadOnly =
     initiative.status === "archived" && status !== "active";
 
-  useEffect(() => {
+  const resetDraft = useCallback(() => {
     setTitle(initiative.title);
     setSummary(initiative.summary);
     setDescription(initiative.description);
     setTags(initiative.tags.join(", "));
     setStatus(initiative.status);
+    setVisibility(initiative.visibility);
   }, [initiative]);
+
+  useEffect(() => {
+    resetDraft();
+  }, [resetDraft]);
+
+  function cancelEditing() {
+    resetDraft();
+    setError(null);
+    onClose();
+  }
 
   async function updateInitiative(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,8 +70,10 @@ export function InitiativeSettingsSection({
         description: description.trim(),
         tags: parseInitiativeTags(tags),
         status,
+        visibility,
       });
       await onChanged();
+      onClose();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -60,7 +82,14 @@ export function InitiativeSettingsSection({
   }
 
   return (
-    <GlassySection title="Settings">
+    <GlassySection
+      title="Settings"
+      action={
+        <Button type="button" size="sm" variant="ghost" onClick={cancelEditing}>
+          Cancel
+        </Button>
+      }
+    >
       <form className="grid gap-3" onSubmit={updateInitiative}>
         <div className="grid gap-3 md:grid-cols-2">
           <Input
@@ -85,7 +114,7 @@ export function InitiativeSettingsSection({
           placeholder="Initiative description"
           aria-label="Initiative description"
         />
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto]">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
           <Input
             disabled={archivedReadOnly}
             value={tags}
@@ -93,6 +122,17 @@ export function InitiativeSettingsSection({
             placeholder="Comma-separated tags"
             aria-label="Initiative tags"
           />
+          <Select
+            disabled={archivedReadOnly}
+            value={visibility}
+            onChange={(event) =>
+              setVisibility(event.target.value as InitiativeVisibilityDto)
+            }
+            aria-label="Initiative visibility"
+          >
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </Select>
           <Select
             value={status}
             onChange={(event) =>

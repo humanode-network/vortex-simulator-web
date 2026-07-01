@@ -211,6 +211,17 @@ export type InitiativeReferenceDto = {
   id: string;
   title: string;
 };
+export type InitiativeVisibilityDto = "public" | "private";
+export type InitiativeJoinRequestStatusDto =
+  | "pending"
+  | "accepted"
+  | "declined";
+export type InitiativeJoinRequestDto = {
+  address: string;
+  status: InitiativeJoinRequestStatusDto;
+  requestedAt: string;
+  respondedAt?: string | null;
+};
 export type InitiativeThreadDto = {
   id: string;
   title: string;
@@ -234,6 +245,7 @@ export type InitiativeDto = {
   title: string;
   summary: string;
   description: string;
+  visibility: InitiativeVisibilityDto;
   status: InitiativeStatusDto;
   tags: string[];
   createdByAddress: string;
@@ -248,6 +260,10 @@ export type InitiativeDto = {
   viewerRole?: InitiativeRoleDto | null;
   viewerCanAdmin?: boolean;
   viewerCanSteward?: boolean;
+  viewerCanJoin?: boolean;
+  viewerCanLeave?: boolean;
+  viewerJoinRequest?: InitiativeJoinRequestDto | null;
+  joinRequests?: InitiativeJoinRequestDto[];
   boardColumns?: InitiativeBoardColumnDto[];
   boardCards?: InitiativeBoardCardDto[];
   threads?: InitiativeThreadDto[];

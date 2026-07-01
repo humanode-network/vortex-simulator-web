@@ -1,9 +1,11 @@
-import { Kicker } from "@/components/Kicker";
-import { StatTile } from "@/components/StatTile";
+import { Chip } from "@/components/Chip";
+import { GlassyStatusChip } from "@/components/GlassySection";
 import { HintLabel } from "@/components/Hint";
-import { Badge } from "@/components/primitives/badge";
-import { Button } from "@/components/primitives/button";
-import { Card, CardContent } from "@/components/primitives/card";
+import { MetricTile } from "@/components/MetricTile";
+import {
+  WorkspaceHeader,
+  WorkspaceHeaderAction,
+} from "@/components/WorkspaceHeader";
 import type { FactionDto } from "@/types/api";
 
 type FactionHeroProps = {
@@ -35,25 +37,22 @@ export const FactionHero: React.FC<FactionHeroProps> = ({
   viewerMembershipActive,
   viewerRole,
 }) => {
+  const roleLabel = viewerRole
+    ? viewerRole.charAt(0).toUpperCase() + viewerRole.slice(1)
+    : "Observer";
+  const pendingJoin =
+    viewerJoinRequest?.status === "pending" && !viewerMembershipActive;
+
   return (
     <>
-      <Card>
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 space-y-3">
-              <Kicker>{faction.focus}</Kicker>
-              <h1 className="text-2xl leading-tight font-semibold text-text sm:text-3xl">
-                {faction.name}
-              </h1>
-              <p className="max-w-4xl text-sm leading-relaxed text-muted sm:text-base">
-                {faction.description}
-              </p>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
+      <WorkspaceHeader
+        title={faction.name}
+        summary={faction.description}
+        actions={
+          canJoin || canLeave || isFounderAdmin ? (
+            <>
               {canJoin ? (
-                <Button
-                  size="sm"
+                <WorkspaceHeaderAction
                   disabled={mutating || viewerJoinRequest?.status === "pending"}
                   onClick={onJoin}
                 >
@@ -62,63 +61,69 @@ export const FactionHero: React.FC<FactionHeroProps> = ({
                       ? "Request pending"
                       : "Request to join"
                     : "Join faction"}
-                </Button>
+                </WorkspaceHeaderAction>
               ) : null}
               {canLeave ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={mutating}
-                  onClick={onLeave}
-                >
+                <WorkspaceHeaderAction disabled={mutating} onClick={onLeave}>
                   Leave faction
-                </Button>
+                </WorkspaceHeaderAction>
               ) : null}
               {isFounderAdmin ? (
-                <Button size="sm" variant="outline" onClick={onEditToggle}>
+                <WorkspaceHeaderAction onClick={onEditToggle}>
                   {editOpen ? "Close edit" : "Edit faction"}
-                </Button>
+                </WorkspaceHeaderAction>
               ) : null}
-            </div>
-          </div>
+            </>
+          ) : undefined
+        }
+        markers={
+          <>
+            <GlassyStatusChip
+              tone={faction.visibility === "public" ? "ok" : "neutral"}
+            >
+              {faction.visibility === "public" ? "Public" : "Private"}
+            </GlassyStatusChip>
+            <GlassyStatusChip tone="neutral">{roleLabel}</GlassyStatusChip>
+            <Chip className="stage-chip stage-chip--faction">
+              {faction.focus}
+            </Chip>
+          </>
+        }
+        meta={
+          viewerRole === "founder" || pendingJoin ? (
+            <>
+              {viewerRole === "founder" ? (
+                <GlassyStatusChip tone="warn">
+                  Founder leave requires transfer
+                </GlassyStatusChip>
+              ) : null}
+              {pendingJoin ? (
+                <GlassyStatusChip tone="warn">
+                  Join request pending
+                </GlassyStatusChip>
+              ) : null}
+            </>
+          ) : undefined
+        }
+      />
 
-          {viewerRole === "founder" ? (
-            <div className="mt-3">
-              <Badge variant="outline">
-                Founder leave disabled until transfer
-              </Badge>
-            </div>
-          ) : null}
-          {viewerJoinRequest?.status === "pending" &&
-          !viewerMembershipActive ? (
-            <div className="mt-3">
-              <Badge variant="outline">
-                Private faction join request pending
-              </Badge>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile
-          label="Members"
-          value={String(faction.members)}
-          align="center"
-        />
-        <StatTile
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricTile label="Members" value={String(faction.members)} />
+        <MetricTile
           label={<HintLabel termId="acm" prefix="Members'" termText="ACM" />}
           value={String(faction.acm)}
-          align="center"
         />
-        <StatTile
-          label="Role"
-          value={
-            viewerRole
-              ? viewerRole.charAt(0).toUpperCase() + viewerRole.slice(1)
-              : "None"
-          }
-          align="center"
+        <MetricTile
+          label="Channels"
+          value={String(faction.channels?.length ?? 0)}
+        />
+        <MetricTile
+          label="Initiatives"
+          value={String(
+            faction.initiativesDetailed?.length ??
+              faction.initiatives?.length ??
+              0,
+          )}
         />
       </div>
     </>

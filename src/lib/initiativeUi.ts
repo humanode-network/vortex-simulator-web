@@ -17,6 +17,20 @@ type InitiativeManageability = {
   viewerCanSteward?: boolean;
 };
 
+type InitiativeAuthState = {
+  enabled: boolean;
+  loading: boolean;
+  authenticated: boolean;
+  eligible: boolean;
+};
+
+type InitiativeViewerState = InitiativeManageability & {
+  viewerRole?: InitiativeRoleDto | null;
+  viewerCanAdmin?: boolean;
+  viewerCanJoin?: boolean;
+  viewerCanLeave?: boolean;
+};
+
 export const initiativeRoleLabel: Record<InitiativeRoleDto, string> = {
   admin: "Admin",
   steward: "Steward",
@@ -98,12 +112,50 @@ export function canManageInitiative(
   return initiative.status === "active" && Boolean(initiative.viewerCanSteward);
 }
 
+export function getInitiativeViewerCapabilities(
+  initiative: InitiativeViewerState,
+  auth: InitiativeAuthState,
+) {
+  const canAct =
+    !auth.enabled || (auth.authenticated && auth.eligible && !auth.loading);
+  const isOperational = initiative.status === "active";
+
+  return {
+    canAdmin: canAct && Boolean(initiative.viewerCanAdmin),
+    canJoin: canAct && Boolean(initiative.viewerCanJoin),
+    canLeave: canAct && Boolean(initiative.viewerCanLeave),
+    canManage: canAct && canManageInitiative(initiative),
+    canParticipate: canAct && isOperational && initiative.viewerRole != null,
+  };
+}
+
 export function initiativeSummaryPreview(value: string, maxLength = 150) {
   const normalized = value.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) return normalized;
   const boundary = normalized.lastIndexOf(" ", maxLength - 1);
   const cutAt = boundary > 80 ? boundary : maxLength;
   return normalized.slice(0, cutAt).trim();
+}
+
+export function initiativeDistinctDescription(
+  summary: string,
+  description: string,
+) {
+  const normalizedSummary = summary.replace(/\s+/g, " ").trim();
+  const normalizedDescription = description.replace(/\s+/g, " ").trim();
+
+  if (!normalizedDescription || normalizedDescription === normalizedSummary) {
+    return "";
+  }
+
+  return description.trim();
+}
+
+export function initiativeDescriptionParagraphs(description: string) {
+  return description
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, " ").trim())
+    .filter(Boolean);
 }
 
 export function initiativeOptionsWithSelection(

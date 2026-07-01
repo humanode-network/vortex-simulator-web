@@ -6,6 +6,10 @@ import {
   apiInitiative,
   apiInitiativeBoardCardDelete,
   apiInitiativeBoardCardUpdate,
+  apiInitiativeJoin,
+  apiInitiativeJoinRequestApprove,
+  apiInitiativeJoinRequestDecline,
+  apiInitiativeLeave,
   apiInitiativeUpdate,
   apiPoolVote,
   apiProposals,
@@ -156,6 +160,54 @@ test("initiative client preserves explicit empty edits and encodes detail ids", 
     },
   });
   assert.equal(calls[3].input, "/api/initiatives/initiative%2Fwith%20spaces");
+
+  global.fetch = originalFetch;
+});
+
+test("initiative membership commands preserve the shared API contract", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  await apiInitiativeJoin({ initiativeId: "initiative-1" });
+  await apiInitiativeJoinRequestApprove({
+    initiativeId: "initiative-1",
+    address: "member-1",
+  });
+  await apiInitiativeJoinRequestDecline({
+    initiativeId: "initiative-1",
+    address: "member-2",
+  });
+  await apiInitiativeLeave({ initiativeId: "initiative-1" });
+
+  assert.deepEqual(
+    calls.map((call) => JSON.parse(call.init.body)),
+    [
+      {
+        type: "initiative.join",
+        payload: { initiativeId: "initiative-1" },
+      },
+      {
+        type: "initiative.join.request.approve",
+        payload: { initiativeId: "initiative-1", address: "member-1" },
+      },
+      {
+        type: "initiative.join.request.decline",
+        payload: { initiativeId: "initiative-1", address: "member-2" },
+      },
+      {
+        type: "initiative.leave",
+        payload: { initiativeId: "initiative-1" },
+      },
+    ],
+  );
 
   global.fetch = originalFetch;
 });

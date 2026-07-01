@@ -17,6 +17,7 @@ import {
 } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { getFactionViewerPermissions } from "@/lib/factionUi";
+import { useActionRunner } from "@/hooks/useActionRunner";
 import { FactionChannelsSection } from "./components/FactionChannelsSection";
 import { FactionEditCard } from "./components/FactionEditCard";
 import { FactionHero } from "./components/FactionHero";
@@ -24,7 +25,6 @@ import { FactionInitiativesSection } from "./components/FactionInitiativesSectio
 import { FactionMembersSection } from "./components/FactionMembersSection";
 import { FactionModerationQueues } from "./components/FactionModerationQueues";
 import { useFactionChannelDraft } from "./hooks/useFactionChannelDraft";
-import { useFactionActionRunner } from "./hooks/useFactionActionRunner";
 import { useFactionEditForm } from "./hooks/useFactionEditForm";
 import { useFactionLegacyThreadRedirect } from "./hooks/useFactionLegacyThreadRedirect";
 import { useFactionPageData } from "./hooks/useFactionPageData";
@@ -41,7 +41,7 @@ const Faction: React.FC = () => {
 
   const channelDraft = useFactionChannelDraft();
   const editForm = useFactionEditForm(faction);
-  const { actionError, mutating, runAction } = useFactionActionRunner({
+  const { actionError, mutating, runAction } = useActionRunner({
     reload: reloadFaction,
   });
 
