@@ -21,6 +21,8 @@ node_modules
 # production
 dist
 storybook-static
+playwright-report
+test-results
 
 # ts
 *.tsbuildinfo

@@ -42,7 +42,7 @@ export function BudgetStep(props: {
               draft.timeline.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_220px_160px]"
+                  className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[1fr_220px_160px]"
                 >
                   <div className="space-y-1">
                     <Label className="text-xs text-muted">Milestone</Label>
@@ -63,6 +63,7 @@ export function BudgetStep(props: {
                   <div className="space-y-1">
                     <Label className="text-xs text-muted">Budget (HMND)</Label>
                     <Input
+                      id={`timeline-budget-${idx}`}
                       type="number"
                       min={0}
                       step={1}
@@ -89,7 +90,7 @@ export function BudgetStep(props: {
             {draft.budgetItems.map((item) => (
               <div
                 key={item.id}
-                className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_160px]"
+                className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[1fr_160px]"
               >
                 <div className="space-y-1">
                   <Label className="text-xs text-muted">Description</Label>
@@ -131,7 +132,7 @@ export function BudgetStep(props: {
         )}
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-border bg-panel-alt px-4 py-3">
+      <div className="proposal-wizard__total">
         <p className="text-sm font-semibold text-text">Total</p>
         <p className="text-lg font-semibold text-text">
           {budgetTotal.toLocaleString()} HMND

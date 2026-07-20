@@ -19,6 +19,7 @@ const rstestServerPlugin = (): RsbuildPlugin => ({
 });
 
 export default defineConfig({
+  exclude: ["tests/e2e/**"],
   testMatch: ["tests/**/*.test.js"],
   environment: "node",
   browser: { enabled: false },

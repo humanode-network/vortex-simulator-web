@@ -2,16 +2,11 @@ import { useEffect, useState } from "react";
 import type { NavigateFunction } from "react-router";
 
 import { apiProposalDraft, apiProposalStatus } from "@/lib/apiClient";
-import {
-  normalizeDraft,
-  persistDraft,
-  persistPresetId,
-  persistServerDraftId,
-  persistTemplateId,
-} from "./storage";
+import { normalizeSessionDraft } from "./sessionStorage";
 import { inferPresetIdFromDraft } from "./presets/registry";
-import type { ProposalCreationTemplateKind } from "./useProposalCreationPreset";
 import type { ProposalDraftForm } from "./types";
+
+type ProposalCreationTemplateKind = "project" | "system";
 
 export type ProposalDraftHydrationResult = {
   draft: ProposalDraftForm;
@@ -64,7 +59,7 @@ export function useProposalDraftHydration({
           throw new Error("Draft payload unavailable for editing.");
         }
 
-        const normalized = normalizeDraft(detail.editableForm);
+        const normalized = normalizeSessionDraft(detail.editableForm);
         const nextTemplateKind =
           detail.editableForm.templateId ??
           (detail.editableForm.metaGovernance ? "system" : "project");
@@ -78,10 +73,6 @@ export function useProposalDraftHydration({
           presetId: nextPresetId,
           templateKind: nextTemplateKind,
         });
-        persistTemplateId(nextTemplateKind);
-        persistPresetId(nextPresetId);
-        persistDraft(normalized);
-        persistServerDraftId(nextDraftId);
       } catch (error) {
         if (!active) return;
         setLoadDraftError((error as Error).message);

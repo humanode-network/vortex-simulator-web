@@ -11,6 +11,7 @@ import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
 import { formatDateTime } from "@/lib/dateTime";
 import { Link } from "react-router";
+import { ProposalNarrative } from "@/components/ProposalNarrative";
 
 export type ProposalSummaryStat = {
   label: string;
@@ -118,15 +119,11 @@ export function ProposalSummaryCard({
       )}
       <div className="space-y-4 text-text">
         <TitledSurface title="Proposal overview">
-          <p className="text-sm leading-relaxed text-muted">{overview}</p>
+          <ProposalNarrative value={overview} />
         </TitledSurface>
         {renderExecutionPlan ? (
           <TitledSurface title="Execution plan">
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-              {executionPlan.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <ProposalNarrative value={executionPlan} />
           </TitledSurface>
         ) : null}
         {renderBudgetScope ? (

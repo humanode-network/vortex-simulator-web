@@ -164,10 +164,8 @@ const ProposalDrafts: React.FC = () => {
                   View
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link
-                    to={`/app/proposals/new?draftId=${draft.id}&step=essentials`}
-                  >
-                    Edit
+                  <Link to={`/app/proposals/new?draftId=${draft.id}`}>
+                    Continue editing
                   </Link>
                 </Button>
               </div>

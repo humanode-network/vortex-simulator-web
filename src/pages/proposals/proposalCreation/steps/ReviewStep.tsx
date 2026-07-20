@@ -3,6 +3,7 @@ import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
 import { AddressInline } from "@/components/AddressInline";
+import { ProposalNarrative } from "@/components/ProposalNarrative";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
@@ -51,7 +52,7 @@ export function ReviewStep(props: {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-border bg-panel-alt p-4">
+      <section className="proposal-wizard__embedded-section">
         <p className="text-sm font-semibold text-text">
           Proposer (auto-filled)
         </p>
@@ -81,9 +82,9 @@ export function ReviewStep(props: {
             placeholder="Short intro / credentials / relevant experience."
           />
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-xl border border-border bg-panel-alt p-4">
+      <section className="proposal-wizard__embedded-section">
         <p className="text-sm font-semibold text-text">Preview</p>
         <div className="mt-3 space-y-3 text-sm">
           <div>
@@ -171,7 +172,7 @@ export function ReviewStep(props: {
                 <p className="text-xs font-semibold text-text">
                   Implementation notes
                 </p>
-                <p className="text-muted">{draft.how}</p>
+                <ProposalNarrative value={draft.how} />
               </div>
             </>
           ) : (
@@ -179,16 +180,16 @@ export function ReviewStep(props: {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-semibold text-text">What</p>
-                  <p className="text-muted">{draft.what}</p>
+                  <ProposalNarrative value={draft.what} />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-text">Why</p>
-                  <p className="text-muted">{draft.why}</p>
+                  <ProposalNarrative value={draft.why} />
                 </div>
               </div>
               <div>
                 <p className="text-xs font-semibold text-text">How</p>
-                <p className="text-muted">{draft.how}</p>
+                <ProposalNarrative value={draft.how} />
               </div>
               {hasFormation ? (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -244,16 +245,16 @@ export function ReviewStep(props: {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-border bg-panel px-3 py-2 text-xs text-muted">
+                <div className="proposal-wizard__notice">
                   Formation is not required for this proposal.
                 </div>
               )}
             </>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-2 rounded-xl border border-border bg-panel-alt p-4">
+      <section className="proposal-wizard__embedded-section space-y-2">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-text">
             Attachments (optional, recommended)
@@ -331,9 +332,9 @@ export function ReviewStep(props: {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="space-y-3 rounded-xl border border-border bg-panel-alt p-4">
+      <section className="proposal-wizard__embedded-section space-y-3">
         <p className="text-sm font-semibold text-text">Rules</p>
         <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
           <li>Be specific about outcomes and deliverables.</li>
@@ -342,8 +343,9 @@ export function ReviewStep(props: {
           <li>Attachments are optional but recommended.</li>
         </ul>
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
+          <label className="flex items-center gap-2 rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text">
             <input
+              id="agree-rules"
               type="checkbox"
               className="h-4 w-4 accent-primary"
               checked={draft.agreeRules}
@@ -356,8 +358,9 @@ export function ReviewStep(props: {
             />
             I agree to the rules
           </label>
-          <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
+          <label className="flex items-center gap-2 rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text">
             <input
+              id="confirm-budget"
               type="checkbox"
               className="h-4 w-4 accent-primary"
               checked={draft.confirmBudget}
@@ -377,8 +380,8 @@ export function ReviewStep(props: {
         </div>
         {!canSubmit ? (
           <p className="text-xs text-muted">
-            You can navigate steps freely. Submit unlocks once required fields
-            are filled and both checkboxes are checked.
+            Submit unlocks after the required fields and both confirmations are
+            complete.
           </p>
         ) : null}
         {SIM_AUTH_ENABLED && !canAct ? (
@@ -386,7 +389,7 @@ export function ReviewStep(props: {
             Submitting is available only to eligible human nodes.
           </p>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 }

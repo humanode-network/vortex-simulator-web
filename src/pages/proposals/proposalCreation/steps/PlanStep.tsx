@@ -2,6 +2,7 @@ import type React from "react";
 import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
+import { ProposalNarrativeEditor } from "@/components/ProposalNarrative";
 import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
 
@@ -11,16 +12,8 @@ export function PlanStep(props: {
   setDraft: React.Dispatch<React.SetStateAction<ProposalDraftForm>>;
   formationEligible?: boolean;
   mode: "project" | "system";
-  textareaClassName: string;
 }) {
-  const {
-    attemptedNext,
-    draft,
-    setDraft,
-    formationEligible,
-    mode,
-    textareaClassName,
-  } = props;
+  const { attemptedNext, draft, setDraft, formationEligible, mode } = props;
   const showTimeline = formationEligible !== false;
 
   return (
@@ -31,14 +24,10 @@ export function PlanStep(props: {
             ? "How (implementation) *"
             : "How (execution plan) *"}
         </Label>
-        <textarea
+        <ProposalNarrativeEditor
           id="how"
-          rows={6}
-          className={textareaClassName}
           value={draft.how}
-          onChange={(e) =>
-            setDraft((prev) => ({ ...prev, how: e.target.value }))
-          }
+          onChange={(value) => setDraft((prev) => ({ ...prev, how: value }))}
           placeholder={
             mode === "system"
               ? "Explain how the system change should be applied and verified."
@@ -90,7 +79,7 @@ export function PlanStep(props: {
                 {draft.timeline.map((ms) => (
                   <div
                     key={ms.id}
-                    className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[1fr_200px_160px_auto]"
+                    className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[1fr_200px_auto]"
                   >
                     <Input
                       value={ms.title}
@@ -119,23 +108,6 @@ export function PlanStep(props: {
                         }))
                       }
                       placeholder="Timeframe (e.g., 2 weeks)"
-                    />
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={ms.budgetHmnd ?? ""}
-                      onChange={(e) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          timeline: prev.timeline.map((item) =>
-                            item.id === ms.id
-                              ? { ...item, budgetHmnd: e.target.value }
-                              : item,
-                          ),
-                        }))
-                      }
-                      placeholder="Budget HMND"
                     />
                     <Button
                       size="sm"
@@ -185,7 +157,7 @@ export function PlanStep(props: {
               {draft.outputs.map((out) => (
                 <div
                   key={out.id}
-                  className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[220px_1fr_auto]"
+                  className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[220px_1fr_auto]"
                 >
                   <Input
                     value={out.label}
@@ -266,7 +238,7 @@ export function PlanStep(props: {
                 {draft.openSlotNeeds.map((slot) => (
                   <div
                     key={slot.id}
-                    className="grid gap-2 rounded-xl border border-border bg-panel-alt p-3 sm:grid-cols-[220px_1fr_auto]"
+                    className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[220px_1fr_auto]"
                   >
                     <Input
                       value={slot.title}
