@@ -8,6 +8,7 @@ import { apiProposalDraftSave, apiProposalSubmitToPool } from "@/lib/apiClient";
 import { toTimestampMs } from "@/lib/dateTime";
 import { initiativeOptionsWithSelection } from "@/lib/initiativeUi";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import {
   ProposalCreationLineageMessage,
   ProposalCreationMessages,
@@ -131,6 +132,7 @@ function initialWizardStateForSession(
 
 const ProposalCreation: React.FC = () => {
   const auth = useAuth();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const repository = useMemo(
@@ -245,23 +247,27 @@ const ProposalCreation: React.FC = () => {
   const textareaClassName =
     "w-full rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition supports-[backdrop-filter]:backdrop-blur-md hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel";
 
-  const runEffects = useCallback((effects: WizardEffect[]) => {
-    window.requestAnimationFrame(() => {
-      for (const effect of effects) {
-        if (effect.type === "focus-step") {
-          headingRef.current?.focus({ preventScroll: true });
-          headingRef.current?.scrollIntoView({
-            block: "nearest",
-            behavior: "smooth",
-          });
-        } else {
-          const field = document.getElementById(effect.fieldId);
-          field?.focus({ preventScroll: true });
-          field?.scrollIntoView({ block: "center", behavior: "smooth" });
+  const runEffects = useCallback(
+    (effects: WizardEffect[]) => {
+      const behavior = prefersReducedMotion ? "auto" : "smooth";
+      window.requestAnimationFrame(() => {
+        for (const effect of effects) {
+          if (effect.type === "focus-step") {
+            headingRef.current?.focus({ preventScroll: true });
+            headingRef.current?.scrollIntoView({
+              block: "nearest",
+              behavior,
+            });
+          } else {
+            const field = document.getElementById(effect.fieldId);
+            field?.focus({ preventScroll: true });
+            field?.scrollIntoView({ block: "center", behavior });
+          }
         }
-      }
-    });
-  }, []);
+      });
+    },
+    [prefersReducedMotion],
+  );
 
   const send = useCallback(
     (event: WizardEvent) => {
@@ -588,9 +594,15 @@ const ProposalCreation: React.FC = () => {
 
   const attemptedNext = wizardState.attemptedStepId === wizardState.stepId;
   const summaryInitiative = selectedInitiative?.title ?? null;
+  const wizardAnnouncement = attemptedNext
+    ? `${currentStep.title}. Complete the highlighted required field before continuing.`
+    : `${currentStep.title}. Step ${currentStepIndex + 1} of ${currentPath.steps.length}. ${stepDescriptions[wizardState.stepId]}`;
 
   return (
     <div className="proposal-wizard">
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {wizardAnnouncement}
+      </p>
       <PageHint pageId="proposals" />
       <ProposalCreationLineageMessage
         resubmitsProposalId={draft.resubmitsProposalId}

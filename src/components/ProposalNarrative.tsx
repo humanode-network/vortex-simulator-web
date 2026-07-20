@@ -1,10 +1,17 @@
-import { useRef } from "react";
+import { lazy, Suspense } from "react";
 
-import { Button } from "@/components/primitives/button";
 import { cn } from "@/lib/utils";
 import "./ProposalNarrative.css";
 
 export type ProposalNarrativeValue = string | string[];
+
+export type ProposalNarrativeEditorProps = {
+  id: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  rows?: number;
+  value: string;
+};
 
 type NarrativeBlock =
   | { type: "heading"; level: 2 | 3; text: string }
@@ -92,7 +99,7 @@ function parseNarrative(value: ProposalNarrativeValue): NarrativeBlock[] {
   return blocks;
 }
 
-function safeHref(rawHref: string): string | null {
+export function safeNarrativeHref(rawHref: string): string | null {
   try {
     const href = new URL(rawHref, "https://vortex.local");
     return SAFE_LINK_PROTOCOLS.has(href.protocol) ? href.href : null;
@@ -118,7 +125,7 @@ function NarrativeInline({ text }: { text: string }) {
         }
         const link = /^\[([^\]]+)\]\(([^\s)]+)\)$/.exec(part);
         if (link) {
-          const href = safeHref(link[2]);
+          const href = safeNarrativeHref(link[2]);
           return href ? (
             <a
               key={`${part}-${index}`}
@@ -190,105 +197,21 @@ export function ProposalNarrative({
   );
 }
 
-type NarrativeCommand =
-  | "heading"
-  | "ordered-list"
-  | "unordered-list"
-  | "quote"
-  | "code"
-  | "link";
+const TiptapNarrativeEditor = lazy(() => import("./ProposalNarrativeEditor"));
 
-const editorCommands: Array<{ command: NarrativeCommand; label: string }> = [
-  { command: "heading", label: "Heading" },
-  { command: "unordered-list", label: "List" },
-  { command: "ordered-list", label: "Numbered list" },
-  { command: "quote", label: "Quote" },
-  { command: "link", label: "Link" },
-  { command: "code", label: "Code" },
-];
-
-function commandText(command: NarrativeCommand, selection: string): string {
-  const content = selection || "Text";
-  switch (command) {
-    case "heading":
-      return `## ${content}`;
-    case "unordered-list":
-      return `- ${content}`;
-    case "ordered-list":
-      return `1. ${content}`;
-    case "quote":
-      return `> ${content}`;
-    case "code":
-      return `\`${content}\``;
-    case "link":
-      return `[${content}](https://)`;
-  }
-}
-
-export function ProposalNarrativeEditor({
-  id,
-  onChange,
-  placeholder,
-  rows = 7,
-  value,
-}: {
-  id: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  rows?: number;
-  value: string;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const applyCommand = (command: NarrativeCommand) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const inserted = commandText(command, value.slice(start, end));
-    const next = `${value.slice(0, start)}${inserted}${value.slice(end)}`;
-    onChange(next);
-    window.requestAnimationFrame(() => {
-      textarea.focus();
-      const cursor = start + inserted.length;
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  };
-
+export function ProposalNarrativeEditor(props: ProposalNarrativeEditorProps) {
   return (
-    <div className="proposal-narrative-editor">
-      <div
-        className="proposal-narrative-editor__toolbar"
-        role="toolbar"
-        aria-label="Proposal formatting"
-      >
-        {editorCommands.map(({ command, label }) => (
-          <Button
-            key={command}
-            aria-label={label}
-            aria-controls={id}
-            size="sm"
-            type="button"
-            variant="ghost"
-            onClick={() => applyCommand(command)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-      <textarea
-        ref={textareaRef}
-        id={id}
-        rows={rows}
-        className="proposal-narrative-editor__input"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
-      <p className="proposal-narrative-editor__hint">
-        Use the controls to structure the proposal. Plain text stays a
-        paragraph, and only explicit lists become bullets.
-      </p>
-    </div>
+    <Suspense
+      fallback={
+        <div
+          aria-label="Preparing proposal editor"
+          className="proposal-narrative-editor proposal-narrative-editor--loading"
+          role="status"
+          style={{ minHeight: `calc(${props.rows ?? 7} * 1.6em + 5.5rem)` }}
+        />
+      }
+    >
+      <TiptapNarrativeEditor {...props} />
+    </Suspense>
   );
 }

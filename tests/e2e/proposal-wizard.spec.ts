@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const address = "hmr1GRb1SRdDfJZmFaYh5L1RNev3dFcTVLGS2Rqqmk3Fbgj2W";
 
@@ -245,6 +245,20 @@ async function openFreshWizard(
   await expect(page).toHaveURL(/step=intent/);
 }
 
+async function focusWithTab(page: Page, target: Locator, maxTabs = 80) {
+  for (let index = 0; index < maxTabs; index += 1) {
+    if (
+      await target.evaluate((element) => document.activeElement === element)
+    ) {
+      return;
+    }
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(
+    `Could not reach ${await target.evaluate((element) => element.id)} with Tab.`,
+  );
+}
+
 test("fresh entry ignores legacy Review state and completes policy submission", async ({
   page,
 }) => {
@@ -279,6 +293,123 @@ test("fresh entry ignores legacy Review state and completes policy submission", 
   await expect(page).toHaveURL(/\/app\/proposals\/proposal-e2e\/pp$/);
 });
 
+test("a keyboard-only author can complete a policy proposal", async ({
+  page,
+}) => {
+  await openFreshWizard(page);
+
+  const kind = page.locator("#proposal-kind");
+  const type = page.locator("#proposal-type");
+  const mode = page.locator("#proposal-formation-mode");
+  const continueButton = page.getByRole("button", { name: "Continue" });
+
+  await focusWithTab(page, kind);
+  await page.keyboard.press("ArrowDown");
+  await expect(kind).toHaveValue("project");
+
+  await focusWithTab(page, type);
+  await page.keyboard.press("ArrowDown");
+  await expect(type).toHaveValue("basic");
+
+  await focusWithTab(page, mode);
+  await page.keyboard.press("ArrowDown");
+  await expect(mode).toHaveValue("policy");
+
+  await focusWithTab(page, continueButton);
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/step=essentials/);
+
+  const title = page.locator("#title");
+  const chamber = page.locator("#chamber");
+  const summary = page.locator("#summary");
+  const what = page.locator("#what");
+  const why = page.locator("#why");
+  await focusWithTab(page, title);
+  await page.keyboard.type("Keyboard governance reporting");
+  await focusWithTab(page, chamber);
+  await page.keyboard.press("ArrowDown");
+  await expect(chamber).toHaveValue("general");
+  await focusWithTab(page, summary);
+  await page.keyboard.type("A fully keyboard-authored proposal.");
+  await focusWithTab(page, what);
+  await page.keyboard.type("Publish a public reporting policy.");
+  await focusWithTab(page, why);
+  await page.keyboard.type("Make governance decisions auditable.");
+
+  await focusWithTab(page, continueButton);
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/step=plan/);
+
+  const how = page.locator("#how");
+  await focusWithTab(page, how);
+  await page.keyboard.type(
+    "Publish one signed report at the end of every era.",
+  );
+  await focusWithTab(page, continueButton);
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/step=review/);
+
+  const agreeRules = page.locator("#agree-rules");
+  const confirmBudget = page.locator("#confirm-budget");
+  const submit = page.getByRole("button", { name: "Submit proposal" });
+  await focusWithTab(page, agreeRules);
+  await page.keyboard.press("Space");
+  await expect(agreeRules).toBeChecked();
+  await focusWithTab(page, confirmBudget);
+  await page.keyboard.press("Space");
+  await expect(confirmBudget).toBeChecked();
+  await focusWithTab(page, submit);
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/app\/proposals\/proposal-e2e\/pp$/);
+});
+
+test("wizard announces step changes and disables smooth focus scrolling for reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    const behaviors: string[] = [];
+    Object.defineProperty(window, "__wizardScrollBehaviors", {
+      configurable: true,
+      value: behaviors,
+    });
+    HTMLElement.prototype.scrollIntoView = function (
+      options?: boolean | ScrollIntoViewOptions,
+    ) {
+      if (typeof options === "object") {
+        behaviors.push(options.behavior ?? "auto");
+      }
+    };
+  });
+  await openFreshWizard(page);
+
+  const announcement = page.locator('[aria-live="polite"]').first();
+  await expect(announcement).toContainText("Choose the proposal path");
+  await page.locator("#proposal-kind").selectOption("project");
+  await page.locator("#proposal-type").selectOption("basic");
+  await page.locator("#proposal-formation-mode").selectOption("policy");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(announcement).toContainText("Define the proposal");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { __wizardScrollBehaviors: string[] })
+            .__wizardScrollBehaviors,
+      ),
+    )
+    .toContain("auto");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as typeof window & { __wizardScrollBehaviors: string[] })
+            .__wizardScrollBehaviors,
+      ),
+    )
+    .not.toContain("smooth");
+});
+
 test("future steps remain locked until their requirements are complete", async ({
   page,
 }) => {
@@ -290,7 +421,9 @@ test("future steps remain locked until their requirements are complete", async (
   await expect(page).toHaveURL(/step=intent/);
 });
 
-test("narrative editor formats selected proposal prose", async ({ page }) => {
+test("narrative editor formats visible proposal prose without markup", async ({
+  page,
+}) => {
   await openFreshWizard(page);
   await page.locator("#proposal-kind").selectOption("project");
   await page.locator("#proposal-type").selectOption("basic");
@@ -298,25 +431,59 @@ test("narrative editor formats selected proposal prose", async ({ page }) => {
   await page.getByRole("button", { name: "Continue" }).click();
 
   await page.locator("#what").fill("Publish decision evidence");
-  await page.locator("#what").evaluate((textarea: HTMLTextAreaElement) => {
-    textarea.focus();
-    textarea.setSelectionRange(0, textarea.value.length);
+  await page.locator("#what").evaluate((editor: HTMLDivElement) => {
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
   });
   await page
     .locator('button[aria-controls="what"][aria-label="Heading"]')
     .click();
-  await expect(page.locator("#what")).toHaveValue(
-    "## Publish decision evidence",
+  await expect(page.locator("#what h2")).toHaveText(
+    "Publish decision evidence",
   );
+  await expect(page.locator("#what")).not.toContainText("##");
 
   await page.locator("#why").fill("Keep public records readable");
-  await page.locator("#why").evaluate((textarea: HTMLTextAreaElement) => {
-    textarea.focus();
-    textarea.setSelectionRange(0, textarea.value.length);
-  });
   await page.locator('button[aria-controls="why"][aria-label="List"]').click();
-  await expect(page.locator("#why")).toHaveValue(
-    "- Keep public records readable",
+  await expect(page.locator("#why ul li")).toHaveText(
+    "Keep public records readable",
+  );
+});
+
+test("narrative editor supports keyboard-accessible formatting and safe links", async ({
+  page,
+}) => {
+  await openFreshWizard(page);
+  await page.locator("#proposal-kind").selectOption("project");
+  await page.locator("#proposal-type").selectOption("basic");
+  await page.locator("#proposal-formation-mode").selectOption("policy");
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  const editor = page.locator("#what");
+  await editor.fill("Publish decision evidence");
+  const heading = page.locator(
+    'button[aria-controls="what"][aria-label="Heading"]',
+  );
+  await heading.focus();
+  await page.keyboard.press("Enter");
+  await expect(editor.locator("h2")).toHaveText("Publish decision evidence");
+
+  await editor.fill("Humanode reference");
+  await editor.evaluate((element: HTMLDivElement) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+  await page.locator('button[aria-controls="what"][aria-label="Link"]').click();
+  await page.getByLabel("Link URL").fill("https://humanode.io");
+  await page.getByRole("button", { name: "Apply link" }).click();
+  await expect(editor.locator('a[href="https://humanode.io/"]')).toHaveText(
+    "Humanode reference",
   );
 });
 
@@ -343,24 +510,43 @@ test("Formation uses a dedicated funding step before Review", async ({
   await expect(page).toHaveURL(/step=review/);
 });
 
-test("system changes follow action and rationale steps", async ({ page }) => {
-  await openFreshWizard(page);
+for (const action of [
+  "chamber.create",
+  "chamber.rename",
+  "chamber.dissolve",
+  "chamber.censure",
+  "governor.censure",
+] as const) {
+  test(`system action ${action} follows a complete author journey`, async ({
+    page,
+  }) => {
+    await openFreshWizard(page);
 
-  await page.locator("#proposal-kind").selectOption("system");
-  await page.locator("#proposal-type").selectOption("administrative");
-  await page.getByRole("button", { name: "Continue" }).click();
+    await page.locator("#proposal-kind").selectOption("system");
+    await page.locator("#proposal-type").selectOption("administrative");
+    await page.locator("#proposal-preset").selectOption(`system.${action}`);
+    await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(/step=system-change/);
-  await page.locator("#target-chamber-id").fill("research");
-  await page.locator("#target-title").fill("Research Chamber");
-  await page.locator("#title").fill("Create Research Chamber");
-  await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page).toHaveURL(/step=system-change/);
+    if (action === "governor.censure") {
+      await page
+        .locator("#target-governor-address")
+        .fill("hmr1GRb1SRdDfJZmFaYh5L1RNev3dFcTVLGS2Rqqmk3Fbgj2W");
+    } else {
+      await page.locator("#target-chamber-id").fill("research");
+    }
+    if (action === "chamber.create" || action === "chamber.rename") {
+      await page.locator("#target-title").fill("Research Chamber");
+    }
+    await page.locator("#title").fill(`${action} author journey`);
+    await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(/step=rationale/);
-  await page.locator("#how").fill("Create the chamber and verify membership.");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page).toHaveURL(/step=review/);
-});
+    await expect(page).toHaveURL(/step=rationale/);
+    await page.locator("#how").fill("Apply and verify the system change.");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page).toHaveURL(/step=review/);
+  });
+}
 
 test("legacy recovery ignores the old global step and resumes incomplete work", async ({
   page,
@@ -388,7 +574,7 @@ test("server draft links hydrate into their first incomplete step", async ({
   await expect(page).toHaveURL(/draftId=draft-existing/);
   await expect(page).toHaveURL(/step=plan/);
   await expect(page.locator("#title")).not.toBeVisible();
-  await expect(page.locator("#how")).toHaveValue("");
+  await expect(page.locator("#how")).toBeEmpty();
 });
 
 test("reconsideration entry keeps its decision lineage visible", async ({
