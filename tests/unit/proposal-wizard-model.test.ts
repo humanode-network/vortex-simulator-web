@@ -7,7 +7,9 @@ import {
 import {
   createWizardState,
   firstIncompleteWizardStep,
+  normalizeWizardStepId,
   pathIdForDraft,
+  proposalBudgetTotal,
   reachableWizardSteps,
   resolveRequestedWizardStep,
   transitionWizard,
@@ -58,6 +60,12 @@ test("paths are derived from template and Formation mode", () => {
   expect(pathIdForDraft(completePolicyDraft(), "system")).toBe("system-change");
 });
 
+test("legacy query steps normalize into the current path vocabulary", () => {
+  expect(normalizeWizardStepId("budget", "project")).toBe("funding");
+  expect(normalizeWizardStepId("essentials", "system")).toBe("system-change");
+  expect(normalizeWizardStepId("plan", "system")).toBe("rationale");
+});
+
 test("reachable steps stop after the first invalid requirement", () => {
   const draft = completePolicyDraft();
   expect(reachableWizardSteps("project-policy", context(draft))).toEqual([
@@ -88,6 +96,7 @@ test("Formation funding validates every milestone budget", () => {
   expect(validateWizardStep("funding", context(draft))).toEqual({
     valid: true,
   });
+  expect(proposalBudgetTotal(draft)).toBe(30);
 });
 
 test("system changes enforce General chamber and action targets", () => {

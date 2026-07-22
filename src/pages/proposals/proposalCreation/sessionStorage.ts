@@ -42,6 +42,18 @@ type SessionRepositoryOptions = {
   now?: () => string;
 };
 
+function isWizardStepId(value: unknown): value is WizardStepId {
+  return (
+    value === "intent" ||
+    value === "essentials" ||
+    value === "plan" ||
+    value === "funding" ||
+    value === "system-change" ||
+    value === "rationale" ||
+    value === "review"
+  );
+}
+
 export function mergeProposalWizardServerSave(input: {
   draftId: string;
   latest: ProposalWizardSessionV2;
@@ -66,30 +78,170 @@ function cloneDraft(draft: ProposalDraftForm): ProposalDraftForm {
   return structuredClone(draft);
 }
 
-export function normalizeSessionDraft(
-  parsed: Partial<ProposalDraftForm> | null | undefined,
-): ProposalDraftForm {
-  const chamberId =
-    typeof parsed?.chamberId === "string" ? parsed.chamberId : "";
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function stringValue(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function optionalStringValue(value: unknown): string | undefined {
+  const normalized = stringValue(value).trim();
+  return normalized || undefined;
+}
+
+function normalizeTimelineItems(value: unknown): ProposalDraftForm["timeline"] {
+  if (!Array.isArray(value)) return cloneDraft(DEFAULT_DRAFT).timeline;
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    return [
+      {
+        id: optionalStringValue(item.id) ?? `milestone-${index + 1}`,
+        title: stringValue(item.title),
+        timeframe: stringValue(item.timeframe),
+        budgetHmnd: stringValue(item.budgetHmnd),
+      },
+    ];
+  });
+}
+
+function normalizeLinkItems(
+  value: unknown,
+  fallback: ProposalDraftForm["outputs"],
+  prefix: string,
+): ProposalDraftForm["outputs"] {
+  if (!Array.isArray(value)) return structuredClone(fallback);
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    return [
+      {
+        id: optionalStringValue(item.id) ?? `${prefix}-${index + 1}`,
+        label: stringValue(item.label),
+        url: stringValue(item.url),
+      },
+    ];
+  });
+}
+
+function normalizeOpenSlotNeeds(
+  value: unknown,
+): ProposalDraftForm["openSlotNeeds"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    return [
+      {
+        id: optionalStringValue(item.id) ?? `slot-${index + 1}`,
+        title: stringValue(item.title),
+        desc: stringValue(item.desc),
+      },
+    ];
+  });
+}
+
+function normalizeBudgetItems(
+  value: unknown,
+): ProposalDraftForm["budgetItems"] {
+  if (!Array.isArray(value)) return cloneDraft(DEFAULT_DRAFT).budgetItems;
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    return [
+      {
+        id: optionalStringValue(item.id) ?? `budget-${index + 1}`,
+        description: stringValue(item.description),
+        amount: stringValue(item.amount),
+      },
+    ];
+  });
+}
+
+function normalizeMetaGovernance(
+  value: unknown,
+): ProposalDraftForm["metaGovernance"] {
+  if (!isRecord(value)) return undefined;
+  const action = value.action;
+  if (
+    action !== "chamber.create" &&
+    action !== "chamber.rename" &&
+    action !== "chamber.dissolve" &&
+    action !== "chamber.censure" &&
+    action !== "governor.censure"
+  ) {
+    return undefined;
+  }
+  return {
+    action,
+    ...(optionalStringValue(value.chamberId)
+      ? { chamberId: optionalStringValue(value.chamberId) }
+      : {}),
+    ...(optionalStringValue(value.targetAddress)
+      ? { targetAddress: optionalStringValue(value.targetAddress) }
+      : {}),
+    ...(optionalStringValue(value.title)
+      ? { title: optionalStringValue(value.title) }
+      : {}),
+    ...(typeof value.multiplier === "number" &&
+    Number.isFinite(value.multiplier)
+      ? { multiplier: value.multiplier }
+      : {}),
+    ...(Array.isArray(value.genesisMembers)
+      ? {
+          genesisMembers: value.genesisMembers
+            .filter((member): member is string => typeof member === "string")
+            .map((member) => member.trim())
+            .filter(Boolean),
+        }
+      : {}),
+  };
+}
+
+export function normalizeSessionDraft(parsed: unknown): ProposalDraftForm {
+  const source: Record<string, unknown> = isRecord(parsed) ? parsed : {};
+  const proposalType = source.proposalType;
+  const metaGovernance = normalizeMetaGovernance(source.metaGovernance);
   return {
     ...cloneDraft(DEFAULT_DRAFT),
-    ...(parsed ?? {}),
-    chamberId,
-    timeline: Array.isArray(parsed?.timeline)
-      ? parsed.timeline.filter(Boolean)
-      : cloneDraft(DEFAULT_DRAFT).timeline,
-    outputs: Array.isArray(parsed?.outputs)
-      ? parsed.outputs.filter(Boolean)
-      : cloneDraft(DEFAULT_DRAFT).outputs,
-    openSlotNeeds: Array.isArray(parsed?.openSlotNeeds)
-      ? parsed.openSlotNeeds.filter(Boolean)
-      : cloneDraft(DEFAULT_DRAFT).openSlotNeeds,
-    budgetItems: Array.isArray(parsed?.budgetItems)
-      ? parsed.budgetItems.filter(Boolean)
-      : cloneDraft(DEFAULT_DRAFT).budgetItems,
-    attachments: Array.isArray(parsed?.attachments)
-      ? parsed.attachments.filter(Boolean)
-      : cloneDraft(DEFAULT_DRAFT).attachments,
+    title: stringValue(source.title),
+    chamberId: stringValue(source.chamberId),
+    ...(optionalStringValue(source.resubmitsProposalId)
+      ? { resubmitsProposalId: optionalStringValue(source.resubmitsProposalId) }
+      : {}),
+    ...(optionalStringValue(source.initiativeId)
+      ? { initiativeId: optionalStringValue(source.initiativeId) }
+      : {}),
+    summary: stringValue(source.summary),
+    what: stringValue(source.what),
+    why: stringValue(source.why),
+    how: stringValue(source.how),
+    formationEligible: metaGovernance
+      ? false
+      : source.formationEligible !== false,
+    ...(optionalStringValue(source.presetId)
+      ? { presetId: optionalStringValue(source.presetId) }
+      : {}),
+    proposalType:
+      proposalType === "basic" ||
+      proposalType === "fee" ||
+      proposalType === "monetary" ||
+      proposalType === "core" ||
+      proposalType === "administrative" ||
+      proposalType === "dao-core"
+        ? proposalType
+        : DEFAULT_DRAFT.proposalType,
+    metaGovernance,
+    timeline: normalizeTimelineItems(source.timeline),
+    outputs: normalizeLinkItems(
+      source.outputs,
+      DEFAULT_DRAFT.outputs,
+      "output",
+    ),
+    openSlotNeeds: normalizeOpenSlotNeeds(source.openSlotNeeds),
+    budgetItems: normalizeBudgetItems(source.budgetItems),
+    aboutMe: stringValue(source.aboutMe),
+    attachments: normalizeLinkItems(source.attachments, [], "attachment"),
+    agreeRules: source.agreeRules === true,
+    confirmBudget: source.confirmBudget === true,
   };
 }
 
@@ -113,7 +265,7 @@ function parseStore(storage: StorageLike): SessionStoreV2 {
     const sessions: Record<string, ProposalWizardSessionV2> = {};
     for (const [id, value] of Object.entries(parsed.sessions)) {
       if (
-        !value ||
+        !isRecord(value) ||
         value.version !== 2 ||
         value.sessionId !== id ||
         !value.form
@@ -124,10 +276,35 @@ function parseStore(storage: StorageLike): SessionStoreV2 {
         value.templateId === "system" ? "system" : "project";
       const form = normalizeSessionDraft(value.form);
       sessions[id] = {
-        ...value,
+        version: 2,
+        sessionId: id,
+        ...(optionalStringValue(value.draftId)
+          ? { draftId: optionalStringValue(value.draftId) }
+          : {}),
+        ...(optionalStringValue(value.resubmitsProposalId)
+          ? {
+              resubmitsProposalId: optionalStringValue(
+                value.resubmitsProposalId,
+              ),
+            }
+          : {}),
         templateId,
+        presetId: stringValue(value.presetId),
         form,
         pathId: pathIdForDraft(form, templateId),
+        lastVisitedStep: isWizardStepId(value.lastVisitedStep)
+          ? value.lastVisitedStep
+          : "intent",
+        ...(value.legacyRecovery === true ? { legacyRecovery: true } : {}),
+        localRevision:
+          typeof value.localRevision === "number" &&
+          Number.isFinite(value.localRevision)
+            ? Math.max(0, Math.floor(value.localRevision))
+            : 0,
+        ...(optionalStringValue(value.serverSavedAt)
+          ? { serverSavedAt: optionalStringValue(value.serverSavedAt) }
+          : {}),
+        updatedAt: stringValue(value.updatedAt),
       };
     }
     return { version: 2, sessions };

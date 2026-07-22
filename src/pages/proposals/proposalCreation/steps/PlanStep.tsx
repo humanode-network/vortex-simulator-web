@@ -3,6 +3,7 @@ import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
 import { ProposalNarrativeEditor } from "@/components/ProposalNarrative";
+import { EditableLinkList } from "../EditableLinkList";
 import { newId } from "../ids";
 import type { ProposalDraftForm } from "../types";
 
@@ -153,57 +154,25 @@ export function PlanStep(props: {
                 Add link
               </Button>
             </div>
-            <div className="space-y-2">
-              {draft.outputs.map((out) => (
-                <div
-                  key={out.id}
-                  className="proposal-wizard__collection-row grid gap-2 sm:grid-cols-[220px_1fr_auto]"
-                >
-                  <Input
-                    value={out.label}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        outputs: prev.outputs.map((item) =>
-                          item.id === out.id
-                            ? { ...item, label: e.target.value }
-                            : item,
-                        ),
-                      }))
-                    }
-                    placeholder="Label (e.g., GitHub, Notion)"
-                  />
-                  <Input
-                    value={out.url}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        outputs: prev.outputs.map((item) =>
-                          item.id === out.id
-                            ? { ...item, url: e.target.value }
-                            : item,
-                        ),
-                      }))
-                    }
-                    placeholder="https://…"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        outputs: prev.outputs.filter(
-                          (item) => item.id !== out.id,
-                        ),
-                      }))
-                    }
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <EditableLinkList
+              items={draft.outputs}
+              labelPlaceholder="Label (e.g., GitHub, Notion)"
+              urlPlaceholder="https://…"
+              onChange={(id, field, value) =>
+                setDraft((previous) => ({
+                  ...previous,
+                  outputs: previous.outputs.map((item) =>
+                    item.id === id ? { ...item, [field]: value } : item,
+                  ),
+                }))
+              }
+              onRemove={(id) =>
+                setDraft((previous) => ({
+                  ...previous,
+                  outputs: previous.outputs.filter((item) => item.id !== id),
+                }))
+              }
+            />
           </div>
 
           {showTimeline ? (

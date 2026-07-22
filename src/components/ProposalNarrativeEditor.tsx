@@ -68,6 +68,7 @@ export default function ProposalNarrativeEditor({
   const linkInputId = useId();
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
   const emittedValueRef = useRef(value);
+  const pendingParentValueRef = useRef<string | null>(null);
   const editor = useEditor({
     content: value,
     contentType: "markdown",
@@ -88,12 +89,24 @@ export default function ProposalNarrativeEditor({
     onUpdate: ({ editor: updatedEditor }) => {
       const nextValue = updatedEditor.getMarkdown();
       emittedValueRef.current = nextValue;
+      pendingParentValueRef.current = nextValue;
       onChange(nextValue);
     },
   });
 
   useEffect(() => {
-    if (!editor || value === emittedValueRef.current) return;
+    if (!editor) return;
+    if (value === pendingParentValueRef.current) {
+      pendingParentValueRef.current = null;
+      emittedValueRef.current = value;
+      return;
+    }
+    if (
+      pendingParentValueRef.current !== null ||
+      value === emittedValueRef.current
+    ) {
+      return;
+    }
     editor.commands.setContent(value, {
       contentType: "markdown",
       emitUpdate: false,

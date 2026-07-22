@@ -47,3 +47,31 @@ test("global proposal creation runtime is removed", () => {
   expect(sessions).toContain("vortex:proposalWizard:sessions:v2");
   expect(sessions).toContain("migrateLegacy");
 });
+
+test("Review preserves the wizard's path-specific authoring sections", () => {
+  const review = readFileSync(
+    join(root, "src/pages/proposals/proposalCreation/steps/ReviewStep.tsx"),
+    "utf8",
+  );
+
+  for (const section of [
+    "Proposal path",
+    "Identity",
+    "Case",
+    "Plan",
+    "Funding and team",
+    "System action",
+    "Proposal identity",
+    "Rationale",
+    "Proposer",
+    "Supporting material",
+    "Confirm",
+  ]) {
+    expect(review).toContain(`title=\"${section}\"`);
+  }
+  expect(review).toContain("<ReviewLinks");
+  expect(review).toContain("safeNarrativeHref");
+  expect(review).toContain("<ProposalNarrative value={draft.what} />");
+  expect(review).toContain("<ProposalNarrative value={draft.why} />");
+  expect(review).toContain("<ProposalNarrative value={draft.how} />");
+});

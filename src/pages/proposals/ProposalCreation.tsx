@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
-import { apiProposalDraftSave, apiProposalSubmitToPool } from "@/lib/apiClient";
+import { apiProposalSubmitToPool } from "@/lib/apiClient";
 import { toTimestampMs } from "@/lib/dateTime";
 import { initiativeOptionsWithSelection } from "@/lib/initiativeUi";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
@@ -28,7 +28,6 @@ import {
 } from "./proposalCreation/presets/registry";
 import {
   createProposalWizardSessionRepository,
-  mergeProposalWizardServerSave,
   type ProposalWizardSessionV2,
 } from "./proposalCreation/sessionStorage";
 import { proposalSubmitErrorStep } from "./proposalCreation/submitErrorRouting";
@@ -38,7 +37,6 @@ import { PlanStep } from "./proposalCreation/steps/PlanStep";
 import { ProjectEssentialsStep } from "./proposalCreation/steps/ProjectEssentialsStep";
 import { ReviewStep } from "./proposalCreation/steps/ReviewStep";
 import { SystemChangeStep } from "./proposalCreation/steps/SystemChangeStep";
-import { draftToApiForm } from "./proposalCreation/toApiForm";
 import {
   DEFAULT_DRAFT,
   type ProposalDraftForm,
@@ -47,6 +45,7 @@ import {
   useProposalDraftHydration,
   type ProposalDraftHydrationResult,
 } from "./proposalCreation/useProposalDraftHydration";
+import { useProposalWizardSave } from "./proposalCreation/useProposalWizardSave";
 import { useProposalCreationComputed } from "./proposalCreation/useProposalCreationComputed";
 import { useProposalCreationReferenceData } from "./proposalCreation/useProposalCreationReferenceData";
 import {
@@ -54,6 +53,7 @@ import {
   pathDefinition,
   pathIdForDraft,
   reachableWizardSteps,
+  normalizeWizardStepId,
   resolveRequestedWizardStep,
   stepDefinition,
   transitionWizard,
@@ -61,32 +61,7 @@ import {
   type WizardContext,
   type WizardEffect,
   type WizardEvent,
-  type WizardStepId,
 } from "./proposalCreation/wizardModel";
-
-const stepDescriptions: Record<WizardStepId, string> = {
-  intent: "Choose the governing right, proposal structure, and preset.",
-  essentials: "Set the proposal identity, chamber context, and public case.",
-  plan: "Describe execution, outputs, milestones, and team requirements.",
-  funding: "Align a positive HMND budget with every Formation milestone.",
-  "system-change": "Identify the executable action and its canonical target.",
-  rationale: "Explain how the system change should be applied and verified.",
-  review: "Confirm the proposal, supporting material, and submission rules.",
-};
-
-function legacyStepToWizardStep(
-  value: string,
-  templateId: "project" | "system",
-): string {
-  if (value === "essentials") {
-    return templateId === "system" ? "system-change" : "essentials";
-  }
-  if (value === "plan") {
-    return templateId === "system" ? "rationale" : "plan";
-  }
-  if (value === "budget") return "funding";
-  return value;
-}
 
 function initialSession(
   repository: ReturnType<typeof createProposalWizardSessionRepository>,
@@ -118,7 +93,7 @@ function initialWizardStateForSession(
   searchParams: URLSearchParams,
 ) {
   const pathId = pathIdForDraft(session.form, session.templateId);
-  const requestedStep = legacyStepToWizardStep(
+  const requestedStep = normalizeWizardStepId(
     searchParams.get("step") ?? session.lastVisitedStep,
     session.templateId,
   );
@@ -162,11 +137,9 @@ const ProposalCreation: React.FC = () => {
     repository.listRecoverable(session.sessionId),
   );
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const saveInFlightBySession = useRef(
-    new Map<string, Promise<string | null>>(),
-  );
   const submitInFlight = useRef(false);
-  const requestedStepRef = useRef(searchParams.get("step") ?? "");
+  const observedQueryRef = useRef(searchParams.toString());
+  const pendingInternalQueryRef = useRef<string | null>(null);
 
   const {
     chamberOptions,
@@ -181,12 +154,10 @@ const ProposalCreation: React.FC = () => {
 
   const {
     budgetTotal,
-    computed,
+    budgetValid,
     currentTier,
-    guardedComputed,
     requiredTier,
     selectedChamber,
-    template,
     tierBlocked,
     tierEligible,
   } = useProposalCreationComputed({
@@ -214,7 +185,7 @@ const ProposalCreation: React.FC = () => {
   );
   const submitDisabled =
     !fullPathValid ||
-    !guardedComputed.canSubmit ||
+    !fullPathValid ||
     !canAct ||
     tierBlocked ||
     wizardState.submitStatus === "submitting";
@@ -244,6 +215,8 @@ const ProposalCreation: React.FC = () => {
       : [...ids, "general"];
   }, [chamberOptions]);
   const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
+  const requestedSessionId = (searchParams.get("session") ?? "").trim();
+  const requestedStep = searchParams.get("step") ?? "";
   const textareaClassName =
     "w-full rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition supports-[backdrop-filter]:backdrop-blur-md hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel";
 
@@ -322,6 +295,13 @@ const ProposalCreation: React.FC = () => {
   ]);
 
   useEffect(() => {
+    const currentQuery = searchParams.toString();
+    if (
+      currentQuery !== observedQueryRef.current &&
+      currentQuery !== pendingInternalQueryRef.current
+    ) {
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     next.set("session", session.sessionId);
     next.set("step", wizardState.stepId);
@@ -333,6 +313,7 @@ const ProposalCreation: React.FC = () => {
       next.delete("resubmitsProposalId");
     }
     if (next.toString() !== searchParams.toString()) {
+      pendingInternalQueryRef.current = next.toString();
       setSearchParams(next, { replace: true });
     }
   }, [
@@ -355,7 +336,7 @@ const ProposalCreation: React.FC = () => {
       };
       const resolvedStep = resolveRequestedWizardStep(
         nextPathId,
-        legacyStepToWizardStep(
+        normalizeWizardStepId(
           requestedStep ?? nextSession.lastVisitedStep,
           nextSession.templateId,
         ),
@@ -388,13 +369,13 @@ const ProposalCreation: React.FC = () => {
       templateKind: nextTemplateKind,
     }: ProposalDraftHydrationResult) => {
       const nextPathId = pathIdForDraft(nextDraft, nextTemplateKind);
-      const requestedStep = legacyStepToWizardStep(
-        requestedStepRef.current,
+      const requestedWizardStep = normalizeWizardStepId(
+        requestedStep,
         nextTemplateKind,
       );
       const resolvedStep = resolveRequestedWizardStep(
         nextPathId,
-        requestedStep,
+        requestedWizardStep,
         {
           draft: nextDraft,
           presetId: nextPresetId,
@@ -414,8 +395,82 @@ const ProposalCreation: React.FC = () => {
       activateSession(saved, resolvedStep);
       setSavedAt(Date.now());
     },
-    [activateSession, repository],
+    [activateSession, repository, requestedStep],
   );
+
+  useEffect(() => {
+    const currentQuery = searchParams.toString();
+    if (currentQuery === observedQueryRef.current) return;
+    if (currentQuery === pendingInternalQueryRef.current) {
+      observedQueryRef.current = currentQuery;
+      pendingInternalQueryRef.current = null;
+      return;
+    }
+    observedQueryRef.current = currentQuery;
+    if (requestedDraftId) return;
+
+    if (
+      requestedSessionId &&
+      requestedSessionId !== sessionRef.current.sessionId
+    ) {
+      const nextSession = repository.get(requestedSessionId);
+      const resubmitsProposalId = (
+        searchParams.get("resubmitsProposalId") ?? ""
+      ).trim();
+      persistCurrentSession(undefined, false);
+      activateSession(
+        nextSession ??
+          repository.create({
+            ...(resubmitsProposalId ? { resubmitsProposalId } : {}),
+          }),
+        requestedStep,
+      );
+      return;
+    }
+
+    if (!requestedSessionId) {
+      const resubmitsProposalId = (
+        searchParams.get("resubmitsProposalId") ?? ""
+      ).trim();
+      persistCurrentSession(undefined, false);
+      activateSession(
+        repository.create({
+          ...(resubmitsProposalId ? { resubmitsProposalId } : {}),
+        }),
+        requestedStep,
+      );
+      return;
+    }
+
+    if (requestedSessionId !== sessionRef.current.sessionId) return;
+
+    const nextStep = resolveRequestedWizardStep(
+      currentPathId,
+      normalizeWizardStepId(requestedStep, templateKind),
+      wizardContext,
+    );
+    if (nextStep === wizardState.stepId) return;
+    setWizardState((current) => ({
+      ...current,
+      attemptedStepId: null,
+      pathId: currentPathId,
+      stepId: nextStep,
+    }));
+    runEffects([{ type: "focus-step", stepId: nextStep }]);
+  }, [
+    activateSession,
+    currentPathId,
+    persistCurrentSession,
+    repository,
+    requestedDraftId,
+    requestedSessionId,
+    requestedStep,
+    runEffects,
+    searchParams,
+    templateKind,
+    wizardContext,
+    wizardState.stepId,
+  ]);
 
   const { loadDraftError, loadingDraftId } = useProposalDraftHydration({
     navigate,
@@ -460,66 +515,23 @@ const ProposalCreation: React.FC = () => {
     });
   };
 
-  const saveDraftNow = useCallback(() => {
-    const sessionId = sessionRef.current.sessionId;
-    const existing = saveInFlightBySession.current.get(sessionId);
-    if (existing) return existing;
-
-    const operation = (async () => {
-      const local = persistCurrentSession({ form: draft });
-      send({ type: "LOCAL_SAVE_COMPLETED" });
-      setSavedAt(Date.now());
-      setSaveError(null);
-      if (!canAct) {
-        setSaveError("Saved locally. Connect and verify to sync this draft.");
-        return local.draftId ?? null;
-      }
-
-      send({ type: "SERVER_SAVE_REQUESTED" });
-      try {
-        const response = await apiProposalDraftSave({
-          ...(local.draftId ? { draftId: local.draftId } : {}),
-          form: draftToApiForm(draft, { templateId: template.id }),
-        });
-        const serverSavedAt = new Date(
-          toTimestampMs(response.updatedAt, Date.now()),
-        ).toISOString();
-        const latest = repository.get(sessionId) ?? local;
-        const merged = mergeProposalWizardServerSave({
-          draftId: response.draftId,
-          latest,
-          requested: local,
-          serverSavedAt,
-        });
-        const synced = repository.save(merged.session);
-        if (sessionRef.current.sessionId === sessionId) {
-          sessionRef.current = synced;
-          setSession(synced);
-          setSavedAt(toTimestampMs(response.updatedAt, Date.now()));
-          send({ type: "SERVER_SAVE_SUCCEEDED" });
-          if (merged.changedDuringSync) send({ type: "LOCAL_SAVE_COMPLETED" });
-        }
-        return response.draftId;
-      } catch (error) {
-        if (sessionRef.current.sessionId === sessionId) {
-          setSaveError((error as Error).message);
-          send({ type: "SERVER_SAVE_FAILED" });
-        }
-        return null;
-      }
-    })();
-
-    saveInFlightBySession.current.set(sessionId, operation);
-    void operation.finally(() => {
-      if (saveInFlightBySession.current.get(sessionId) === operation) {
-        saveInFlightBySession.current.delete(sessionId);
-      }
-    });
-    return operation;
-  }, [canAct, draft, persistCurrentSession, repository, send, template.id]);
+  const saveDraftNow = useProposalWizardSave({
+    canAct,
+    draft,
+    onSaveError: setSaveError,
+    onSavedAt: setSavedAt,
+    onSessionSynced: setSession,
+    persistSession: persistCurrentSession,
+    presetId,
+    repository,
+    send,
+    sessionRef,
+    templateId: templateKind,
+  });
 
   const submitProposal = async () => {
     if (submitDisabled || submitInFlight.current) return;
+    const submittingSession = sessionRef.current;
     submitInFlight.current = true;
     setSubmitError(null);
     send({ type: "SUBMIT_REQUESTED" });
@@ -527,10 +539,12 @@ const ProposalCreation: React.FC = () => {
       const draftId = await saveDraftNow();
       if (!draftId) throw new Error("Draft could not be synchronized.");
       const response = await apiProposalSubmitToPool({ draftId });
-      repository.remove(session.sessionId);
-      if (session.legacyRecovery) repository.clearLegacy();
+      if (sessionRef.current.sessionId !== submittingSession.sessionId) return;
+      repository.remove(submittingSession.sessionId);
+      if (submittingSession.legacyRecovery) repository.clearLegacy();
       navigate(`/app/proposals/${response.proposalId}/pp`, { replace: true });
     } catch (error) {
+      if (sessionRef.current.sessionId !== submittingSession.sessionId) return;
       const message = formatProposalSubmitError(error);
       setSubmitError(message);
       const targetStep = proposalSubmitErrorStep(
@@ -556,6 +570,7 @@ const ProposalCreation: React.FC = () => {
   };
 
   const handleStartOver = () => {
+    if (submitInFlight.current) return;
     if (!window.confirm("Start a clean proposal? The server draft is kept.")) {
       return;
     }
@@ -565,27 +580,42 @@ const ProposalCreation: React.FC = () => {
       return;
     }
     const cleanDraft = structuredClone(DEFAULT_DRAFT);
-    setDraft(cleanDraft);
-    setPresetId("");
-    setTemplateKind("project");
-    setWizardState(createWizardState("project-formation", "intent"));
-    setSaveError(null);
-    setSubmitError(null);
-    setSavedAt(null);
+    const {
+      legacyRecovery: _legacyRecovery,
+      resubmitsProposalId: _resubmitsProposalId,
+      ...currentSession
+    } = sessionRef.current;
+    if (session.legacyRecovery) repository.clearLegacy();
+    const clean = repository.save({
+      ...currentSession,
+      form: cleanDraft,
+      presetId: "",
+      templateId: "project",
+      pathId: "project-formation",
+      lastVisitedStep: "intent",
+    });
+    activateSession(clean, "intent");
   };
 
   const handleSaveAndExit = async () => {
-    await saveDraftNow();
+    if (submitInFlight.current) return;
+    const savingSessionId = sessionRef.current.sessionId;
+    const draftId = await saveDraftNow();
+    if (sessionRef.current.sessionId !== savingSessionId) return;
     navigate(
-      session.draftId || canAct ? "/app/proposals/drafts" : "/app/proposals",
+      draftId || sessionRef.current.draftId
+        ? "/app/proposals/drafts"
+        : "/app/proposals",
     );
   };
 
   const handleRecover = (nextSession: ProposalWizardSessionV2) => {
+    if (submitInFlight.current) return;
     activateSession(nextSession);
   };
 
   const handleDiscardRecovery = (sessionId: string) => {
+    if (submitInFlight.current) return;
     const discarded = repository.get(sessionId);
     repository.remove(sessionId);
     if (discarded?.legacyRecovery) repository.clearLegacy();
@@ -593,10 +623,11 @@ const ProposalCreation: React.FC = () => {
   };
 
   const attemptedNext = wizardState.attemptedStepId === wizardState.stepId;
+  const submitting = wizardState.submitStatus === "submitting";
   const summaryInitiative = selectedInitiative?.title ?? null;
   const wizardAnnouncement = attemptedNext
     ? `${currentStep.title}. Complete the highlighted required field before continuing.`
-    : `${currentStep.title}. Step ${currentStepIndex + 1} of ${currentPath.steps.length}. ${stepDescriptions[wizardState.stepId]}`;
+    : `${currentStep.title}. Step ${currentStepIndex + 1} of ${currentPath.steps.length}. ${currentStep.description}`;
 
   return (
     <div className="proposal-wizard">
@@ -611,20 +642,23 @@ const ProposalCreation: React.FC = () => {
         onSave={() => void saveDraftNow()}
         onSaveAndExit={() => void handleSaveAndExit()}
         onStartOver={handleStartOver}
-        pathLabel={currentPath.label}
+        pathLabel={presetId ? currentPath.label : "Not chosen"}
         saveStatus={wizardState.saveStatus}
         saving={wizardState.saveStatus === "syncing"}
+        submitting={submitting}
       />
       <WizardRecovery
         sessions={recoverableSessions}
         onRecover={handleRecover}
         onDiscard={handleDiscardRecovery}
+        submitting={submitting}
       />
       <WizardProgress
         currentStepId={wizardState.stepId}
         path={currentPath}
         reachableStepIds={reachableSteps}
         onStepChange={(stepId) => send({ type: "STEP_REQUESTED", stepId })}
+        submitting={submitting}
       />
 
       <ProposalCreationMessages
@@ -641,7 +675,7 @@ const ProposalCreation: React.FC = () => {
         <WizardWorkspace
           headingRef={headingRef}
           title={currentStep.title}
-          description={stepDescriptions[wizardState.stepId]}
+          description={currentStep.description}
         >
           {wizardState.stepId === "intent" ? (
             <IntentStep
@@ -695,7 +729,7 @@ const ProposalCreation: React.FC = () => {
             <BudgetStep
               attemptedNext={attemptedNext}
               budgetTotal={budgetTotal}
-              budgetValid={computed.budgetValid}
+              budgetValid={budgetValid}
               draft={draft}
               formationEligible={draft.formationEligible}
               setDraft={setDraft}
@@ -706,10 +740,11 @@ const ProposalCreation: React.FC = () => {
             <ReviewStep
               budgetTotal={budgetTotal}
               canAct={canAct}
-              canSubmit={guardedComputed.canSubmit}
+              canSubmit={fullPathValid && !tierBlocked}
               draft={draft}
               formationEligible={draft.formationEligible}
               mode={templateKind}
+              presetLabel={selectedPreset?.label}
               proposerAddress={auth.address ?? null}
               selectedChamber={selectedChamber}
               selectedInitiative={selectedInitiative}
@@ -731,6 +766,7 @@ const ProposalCreation: React.FC = () => {
             }
             onBack={() => send({ type: "BACK_REQUESTED" })}
             onContinue={handleContinue}
+            submitting={submitting}
           />
         </WizardWorkspace>
 

@@ -1,5 +1,4 @@
-import type { ProposalDraftForm } from "../types";
-import type { WizardTemplateId } from "../templates/types";
+import type { ProposalDraftForm, ProposalTemplateId } from "../types";
 import {
   isTierEligible,
   requiredTierForProposalType,
@@ -68,7 +67,7 @@ export type ProposalPreset = {
   id: ProposalPresetId;
   label: string;
   description: string;
-  templateId: WizardTemplateId;
+  templateId: ProposalTemplateId;
   proposalType: ProposalDraftForm["proposalType"];
   formationEligible: boolean;
   recommendedChamber?: string;

@@ -38,6 +38,9 @@ test("policy payload preserves Initiative and reconsideration provenance", () =>
     title: "Policy",
     chamberId: "general",
   });
+  expect(payload.timeline).toEqual([]);
+  expect(payload.openSlotNeeds).toEqual([]);
+  expect(payload.budgetItems).toEqual([]);
 });
 
 test("Formation payload aligns positive milestone budgets", () => {

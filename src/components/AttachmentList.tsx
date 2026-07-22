@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { safeExternalHref } from "@/lib/safeExternalHref";
 import { cn } from "@/lib/utils";
 import { Surface } from "@/components/Surface";
 
@@ -29,34 +30,37 @@ export function AttachmentList({
     >
       <p className="text-sm font-semibold">{title}</p>
       <ul className="space-y-2 text-sm text-muted">
-        {items.map((file) => (
-          <Surface
-            key={file.id}
-            as="li"
-            variant="panel"
-            radius="xl"
-            shadow="control"
-            className="flex items-center justify-between gap-3 px-3 py-2"
-          >
-            <span className="min-w-0 flex-1 [overflow-wrap:anywhere] break-words">
-              {file.title}
-            </span>
-            {file.href ? (
-              <a
-                href={file.href}
-                target="_blank"
-                rel="noreferrer"
-                className="shrink-0 text-sm font-semibold text-primary"
-              >
-                {file.actionLabel ?? "View"}
-              </a>
-            ) : (
-              <span className="shrink-0 text-sm font-semibold text-muted">
-                {file.actionLabel ?? "Attached"}
+        {items.map((file) => {
+          const href = file.href ? safeExternalHref(file.href) : null;
+          return (
+            <Surface
+              key={file.id}
+              as="li"
+              variant="panel"
+              radius="xl"
+              shadow="control"
+              className="flex items-center justify-between gap-3 px-3 py-2"
+            >
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere] break-words">
+                {file.title}
               </span>
-            )}
-          </Surface>
-        ))}
+              {href ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 text-sm font-semibold text-primary"
+                >
+                  {file.actionLabel ?? "View"}
+                </a>
+              ) : (
+                <span className="shrink-0 text-sm font-semibold text-muted">
+                  {file.actionLabel ?? "Attached"}
+                </span>
+              )}
+            </Surface>
+          );
+        })}
       </ul>
     </Surface>
   );

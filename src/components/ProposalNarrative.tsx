@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 
+import { safeExternalHref } from "@/lib/safeExternalHref";
 import { cn } from "@/lib/utils";
 import "./ProposalNarrative.css";
 
@@ -19,8 +20,6 @@ type NarrativeBlock =
   | { type: "unordered-list"; items: string[] }
   | { type: "quote"; text: string }
   | { type: "paragraph"; text: string };
-
-const SAFE_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
 
 function narrativeSource(value: ProposalNarrativeValue): string {
   return Array.isArray(value) ? value.join("\n\n") : value;
@@ -100,12 +99,7 @@ function parseNarrative(value: ProposalNarrativeValue): NarrativeBlock[] {
 }
 
 export function safeNarrativeHref(rawHref: string): string | null {
-  try {
-    const href = new URL(rawHref, "https://vortex.local");
-    return SAFE_LINK_PROTOCOLS.has(href.protocol) ? href.href : null;
-  } catch {
-    return null;
-  }
+  return safeExternalHref(rawHref);
 }
 
 function NarrativeInline({ text }: { text: string }) {

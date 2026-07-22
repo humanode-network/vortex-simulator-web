@@ -1,4 +1,4 @@
-import type { ProposalDraftForm } from "./types";
+import type { ProposalDraftForm, ProposalTemplateId } from "./types";
 
 export type WizardPathId =
   | "project-policy"
@@ -60,6 +60,7 @@ export type WizardContext = {
 };
 
 export type WizardStepDefinition = {
+  description: string;
   id: WizardStepId;
   shortLabel: string;
   title: string;
@@ -73,41 +74,64 @@ export type WizardPathDefinition = {
 
 const STEP_DEFINITIONS: Record<WizardStepId, WizardStepDefinition> = {
   intent: {
+    description: "Choose the governing right, proposal structure, and preset.",
     id: "intent",
     shortLabel: "Intent",
     title: "Choose the proposal path",
   },
   essentials: {
+    description: "Set the proposal identity, chamber context, and public case.",
     id: "essentials",
     shortLabel: "Essentials",
     title: "Define the proposal",
   },
   plan: {
+    description:
+      "Describe execution, outputs, milestones, and team requirements.",
     id: "plan",
     shortLabel: "Plan",
     title: "Explain the plan",
   },
   funding: {
+    description: "Align a positive HMND budget with every Formation milestone.",
     id: "funding",
     shortLabel: "Funding",
     title: "Fund milestones and team needs",
   },
   "system-change": {
+    description: "Identify the executable action and its canonical target.",
     id: "system-change",
     shortLabel: "System change",
     title: "Define the system change",
   },
   rationale: {
+    description:
+      "Explain how the system change should be applied and verified.",
     id: "rationale",
     shortLabel: "Rationale",
     title: "Explain the rationale",
   },
   review: {
+    description:
+      "Confirm the proposal, supporting material, and submission rules.",
     id: "review",
     shortLabel: "Review",
     title: "Review and submit",
   },
 };
+
+export function normalizeWizardStepId(
+  value: string | null | undefined,
+  templateId: ProposalTemplateId,
+): string {
+  if (value === "essentials") {
+    return templateId === "system" ? "system-change" : "essentials";
+  }
+  if (value === "plan") {
+    return templateId === "system" ? "rationale" : "plan";
+  }
+  return value === "budget" ? "funding" : (value ?? "");
+}
 
 function steps(...ids: WizardStepId[]): readonly WizardStepDefinition[] {
   return ids.map((id) => STEP_DEFINITIONS[id]);
@@ -155,11 +179,20 @@ export function stepDefinition(
   );
 }
 
-function positiveBudgetTotal(draft: ProposalDraftForm): number {
-  return draft.timeline.reduce((sum, item) => {
-    const amount = Number(item.budgetHmnd);
+function positiveAmountTotal<T>(
+  items: readonly T[],
+  amountFor: (item: T) => string | undefined,
+): number {
+  return items.reduce((sum, item) => {
+    const amount = Number(amountFor(item));
     return Number.isFinite(amount) && amount > 0 ? sum + amount : sum;
   }, 0);
+}
+
+export function proposalBudgetTotal(draft: ProposalDraftForm): number {
+  return draft.formationEligible !== false
+    ? positiveAmountTotal(draft.timeline, (item) => item.budgetHmnd)
+    : positiveAmountTotal(draft.budgetItems, (item) => item.amount);
 }
 
 function systemTargetValid(draft: ProposalDraftForm): StepValidation {
@@ -232,7 +265,7 @@ export function validateWizardStep(
       const amount = Number(item.budgetHmnd);
       return !Number.isFinite(amount) || amount <= 0;
     });
-    if (draft.timeline.length === 0 || positiveBudgetTotal(draft) <= 0) {
+    if (draft.timeline.length === 0 || proposalBudgetTotal(draft) <= 0) {
       return { valid: false, firstInvalidFieldId: "timeline-budget-0" };
     }
     return invalidIndex === -1

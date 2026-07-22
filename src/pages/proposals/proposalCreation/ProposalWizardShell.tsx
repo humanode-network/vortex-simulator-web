@@ -19,6 +19,7 @@ type WizardHeaderProps = {
   pathLabel: string;
   saveStatus: WizardSaveStatus;
   saving: boolean;
+  submitting: boolean;
 };
 
 const saveStatusLabel: Record<WizardSaveStatus, string> = {
@@ -36,7 +37,9 @@ export function WizardHeader({
   pathLabel,
   saveStatus,
   saving,
+  submitting,
 }: WizardHeaderProps) {
+  const busy = saving || submitting;
   return (
     <GlassyCard as="article" className="proposal-wizard__header">
       <div className="min-w-0">
@@ -67,7 +70,7 @@ export function WizardHeader({
           type="button"
           size="sm"
           variant="outline"
-          disabled={saving}
+          disabled={busy}
           onClick={onSave}
         >
           {saving ? "Saving" : "Save draft"}
@@ -76,12 +79,18 @@ export function WizardHeader({
           type="button"
           size="sm"
           variant="outline"
-          disabled={saving}
+          disabled={busy}
           onClick={onSaveAndExit}
         >
           Save and exit
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onStartOver}>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onClick={onStartOver}
+        >
           Start over
         </Button>
       </div>
@@ -94,6 +103,7 @@ type WizardProgressProps = {
   onStepChange: (stepId: WizardStepId) => void;
   path: WizardPathDefinition;
   reachableStepIds: WizardStepId[];
+  submitting: boolean;
 };
 
 export function WizardProgress({
@@ -101,6 +111,7 @@ export function WizardProgress({
   onStepChange,
   path,
   reachableStepIds,
+  submitting,
 }: WizardProgressProps) {
   const currentIndex = path.steps.findIndex(
     (step) => step.id === currentStepId,
@@ -122,8 +133,8 @@ export function WizardProgress({
               !reachable && "is-locked",
             )}
             aria-current={current ? "step" : undefined}
-            aria-disabled={!reachable}
-            disabled={!reachable}
+            aria-disabled={!reachable || submitting}
+            disabled={!reachable || submitting}
             onClick={() => onStepChange(step.id)}
           >
             <span className="proposal-wizard__progress-index">
@@ -218,6 +229,7 @@ type WizardActionsProps = {
   continueDisabled?: boolean;
   onBack: () => void;
   onContinue: () => void;
+  submitting: boolean;
 };
 
 export function WizardActions({
@@ -227,18 +239,23 @@ export function WizardActions({
   continueLabel,
   onBack,
   onContinue,
+  submitting,
 }: WizardActionsProps) {
   return (
     <footer className="proposal-wizard__actions">
       <Button
         type="button"
         variant="ghost"
-        disabled={!canGoBack}
+        disabled={!canGoBack || submitting}
         onClick={onBack}
       >
         {backLabel}
       </Button>
-      <Button type="button" disabled={continueDisabled} onClick={onContinue}>
+      <Button
+        type="button"
+        disabled={continueDisabled || submitting}
+        onClick={onContinue}
+      >
         {continueLabel}
       </Button>
     </footer>
@@ -249,12 +266,14 @@ type WizardRecoveryProps = {
   onDiscard: (sessionId: string) => void;
   onRecover: (session: ProposalWizardSessionV2) => void;
   sessions: ProposalWizardSessionV2[];
+  submitting: boolean;
 };
 
 export function WizardRecovery({
   onDiscard,
   onRecover,
   sessions,
+  submitting,
 }: WizardRecoveryProps) {
   if (sessions.length === 0) return null;
   return (
@@ -283,6 +302,7 @@ export function WizardRecovery({
                 type="button"
                 size="sm"
                 variant="outline"
+                disabled={submitting}
                 onClick={() => onRecover(session)}
               >
                 Continue
@@ -291,6 +311,7 @@ export function WizardRecovery({
                 type="button"
                 size="sm"
                 variant="ghost"
+                disabled={submitting}
                 onClick={() => onDiscard(session.sessionId)}
               >
                 Discard

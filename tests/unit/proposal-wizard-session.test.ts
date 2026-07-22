@@ -4,6 +4,7 @@ import { DEFAULT_DRAFT } from "../../src/pages/proposals/proposalCreation/types"
 import {
   createProposalWizardSessionRepository,
   mergeProposalWizardServerSave,
+  normalizeSessionDraft,
 } from "../../src/pages/proposals/proposalCreation/sessionStorage";
 
 class MemoryStorage {
@@ -75,6 +76,102 @@ test("malformed stores fail closed without affecting new in-memory work", () => 
   storage.setItem("vortex:proposalWizard:sessions:v2", "{bad json");
   const created = repo.create({ form: { ...DEFAULT_DRAFT, title: "Safe" } });
   expect(repo.get(created.sessionId)?.form.title).toBe("Safe");
+});
+
+test("parseable recovery content normalizes scalar and collection values before rendering", () => {
+  const normalized = normalizeSessionDraft({
+    title: 42,
+    chamberId: ["general"],
+    proposalType: "unknown",
+    timeline: [
+      null,
+      { id: 7, title: "Milestone", timeframe: 3, budgetHmnd: 50 },
+    ],
+    outputs: ["invalid", { id: 3, label: "Evidence", url: 9 }],
+    openSlotNeeds: [{ id: 4, title: "Reviewer", desc: null }],
+    budgetItems: [{ id: 5, description: "Research", amount: 100 }],
+    attachments: [{ id: 6, label: "Brief", url: false }],
+    metaGovernance: { action: "not-a-system-action" },
+    agreeRules: "yes",
+    confirmBudget: 1,
+  });
+
+  expect(normalized.title).toBe("");
+  expect(normalized.chamberId).toBe("");
+  expect(normalized.proposalType).toBe("basic");
+  expect(normalized.timeline).toEqual([
+    {
+      id: "milestone-2",
+      title: "Milestone",
+      timeframe: "",
+      budgetHmnd: "",
+    },
+  ]);
+  expect(normalized.outputs).toEqual([
+    { id: "output-2", label: "Evidence", url: "" },
+  ]);
+  expect(normalized.openSlotNeeds).toEqual([
+    { id: "slot-1", title: "Reviewer", desc: "" },
+  ]);
+  expect(normalized.budgetItems).toEqual([
+    { id: "budget-1", description: "Research", amount: "" },
+  ]);
+  expect(normalized.attachments).toEqual([
+    { id: "attachment-1", label: "Brief", url: "" },
+  ]);
+  expect(normalized.metaGovernance).toBeUndefined();
+  expect(normalized.agreeRules).toBe(false);
+  expect(normalized.confirmBudget).toBe(false);
+});
+
+test("parseable session metadata cannot crash recovery sorting", () => {
+  const { repository: repo, storage } = repository();
+  storage.setItem(
+    "vortex:proposalWizard:sessions:v2",
+    JSON.stringify({
+      version: 2,
+      sessions: {
+        corrupted: {
+          version: 2,
+          sessionId: "corrupted",
+          templateId: "project",
+          presetId: 3,
+          pathId: "not-a-real-path",
+          lastVisitedStep: "not-a-real-step",
+          localRevision: -12,
+          updatedAt: 42,
+          form: { ...DEFAULT_DRAFT, title: "Recovered safely" },
+        },
+      },
+    }),
+  );
+
+  expect(repo.listRecoverable()).toEqual([
+    expect.objectContaining({
+      sessionId: "corrupted",
+      presetId: "",
+      lastVisitedStep: "intent",
+      localRevision: 0,
+      updatedAt: "",
+    }),
+  ]);
+});
+
+test("system-action recovery never regains Formation defaults", () => {
+  const normalized = normalizeSessionDraft({
+    ...DEFAULT_DRAFT,
+    formationEligible: true,
+    metaGovernance: {
+      action: "chamber.censure",
+      chamberId: "general",
+    },
+  });
+
+  expect(normalized.formationEligible).toBe(false);
+  expect(normalized.metaGovernance).toEqual({
+    action: "chamber.censure",
+    chamberId: "general",
+  });
 });
 
 test("recoverable sessions omit empty current sessions and sort newest first", () => {
