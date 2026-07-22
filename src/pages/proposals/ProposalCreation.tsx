@@ -643,6 +643,8 @@ const ProposalCreation: React.FC = () => {
         onSaveAndExit={() => void handleSaveAndExit()}
         onStartOver={handleStartOver}
         pathLabel={presetId ? currentPath.label : "Not chosen"}
+        proposalSummary={draft.summary}
+        proposalTitle={draft.title}
         saveStatus={wizardState.saveStatus}
         saving={wizardState.saveStatus === "syncing"}
         submitting={submitting}

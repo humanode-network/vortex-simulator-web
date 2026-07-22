@@ -17,6 +17,8 @@ type WizardHeaderProps = {
   onSaveAndExit: () => void;
   onStartOver: () => void;
   pathLabel: string;
+  proposalSummary: string;
+  proposalTitle: string;
   saveStatus: WizardSaveStatus;
   saving: boolean;
   submitting: boolean;
@@ -35,11 +37,15 @@ export function WizardHeader({
   onSaveAndExit,
   onStartOver,
   pathLabel,
+  proposalSummary,
+  proposalTitle,
   saveStatus,
   saving,
   submitting,
 }: WizardHeaderProps) {
   const busy = saving || submitting;
+  const displayTitle = proposalTitle.trim() || "Not set";
+  const displaySummary = proposalSummary.trim() || "Not set";
   return (
     <GlassyCard as="article" className="proposal-wizard__header">
       <div className="min-w-0">
@@ -57,12 +63,11 @@ export function WizardHeader({
             {saveStatusLabel[saveStatus]}
           </GlassyStatusChip>
         </div>
-        <h1 className="mt-3 text-2xl leading-tight font-semibold text-text sm:text-3xl">
-          Proposal Wizard
+        <h1 className="proposal-wizard__header-title mt-3 text-2xl leading-tight font-semibold text-text sm:text-3xl">
+          {displayTitle}
         </h1>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">
-          Build the proposal in order. Completed steps remain available while
-          the next requirement stays visible.
+        <p className="proposal-wizard__header-summary mt-1 max-w-3xl text-sm leading-6 text-muted">
+          {displaySummary}
         </p>
       </div>
       <div className="proposal-wizard__header-actions">

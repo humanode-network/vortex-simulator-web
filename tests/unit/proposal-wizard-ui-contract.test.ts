@@ -17,7 +17,12 @@ test("Proposal Wizard 2.0 owns submission and uses the shared glass shell", () =
   expect(creation).toContain("apiProposalSubmitToPool");
   expect(creation).toContain("<WizardProgress");
   expect(creation).toContain("<WizardWorkspace");
+  expect(creation).toContain("proposalSummary={draft.summary}");
+  expect(creation).toContain("proposalTitle={draft.title}");
   expect(shell).toContain("<GlassyCard");
+  expect(shell).toContain('proposalTitle.trim() || "Not set"');
+  expect(shell).toContain('proposalSummary.trim() || "Not set"');
+  expect(shell).not.toContain("Build the proposal in order");
   expect(shell).not.toContain('from "@/components/primitives/card"');
 });
 

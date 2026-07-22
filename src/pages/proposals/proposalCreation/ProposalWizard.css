@@ -23,6 +23,12 @@
   opacity: 0.92;
 }
 
+.proposal-wizard__header-title,
+.proposal-wizard__header-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .proposal-wizard__progress {
   display: grid;
   grid-auto-columns: minmax(9rem, 1fr);
