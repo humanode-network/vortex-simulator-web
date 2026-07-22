@@ -240,8 +240,11 @@ async function openFreshWizard(
   await installApiFixtures(page);
   await page.goto("/app/proposals/new");
   await expect(
-    page.getByRole("heading", { name: "Proposal Wizard" }),
+    page.getByRole("heading", { name: "Not set", exact: true }),
   ).toBeVisible();
+  await expect(page.locator(".proposal-wizard__header-summary")).toHaveText(
+    "Not set",
+  );
   await expect(page.getByText("Not chosen", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/step=intent/);
 }
@@ -314,6 +317,15 @@ test("fresh entry ignores legacy Review state and completes policy submission", 
     .locator("#proposal-initiative")
     .selectOption("initiative-governance-observatory");
   await page.locator("#summary").fill("Publish regular governance reports.");
+  await expect(
+    page.getByRole("heading", {
+      name: "Transparent governance reporting",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".proposal-wizard__header-summary")).toHaveText(
+    "Publish regular governance reports.",
+  );
   await page.locator("#what").fill("Create a public reporting policy.");
   await page.locator("#why").fill("Make governance decisions auditable.");
   await page.getByRole("button", { name: "Continue" }).click();
@@ -965,7 +977,7 @@ test("late hydration cannot replace the currently selected server draft", async 
   await installApiFixtures(page);
   await page.goto("/app/proposals/new?draftId=draft-stale");
   await expect(
-    page.getByRole("heading", { name: "Proposal Wizard" }),
+    page.getByRole("heading", { name: "Not set", exact: true }),
   ).toBeVisible();
   await page.evaluate(() => {
     window.history.pushState(
@@ -978,7 +990,9 @@ test("late hydration cannot replace the currently selected server draft", async 
   await expect(page).toHaveURL(/draftId=draft-existing/);
   await expect(page).toHaveURL(/step=plan/);
   await page.waitForTimeout(550);
-  await expect(page.getByText("Existing policy draft")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Existing policy draft", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Stale response")).not.toBeVisible();
 });
 
@@ -997,7 +1011,10 @@ test("browser history restores the local wizard session named in the URL", async
 
   await expect(page).toHaveURL(/session=session-history-other/);
   await expect(
-    page.getByText("History session title", { exact: true }),
+    page.getByRole("heading", {
+      name: "History session title",
+      exact: true,
+    }),
   ).toBeVisible();
 
   await page.goBack();
@@ -1147,7 +1164,10 @@ test("Save and exit cannot redirect a session opened while saving", async ({
   await expect(page).toHaveURL(/session=session-after-save-and-exit/);
   await expect(page).toHaveURL(/step=intent/);
   await expect(
-    page.getByText("New session avoids old redirect", { exact: true }),
+    page.getByRole("heading", {
+      name: "New session avoids old redirect",
+      exact: true,
+    }),
   ).toBeVisible();
 });
 
