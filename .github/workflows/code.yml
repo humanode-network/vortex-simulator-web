@@ -26,6 +26,8 @@ jobs:
             skip-build: true
           - command: test
             skip-build: true
+            # The cross-repo contract suite requires a sibling server checkout.
+            args: --exclude "tests/e2e/**" --exclude tests/api/cross-repo-contract.test.js
 
       fail-fast: false
 
@@ -44,7 +46,7 @@ jobs:
         with:
           skip-yarn-build: ${{ matrix.mode.skip-build }}
 
-      - run: yarn ${{ matrix.mode.command }}
+      - run: yarn ${{ matrix.mode.command }} ${{ matrix.mode.args }}
 
   playwright:
     name: playwright
