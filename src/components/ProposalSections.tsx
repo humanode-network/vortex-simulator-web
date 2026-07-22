@@ -10,7 +10,11 @@ import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
 import { TitledSurface } from "@/components/TitledSurface";
 import { formatDateTime } from "@/lib/dateTime";
+import { formatProposalType } from "@/lib/proposalTypes";
 import { Link } from "react-router";
+import { ProposalNarrative } from "@/components/ProposalNarrative";
+import { SYSTEM_ACTIONS } from "@/pages/proposals/proposalCreation/templates/systemActions";
+import type { ProposalAuthoringDetailsDto } from "@/types/api";
 
 export type ProposalSummaryStat = {
   label: string;
@@ -62,7 +66,294 @@ type ProposalSummaryCardProps = {
   attachments: AttachmentItem[];
   showExecutionPlan?: boolean;
   showBudgetScope?: boolean;
+  authoring?: ProposalAuthoringDetailsDto;
 };
+
+function DetailFacts({
+  items,
+}: {
+  items: Array<{ label: string; value: ReactNode }>;
+}) {
+  const visibleItems = items.filter(
+    (item) =>
+      item.value !== null && item.value !== undefined && item.value !== "",
+  );
+  if (visibleItems.length === 0) return null;
+
+  return (
+    <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {visibleItems.map((item) => (
+        <Surface
+          key={item.label}
+          as="div"
+          variant="panel"
+          radius="xl"
+          shadow="control"
+          className="min-w-0 px-3 py-2"
+        >
+          <dt className="text-xs text-muted">{item.label}</dt>
+          <dd className="mt-1 text-sm font-semibold [overflow-wrap:anywhere] break-words text-text">
+            {item.value}
+          </dd>
+        </Surface>
+      ))}
+    </dl>
+  );
+}
+
+function NarrativeSurface({ title, value }: { title: string; value: string }) {
+  if (!value.trim()) return null;
+  return (
+    <AuthoringSurface title={title}>
+      <ProposalNarrative value={value} />
+    </AuthoringSurface>
+  );
+}
+
+function AuthoringSurface({
+  children,
+  title,
+}: {
+  children: ReactNode;
+  title: string;
+}) {
+  return (
+    <TitledSurface
+      title={title}
+      titleClassName="proposal-authoring__section-heading"
+    >
+      {children}
+    </TitledSurface>
+  );
+}
+
+function NarrativeBlock({ title, value }: { title: string; value: string }) {
+  if (!value.trim()) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-text">{title}</p>
+      <ProposalNarrative value={value} />
+    </div>
+  );
+}
+
+function ProposalAuthoringCard({
+  attachments,
+  authoring,
+  budgetScope,
+  executionPlan,
+  overview,
+  showBudgetScope,
+  showExecutionPlan,
+}: Pick<
+  ProposalSummaryCardProps,
+  | "attachments"
+  | "authoring"
+  | "budgetScope"
+  | "executionPlan"
+  | "overview"
+  | "showBudgetScope"
+  | "showExecutionPlan"
+>) {
+  if (!authoring) return null;
+  const actionId = authoring.systemAction?.action;
+  const actionMeta =
+    actionId && actionId in SYSTEM_ACTIONS
+      ? SYSTEM_ACTIONS[actionId as keyof typeof SYSTEM_ACTIONS]
+      : null;
+  const showLegacyExecutionPlan =
+    showExecutionPlan ?? executionPlan.some((item) => item.trim().length > 0);
+  const showLegacyBudget = showBudgetScope ?? budgetScope.trim().length > 0;
+
+  return (
+    <div className="space-y-4 text-text">
+      <AuthoringSurface title="Proposal path">
+        <DetailFacts
+          items={[
+            {
+              label: "Kind",
+              value:
+                authoring.kind === "system"
+                  ? "System change"
+                  : "Project proposal",
+            },
+            {
+              label: "Proposal type",
+              value:
+                (authoring.proposalType &&
+                  formatProposalType(authoring.proposalType)) ||
+                "Not specified",
+            },
+            { label: "Preset", value: authoring.presetId ?? "Not selected" },
+          ]}
+        />
+      </AuthoringSurface>
+
+      {authoring.kind === "system" ? (
+        <>
+          <AuthoringSurface title="System action">
+            <DetailFacts
+              items={[
+                {
+                  label: "Action",
+                  value: actionMeta?.label ?? authoring.systemAction?.action,
+                },
+                {
+                  label: "Target chamber",
+                  value: authoring.systemAction?.chamberId,
+                },
+                {
+                  label: "Target governor",
+                  value: authoring.systemAction?.targetAddress,
+                },
+                { label: "New title", value: authoring.systemAction?.title },
+                {
+                  label: "Multiplier",
+                  value: authoring.systemAction?.multiplier,
+                },
+              ]}
+            />
+            {authoring.systemAction?.genesisMembers.length ? (
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-text">
+                  Genesis members
+                </p>
+                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {authoring.systemAction.genesisMembers.map((address) => (
+                    <Surface
+                      key={address}
+                      as="li"
+                      variant="panel"
+                      radius="xl"
+                      shadow="control"
+                      className="px-3 py-2"
+                    >
+                      <AddressInline address={address} size={10} />
+                    </Surface>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </AuthoringSurface>
+          <NarrativeSurface title="Rationale" value={authoring.how} />
+          <NarrativeSurface title="What changes" value={authoring.what} />
+          <NarrativeSurface title="Why now" value={authoring.why} />
+        </>
+      ) : (
+        <>
+          <AuthoringSurface title="Case">
+            <div className="space-y-4">
+              <NarrativeBlock title="What" value={authoring.what || overview} />
+              <NarrativeBlock title="Why" value={authoring.why} />
+            </div>
+          </AuthoringSurface>
+
+          <AuthoringSurface title="Plan">
+            <div className="space-y-4">
+              <NarrativeBlock
+                title="How"
+                value={authoring.how || executionPlan.join("\n")}
+              />
+              {authoring.outputs.length ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-text">Where</p>
+                  <AttachmentList
+                    items={authoring.outputs.map((output) => ({
+                      id: output.id,
+                      title: output.label,
+                      href: output.href,
+                      actionLabel: output.href ? "Open" : "Planned",
+                    }))}
+                    title="Outputs"
+                  />
+                </div>
+              ) : null}
+            </div>
+          </AuthoringSurface>
+
+          {authoring.timeline.length || authoring.budgetItems.length ? (
+            <AuthoringSurface title="Funding and delivery">
+              <div className="grid gap-3 lg:grid-cols-2">
+                {authoring.timeline.length ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-text">When</p>
+                    <ul className="space-y-2">
+                      {authoring.timeline.map((milestone) => (
+                        <Surface
+                          key={`${milestone.title}-${milestone.timeframe ?? ""}`}
+                          as="li"
+                          variant="panel"
+                          radius="xl"
+                          shadow="control"
+                          className="px-3 py-2"
+                        >
+                          <p className="font-semibold text-text">
+                            {milestone.title}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">
+                            {milestone.timeframe ?? "Timeline not specified"}
+                            {milestone.budgetHmnd
+                              ? ` · ${milestone.budgetHmnd} HMND`
+                              : ""}
+                          </p>
+                        </Surface>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {authoring.budgetItems.length ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-text">Budget</p>
+                    <ul className="space-y-2">
+                      {authoring.budgetItems.map((item, index) => (
+                        <Surface
+                          key={`${item.description}-${index}`}
+                          as="li"
+                          variant="panel"
+                          radius="xl"
+                          shadow="control"
+                          className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-3 py-2"
+                        >
+                          <span className="min-w-0 [overflow-wrap:anywhere] break-words">
+                            {item.description || "Budget line"}
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold text-text">
+                            {item.amountHmnd ? `${item.amountHmnd} HMND` : "—"}
+                          </span>
+                        </Surface>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </AuthoringSurface>
+          ) : null}
+        </>
+      )}
+
+      {authoring.aboutMe ? (
+        <NarrativeSurface title="Proposer context" value={authoring.aboutMe} />
+      ) : null}
+
+      {authoring.kind === "project" &&
+      !authoring.timeline.length &&
+      showLegacyExecutionPlan ? (
+        <NarrativeSurface
+          title="Execution plan"
+          value={executionPlan.join("\n")}
+        />
+      ) : null}
+      {authoring.kind === "project" &&
+      !authoring.budgetItems.length &&
+      showLegacyBudget ? (
+        <AuthoringSurface title="Budget and scope">
+          <p className="text-sm text-muted">{budgetScope}</p>
+        </AuthoringSurface>
+      ) : null}
+      <AttachmentList items={attachments} />
+    </div>
+  );
+}
 
 function canonicalizeProposalText(value: string): string {
   return value
@@ -76,6 +367,19 @@ function canonicalizeProposalText(value: string): string {
     .trim();
 }
 
+function hasVisibleAuthoring(authoring: ProposalAuthoringDetailsDto): boolean {
+  return Boolean(
+    authoring.what.trim() ||
+      authoring.why.trim() ||
+      authoring.how.trim() ||
+      authoring.aboutMe.trim() ||
+      authoring.outputs.length ||
+      authoring.timeline.length ||
+      authoring.budgetItems.length ||
+      authoring.systemAction?.action,
+  );
+}
+
 export function ProposalSummaryCard({
   summary,
   stats,
@@ -85,6 +389,7 @@ export function ProposalSummaryCard({
   attachments,
   showExecutionPlan,
   showBudgetScope,
+  authoring,
 }: ProposalSummaryCardProps) {
   const normalizedSummary = summary.replace(/\s+/g, " ").trim();
   const normalizedOverview = overview.replace(/\s+/g, " ").trim();
@@ -99,6 +404,8 @@ export function ProposalSummaryCard({
   const renderExecutionPlan =
     showExecutionPlan ?? executionPlan.some((item) => item.trim().length > 0);
   const renderBudgetScope = showBudgetScope ?? normalizedBudgetScope.length > 0;
+  const visibleAuthoring =
+    authoring && hasVisibleAuthoring(authoring) ? authoring : undefined;
 
   return (
     <section className="space-y-3 text-sm text-muted">
@@ -116,26 +423,34 @@ export function ProposalSummaryCard({
           ))}
         </div>
       )}
-      <div className="space-y-4 text-text">
-        <TitledSurface title="Proposal overview">
-          <p className="text-sm leading-relaxed text-muted">{overview}</p>
-        </TitledSurface>
-        {renderExecutionPlan ? (
-          <TitledSurface title="Execution plan">
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-              {executionPlan.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+      {visibleAuthoring ? (
+        <ProposalAuthoringCard
+          attachments={attachments}
+          authoring={visibleAuthoring}
+          budgetScope={budgetScope}
+          executionPlan={executionPlan}
+          overview={overview}
+          showBudgetScope={showBudgetScope}
+          showExecutionPlan={showExecutionPlan}
+        />
+      ) : (
+        <div className="space-y-4 text-text">
+          <TitledSurface title="Proposal overview">
+            <ProposalNarrative value={overview} />
           </TitledSurface>
-        ) : null}
-        {renderBudgetScope ? (
-          <TitledSurface title="Budget & scope">
-            <p className="text-sm text-muted">{budgetScope}</p>
-          </TitledSurface>
-        ) : null}
-        <AttachmentList items={attachments} />
-      </div>
+          {renderExecutionPlan ? (
+            <TitledSurface title="Execution plan">
+              <ProposalNarrative value={executionPlan} />
+            </TitledSurface>
+          ) : null}
+          {renderBudgetScope ? (
+            <TitledSurface title="Budget & scope">
+              <p className="text-sm text-muted">{budgetScope}</p>
+            </TitledSurface>
+          ) : null}
+          <AttachmentList items={attachments} />
+        </div>
+      )}
     </section>
   );
 }
@@ -144,16 +459,20 @@ type ProposalTeamMilestonesCardProps = {
   teamLocked: ProposalTeamMember[];
   openSlots: ProposalOpenSlot[];
   milestonesDetail: ProposalMilestoneDetail[];
+  sectionTitle?: string;
+  showMilestones?: boolean;
 };
 
 export function ProposalTeamMilestonesCard({
   teamLocked,
   openSlots,
   milestonesDetail,
+  sectionTitle = "Team & milestones",
+  showMilestones = true,
 }: ProposalTeamMilestonesCardProps) {
   return (
     <section className="space-y-4 text-sm text-muted">
-      <SectionHeader>Team & milestones</SectionHeader>
+      <SectionHeader>{sectionTitle}</SectionHeader>
       <div className="grid gap-3 lg:grid-cols-2">
         <TitledSurface title="Team (locked)">
           <ul className="space-y-2 text-sm text-muted">
@@ -214,34 +533,36 @@ export function ProposalTeamMilestonesCard({
         </TitledSurface>
       </div>
 
-      <TitledSurface title="Milestones">
-        <ul className="space-y-2 text-sm text-muted">
-          {milestonesDetail.map((ms) => (
-            <Surface
-              key={ms.title}
-              as="li"
-              variant="panel"
-              radius="xl"
-              shadow="control"
-              className="px-3 py-2"
-            >
-              <p className="font-semibold text-text">{ms.title}</p>
-              <p className="text-xs text-muted">{ms.desc}</p>
-            </Surface>
-          ))}
-          {milestonesDetail.length === 0 && (
-            <Surface
-              as="li"
-              variant="panel"
-              radius="xl"
-              borderStyle="dashed"
-              className="px-3 py-3 text-center text-xs text-muted"
-            >
-              No milestones defined yet.
-            </Surface>
-          )}
-        </ul>
-      </TitledSurface>
+      {showMilestones ? (
+        <TitledSurface title="Milestones">
+          <ul className="space-y-2 text-sm text-muted">
+            {milestonesDetail.map((ms) => (
+              <Surface
+                key={ms.title}
+                as="li"
+                variant="panel"
+                radius="xl"
+                shadow="control"
+                className="px-3 py-2"
+              >
+                <p className="font-semibold text-text">{ms.title}</p>
+                <p className="text-xs text-muted">{ms.desc}</p>
+              </Surface>
+            ))}
+            {milestonesDetail.length === 0 && (
+              <Surface
+                as="li"
+                variant="panel"
+                radius="xl"
+                borderStyle="dashed"
+                className="px-3 py-3 text-center text-xs text-muted"
+              >
+                No milestones defined yet.
+              </Surface>
+            )}
+          </ul>
+        </TitledSurface>
+      ) : null}
     </section>
   );
 }

@@ -10,7 +10,10 @@ import {
   PROPOSAL_PRESETS,
 } from "../../src/pages/proposals/proposalCreation/presets/registry";
 import { DEFAULT_DRAFT } from "../../src/pages/proposals/proposalCreation/types";
-import { projectTemplate } from "../../src/pages/proposals/proposalCreation/templates/project";
+import {
+  pathIdForDraft,
+  validateWizardStep,
+} from "../../src/pages/proposals/proposalCreation/wizardModel";
 
 test("applyPresetToDraft seeds formation flags and meta governance", () => {
   const policyPreset = getProposalPreset("project.policy");
@@ -107,7 +110,7 @@ test("inferPresetIdFromDraft aligns with system and policy-only drafts", () => {
   ).toBe("system.governor.censure");
 });
 
-test("project template treats policy-only proposals as budget-valid", () => {
+test("policy-only proposals use the path without Formation funding", () => {
   const draft = {
     ...DEFAULT_DRAFT,
     formationEligible: false,
@@ -117,10 +120,21 @@ test("project template treats policy-only proposals as budget-valid", () => {
     how: "Execution notes",
     budgetItems: [],
   };
-  const computed = projectTemplate.compute(draft, { budgetTotal: 0 });
-  expect(computed.budgetValid).toBe(true);
-  expect(computed.planValid).toBe(true);
-  expect(computed.essentialsValid).toBe(true);
+  expect(pathIdForDraft(draft, "project")).toBe("project-policy");
+  expect(
+    validateWizardStep("essentials", {
+      draft,
+      presetId: "project.policy",
+      tierBlocked: false,
+    }).valid,
+  ).toBe(true);
+  expect(
+    validateWizardStep("plan", {
+      draft,
+      presetId: "project.policy",
+      tierBlocked: false,
+    }).valid,
+  ).toBe(true);
 });
 
 test("getPresetCategory groups presets by taxonomy", () => {

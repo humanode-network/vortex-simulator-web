@@ -1,22 +1,74 @@
 import type React from "react";
-import { Button } from "@/components/primitives/button";
-import { Input } from "@/components/primitives/input";
-import { Label } from "@/components/primitives/label";
-import { AddressInline } from "@/components/AddressInline";
-import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
-import { newId } from "../ids";
-import type { ProposalDraftForm } from "../types";
-import type { ChamberDto } from "@/types/api";
-import { getSystemActionMeta } from "../templates/systemActions";
 
-const proposalTypeLabel: Record<ProposalDraftForm["proposalType"], string> = {
-  basic: "Basic",
-  fee: "Fee distribution",
-  monetary: "Monetary system",
-  core: "Core infrastructure",
-  administrative: "Administrative",
-  "dao-core": "DAO core",
-};
+import { AddressInline } from "@/components/AddressInline";
+import {
+  ProposalNarrative,
+  safeNarrativeHref,
+} from "@/components/ProposalNarrative";
+import { Button } from "@/components/primitives/button";
+import { Label } from "@/components/primitives/label";
+import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
+import { formatProposalType } from "@/lib/proposalTypes";
+import type { ChamberDto } from "@/types/api";
+
+import { newId } from "../ids";
+import { EditableLinkList } from "../EditableLinkList";
+import { getSystemActionMeta } from "../templates/systemActions";
+import type { LinkItem, ProposalDraftForm } from "../types";
+import { WizardFieldSection } from "../WizardFieldSection";
+
+function ReviewFact({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="proposal-wizard__review-fact">
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+function hasLinkContent(link: LinkItem) {
+  return link.label.trim().length > 0 || link.url.trim().length > 0;
+}
+
+function ReviewLinks({
+  emptyLabel,
+  links,
+}: {
+  emptyLabel: string;
+  links: LinkItem[];
+}) {
+  const visibleLinks = links.filter(hasLinkContent);
+  if (visibleLinks.length === 0) {
+    return <p className="text-sm text-muted">{emptyLabel}</p>;
+  }
+
+  return (
+    <ul className="proposal-wizard__review-list">
+      {visibleLinks.map((link) => {
+        const href = safeNarrativeHref(link.url);
+        const label = link.label.trim() || link.url.trim() || "Untitled link";
+        return (
+          <li key={link.id} className="proposal-wizard__review-item">
+            {href ? (
+              <a href={href} rel="noreferrer" target="_blank">
+                {label}
+              </a>
+            ) : (
+              <span>{label}</span>
+            )}
+            {link.url.trim().length > 0 ? <small>{link.url}</small> : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function ReviewStep(props: {
   budgetTotal: number;
@@ -25,6 +77,7 @@ export function ReviewStep(props: {
   draft: ProposalDraftForm;
   formationEligible?: boolean;
   mode: "project" | "system";
+  presetLabel?: string;
   proposerAddress: string | null;
   selectedChamber: ChamberDto | null;
   selectedInitiative?: { id: string; title: string } | null;
@@ -38,6 +91,7 @@ export function ReviewStep(props: {
     draft,
     formationEligible,
     mode,
+    presetLabel,
     proposerAddress,
     selectedChamber,
     selectedInitiative,
@@ -48,224 +102,296 @@ export function ReviewStep(props: {
   const systemActionMeta = draft.metaGovernance?.action
     ? getSystemActionMeta(draft.metaGovernance.action)
     : null;
+  const executionLabel =
+    mode === "system"
+      ? "System change"
+      : hasFormation
+        ? "Formation project"
+        : "Policy";
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-border bg-panel-alt p-4">
-        <p className="text-sm font-semibold text-text">
-          Proposer (auto-filled)
-        </p>
-        <div className="mt-2 grid gap-2 text-sm text-muted sm:grid-cols-1">
-          <div>
-            <span className="text-text">Wallet</span>:{" "}
+    <div className="space-y-6">
+      <WizardFieldSection
+        title="Proposal path"
+        description="The governing path selected at the start of this draft."
+      >
+        <dl className="proposal-wizard__review-facts">
+          <ReviewFact label="Kind">
+            {mode === "system" ? "System change" : "Project proposal"}
+          </ReviewFact>
+          <ReviewFact label="Execution">{executionLabel}</ReviewFact>
+          <ReviewFact label="Proposal type">
+            {formatProposalType(draft.proposalType)}
+          </ReviewFact>
+          <ReviewFact label="Preset">
+            {presetLabel ?? draft.presetId ?? "Not selected"}
+          </ReviewFact>
+        </dl>
+      </WizardFieldSection>
+
+      {mode === "system" ? (
+        <>
+          <WizardFieldSection
+            title="System action"
+            description="The canonical target and values that this change will apply."
+          >
+            <dl className="proposal-wizard__review-facts">
+              <ReviewFact label="Action">
+                {systemActionMeta?.label ?? "Not selected"}
+              </ReviewFact>
+              <ReviewFact label="Chamber">General chamber</ReviewFact>
+              {systemActionMeta?.requiresChamberId ? (
+                <ReviewFact label="Target chamber id">
+                  {draft.metaGovernance?.chamberId ?? "Not set"}
+                </ReviewFact>
+              ) : null}
+              {systemActionMeta?.requiresTargetAddress ? (
+                <ReviewFact label="Target governor">
+                  {draft.metaGovernance?.targetAddress ?? "Not set"}
+                </ReviewFact>
+              ) : null}
+              {systemActionMeta?.requiresTitle ? (
+                <ReviewFact label="New title">
+                  {draft.metaGovernance?.title ?? "Not set"}
+                </ReviewFact>
+              ) : null}
+              {systemActionMeta?.showMultiplier ? (
+                <ReviewFact label="Multiplier">
+                  {draft.metaGovernance?.multiplier ?? "Not set"}
+                </ReviewFact>
+              ) : null}
+            </dl>
+            {systemActionMeta?.showGenesisMembers ? (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-text">
+                  Genesis members
+                </p>
+                {(draft.metaGovernance?.genesisMembers ?? []).length > 0 ? (
+                  <ul className="proposal-wizard__review-list">
+                    {draft.metaGovernance?.genesisMembers?.map((address) => (
+                      <li
+                        key={address}
+                        className="proposal-wizard__review-item"
+                      >
+                        <AddressInline address={address} size={10} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted">No genesis members set.</p>
+                )}
+              </div>
+            ) : null}
+          </WizardFieldSection>
+
+          <WizardFieldSection
+            title="Proposal identity"
+            description="The public title and context shown to governors."
+          >
+            <div className="proposal-wizard__review-title">
+              <h3>{draft.title || "Untitled proposal"}</h3>
+              {draft.summary.trim().length > 0 ? <p>{draft.summary}</p> : null}
+            </div>
+            <dl className="proposal-wizard__review-facts">
+              <ReviewFact label="Initiative">
+                {selectedInitiative?.title ?? "None"}
+              </ReviewFact>
+            </dl>
+          </WizardFieldSection>
+
+          <WizardFieldSection
+            title="Rationale"
+            description="How the system change should be applied and verified."
+          >
+            <ProposalNarrative value={draft.how} />
+          </WizardFieldSection>
+        </>
+      ) : (
+        <>
+          <WizardFieldSection
+            title="Identity"
+            description="The proposal name and governing context."
+          >
+            <div className="proposal-wizard__review-title">
+              <h3>{draft.title || "Untitled proposal"}</h3>
+              {draft.summary.trim().length > 0 ? <p>{draft.summary}</p> : null}
+            </div>
+            <dl className="proposal-wizard__review-facts">
+              <ReviewFact label="Chamber">
+                {(selectedChamber?.name ?? draft.chamberId) || "Not selected"}
+              </ReviewFact>
+              <ReviewFact label="Initiative">
+                {selectedInitiative?.title ?? "None"}
+              </ReviewFact>
+            </dl>
+          </WizardFieldSection>
+
+          <WizardFieldSection
+            title="Case"
+            description="The change being proposed and the reason for it."
+          >
+            <div className="proposal-wizard__review-narratives">
+              <div>
+                <h3>What</h3>
+                <ProposalNarrative value={draft.what} />
+              </div>
+              <div>
+                <h3>Why</h3>
+                <ProposalNarrative value={draft.why} />
+              </div>
+            </div>
+          </WizardFieldSection>
+
+          <WizardFieldSection
+            title="Plan"
+            description="The intended execution and where its public outcomes will live."
+          >
+            <div className="space-y-4">
+              <div>
+                <h3 className="proposal-wizard__review-subheading">How</h3>
+                <ProposalNarrative value={draft.how} />
+              </div>
+              {hasFormation ? (
+                <div>
+                  <h3 className="proposal-wizard__review-subheading">When</h3>
+                  {draft.timeline.length === 0 ? (
+                    <p className="text-sm text-muted">No milestones added.</p>
+                  ) : (
+                    <ul className="proposal-wizard__review-list">
+                      {draft.timeline.map((milestone, index) => (
+                        <li
+                          key={milestone.id}
+                          className="proposal-wizard__review-item"
+                        >
+                          <strong>
+                            {milestone.title.trim() || `Milestone ${index + 1}`}
+                          </strong>
+                          <small>
+                            {milestone.timeframe.trim() ||
+                              "Timeframe not specified"}
+                          </small>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : null}
+              <div>
+                <h3 className="proposal-wizard__review-subheading">Where</h3>
+                <ReviewLinks
+                  emptyLabel="No public outcome links added."
+                  links={draft.outputs}
+                />
+              </div>
+            </div>
+          </WizardFieldSection>
+
+          {hasFormation ? (
+            <WizardFieldSection
+              title="Funding and team"
+              description="Milestone funding and the Formation roles still needed."
+            >
+              <dl className="proposal-wizard__review-facts">
+                <ReviewFact label="Total budget">
+                  {budgetTotal.toLocaleString()} HMND
+                </ReviewFact>
+                <ReviewFact label="Team slots">
+                  1 / {1 + draft.openSlotNeeds.length}
+                </ReviewFact>
+              </dl>
+              <div className="space-y-2">
+                <h3 className="proposal-wizard__review-subheading">
+                  Milestone funding
+                </h3>
+                <ul className="proposal-wizard__review-list">
+                  {draft.timeline.map((milestone, index) => (
+                    <li
+                      key={milestone.id}
+                      className="proposal-wizard__review-item"
+                    >
+                      <strong>
+                        {milestone.title.trim() || `Milestone ${index + 1}`}
+                      </strong>
+                      <small>
+                        {Number(milestone.budgetHmnd) > 0
+                          ? `${Number(milestone.budgetHmnd).toLocaleString()} HMND`
+                          : "No budget set"}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h3 className="proposal-wizard__review-subheading">
+                  Team needs
+                </h3>
+                {draft.openSlotNeeds.length === 0 ? (
+                  <p className="text-sm text-muted">No open roles defined.</p>
+                ) : (
+                  <ul className="proposal-wizard__review-list">
+                    {draft.openSlotNeeds.map((slot) => (
+                      <li
+                        key={slot.id}
+                        className="proposal-wizard__review-item"
+                      >
+                        <strong>{slot.title.trim() || "Untitled role"}</strong>
+                        {slot.desc.trim() ? <small>{slot.desc}</small> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </WizardFieldSection>
+          ) : null}
+        </>
+      )}
+
+      <WizardFieldSection
+        title="Proposer"
+        description="The wallet submitting this proposal and any optional context."
+      >
+        <dl className="proposal-wizard__review-facts">
+          <ReviewFact label="Wallet">
             {proposerAddress ? (
               <AddressInline address={proposerAddress} size={7} />
             ) : (
-              "—"
+              "Not connected"
             )}
-          </div>
-        </div>
-        <div className="mt-3 space-y-1">
+          </ReviewFact>
+        </dl>
+        <div className="space-y-2">
           <Label htmlFor="about">Tell about yourself (optional)</Label>
           <textarea
             id="about"
             rows={3}
             className={textareaClassName}
             value={draft.aboutMe}
-            onChange={(e) =>
-              setDraft((prev) => ({
-                ...prev,
-                aboutMe: e.target.value,
+            onChange={(event) =>
+              setDraft((previous) => ({
+                ...previous,
+                aboutMe: event.target.value,
               }))
             }
             placeholder="Short intro / credentials / relevant experience."
           />
         </div>
-      </div>
+      </WizardFieldSection>
 
-      <div className="rounded-xl border border-border bg-panel-alt p-4">
-        <p className="text-sm font-semibold text-text">Preview</p>
-        <div className="mt-3 space-y-3 text-sm">
-          <div>
-            <p className="font-semibold text-text">{draft.title}</p>
-            {draft.summary.trim().length > 0 ? (
-              <p className="text-muted">{draft.summary}</p>
-            ) : null}
-            {selectedChamber ? (
-              <p className="mt-1 text-xs text-muted">
-                Chamber: {selectedChamber.name}
-              </p>
-            ) : null}
-            <p className="mt-1 text-xs text-muted">
-              Proposal type: {proposalTypeLabel[draft.proposalType]}
-            </p>
-            {selectedInitiative ? (
-              <p className="mt-1 text-xs text-muted">
-                Initiative: {selectedInitiative.title}
-              </p>
-            ) : null}
-          </div>
-          {mode === "system" ? (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold text-text">Action</p>
-                  <p className="text-muted">
-                    {systemActionMeta?.label ?? "No preset selected"}
-                  </p>
-                </div>
-                {systemActionMeta?.requiresChamberId ? (
-                  <div>
-                    <p className="text-xs font-semibold text-text">
-                      Target chamber id
-                    </p>
-                    <p className="text-muted">
-                      {draft.metaGovernance?.chamberId ?? "—"}
-                    </p>
-                  </div>
-                ) : null}
-                {systemActionMeta?.requiresTargetAddress ? (
-                  <div>
-                    <p className="text-xs font-semibold text-text">
-                      Target governor
-                    </p>
-                    <p className="text-muted">
-                      {draft.metaGovernance?.targetAddress ?? "—"}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-              {systemActionMeta?.requiresTitle ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-semibold text-text">
-                      Chamber name
-                    </p>
-                    <p className="text-muted">
-                      {draft.metaGovernance?.title ?? "—"}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-              {systemActionMeta?.showMultiplier ? (
-                <div>
-                  <p className="text-xs font-semibold text-text">Multiplier</p>
-                  <p className="text-muted">
-                    {draft.metaGovernance?.multiplier ?? "—"}
-                  </p>
-                </div>
-              ) : null}
-              {systemActionMeta?.showGenesisMembers ? (
-                <div>
-                  <p className="text-xs font-semibold text-text">
-                    Genesis members
-                  </p>
-                  <p className="text-muted">
-                    {(draft.metaGovernance?.genesisMembers ?? []).length > 0
-                      ? draft.metaGovernance?.genesisMembers?.join(", ")
-                      : "—"}
-                  </p>
-                </div>
-              ) : null}
-              <div>
-                <p className="text-xs font-semibold text-text">
-                  Implementation notes
-                </p>
-                <p className="text-muted">{draft.how}</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-semibold text-text">What</p>
-                  <p className="text-muted">{draft.what}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-text">Why</p>
-                  <p className="text-muted">{draft.why}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-text">How</p>
-                <p className="text-muted">{draft.how}</p>
-              </div>
-              {hasFormation ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-semibold text-text">When</p>
-                    <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-                      {draft.timeline.length === 0 ? (
-                        <li>No milestones added.</li>
-                      ) : (
-                        draft.timeline.map((ms) => (
-                          <li key={ms.id}>
-                            {ms.title.trim().length > 0 ? ms.title : "—"} (
-                            {ms.timeframe.trim().length > 0
-                              ? ms.timeframe
-                              : "—"}
-                            ) — Budget:{" "}
-                            {Number.isFinite(Number(ms.budgetHmnd)) &&
-                            Number(ms.budgetHmnd) > 0
-                              ? `${Number(ms.budgetHmnd).toLocaleString()} HMND`
-                              : "—"}
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-text">Budget</p>
-                    <p className="text-muted">
-                      Total: {budgetTotal.toLocaleString()} HMND
-                    </p>
-                    <p className="mt-1 text-xs text-muted">
-                      Team slots: 1 / {1 + draft.openSlotNeeds.length}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-text">
-                      Open positions
-                    </p>
-                    {draft.openSlotNeeds.length === 0 ? (
-                      <p className="text-xs text-muted">
-                        No open positions defined.
-                      </p>
-                    ) : (
-                      <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-                        {draft.openSlotNeeds.map((slot) => (
-                          <li key={slot.id}>
-                            {slot.title.trim() || "—"}
-                            {slot.desc.trim().length > 0
-                              ? ` — ${slot.desc.trim()}`
-                              : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border bg-panel px-3 py-2 text-xs text-muted">
-                  Formation is not required for this proposal.
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2 rounded-xl border border-border bg-panel-alt p-4">
+      <WizardFieldSection
+        title="Supporting material"
+        description="Links to evidence, designs, specifications, or supporting documents."
+      >
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-text">
-            Attachments (optional, recommended)
-          </p>
+          <p className="text-sm text-muted">Attachments are optional.</p>
           <Button
             size="sm"
+            type="button"
             variant="outline"
             onClick={() =>
-              setDraft((prev) => ({
-                ...prev,
+              setDraft((previous) => ({
+                ...previous,
                 attachments: [
-                  ...prev.attachments,
+                  ...previous.attachments,
                   { id: newId("att"), label: "", url: "" },
                 ],
               }))
@@ -274,111 +400,72 @@ export function ReviewStep(props: {
             Add link
           </Button>
         </div>
-        {draft.attachments.length === 0 ? (
-          <p className="text-xs text-muted">
-            Add links to PDFs, docs, spreadsheets, or any supporting material.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {draft.attachments.map((att) => (
-              <div
-                key={att.id}
-                className="grid gap-2 sm:grid-cols-[220px_1fr_auto]"
-              >
-                <Input
-                  value={att.label}
-                  onChange={(e) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      attachments: prev.attachments.map((item) =>
-                        item.id === att.id
-                          ? { ...item, label: e.target.value }
-                          : item,
-                      ),
-                    }))
-                  }
-                  placeholder="Label"
-                />
-                <Input
-                  value={att.url}
-                  onChange={(e) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      attachments: prev.attachments.map((item) =>
-                        item.id === att.id
-                          ? { ...item, url: e.target.value }
-                          : item,
-                      ),
-                    }))
-                  }
-                  placeholder="https://…"
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      attachments: prev.attachments.filter(
-                        (item) => item.id !== att.id,
-                      ),
-                    }))
-                  }
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        <EditableLinkList
+          emptyMessage="No supporting material added."
+          items={draft.attachments}
+          labelPlaceholder="Label"
+          urlPlaceholder="https://..."
+          onChange={(id, field, value) =>
+            setDraft((previous) => ({
+              ...previous,
+              attachments: previous.attachments.map((item) =>
+                item.id === id ? { ...item, [field]: value } : item,
+              ),
+            }))
+          }
+          onRemove={(id) =>
+            setDraft((previous) => ({
+              ...previous,
+              attachments: previous.attachments.filter(
+                (item) => item.id !== id,
+              ),
+            }))
+          }
+        />
+      </WizardFieldSection>
 
-      <div className="space-y-3 rounded-xl border border-border bg-panel-alt p-4">
-        <p className="text-sm font-semibold text-text">Rules</p>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-          <li>Be specific about outcomes and deliverables.</li>
-          <li>Use a realistic timeline and budget.</li>
-          <li>No personal data; keep it governance-safe.</li>
-          <li>Attachments are optional but recommended.</li>
-        </ul>
+      <WizardFieldSection
+        title="Confirm"
+        description="Confirm that the proposal is accurate and ready for submission."
+      >
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
+          <label className="flex items-center gap-2 rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text">
             <input
+              id="agree-rules"
               type="checkbox"
               className="h-4 w-4 accent-primary"
               checked={draft.agreeRules}
-              onChange={(e) =>
-                setDraft((prev) => ({
-                  ...prev,
-                  agreeRules: e.target.checked,
+              onChange={(event) =>
+                setDraft((previous) => ({
+                  ...previous,
+                  agreeRules: event.target.checked,
                 }))
               }
             />
             I agree to the rules
           </label>
-          <label className="flex items-center gap-2 rounded-xl border border-border bg-panel px-3 py-2 text-sm text-text">
+          <label className="flex items-center gap-2 rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text">
             <input
+              id="confirm-budget"
               type="checkbox"
               className="h-4 w-4 accent-primary"
               checked={draft.confirmBudget}
-              onChange={(e) =>
-                setDraft((prev) => ({
-                  ...prev,
-                  confirmBudget: e.target.checked,
+              onChange={(event) =>
+                setDraft((previous) => ({
+                  ...previous,
+                  confirmBudget: event.target.checked,
                 }))
               }
             />
-            {mode === "system"
-              ? "I confirm the proposal details are accurate"
-              : !hasFormation
-                ? "I confirm the proposal details are accurate"
-                : "I confirm the budget is accurate"}
+            {mode === "project" && hasFormation
+              ? "I confirm the budget is accurate"
+              : "I confirm the proposal details are accurate"}
           </label>
         </div>
         {!canSubmit ? (
           <p className="text-xs text-muted">
-            You can navigate steps freely. Submit unlocks once required fields
-            are filled and both checkboxes are checked.
+            Submit unlocks after the required fields and both confirmations are
+            complete.
           </p>
         ) : null}
         {SIM_AUTH_ENABLED && !canAct ? (
@@ -386,7 +473,7 @@ export function ReviewStep(props: {
             Submitting is available only to eligible human nodes.
           </p>
         ) : null}
-      </div>
+      </WizardFieldSection>
     </div>
   );
 }

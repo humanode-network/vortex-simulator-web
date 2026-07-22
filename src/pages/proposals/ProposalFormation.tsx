@@ -170,6 +170,7 @@ const ProposalFormation: React.FC = () => {
         executionPlan={project.executionPlan}
         budgetScope={project.budgetScope}
         attachments={project.attachments}
+        authoring={project.authoring}
         teamLocked={project.lockedTeam}
         openSlots={project.openSlots}
         milestonesDetail={project.milestonesDetail}

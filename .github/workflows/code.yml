@@ -24,6 +24,10 @@ jobs:
             skip-build: true
           - command: build
             skip-build: true
+          - command: test
+            skip-build: true
+            # The cross-repo contract suite requires a sibling server checkout.
+            args: --exclude "tests/e2e/**" --exclude tests/api/cross-repo-contract.test.js
 
       fail-fast: false
 
@@ -42,7 +46,37 @@ jobs:
         with:
           skip-yarn-build: ${{ matrix.mode.skip-build }}
 
-      - run: yarn ${{ matrix.mode.command }}
+      - run: yarn ${{ matrix.mode.command }} ${{ matrix.mode.args }}
+
+  playwright:
+    name: playwright
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: ./.github/actions/setup
+        with:
+          skip-yarn-build: true
+
+      - name: Install Chromium
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run proposal journeys
+        run: yarn test:e2e
+
+      - name: Upload browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proposal-wizard-playwright
+          path: test-results/playwright
+          if-no-files-found: ignore
 
   check-cache:
     name: Cache integrity check

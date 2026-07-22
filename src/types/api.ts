@@ -754,6 +754,31 @@ export type ProposalDraftDetailDto = {
   editableForm?: ProposalDraftEditableFormDto;
 };
 
+export type ProposalAuthoringDetailsDto = {
+  kind: "project" | "system";
+  presetId: string | null;
+  proposalType: string | null;
+  what: string;
+  why: string;
+  how: string;
+  aboutMe: string;
+  outputs: { id: string; label: string; href?: string }[];
+  timeline: {
+    title: string;
+    timeframe: string | null;
+    budgetHmnd: string | null;
+  }[];
+  budgetItems: { description: string; amountHmnd: string | null }[];
+  systemAction: {
+    action: string | null;
+    chamberId: string | null;
+    targetAddress: string | null;
+    title: string | null;
+    multiplier: string | null;
+    genesisMembers: string[];
+  } | null;
+};
+
 export type PoolProposalPageDto = {
   title: string;
   proposer: string;
@@ -781,6 +806,7 @@ export type PoolProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
   thresholdContext?: {
     activityThreshold: {
       categories: string[];
@@ -834,6 +860,7 @@ export type ChamberProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
   viewerVote: null | {
     choice: "yes" | "no" | "abstain";
     score: number | null;
@@ -918,6 +945,7 @@ export type CitizenVetoProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
   attachments: { id: string; title: string; href?: string }[];
   stageData: ProposalStageDatumDto[];
   stats: { label: string; value: string }[];
@@ -946,6 +974,7 @@ export type ChamberVetoProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
   attachments: { id: string; title: string; href?: string }[];
   stageData: ProposalStageDatumDto[];
   stats: { label: string; value: string }[];
@@ -1008,6 +1037,7 @@ export type FormationProposalPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
 };
 
 export type ProposalFinishedPageDto = {
@@ -1035,6 +1065,7 @@ export type ProposalFinishedPageDto = {
   overview: string;
   executionPlan: string[];
   budgetScope: string;
+  authoring: ProposalAuthoringDetailsDto;
 };
 
 export type CourtCaseStatusDto = "jury" | "live" | "ended";

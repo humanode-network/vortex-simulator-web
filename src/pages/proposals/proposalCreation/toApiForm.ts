@@ -24,7 +24,7 @@ export function draftToApiForm(
           (item): item is { id: string; description: string; amount: string } =>
             Boolean(item),
         )
-    : draft.budgetItems;
+    : [];
 
   return {
     ...(input?.templateId ? { templateId: input.templateId } : {}),
@@ -44,9 +44,9 @@ export function draftToApiForm(
     how: draft.how,
     proposalType: draft.proposalType,
     ...(draft.metaGovernance ? { metaGovernance: draft.metaGovernance } : {}),
-    timeline: draft.timeline,
+    timeline: formationEligible ? draft.timeline : [],
     outputs: draft.outputs,
-    openSlotNeeds: draft.openSlotNeeds,
+    openSlotNeeds: formationEligible ? draft.openSlotNeeds : [],
     budgetItems: alignedBudgetItems,
     aboutMe: draft.aboutMe,
     attachments: draft.attachments,

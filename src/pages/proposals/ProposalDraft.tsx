@@ -4,14 +4,12 @@ import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/primitives/button";
 import { Card } from "@/components/primitives/card";
 import { PageHint } from "@/components/PageHint";
-import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
-import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
 import { parseRatioPair } from "@/lib/dtoParsers";
 import {
   apiProposalDraft,
+  apiProposalDraftDelete,
   apiProposalStatus,
-  apiProposalSubmitToPool,
 } from "@/lib/apiClient";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProposalDraftDetailDto } from "@/types/api";
@@ -24,13 +22,12 @@ const ProposalDraft: React.FC = () => {
   const [draftDetails, setDraftDetails] =
     useState<ProposalDraftDetailDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { left: filledSlots, right: totalSlots } = parseRatioPair(
     draftDetails?.teamSlots ?? "0 / 0",
   );
   const openSlots = Math.max((totalSlots || 0) - (filledSlots || 0), 0);
-  const canAct = !SIM_AUTH_ENABLED || (auth.authenticated && auth.eligible);
   const submittedDraft = Boolean(draftDetails?.submittedProposalId);
 
   useEffect(() => {
@@ -74,8 +71,8 @@ const ProposalDraft: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {id ? (
               <Button asChild size="sm" variant="outline">
-                <Link to={`/app/proposals/new?draftId=${id}&step=essentials`}>
-                  Edit draft
+                <Link to={`/app/proposals/new?draftId=${id}`}>
+                  Continue editing
                 </Link>
               </Button>
             ) : null}
@@ -109,42 +106,43 @@ const ProposalDraft: React.FC = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {id && !submittedDraft ? (
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/app/proposals/new?draftId=${id}&step=essentials`}>
-                Edit draft
-              </Link>
-            </Button>
+            <>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/app/proposals/new?draftId=${id}`}>
+                  Continue editing
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={deleting}
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      "Delete this server draft? This cannot be undone.",
+                    )
+                  ) {
+                    return;
+                  }
+                  setDeleteError(null);
+                  setDeleting(true);
+                  try {
+                    await apiProposalDraftDelete({ draftId: id });
+                    navigate("/app/proposals/drafts", { replace: true });
+                  } catch (error) {
+                    setDeleteError((error as Error).message);
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+              >
+                {deleting ? "Deleting" : "Delete draft"}
+              </Button>
+            </>
           ) : null}
           <Button asChild size="sm" variant="ghost">
             <Link to="/app/proposals/new">New proposal</Link>
-          </Button>
-          <Button
-            size="sm"
-            disabled={!canAct || submitting || submittedDraft}
-            title={
-              submittedDraft
-                ? "This draft was already submitted."
-                : SIM_AUTH_ENABLED && !canAct
-                  ? "Connect and verify as an eligible human node to submit."
-                  : undefined
-            }
-            onClick={async () => {
-              if (!id || !canAct || submittedDraft) return;
-              setSubmitError(null);
-              setSubmitting(true);
-              try {
-                const res = await apiProposalSubmitToPool({ draftId: id });
-                navigate(`/app/proposals/${res.proposalId}/pp`, {
-                  replace: true,
-                });
-              } catch (error) {
-                setSubmitError(formatProposalSubmitError(error));
-              } finally {
-                setSubmitting(false);
-              }
-            }}
-          >
-            {submitting ? "Submitting…" : "Submit to pool"}
           </Button>
           {draftDetails.submittedProposalId ? (
             <Button
@@ -166,9 +164,9 @@ const ProposalDraft: React.FC = () => {
           ) : null}
         </div>
       </div>
-      {submitError ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-[var(--destructive)]">
-          Submit failed: {formatLoadError(submitError)}
+      {deleteError ? (
+        <Card className="border-dashed px-4 py-4 text-center text-sm text-[var(--destructive)]">
+          Delete failed: {formatLoadError(deleteError)}
         </Card>
       ) : null}
       {draftDetails.submittedProposalId ? (

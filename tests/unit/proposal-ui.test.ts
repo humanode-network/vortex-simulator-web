@@ -11,6 +11,19 @@ import type { ChamberProposalPageDto } from "../../src/types/api";
 
 const genericAddress = "5C62Ck4UrFPiBtoCmeSrgF7x9yv9mn38446dhCpsi2mLHiFT";
 const canonicalAddress = "hmnVXRhJsFLh5CbdxZNrn5Lu6FR2nDacxgSLrsVoyoW9ERXAP";
+const authoringFixture: ChamberProposalPageDto["authoring"] = {
+  kind: "project",
+  presetId: null,
+  proposalType: "basic",
+  what: "",
+  why: "",
+  how: "",
+  aboutMe: "",
+  outputs: [],
+  timeline: [],
+  budgetItems: [],
+  systemAction: null,
+};
 
 function chamberProposalFixture(
   overrides: Partial<ChamberProposalPageDto> = {},
@@ -69,6 +82,7 @@ function chamberProposalFixture(
       chambers: [],
     },
     ...overrides,
+    authoring: overrides.authoring ?? authoringFixture,
   };
 }
 

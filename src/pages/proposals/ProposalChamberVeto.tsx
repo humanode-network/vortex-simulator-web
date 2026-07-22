@@ -178,6 +178,7 @@ const ProposalChamberVeto: React.FC = () => {
         executionPlan={proposal.executionPlan}
         budgetScope={proposal.budgetScope}
         attachments={proposal.attachments}
+        authoring={proposal.authoring}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
       />

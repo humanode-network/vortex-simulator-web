@@ -1,4 +1,4 @@
-export type StepKey = "essentials" | "plan" | "budget" | "review";
+export type ProposalTemplateId = "project" | "system";
 
 export type TimelineItem = {
   id: string;
@@ -91,7 +91,3 @@ export const DEFAULT_DRAFT: ProposalDraftForm = {
   agreeRules: false,
   confirmBudget: false,
 };
-
-export function isStepKey(value: string): value is StepKey {
-  return value === "essentials" || value === "plan" || value === "budget";
-}

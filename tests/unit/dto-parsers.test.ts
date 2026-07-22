@@ -93,6 +93,19 @@ test("formation progress mapping uses ratios", () => {
     overview: "",
     executionPlan: [],
     budgetScope: "",
+    authoring: {
+      kind: "project",
+      presetId: null,
+      proposalType: null,
+      what: "",
+      why: "",
+      how: "",
+      aboutMe: "",
+      outputs: [],
+      timeline: [],
+      budgetItems: [],
+      systemAction: null,
+    },
   };
 
   const progress = getFormationProgress(formation);

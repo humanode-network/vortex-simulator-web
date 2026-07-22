@@ -442,7 +442,7 @@
     padding: 0.95rem 1rem;
     border-right: 0;
     border-bottom: 1px solid var(--sidebar-border);
-    overflow: visible;
+    overflow: clip;
   }
 
   .sidebar__brand {

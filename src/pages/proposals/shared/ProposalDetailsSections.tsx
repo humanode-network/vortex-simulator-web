@@ -2,6 +2,7 @@ import {
   ProposalSummaryCard,
   ProposalTeamMilestonesCard,
 } from "@/components/ProposalSections";
+import type { ProposalAuthoringDetailsDto } from "@/types/api";
 
 type ProposalSummaryStat = {
   label: string;
@@ -10,6 +11,7 @@ type ProposalSummaryStat = {
 
 type ProposalDetailsSectionsProps = {
   attachments: { id: string; title: string; href?: string }[];
+  authoring: ProposalAuthoringDetailsDto;
   budgetScope: string;
   executionPlan: string[];
   milestonesDetail?: { title: string; desc: string }[];
@@ -26,6 +28,7 @@ export const ProposalDetailsSections: React.FC<
   ProposalDetailsSectionsProps
 > = ({
   attachments,
+  authoring,
   budgetScope,
   executionPlan,
   milestonesDetail,
@@ -39,6 +42,8 @@ export const ProposalDetailsSections: React.FC<
 }) => {
   const showTeamMilestones =
     Boolean(teamLocked) && Boolean(openSlots) && Boolean(milestonesDetail);
+  const authoredTimelineVisible =
+    authoring.kind === "project" && authoring.timeline.length > 0;
 
   return (
     <>
@@ -49,6 +54,7 @@ export const ProposalDetailsSections: React.FC<
         executionPlan={executionPlan}
         budgetScope={budgetScope}
         attachments={attachments}
+        authoring={authoring}
         showExecutionPlan={showExecutionPlan}
         showBudgetScope={showBudgetScope}
       />
@@ -58,6 +64,8 @@ export const ProposalDetailsSections: React.FC<
           teamLocked={teamLocked ?? []}
           openSlots={openSlots ?? []}
           milestonesDetail={milestonesDetail ?? []}
+          sectionTitle={authoredTimelineVisible ? "Team" : undefined}
+          showMilestones={!authoredTimelineVisible}
         />
       ) : null}
     </>
