@@ -103,7 +103,8 @@ const HumanNodes: React.FC = () => {
             label: "Status",
             options: [
               { value: "all", label: "All statuses" },
-              { value: "governor", label: "Governor active" },
+              { value: "governor", label: "Governor" },
+              { value: "active-governor", label: "Active governor" },
               { value: "human", label: "Human node active" },
               { value: "inactive", label: "Inactive" },
             ],

@@ -19,6 +19,7 @@ import { apiProposals } from "@/lib/apiClient";
 import type { ProposalListItemDto } from "@/types/api";
 import { ProposalListCard } from "./list/ProposalListCard";
 import { useProposalStageDetails } from "./list/useProposalStageDetails";
+import { proposalDraftRoutes } from "./draft/draftUi";
 
 const Proposals: React.FC = () => {
   const [proposalData, setProposalData] = useState<
@@ -71,17 +72,27 @@ const Proposals: React.FC = () => {
     <div className="flex flex-col gap-6">
       <PageHint pageId="proposals" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="rounded-full px-4"
-        >
-          <Link to="/app/proposals/drafts">Drafts</Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="rounded-full px-4"
+          >
+            <Link to={proposalDraftRoutes.public}>Public drafts</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="rounded-full px-4"
+          >
+            <Link to={proposalDraftRoutes.mine}>My drafts</Link>
+          </Button>
+        </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Button asChild size="sm" className="rounded-full px-4">
-            <Link to="/app/proposals/new">Create proposal</Link>
+            <Link to={proposalDraftRoutes.create}>Create proposal</Link>
           </Button>
         </div>
       </div>

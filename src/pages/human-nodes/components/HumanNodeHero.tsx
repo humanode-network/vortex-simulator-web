@@ -2,7 +2,7 @@ import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
-import { StatusPill } from "@/components/StatusPill";
+import { GovernanceStatusPills } from "@/components/GovernanceStatusPills";
 import { Kicker } from "@/components/Kicker";
 import type { HumanNodeProfileDto } from "@/types/api";
 import { Check, Copy } from "lucide-react";
@@ -11,6 +11,7 @@ type HumanNodeHeroProps = {
   copied: boolean;
   headerTitle: string;
   humanNodeActive: boolean;
+  governor: boolean;
   governorActive: boolean;
   onCopyAddress: () => void;
   profile: HumanNodeProfileDto;
@@ -23,6 +24,7 @@ export function HumanNodeHero({
   copied,
   headerTitle,
   humanNodeActive,
+  governor,
   governorActive,
   onCopyAddress,
   profile,
@@ -69,18 +71,11 @@ export function HumanNodeHero({
               </button>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-2 text-sm lg:items-end">
-            <StatusPill
-              label="Governor"
-              value={governorActive ? "Active" : "Not active"}
-              active={governorActive}
-            />
-            <StatusPill
-              label="Human node"
-              value={humanNodeActive ? "Active" : "Not active"}
-              active={humanNodeActive}
-            />
-          </div>
+          <GovernanceStatusPills
+            governor={governor}
+            activeGovernor={governorActive}
+            humanNode={humanNodeActive}
+          />
         </div>
       </Surface>
 

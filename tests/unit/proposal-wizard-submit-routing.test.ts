@@ -59,3 +59,20 @@ test("incomplete server drafts resolve to the first incomplete local step", () =
     ),
   ).toBe("plan");
 });
+
+test("publication validation returns to the path-owned content step", () => {
+  expect(
+    proposalSubmitErrorStep(
+      apiError("draft_publication_summary_required"),
+      "project-policy",
+      context,
+    ),
+  ).toBe("essentials");
+  expect(
+    proposalSubmitErrorStep(
+      apiError("draft_publication_system_action_required"),
+      "system-change",
+      context,
+    ),
+  ).toBe("system-change");
+});

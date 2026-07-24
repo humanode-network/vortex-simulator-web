@@ -1,23 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Card } from "@/components/primitives/card";
 import { Button } from "@/components/primitives/button";
-import { Badge } from "@/components/primitives/badge";
 import { SearchBar } from "@/components/SearchBar";
 import { PageHint } from "@/components/PageHint";
 import { SectionHeader } from "@/components/SectionHeader";
-import { Kicker } from "@/components/Kicker";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { apiProposalDrafts } from "@/lib/apiClient";
-import { formatDateTime } from "@/lib/dateTime";
 import { formatLoadError } from "@/lib/errorFormatting";
-import { proposalSummaryPreview } from "@/lib/textPreview";
 import type { ProposalDraftListItemDto } from "@/types/api";
 import { useAuth } from "@/app/auth/AuthContext";
+import { OwnerDraftCard } from "./draft/OwnerDraftCard";
+import { proposalDraftRoutes } from "./draft/draftUi";
 
 const ProposalDrafts: React.FC = () => {
   const auth = useAuth();
-  const navigate = useNavigate();
   const [drafts, setDrafts] = useState<ProposalDraftListItemDto[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -81,11 +78,11 @@ const ProposalDrafts: React.FC = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/app/proposals">Back to proposals</Link>
+            <Link to={proposalDraftRoutes.proposals}>Back to proposals</Link>
           </Button>
         </div>
         <Button asChild size="sm" className="w-full sm:w-auto">
-          <Link to="/app/proposals/new">New proposal</Link>
+          <Link to={proposalDraftRoutes.create}>New proposal</Link>
         </Button>
       </div>
 
@@ -137,40 +134,24 @@ const ProposalDrafts: React.FC = () => {
       {drafts !== null && drafts.length === 0 && !loadError ? (
         <NoDataYetBar label="drafts" />
       ) : null}
+      {drafts !== null && drafts.length > 0 && filtered.length === 0 ? (
+        <NoDataYetBar label="drafts matching these filters" />
+      ) : null}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         {filtered.map((draft) => (
-          <Card key={draft.id} className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Kicker>Draft · {formatDateTime(draft.updated)}</Kicker>
-                <h2 className="text-lg font-semibold text-text">
-                  {draft.title}
-                </h2>
-                <p className="max-h-[4.35em] overflow-hidden text-sm leading-[1.45] text-muted">
-                  {proposalSummaryPreview(draft.summary)}
-                </p>
-              </div>
-              <Badge variant="outline">{draft.chamber}</Badge>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-muted">
-              <span>Tier: {draft.tier}</span>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => navigate(`/app/proposals/drafts/${draft.id}`)}
-                >
-                  View
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link to={`/app/proposals/new?draftId=${draft.id}`}>
-                    Continue editing
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
+          <OwnerDraftCard
+            key={draft.id}
+            draft={draft}
+            onPublicationChanged={(publication) =>
+              setDrafts(
+                (current) =>
+                  current?.map((item) =>
+                    item.id === draft.id ? { ...item, publication } : item,
+                  ) ?? null,
+              )
+            }
+          />
         ))}
       </div>
     </div>

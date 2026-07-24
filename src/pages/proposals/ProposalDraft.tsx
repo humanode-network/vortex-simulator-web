@@ -5,7 +5,6 @@ import { Button } from "@/components/primitives/button";
 import { Card } from "@/components/primitives/card";
 import { PageHint } from "@/components/PageHint";
 import { useAuth } from "@/app/auth/AuthContext";
-import { parseRatioPair } from "@/lib/dtoParsers";
 import {
   apiProposalDraft,
   apiProposalDraftDelete,
@@ -14,6 +13,8 @@ import {
 import { formatLoadError } from "@/lib/errorFormatting";
 import type { ProposalDraftDetailDto } from "@/types/api";
 import { ProposalDraftDetailsCard } from "./draft/ProposalDraftDetailsCard";
+import { DraftPublicationActions } from "./draft/DraftPublicationActions";
+import { editDraftRoute, proposalDraftRoutes } from "./draft/draftUi";
 
 const ProposalDraft: React.FC = () => {
   const auth = useAuth();
@@ -24,10 +25,6 @@ const ProposalDraft: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const { left: filledSlots, right: totalSlots } = parseRatioPair(
-    draftDetails?.teamSlots ?? "0 / 0",
-  );
-  const openSlots = Math.max((totalSlots || 0) - (filledSlots || 0), 0);
   const submittedDraft = Boolean(draftDetails?.submittedProposalId);
 
   useEffect(() => {
@@ -65,19 +62,17 @@ const ProposalDraft: React.FC = () => {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link to="/app/proposals/drafts">Back to drafts</Link>
+              <Link to={proposalDraftRoutes.mine}>Back to drafts</Link>
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {id ? (
               <Button asChild size="sm" variant="outline">
-                <Link to={`/app/proposals/new?draftId=${id}`}>
-                  Continue editing
-                </Link>
+                <Link to={editDraftRoute(id)}>Continue editing</Link>
               </Button>
             ) : null}
             <Button asChild size="sm" variant="ghost">
-              <Link to="/app/proposals/new">New proposal</Link>
+              <Link to={proposalDraftRoutes.create}>New proposal</Link>
             </Button>
           </div>
         </div>
@@ -101,16 +96,14 @@ const ProposalDraft: React.FC = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link to="/app/proposals/drafts">Back to drafts</Link>
+            <Link to={proposalDraftRoutes.mine}>Back to drafts</Link>
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {id && !submittedDraft ? (
             <>
               <Button asChild size="sm" variant="outline">
-                <Link to={`/app/proposals/new?draftId=${id}`}>
-                  Continue editing
-                </Link>
+                <Link to={editDraftRoute(id)}>Continue editing</Link>
               </Button>
               <Button
                 type="button"
@@ -120,7 +113,9 @@ const ProposalDraft: React.FC = () => {
                 onClick={async () => {
                   if (
                     !window.confirm(
-                      "Delete this server draft? This cannot be undone.",
+                      draftDetails.publication.status === "published"
+                        ? "Delete this server draft and remove its public page? This cannot be undone."
+                        : "Delete this server draft? This cannot be undone.",
                     )
                   ) {
                     return;
@@ -128,8 +123,11 @@ const ProposalDraft: React.FC = () => {
                   setDeleteError(null);
                   setDeleting(true);
                   try {
-                    await apiProposalDraftDelete({ draftId: id });
-                    navigate("/app/proposals/drafts", { replace: true });
+                    await apiProposalDraftDelete({
+                      draftId: id,
+                      idempotencyKey: `draft-delete-${crypto.randomUUID()}`,
+                    });
+                    navigate(proposalDraftRoutes.mine, { replace: true });
                   } catch (error) {
                     setDeleteError((error as Error).message);
                   } finally {
@@ -141,8 +139,19 @@ const ProposalDraft: React.FC = () => {
               </Button>
             </>
           ) : null}
+          {id ? (
+            <DraftPublicationActions
+              draftId={id}
+              publication={draftDetails.publication}
+              onChanged={(publication) =>
+                setDraftDetails((current) =>
+                  current ? { ...current, publication } : current,
+                )
+              }
+            />
+          ) : null}
           <Button asChild size="sm" variant="ghost">
-            <Link to="/app/proposals/new">New proposal</Link>
+            <Link to={proposalDraftRoutes.create}>New proposal</Link>
           </Button>
           {draftDetails.submittedProposalId ? (
             <Button
@@ -176,7 +185,7 @@ const ProposalDraft: React.FC = () => {
         </Card>
       ) : null}
 
-      <ProposalDraftDetailsCard draft={draftDetails} openSlots={openSlots} />
+      <ProposalDraftDetailsCard draft={draftDetails} />
     </div>
   );
 };

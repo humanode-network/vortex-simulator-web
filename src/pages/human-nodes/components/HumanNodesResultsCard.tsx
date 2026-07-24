@@ -121,6 +121,10 @@ export function HumanNodesResultsCard({
                 { label: "Faction", value: factionName },
                 {
                   label: "Governor",
+                  value: node.active.governor ? "Yes" : "No",
+                },
+                {
+                  label: "Active governor",
                   value: node.active.governorActive ? "Active" : "Not active",
                 },
                 {

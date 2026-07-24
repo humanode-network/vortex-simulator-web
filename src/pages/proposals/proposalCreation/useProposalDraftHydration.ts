@@ -4,6 +4,7 @@ import type { NavigateFunction } from "react-router";
 import { apiProposalDraft, apiProposalStatus } from "@/lib/apiClient";
 import { normalizeSessionDraft } from "./sessionStorage";
 import { inferPresetIdFromDraft } from "./presets/registry";
+import type { DraftPublicationSummaryDto } from "@/types/api";
 import type { ProposalDraftForm } from "./types";
 
 type ProposalCreationTemplateKind = "project" | "system";
@@ -12,6 +13,7 @@ export type ProposalDraftHydrationResult = {
   draft: ProposalDraftForm;
   draftId: string;
   presetId: string;
+  publication: DraftPublicationSummaryDto;
   templateKind: ProposalCreationTemplateKind;
 };
 
@@ -71,6 +73,7 @@ export function useProposalDraftHydration({
           draft: normalized,
           draftId: nextDraftId,
           presetId: nextPresetId,
+          publication: detail.publication,
           templateKind: nextTemplateKind,
         });
       } catch (error) {

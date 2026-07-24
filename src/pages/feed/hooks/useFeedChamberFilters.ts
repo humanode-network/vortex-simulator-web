@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { apiClock, apiHuman, apiMyGovernance } from "@/lib/apiClient";
+import { apiHuman, apiMyGovernance } from "@/lib/apiClient";
 import type { FeedScope } from "@/lib/feedScopeRouting";
 
 export function useFeedChamberFilters(input: {
@@ -32,23 +32,17 @@ export function useFeedChamberFilters(input: {
     setChambersLoading(true);
     (async () => {
       try {
-        const [governance, profile, clock] = await Promise.all([
+        const [governance, profile] = await Promise.all([
           apiMyGovernance(),
           apiHuman(address),
-          apiClock(),
         ]);
         if (!active) return;
-        const tier = profile.tierProgress?.tier?.trim().toLowerCase() ?? "";
-        const bootstrapGovernor =
-          clock.currentEra === 0 && tier !== "" && tier !== "nominee";
         const chamberIds = governance.myChamberIds ?? [];
         const unique = Array.from(
           new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
         );
         setChamberFilters(unique);
-        setViewerGovernorActive(
-          Boolean(profile.governorActive) || bootstrapGovernor,
-        );
+        setViewerGovernorActive(Boolean(profile.governorActive));
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);

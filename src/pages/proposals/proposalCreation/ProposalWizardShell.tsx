@@ -234,6 +234,9 @@ type WizardActionsProps = {
   continueDisabled?: boolean;
   onBack: () => void;
   onContinue: () => void;
+  onSecondaryAction?: () => void;
+  secondaryActionDisabled?: boolean;
+  secondaryActionLabel?: string;
   submitting: boolean;
 };
 
@@ -244,6 +247,9 @@ export function WizardActions({
   continueLabel,
   onBack,
   onContinue,
+  onSecondaryAction,
+  secondaryActionDisabled = false,
+  secondaryActionLabel,
   submitting,
 }: WizardActionsProps) {
   return (
@@ -256,13 +262,25 @@ export function WizardActions({
       >
         {backLabel}
       </Button>
-      <Button
-        type="button"
-        disabled={continueDisabled || submitting}
-        onClick={onContinue}
-      >
-        {continueLabel}
-      </Button>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {onSecondaryAction && secondaryActionLabel ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={secondaryActionDisabled || submitting}
+            onClick={onSecondaryAction}
+          >
+            {secondaryActionLabel}
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          disabled={continueDisabled || submitting}
+          onClick={onContinue}
+        >
+          {continueLabel}
+        </Button>
+      </div>
     </footer>
   );
 }

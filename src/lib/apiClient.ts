@@ -23,10 +23,13 @@ import type {
   GetInvisionResponse,
   GetMyGovernanceResponse,
   GetProposalDraftsResponse,
+  GetPublicProposalDraftsResponse,
   GetProposalsResponse,
   GetProposalTimelineResponse,
   HumanNodeProfileDto,
   ProposalDraftDetailDto,
+  PublicProposalDraftKindDto,
+  PublicProposalDraftSortDto,
   ProposalThreadDetailDto,
   ProposalThreadDto,
   ProposalThreadListDto,
@@ -800,6 +803,39 @@ export async function apiProposalDraft(
   return await apiGet<ProposalDraftDetailDto>(`/api/proposals/drafts/${id}`);
 }
 
+export async function apiPublicProposalDrafts(input?: {
+  q?: string;
+  chamber?: string;
+  author?: string;
+  initiative?: string;
+  proposalPath?: PublicProposalDraftKindDto;
+  sort?: PublicProposalDraftSortDto;
+  cursor?: string;
+  limit?: number;
+}): Promise<GetPublicProposalDraftsResponse> {
+  const params = new URLSearchParams();
+  if (input?.q) params.set("q", input.q);
+  if (input?.chamber) params.set("chamber", input.chamber);
+  if (input?.author) params.set("author", input.author);
+  if (input?.initiative) params.set("initiative", input.initiative);
+  if (input?.proposalPath) params.set("proposalPath", input.proposalPath);
+  if (input?.sort) params.set("sort", input.sort);
+  if (input?.cursor) params.set("cursor", input.cursor);
+  if (input?.limit) params.set("limit", String(input.limit));
+  const qs = params.toString();
+  return await apiGet<GetPublicProposalDraftsResponse>(
+    `/api/proposals/public-drafts?${qs}`,
+  );
+}
+
+export async function apiPublicProposalDraft(
+  id: string,
+): Promise<ProposalDraftDetailDto> {
+  return await apiGet<ProposalDraftDetailDto>(
+    `/api/proposals/public-drafts/${encodeURIComponent(id)}`,
+  );
+}
+
 export type ProposalDraftFormPayload = {
   templateId?: "project" | "system";
   presetId?: string;
@@ -878,6 +914,42 @@ export async function apiProposalDraftDelete(input: {
 }> {
   return await apiCommand({
     type: "proposal.draft.delete",
+    payload: { draftId: input.draftId },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiProposalDraftPublish(input: {
+  draftId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.draft.publish";
+  draftId: string;
+  revision: number;
+  publicUrl: string;
+  publishedAt: string;
+  updatedAt: string;
+}> {
+  return await apiCommand({
+    type: "proposal.draft.publish",
+    payload: { draftId: input.draftId },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
+
+export async function apiProposalDraftUnpublish(input: {
+  draftId: string;
+  idempotencyKey?: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.draft.unpublish";
+  draftId: string;
+  unpublished: boolean;
+  updatedAt: string;
+}> {
+  return await apiCommand({
+    type: "proposal.draft.unpublish",
     payload: { draftId: input.draftId },
     idempotencyKey: input.idempotencyKey,
   });

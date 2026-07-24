@@ -38,7 +38,9 @@ function draftDetail(id: string, editableForm: typeof existingDraftForm) {
     teamSlots: "0",
     milestonesPlanned: "0",
     summary: editableForm.summary,
+    overview: editableForm.what,
     rationale: editableForm.why,
+    executionPlan: [],
     budgetScope: "No Formation budget",
     checklist: [],
     milestones: [],
@@ -46,6 +48,18 @@ function draftDetail(id: string, editableForm: typeof existingDraftForm) {
     openSlotNeeds: [],
     milestonesDetail: [],
     attachments: [],
+    authoring: {
+      kind: "project",
+      presetId: editableForm.presetId,
+      proposalType: editableForm.proposalType,
+      what: editableForm.what,
+      why: editableForm.why,
+      how: editableForm.how,
+      aboutMe: editableForm.aboutMe,
+      outputs: [],
+      budgetItems: [],
+    },
+    publication: { status: "private" },
     editableForm,
   };
 }
@@ -160,6 +174,7 @@ async function installApiFixtures(page: Page) {
         json: {
           id: address,
           name: "Test Governor",
+          governor: true,
           governorActive: true,
           humanNodeActive: true,
           governanceSummary: "",
@@ -184,6 +199,20 @@ async function installApiFixtures(page: Page) {
             ok: true,
             type: body.type,
             draftId: "draft-e2e",
+            updatedAt: "2026-07-02T12:00:00.000Z",
+          },
+        });
+        return;
+      }
+      if (body.type === "proposal.draft.publish") {
+        await route.fulfill({
+          json: {
+            ok: true,
+            type: body.type,
+            draftId: "draft-e2e",
+            revision: 1,
+            publicUrl: "/app/proposals/public-drafts/draft-e2e",
+            publishedAt: "2026-07-02T12:00:00.000Z",
             updatedAt: "2026-07-02T12:00:00.000Z",
           },
         });
@@ -347,6 +376,37 @@ test("fresh entry ignores legacy Review state and completes policy submission", 
   await page.locator("#confirm-budget").check();
   await page.getByRole("button", { name: "Submit proposal" }).click();
   await expect(page).toHaveURL(/\/app\/proposals\/proposal-e2e\/pp$/);
+});
+
+test("Review publishes an explicit public snapshot without submitting", async ({
+  page,
+}) => {
+  await openFreshWizard(page);
+  await page.locator("#proposal-kind").selectOption("project");
+  await page.locator("#proposal-type").selectOption("basic");
+  await page.locator("#proposal-formation-mode").selectOption("policy");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#title").fill("Draft before governance");
+  await page.locator("#chamber").selectOption("general");
+  await page.locator("#summary").fill("Invite review before submission.");
+  await page.locator("#what").fill("Publish a readable snapshot.");
+  await page.locator("#why").fill("Catch mistakes before formal voting.");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#how").fill("Review, revise, and submit separately.");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.locator("#agree-rules")).not.toBeChecked();
+  await expect(page.locator("#confirm-budget")).not.toBeChecked();
+
+  const publishRequest = page.waitForRequest((request) => {
+    if (!request.url().endsWith("/api/command")) return false;
+    return request.postDataJSON()?.type === "proposal.draft.publish";
+  });
+  await page.getByRole("button", { name: "Publish draft" }).click();
+  await publishRequest;
+  await expect(
+    page.getByRole("button", { name: "Update public draft" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/step=review/);
 });
 
 test("submission locks draft-changing controls until the pool response returns", async ({
@@ -559,6 +619,88 @@ test("submission synchronizes the newest edit after an earlier save is still pen
   expect(savedForms[0]?.how).toBe("Original plan before save.");
   expect(savedForms[1]?.how).toBe("Final plan immediately before submit.");
   expect(submittedDraftId).toBe("draft-latest-revision");
+});
+
+test("an ambiguous submission failure retries without rewriting the submitted draft", async ({
+  page,
+}) => {
+  let saveCount = 0;
+  const submitKeys: string[] = [];
+
+  await openFreshWizard(page);
+  await page.route("**/api/command", async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { type?: string };
+    if (body.type === "proposal.draft.save") {
+      saveCount += 1;
+      await route.fulfill({
+        json: {
+          ok: true,
+          type: body.type,
+          draftId: "draft-ambiguous-submit",
+          updatedAt: "2026-07-03T12:00:00.000Z",
+        },
+      });
+      return;
+    }
+    if (body.type === "proposal.submitToPool") {
+      submitKeys.push(request.headers()["idempotency-key"] ?? "");
+      if (submitKeys.length === 1) {
+        await route.fulfill({
+          status: 503,
+          json: {
+            error: {
+              code: "temporarily_unavailable",
+              message: "Submission response was interrupted.",
+            },
+          },
+        });
+        return;
+      }
+      await route.fulfill({
+        json: {
+          ok: true,
+          type: body.type,
+          proposalId: "proposal-recovered-submit",
+        },
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.locator("#proposal-kind").selectOption("project");
+  await page.locator("#proposal-type").selectOption("basic");
+  await page.locator("#proposal-formation-mode").selectOption("policy");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#title").fill("Recover uncertain submission");
+  await page.locator("#chamber").selectOption("general");
+  await page.locator("#summary").fill("Retry without rewriting the draft.");
+  await page.locator("#what").fill("Preserve an accepted proposal command.");
+  await page
+    .locator("#why")
+    .fill("Network failures cannot reveal commit state.");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#how").fill("Replay the same idempotent submission.");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator("#agree-rules").check();
+  await page.locator("#confirm-budget").check();
+
+  await page.getByRole("button", { name: "Submit proposal" }).click();
+  await expect(
+    page.getByText("Submission response was interrupted."),
+  ).toBeVisible();
+  expect(saveCount).toBe(1);
+  expect(submitKeys).toHaveLength(1);
+
+  await page.getByRole("button", { name: "Submit proposal" }).click();
+  await expect(page).toHaveURL(
+    /\/app\/proposals\/proposal-recovered-submit\/pp$/,
+  );
+  expect(saveCount).toBe(1);
+  expect(submitKeys).toHaveLength(2);
+  expect(submitKeys[0]).not.toBe("");
+  expect(submitKeys[1]).toBe(submitKeys[0]);
 });
 
 test("a keyboard-only author can complete a policy proposal", async ({

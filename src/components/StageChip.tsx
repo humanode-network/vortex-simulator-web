@@ -12,6 +12,7 @@ import {
 import "./StageChip.css";
 
 const chipClasses: Record<StageChipKind, string> = {
+  draft: "stage-chip--draft",
   proposal_pool: "stage-chip--proposal-pool",
   chamber_vote: "stage-chip--chamber-vote",
   citizen_veto: "stage-chip--citizen-veto",

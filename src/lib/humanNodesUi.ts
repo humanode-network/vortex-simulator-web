@@ -15,7 +15,12 @@ export type HumanNodesTierFilter =
   | "legate"
   | "consul"
   | "citizen";
-export type HumanNodesStatusFilter = "all" | "governor" | "human" | "inactive";
+export type HumanNodesStatusFilter =
+  | "all"
+  | "governor"
+  | "active-governor"
+  | "human"
+  | "inactive";
 export type HumanNodesCmRange = "all" | "0-50" | "50-200" | "200+";
 
 export type HumanNodesFilters = {
@@ -24,6 +29,32 @@ export type HumanNodesFilters = {
   statusFilter: HumanNodesStatusFilter;
   tierFilter: HumanNodesTierFilter;
 };
+
+export type GovernanceIdentityState = {
+  governor: boolean;
+  activeGovernor: boolean;
+  humanNode: boolean;
+};
+
+export function governanceIdentityStatuses(state: GovernanceIdentityState) {
+  return {
+    governor: {
+      label: "Governor",
+      value: state.governor ? "Active" : "Not active",
+      active: state.governor,
+    },
+    activeGovernor: {
+      label: "Active governor",
+      value: state.activeGovernor ? "Active" : "Not active",
+      active: state.activeGovernor,
+    },
+    humanNode: {
+      label: "Human node",
+      value: state.humanNode ? "Active" : "Not active",
+      active: state.humanNode,
+    },
+  } as const;
+}
 
 export const DEFAULT_HUMAN_NODES_FILTERS: HumanNodesFilters = {
   sortBy: "acm-desc",
@@ -70,10 +101,12 @@ export function filterHumanNodes(input: {
         statusFilter === "all"
           ? true
           : statusFilter === "governor"
-            ? node.active.governorActive
-            : statusFilter === "human"
-              ? node.active.humanNodeActive
-              : !node.active.governorActive && !node.active.humanNodeActive;
+            ? node.active.governor
+            : statusFilter === "active-governor"
+              ? node.active.governorActive
+              : statusFilter === "human"
+                ? node.active.humanNodeActive
+                : !node.active.governorActive && !node.active.humanNodeActive;
       const acmValue = node.cmTotals?.acm ?? node.acm ?? 0;
       const matchesRange =
         cmRange === "all"

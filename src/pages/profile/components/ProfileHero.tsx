@@ -2,7 +2,7 @@ import { Badge } from "@/components/primitives/badge";
 import { HintLabel } from "@/components/Hint";
 import { Surface } from "@/components/Surface";
 import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
-import { StatusPill } from "@/components/StatusPill";
+import { GovernanceStatusPills } from "@/components/GovernanceStatusPills";
 import { Kicker } from "@/components/Kicker";
 import type { HumanNodeProfileDto } from "@/types/api";
 import { Check, Copy } from "lucide-react";
@@ -69,18 +69,11 @@ export function ProfileHero({
               </div>
             ) : null}
           </div>
-          <div className="flex flex-col items-center gap-2 text-sm lg:items-end">
-            <StatusPill
-              label="Governor"
-              value={profile?.governorActive ? "Active" : "Not active"}
-              active={profile?.governorActive ?? false}
-            />
-            <StatusPill
-              label="Human node"
-              value={profile?.humanNodeActive ? "Active" : "Not active"}
-              active={profile?.humanNodeActive ?? false}
-            />
-          </div>
+          <GovernanceStatusPills
+            governor={profile?.governor ?? false}
+            activeGovernor={profile?.governorActive ?? false}
+            humanNode={profile?.humanNodeActive ?? false}
+          />
         </div>
       </Surface>
 

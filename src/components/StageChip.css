@@ -15,6 +15,12 @@
   white-space: nowrap;
 }
 
+.stage-chip--draft {
+  --stage-chip-bg: var(--control-glass-bg);
+  --stage-chip-border: var(--surface-glass-border);
+  --stage-chip-text: var(--text);
+}
+
 .stage-chip--proposal-pool {
   --stage-chip-bg: #fff1dc;
   --stage-chip-border: rgba(176, 102, 25, 0.2);

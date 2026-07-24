@@ -3,6 +3,7 @@ import { Button } from "@/components/primitives/button";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Surface } from "@/components/Surface";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
+import { editDraftRoute, reconsiderProposalRoute } from "./draft/draftUi";
 import { apiProposalFinishedPage } from "@/lib/apiClient";
 import {
   useProposalStageSync,
@@ -61,8 +62,8 @@ const ProposalFinished: React.FC = () => {
               <Link
                 to={
                   proposal.reconsiderationDraftId
-                    ? `/app/proposals/new?draftId=${encodeURIComponent(proposal.reconsiderationDraftId)}`
-                    : `/app/proposals/new?resubmitsProposalId=${encodeURIComponent(proposal.decisionRootProposalId)}`
+                    ? editDraftRoute(proposal.reconsiderationDraftId)
+                    : reconsiderProposalRoute(proposal.decisionRootProposalId)
                 }
               >
                 Resubmit for reconsideration
