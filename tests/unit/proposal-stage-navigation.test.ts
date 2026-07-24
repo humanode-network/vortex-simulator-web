@@ -44,3 +44,18 @@ test("proposal stage navigation links terminal live stage and prior formation sn
   assert.equal(links.passed, "/app/proposals/p-3/finished");
   assert.equal(links.failed, undefined);
 });
+
+test("proposal stage navigation exposes Draft only from server-provided history", () => {
+  const withoutHistory = buildProposalStageLinks({
+    liveStage: "vote",
+    proposalId: "p-4",
+  });
+  assert.equal(withoutHistory.draft, undefined);
+
+  const withHistory = buildProposalStageLinks({
+    draftRoute: "/app/proposals/public-drafts/draft-p-4",
+    liveStage: "vote",
+    proposalId: "p-4",
+  });
+  assert.equal(withHistory.draft, "/app/proposals/public-drafts/draft-p-4");
+});

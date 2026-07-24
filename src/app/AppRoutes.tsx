@@ -31,6 +31,8 @@ import ProposalCreation from "../pages/proposals/ProposalCreation";
 import MyGovernance from "../pages/MyGovernance";
 import ProposalDrafts from "../pages/proposals/ProposalDrafts";
 import ProposalDraft from "../pages/proposals/ProposalDraft";
+import PublicDraft from "../pages/proposals/PublicDraft";
+import PublicDrafts from "../pages/proposals/PublicDrafts";
 import FullHistory from "../pages/human-nodes/FullHistory";
 import Landing from "../pages/Landing";
 import Paper from "../pages/Paper";
@@ -92,6 +94,8 @@ const AppRoutes: React.FC = () => {
         <Route path="courts/:id" element={<Courtroom />} />
         <Route path="cm" element={<CMPanel />} />
         <Route path="proposals" element={<Proposals />} />
+        <Route path="proposals/public-drafts" element={<PublicDrafts />} />
+        <Route path="proposals/public-drafts/:id" element={<PublicDraft />} />
         <Route path="proposals/drafts" element={<ProposalDrafts />} />
         <Route path="proposals/drafts/:id" element={<ProposalDraft />} />
         <Route path="proposals/new" element={<ProposalCreation />} />

@@ -29,6 +29,14 @@ const scopeCodes = new Set([
   "initiative_association_immutable",
 ]);
 
+const publicationContentCodes = new Set([
+  "draft_publication_title_required",
+  "draft_publication_summary_required",
+  "draft_publication_chamber_required",
+  "draft_publication_case_required",
+  "draft_publication_rationale_required",
+]);
+
 export function proposalSubmitErrorStep(
   error: unknown,
   pathId: WizardPathId,
@@ -40,6 +48,15 @@ export function proposalSubmitErrorStep(
   if (systemCodes.has(code)) return "system-change";
   if (scopeCodes.has(code)) {
     return pathId === "system-change" ? "system-change" : "essentials";
+  }
+  if (publicationContentCodes.has(code)) {
+    return pathId === "system-change" ? "system-change" : "essentials";
+  }
+  if (code === "draft_publication_system_action_required") {
+    return "system-change";
+  }
+  if (code === "draft_publication_invalid_url") {
+    return pathId === "system-change" ? "rationale" : "plan";
   }
   if (code === "draft_not_submittable") {
     return firstIncompleteWizardStep(pathId, context);

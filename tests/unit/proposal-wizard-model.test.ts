@@ -16,6 +16,7 @@ import {
   validateWizardStep,
   type WizardContext,
 } from "../../src/pages/proposals/proposalCreation/wizardModel";
+import { isProposalDraftPublicationReady } from "../../src/pages/proposals/proposalCreation/publicationReadiness";
 
 function completePolicyDraft(): ProposalDraftForm {
   return {
@@ -77,6 +78,48 @@ test("reachable steps stop after the first invalid requirement", () => {
   expect(
     reachableWizardSteps("project-policy", context({ ...draft, how: "" })),
   ).toEqual(["intent", "essentials", "plan"]);
+});
+
+test("public review can be reached before the formal submission path is complete", () => {
+  const draft = {
+    ...completePolicyDraft(),
+    chamberId: "general",
+    summary: "Ready for public review",
+    how: "",
+    agreeRules: false,
+    confirmBudget: false,
+  };
+  expect(isProposalDraftPublicationReady(draft, "project")).toBe(true);
+  expect(
+    reachableWizardSteps("project-policy", {
+      ...context(draft),
+      publicationReady: true,
+    }),
+  ).toEqual(["intent", "essentials", "plan", "review"]);
+  expect(validateWizardStep("review", context(draft)).valid).toBe(false);
+});
+
+test("system publication requires the action's canonical target fields", () => {
+  const draft: ProposalDraftForm = {
+    ...completePolicyDraft(),
+    title: "Create a chamber",
+    chamberId: "general",
+    summary: "Open a public system Draft.",
+    metaGovernance: {
+      action: "chamber.create",
+      chamberId: "research",
+    },
+  };
+  expect(isProposalDraftPublicationReady(draft, "system")).toBe(false);
+  expect(
+    isProposalDraftPublicationReady(
+      {
+        ...draft,
+        metaGovernance: { ...draft.metaGovernance!, title: "Research" },
+      },
+      "system",
+    ),
+  ).toBe(true);
 });
 
 test("Formation funding validates every milestone budget", () => {

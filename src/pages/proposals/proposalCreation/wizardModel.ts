@@ -56,6 +56,7 @@ export type StepValidation = {
 export type WizardContext = {
   draft: ProposalDraftForm;
   presetId: string;
+  publicationReady?: boolean;
   tierBlocked: boolean;
 };
 
@@ -195,7 +196,9 @@ export function proposalBudgetTotal(draft: ProposalDraftForm): number {
     : positiveAmountTotal(draft.budgetItems, (item) => item.amount);
 }
 
-function systemTargetValid(draft: ProposalDraftForm): StepValidation {
+export function validateSystemDraftTarget(
+  draft: ProposalDraftForm,
+): StepValidation {
   if (draft.title.trim().length === 0) {
     return { valid: false, firstInvalidFieldId: "title" };
   }
@@ -254,7 +257,7 @@ export function validateWizardStep(
     }
     return { valid: true };
   }
-  if (stepId === "system-change") return systemTargetValid(draft);
+  if (stepId === "system-change") return validateSystemDraftTarget(draft);
   if (stepId === "plan" || stepId === "rationale") {
     return draft.how.trim().length > 0
       ? { valid: true }
@@ -289,9 +292,13 @@ export function reachableWizardSteps(
   context: WizardContext,
 ): WizardStepId[] {
   const result: WizardStepId[] = [];
-  for (const step of WIZARD_PATHS[pathId].steps) {
+  const definition = WIZARD_PATHS[pathId];
+  for (const step of definition.steps) {
     result.push(step.id);
     if (!validateWizardStep(step.id, context).valid) break;
+  }
+  if (context.publicationReady && !result.includes("review")) {
+    result.push("review");
   }
   return result;
 }

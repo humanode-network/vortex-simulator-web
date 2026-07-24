@@ -55,6 +55,7 @@ function withSnapshotStage(href: string, stage: ProposalStage): string {
 
 type BuildProposalStageLinksInput = {
   canonicalRoute?: string;
+  draftRoute?: string;
   liveStage: ProposalStage;
   proposalId: string;
   routeOverrides?: Partial<Record<ProposalStage, string>>;
@@ -63,6 +64,7 @@ type BuildProposalStageLinksInput = {
 
 export function buildProposalStageLinks({
   canonicalRoute,
+  draftRoute,
   liveStage,
   proposalId,
   routeOverrides,
@@ -70,6 +72,8 @@ export function buildProposalStageLinks({
 }: BuildProposalStageLinksInput): Partial<Record<ProposalStage, string>> {
   const liveIndex = stageProgressIndex(liveStage);
   const links: Partial<Record<ProposalStage, string>> = {};
+
+  if (draftRoute) links.draft = draftRoute;
 
   for (const stage of stageOrder) {
     if (stage === "draft") continue;

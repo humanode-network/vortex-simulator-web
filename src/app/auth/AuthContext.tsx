@@ -21,6 +21,7 @@ import {
   getPolkadotAccounts,
   signPolkadotMessage,
 } from "@/lib/polkadotExtension";
+import { governanceIdentityStatuses } from "@/lib/humanNodesUi";
 
 type AuthState = {
   enabled: boolean;
@@ -210,7 +211,8 @@ export function useAuth(): AuthContextValue {
 export function AuthSidebarPanel() {
   const auth = useAuth();
   const [activityState, setActivityState] = useState<{
-    governorActive: boolean;
+    governor: boolean;
+    activeGovernor: boolean;
     humanNodeActive: boolean;
   } | null>(null);
 
@@ -227,12 +229,17 @@ export function AuthSidebarPanel() {
         const profile = await apiHuman(address);
         if (!active) return;
         setActivityState({
-          governorActive: profile.governorActive,
+          governor: profile.governor,
+          activeGovernor: profile.governorActive,
           humanNodeActive: profile.humanNodeActive,
         });
       } catch {
         if (!active) return;
-        setActivityState({ governorActive: false, humanNodeActive: false });
+        setActivityState({
+          governor: false,
+          activeGovernor: false,
+          humanNodeActive: false,
+        });
       }
     };
 
@@ -255,9 +262,15 @@ export function AuthSidebarPanel() {
   const humanNodeActive = Boolean(
     auth.authenticated && activityState?.humanNodeActive,
   );
-  const governorActive = Boolean(
-    auth.authenticated && activityState?.governorActive,
+  const governor = Boolean(auth.authenticated && activityState?.governor);
+  const activeGovernor = Boolean(
+    auth.authenticated && activityState?.activeGovernor,
   );
+  const identityStatuses = governanceIdentityStatuses({
+    governor,
+    activeGovernor,
+    humanNode: humanNodeActive,
+  });
 
   const gateError =
     auth.authenticated && !auth.eligible
@@ -274,32 +287,36 @@ export function AuthSidebarPanel() {
         <span className="sidebar__authKicker">Wallet</span>
         <span className="sidebar__authValue">{addressLabel}</span>
       </div>
-      <div className="sidebar__authRow">
-        <span className="sidebar__authKicker">Human node</span>
-        <span
-          className={
-            humanNodeActive
-              ? "sidebar__authValue sidebar__authValue--ok"
-              : "sidebar__authValue sidebar__authValue--warn"
-          }
-          title={auth.gateReason}
-        >
-          {humanNodeActive ? "Active" : "Not active"}
-        </span>
-      </div>
-      <div className="sidebar__authRow">
-        <span className="sidebar__authKicker">Governor</span>
-        <span
-          className={
-            governorActive
-              ? "sidebar__authValue sidebar__authValue--ok"
-              : "sidebar__authValue sidebar__authValue--warn"
-          }
-          title={auth.gateReason}
-        >
-          {governorActive ? "Active" : "Not active"}
-        </span>
-      </div>
+      {(
+        [
+          ["humanNode", auth.gateReason],
+          [
+            "governor",
+            "Governor status is earned through the Vortex tier system.",
+          ],
+          [
+            "activeGovernor",
+            "Active Governor status reflects completed governing thresholds for the current era.",
+          ],
+        ] as const
+      ).map(([key, title]) => {
+        const status = identityStatuses[key];
+        return (
+          <div className="sidebar__authRow" key={key}>
+            <span className="sidebar__authKicker">{status.label}</span>
+            <span
+              className={
+                status.active
+                  ? "sidebar__authValue sidebar__authValue--ok"
+                  : "sidebar__authValue sidebar__authValue--warn"
+              }
+              title={title}
+            >
+              {status.value}
+            </span>
+          </div>
+        );
+      })}
 
       {auth.lastError ? (
         <div className="sidebar__authError" role="status">

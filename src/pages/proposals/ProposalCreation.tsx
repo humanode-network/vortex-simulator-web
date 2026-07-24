@@ -4,11 +4,16 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PageHint } from "@/components/PageHint";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
-import { apiProposalSubmitToPool } from "@/lib/apiClient";
+import {
+  apiProposalDraftPublish,
+  apiProposalSubmitToPool,
+  type ApiError,
+} from "@/lib/apiClient";
 import { toTimestampMs } from "@/lib/dateTime";
 import { initiativeOptionsWithSelection } from "@/lib/initiativeUi";
 import { formatProposalSubmitError } from "@/lib/proposalSubmitErrors";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
+import type { DraftPublicationSummaryDto } from "@/types/api";
 import {
   ProposalCreationLineageMessage,
   ProposalCreationMessages,
@@ -31,6 +36,8 @@ import {
   type ProposalWizardSessionV2,
 } from "./proposalCreation/sessionStorage";
 import { proposalSubmitErrorStep } from "./proposalCreation/submitErrorRouting";
+import { isProposalDraftPublicationReady } from "./proposalCreation/publicationReadiness";
+import { proposalDraftRoutes } from "./draft/draftUi";
 import { BudgetStep } from "./proposalCreation/steps/BudgetStep";
 import { IntentStep } from "./proposalCreation/steps/IntentStep";
 import { PlanStep } from "./proposalCreation/steps/PlanStep";
@@ -133,11 +140,19 @@ const ProposalCreation: React.FC = () => {
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [publication, setPublication] = useState<DraftPublicationSummaryDto>({
+    status: "private",
+  });
+  const [publishing, setPublishing] = useState(false);
   const [recoverableSessions, setRecoverableSessions] = useState(() =>
     repository.listRecoverable(session.sessionId),
   );
   const headingRef = useRef<HTMLHeadingElement>(null);
   const submitInFlight = useRef(false);
+  const submitIdempotencyKeyRef = useRef<string | null>(null);
+  const submitRetryDraftIdRef = useRef<string | null>(null);
+  const submitRetryDirectRef = useRef(false);
+  const publishIdempotencyKeyRef = useRef<string | null>(null);
   const observedQueryRef = useRef(searchParams.toString());
   const pendingInternalQueryRef = useRef<string | null>(null);
 
@@ -167,9 +182,10 @@ const ProposalCreation: React.FC = () => {
     tierProgress,
   });
 
+  const publicationReady = isProposalDraftPublicationReady(draft, templateKind);
   const wizardContext = useMemo<WizardContext>(
-    () => ({ draft, presetId, tierBlocked }),
-    [draft, presetId, tierBlocked],
+    () => ({ draft, presetId, publicationReady, tierBlocked }),
+    [draft, presetId, publicationReady, tierBlocked],
   );
   const currentPathId = pathIdForDraft(draft, templateKind);
   const currentPath = pathDefinition(currentPathId);
@@ -184,7 +200,6 @@ const ProposalCreation: React.FC = () => {
     (step) => validateWizardStep(step.id, wizardContext).valid,
   );
   const submitDisabled =
-    !fullPathValid ||
     !fullPathValid ||
     !canAct ||
     tierBlocked ||
@@ -219,6 +234,13 @@ const ProposalCreation: React.FC = () => {
   const requestedStep = searchParams.get("step") ?? "";
   const textareaClassName =
     "w-full rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition supports-[backdrop-filter]:backdrop-blur-md hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel";
+
+  useEffect(() => {
+    submitIdempotencyKeyRef.current = null;
+    submitRetryDraftIdRef.current = null;
+    submitRetryDirectRef.current = false;
+    publishIdempotencyKeyRef.current = null;
+  }, [session.sessionId]);
 
   const runEffects = useCallback(
     (effects: WizardEffect[]) => {
@@ -355,6 +377,8 @@ const ProposalCreation: React.FC = () => {
       );
       setSaveError(null);
       setSubmitError(null);
+      setPublication({ status: "private" });
+      setPublishing(false);
       setRecoverableSessions(repository.listRecoverable(nextSession.sessionId));
       runEffects([{ type: "focus-step", stepId: resolvedStep }]);
     },
@@ -366,6 +390,7 @@ const ProposalCreation: React.FC = () => {
       draft: nextDraft,
       draftId,
       presetId: nextPresetId,
+      publication: nextPublication,
       templateKind: nextTemplateKind,
     }: ProposalDraftHydrationResult) => {
       const nextPathId = pathIdForDraft(nextDraft, nextTemplateKind);
@@ -393,6 +418,7 @@ const ProposalCreation: React.FC = () => {
         serverSavedAt: new Date().toISOString(),
       });
       activateSession(saved, resolvedStep);
+      setPublication(nextPublication);
       setSavedAt(Date.now());
     },
     [activateSession, repository, requestedStep],
@@ -535,16 +561,32 @@ const ProposalCreation: React.FC = () => {
     submitInFlight.current = true;
     setSubmitError(null);
     send({ type: "SUBMIT_REQUESTED" });
+    let commandAttempted = false;
     try {
-      const draftId = await saveDraftNow();
+      const draftId =
+        submitRetryDirectRef.current && submitRetryDraftIdRef.current
+          ? submitRetryDraftIdRef.current
+          : await saveDraftNow();
       if (!draftId) throw new Error("Draft could not be synchronized.");
-      const response = await apiProposalSubmitToPool({ draftId });
+      submitRetryDraftIdRef.current = draftId;
+      submitIdempotencyKeyRef.current ??= `proposal-submit-${crypto.randomUUID()}`;
+      commandAttempted = true;
+      const response = await apiProposalSubmitToPool({
+        draftId,
+        idempotencyKey: submitIdempotencyKeyRef.current,
+      });
       if (sessionRef.current.sessionId !== submittingSession.sessionId) return;
       repository.remove(submittingSession.sessionId);
+      submitIdempotencyKeyRef.current = null;
+      submitRetryDraftIdRef.current = null;
+      submitRetryDirectRef.current = false;
       if (submittingSession.legacyRecovery) repository.clearLegacy();
       navigate(`/app/proposals/${response.proposalId}/pp`, { replace: true });
     } catch (error) {
       if (sessionRef.current.sessionId !== submittingSession.sessionId) return;
+      const status = (error as ApiError | null)?.status;
+      submitRetryDirectRef.current =
+        commandAttempted && (typeof status !== "number" || status >= 500);
       const message = formatProposalSubmitError(error);
       setSubmitError(message);
       const targetStep = proposalSubmitErrorStep(
@@ -558,6 +600,54 @@ const ProposalCreation: React.FC = () => {
       send({ type: "SUBMIT_FAILED" });
     } finally {
       submitInFlight.current = false;
+    }
+  };
+
+  const publishDraft = async () => {
+    if (
+      !isReview ||
+      !publicationReady ||
+      !canAct ||
+      tierBlocked ||
+      publishing
+    ) {
+      return;
+    }
+    setPublishing(true);
+    setSaveError(null);
+    const publishingSessionId = sessionRef.current.sessionId;
+    try {
+      const draftId = await saveDraftNow();
+      if (!draftId) throw new Error("Draft could not be synchronized.");
+      if (sessionRef.current.sessionId !== publishingSessionId) return;
+      publishIdempotencyKeyRef.current ??= `draft-publish-${crypto.randomUUID()}`;
+      const response = await apiProposalDraftPublish({
+        draftId,
+        idempotencyKey: publishIdempotencyKeyRef.current,
+      });
+      if (sessionRef.current.sessionId !== publishingSessionId) return;
+      setPublication({
+        status: "published",
+        revision: response.revision,
+        publicUrl: response.publicUrl,
+        publishedAt: response.publishedAt,
+        publicUpdatedAt: response.updatedAt,
+        hasUnpublishedChanges: false,
+      });
+      publishIdempotencyKeyRef.current = null;
+    } catch (error) {
+      if (sessionRef.current.sessionId !== publishingSessionId) return;
+      setSaveError(error instanceof Error ? error.message : "Publish failed.");
+      const targetStep = proposalSubmitErrorStep(
+        error,
+        currentPathId,
+        wizardContext,
+      );
+      if (targetStep) send({ type: "STEP_REQUESTED", stepId: targetStep });
+    } finally {
+      if (sessionRef.current.sessionId === publishingSessionId) {
+        setPublishing(false);
+      }
     }
   };
 
@@ -604,8 +694,8 @@ const ProposalCreation: React.FC = () => {
     if (sessionRef.current.sessionId !== savingSessionId) return;
     navigate(
       draftId || sessionRef.current.draftId
-        ? "/app/proposals/drafts"
-        : "/app/proposals",
+        ? proposalDraftRoutes.mine
+        : proposalDraftRoutes.proposals,
     );
   };
 
@@ -768,7 +858,20 @@ const ProposalCreation: React.FC = () => {
             }
             onBack={() => send({ type: "BACK_REQUESTED" })}
             onContinue={handleContinue}
-            submitting={submitting}
+            onSecondaryAction={isReview ? () => void publishDraft() : undefined}
+            secondaryActionDisabled={
+              !publicationReady || !canAct || tierBlocked || publishing
+            }
+            secondaryActionLabel={
+              isReview
+                ? publishing
+                  ? "Publishing"
+                  : publication.status === "published"
+                    ? "Update public draft"
+                    : "Publish draft"
+                : undefined
+            }
+            submitting={submitting || publishing}
           />
         </WizardWorkspace>
 

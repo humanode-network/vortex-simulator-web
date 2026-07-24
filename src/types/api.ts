@@ -670,7 +670,28 @@ export type ProposalStatusDto = {
     | "completed";
   pendingMilestoneIndex?: number | null;
   initiative?: InitiativeReferenceDto;
+  draftHistory?: {
+    draftId: string;
+    route: string;
+    revision: number;
+  };
   updatedAt: string;
+};
+
+export type DraftPublicationStatusDto =
+  | "private"
+  | "published"
+  | "withdrawn"
+  | "submitted";
+
+export type DraftPublicationSummaryDto = {
+  status: DraftPublicationStatusDto;
+  revision?: number;
+  publicUrl?: string;
+  publishedAt?: string;
+  publicUpdatedAt?: string;
+  hasUnpublishedChanges?: boolean;
+  submittedProposalRoute?: string;
 };
 
 export type ProposalDraftListItemDto = {
@@ -680,8 +701,30 @@ export type ProposalDraftListItemDto = {
   tier: string;
   summary: string;
   updated: string;
+  publication: DraftPublicationSummaryDto;
 };
 export type GetProposalDraftsResponse = { items: ProposalDraftListItemDto[] };
+
+export type PublicProposalDraftKindDto = "policy" | "formation" | "system";
+export type PublicProposalDraftSortDto = "updated" | "published";
+
+export type PublicProposalDraftListItemDto = {
+  id: string;
+  title: string;
+  chamber: string;
+  summary: string;
+  proposer: string;
+  proposalKind: PublicProposalDraftKindDto;
+  revision: number;
+  publishedAt: string;
+  updatedAt: string;
+  initiative?: InitiativeReferenceDto;
+};
+
+export type GetPublicProposalDraftsResponse = {
+  items: PublicProposalDraftListItemDto[];
+  nextCursor?: string;
+};
 
 export type ProposalDraftEditableFormDto = {
   templateId?: "project" | "system";
@@ -743,7 +786,9 @@ export type ProposalDraftDetailDto = {
   teamSlots: string;
   milestonesPlanned: string;
   summary: string;
+  overview: string;
   rationale: string;
+  executionPlan: string[];
   budgetScope: string;
   checklist: string[];
   milestones: string[];
@@ -751,6 +796,9 @@ export type ProposalDraftDetailDto = {
   openSlotNeeds: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
   attachments: { title: string; href?: string }[];
+  authoring: ProposalAuthoringDetailsDto;
+  publication: DraftPublicationSummaryDto;
+  initiative?: InitiativeReferenceDto;
   editableForm?: ProposalDraftEditableFormDto;
 };
 
@@ -1103,6 +1151,7 @@ export type HumanNodeDto = {
   memberSince: string;
   formationCapable?: boolean;
   active: {
+    governor: boolean;
     governorActive: boolean;
     humanNodeActive: boolean;
   };
@@ -1161,6 +1210,7 @@ export type HumanDelegationChamberDto = {
 export type HumanNodeProfileDto = {
   id: string;
   name: string;
+  governor: boolean;
   governorActive: boolean;
   humanNodeActive: boolean;
   governanceSummary: string;

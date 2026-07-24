@@ -61,6 +61,7 @@ export function ProposalPageHeader({
     if (!proposalId) return stageLinks;
     return buildProposalStageLinks({
       canonicalRoute: status?.canonicalRoute,
+      draftRoute: status?.draftHistory?.route ?? stageLinks?.draft,
       liveStage,
       proposalId,
       routeOverrides: stageLinks,
@@ -72,6 +73,7 @@ export function ProposalPageHeader({
     showFormationStage,
     stageLinks,
     status?.canonicalRoute,
+    status?.draftHistory?.route,
   ]);
 
   return (

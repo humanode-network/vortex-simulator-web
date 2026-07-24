@@ -39,12 +39,15 @@ import { InitiativeProposalsSection } from "./components/InitiativeProposalsSect
 import { InitiativeSettingsSection } from "./components/InitiativeSettingsSection";
 import { InitiativeThreadsSection } from "./components/InitiativeThreadsSection";
 import { useInitiativePageData } from "./hooks/useInitiativePageData";
+import { PublicDraftsSection } from "@/pages/proposals/draft/PublicDraftsSection";
+import { usePublicDrafts } from "@/pages/proposals/draft/usePublicDrafts";
 
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const auth = useAuth();
   const { initiative, loadError, reload } = useInitiativePageData(id);
+  const publicDrafts = usePublicDrafts({ initiative: id });
   const [editing, setEditing] = useState(false);
   const { actionError, mutating, runAction } = useActionRunner({ reload });
 
@@ -245,6 +248,7 @@ const Initiative: React.FC = () => {
         threads={threads}
       />
       <InitiativeProposalsSection proposals={proposals} />
+      <PublicDraftsSection drafts={publicDrafts} />
       <InitiativeMembersSection
         canAdmin={isOperational && canAdmin}
         initiativeId={initiative.id}

@@ -9,6 +9,7 @@ import {
   getHumanNodeManageableDelegationChambers,
   getHumanNodeViewerDelegationByChamber,
   getHumanNodeVisibleHeroStats,
+  governanceIdentityStatuses,
   isLikelyHumanodeAddress,
   shouldShowHumanNodeShortBadge,
 } from "../../src/lib/humanNodesUi";
@@ -32,6 +33,7 @@ const node = (
   mm: 0,
   memberSince: "2026-01-01T00:00:00.000Z",
   active: {
+    governor: false,
     governorActive: false,
     humanNodeActive: false,
   },
@@ -44,6 +46,7 @@ const profile = (
 ): HumanNodeProfileDto => ({
   id: "hmpt3fxBvpWrkZxq5H5uWjZ2BgHRMJs2hKHiWJDoqD7am1xPs",
   name: "Human Node Profile",
+  governor: true,
   governorActive: true,
   humanNodeActive: true,
   governanceSummary: "",
@@ -87,6 +90,24 @@ test("isLikelyHumanodeAddress identifies long hm addresses only", () => {
   expect(isLikelyHumanodeAddress("hm-short")).toBe(false);
 });
 
+test("governor and active-governor labels preserve distinct semantics", () => {
+  expect(
+    governanceIdentityStatuses({
+      governor: true,
+      activeGovernor: false,
+      humanNode: true,
+    }),
+  ).toEqual({
+    governor: { label: "Governor", value: "Active", active: true },
+    activeGovernor: {
+      label: "Active governor",
+      value: "Not active",
+      active: false,
+    },
+    humanNode: { label: "Human node", value: "Active", active: true },
+  });
+});
+
 test("filterHumanNodes searches chamber and faction names", () => {
   const result = filterHumanNodes({
     chambersById: {
@@ -122,12 +143,16 @@ test("filterHumanNodes sorts by ACM and honors active status", () => {
     },
     nodes: [
       node("low", {
-        active: { governorActive: true, humanNodeActive: true },
+        active: { governor: true, governorActive: true, humanNodeActive: true },
         acm: 10,
       }),
       node("inactive", { acm: 100 }),
       node("high", {
-        active: { governorActive: true, humanNodeActive: false },
+        active: {
+          governor: true,
+          governorActive: true,
+          humanNodeActive: false,
+        },
         cmTotals: { lcm: 0, mcm: 0, acm: 50 },
       }),
     ],

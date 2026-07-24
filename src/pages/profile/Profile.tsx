@@ -27,6 +27,8 @@ import { ProfileDelegationSection } from "./components/ProfileDelegationSection"
 import { ProfileDetailsProofsSection } from "./components/ProfileDetailsProofsSection";
 import { ProfileHero } from "./components/ProfileHero";
 import { ProfileTierProgressSection } from "./components/ProfileTierProgressSection";
+import { PublicDraftsSection } from "@/pages/proposals/draft/PublicDraftsSection";
+import { usePublicDrafts } from "@/pages/proposals/draft/usePublicDrafts";
 import "./Profile.css";
 
 type ProfileProps = {
@@ -39,6 +41,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [profile, setProfile] = useState<HumanNodeProfileDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const publicDrafts = usePublicDrafts({ author: auth.address ?? undefined });
 
   useEffect(() => {
     if (auth.enabled && auth.loading) {
@@ -190,6 +193,8 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         proofTiles={proofTiles}
         visibleDetails={visibleDetails}
       />
+
+      <PublicDraftsSection drafts={publicDrafts} />
 
       <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
         <ProfileFormationProjectsSection

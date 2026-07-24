@@ -34,10 +34,13 @@ import {
   ProfileGovernanceActivitySection,
 } from "@/pages/profile/components/ProfileActivityProjectsSection";
 import { ProfileTierProgressSection } from "@/pages/profile/components/ProfileTierProgressSection";
+import { PublicDraftsSection } from "@/pages/proposals/draft/PublicDraftsSection";
+import { usePublicDrafts } from "@/pages/proposals/draft/usePublicDrafts";
 
 const HumanNode: React.FC = () => {
   const auth = useAuth();
   const { id } = useParams();
+  const publicDrafts = usePublicDrafts({ author: id });
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [copied, setCopied] = useState(false);
   const {
@@ -86,6 +89,7 @@ const HumanNode: React.FC = () => {
   }
 
   const {
+    governor,
     governorActive,
     humanNodeActive,
     heroStats,
@@ -159,6 +163,7 @@ const HumanNode: React.FC = () => {
     <div className="flex flex-col gap-6">
       <HumanNodeHero
         copied={copied}
+        governor={governor}
         governorActive={governorActive}
         headerTitle={headerTitle}
         humanNodeActive={humanNodeActive}
@@ -173,6 +178,8 @@ const HumanNode: React.FC = () => {
         proofTiles={proofTiles}
         visibleDetails={visibleDetails}
       />
+
+      <PublicDraftsSection drafts={publicDrafts} />
 
       <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
         <ProfileFormationProjectsSection
