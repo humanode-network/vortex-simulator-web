@@ -241,13 +241,13 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courts",
     title: "Courts",
     intro:
-      "Overview of active and recent court cases: status, jury info, and quick navigation.",
+      "Court proceedings remain unavailable while the reporting and adjudication system is completed.",
     sections: [
       {
-        heading: "What you see",
+        heading: "Current status",
         items: [
-          "Cards for court cases with status (jury/live/ended), reports count, and opened date.",
-          "Links to open specific courtrooms for details and participation.",
+          "Legacy case records remain preserved but are not presented as complete Court procedure.",
+          "Reporting, evidence access, jury selection, sentencing, enforcement, and appeals remain unavailable.",
         ],
       },
     ],
@@ -256,14 +256,13 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courtroom",
     title: "Courtroom",
     intro:
-      "Case detail: filings/context, jury composition, and action timeline for the current courtroom.",
+      "Direct Court participation remains unavailable while the complete procedure is implemented.",
     sections: [
       {
-        heading: "What you can do",
+        heading: "Current status",
         items: [
-          "Review case context and filings.",
-          "See jury composition and timeline; track status badges.",
-          "Submit statements or view decisions based on your current role and permissions.",
+          "No report, finding, jury, sentence, or enforcement action is available from this route.",
+          "Legacy records remain separate from the new Court procedure.",
         ],
       },
     ],

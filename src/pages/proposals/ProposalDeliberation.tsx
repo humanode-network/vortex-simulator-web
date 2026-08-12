@@ -17,6 +17,7 @@ import {
 } from "@/lib/proposalDeliberationUi";
 import type { ProposalThreadDto } from "@/types/api";
 import { useProposalDeliberation } from "./hooks/useProposalDeliberation";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const THREAD_STATUS_OPTIONS: Array<
   DiscussionStatusOption<ProposalThreadDto["status"]>
@@ -123,6 +124,17 @@ export const ProposalDeliberation: React.FC<ProposalDeliberationProps> = ({
             replyPlaceholder={(thread) =>
               thread.status === "locked" ? "Thread is locked" : "Write a reply"
             }
+            renderThreadActions={(thread) => (
+              <CourtReportButton
+                target={{ type: "proposal_thread", id: thread.id }}
+              />
+            )}
+            renderMessageActions={(message) => (
+              <CourtReportButton
+                label="Report reply"
+                target={{ type: "proposal_message", id: message.id }}
+              />
+            )}
           />
         </div>
       </div>

@@ -18,6 +18,7 @@ import {
 } from "@/lib/initiativeUi";
 import { shortAddress } from "@/lib/profileUi";
 import type { InitiativeThreadDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type InitiativeThreadsSectionProps = {
   canModerate: boolean;
@@ -158,6 +159,9 @@ export function InitiativeThreadsSection({
                 >
                   {initiativeThreadStatusLabel[thread.status]}
                 </GlassyStatusChip>
+                <CourtReportButton
+                  target={{ type: "initiative_thread", id: thread.id }}
+                />
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted">
                 {thread.body}
@@ -175,9 +179,17 @@ export function InitiativeThreadsSection({
                       <p className="text-xs font-semibold text-text">
                         {shortAddress(message.authorAddress)}
                       </p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted">
-                        {message.body}
-                      </p>
+                      <div className="mt-1 flex items-start justify-between gap-3">
+                        <p className="text-sm leading-relaxed text-muted">
+                          {message.body}
+                        </p>
+                        <CourtReportButton
+                          target={{
+                            type: "initiative_message",
+                            id: message.id,
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

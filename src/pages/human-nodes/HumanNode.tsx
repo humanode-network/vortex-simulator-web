@@ -36,6 +36,7 @@ import {
 import { ProfileTierProgressSection } from "@/pages/profile/components/ProfileTierProgressSection";
 import { PublicDraftsSection } from "@/pages/proposals/draft/PublicDraftsSection";
 import { usePublicDrafts } from "@/pages/proposals/draft/usePublicDrafts";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const HumanNode: React.FC = () => {
   const auth = useAuth();
@@ -173,6 +174,11 @@ const HumanNode: React.FC = () => {
         showShortBadge={showShortBadge}
         visibleHeroStats={visibleHeroStats}
       />
+      <div className="flex justify-end">
+        <CourtReportButton
+          target={{ type: "human_identity", id: profile.id }}
+        />
+      </div>
 
       <HumanNodeDetailsProofsSection
         proofTiles={proofTiles}

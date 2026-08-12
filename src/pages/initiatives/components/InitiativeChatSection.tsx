@@ -8,6 +8,7 @@ import { apiInitiativeChatPost } from "@/lib/apiClient";
 import { formatDateTime } from "@/lib/dateTime";
 import { shortAddress } from "@/lib/profileUi";
 import type { InitiativeThreadMessageDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type InitiativeChatSectionProps = {
   canPost: boolean;
@@ -94,9 +95,14 @@ export function InitiativeChatSection({
                       {formatDateTime(message.createdAt)}
                     </time>
                   </div>
-                  <p className="mt-1.5 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap text-text">
-                    {message.body}
-                  </p>
+                  <div className="mt-1.5 flex items-start justify-between gap-3">
+                    <p className="text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap text-text">
+                      {message.body}
+                    </p>
+                    <CourtReportButton
+                      target={{ type: "initiative_message", id: message.id }}
+                    />
+                  </div>
                 </article>
               ))}
             </div>

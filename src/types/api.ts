@@ -1133,6 +1133,301 @@ export type CourtCaseDetailDto = CourtCaseDto & {
 };
 export type GetCourtsResponse = { items: CourtCaseDto[] };
 
+export type CourtReportLaneV2Dto =
+  | "correction"
+  | "scoped_moderation"
+  | "court_report"
+  | "safety_or_protocol_incident";
+
+export type CourtReportStateV2Dto =
+  | "submitted"
+  | "needs_amendment"
+  | "collecting"
+  | "routed_to_correction"
+  | "routed_to_moderation"
+  | "grouped"
+  | "withdrawn"
+  | "expired"
+  | "closed_without_case"
+  | "triggered";
+
+export type CourtCaseStateV2Dto =
+  | "case_opened"
+  | "awaiting_jury_capacity"
+  | "jury_selection"
+  | "notice_and_response"
+  | "evidence_exchange"
+  | "deliberation"
+  | "finding_ballot"
+  | "dismissed"
+  | "substantiated"
+  | "sentence_ballot"
+  | "sentence_calculation"
+  | "enforcement_pending"
+  | "substantiated_without_punitive_sentence"
+  | "no_enforceable_remedy"
+  | "appeal_window"
+  | "final"
+  | "appealed"
+  | "remanded"
+  | "reopened";
+
+export type CourtEvidenceAccessV2Dto =
+  | "public"
+  | "parties_and_jury"
+  | "jury_only_pending_summary"
+  | "security_sealed"
+  | "enforcement_only";
+
+export type CourtTargetTypeV2Dto =
+  | "human_identity"
+  | "protocol_action"
+  | "public_proposal_draft"
+  | "proposal"
+  | "proposal_thread"
+  | "proposal_message"
+  | "chamber"
+  | "chamber_thread"
+  | "chamber_message"
+  | "faction"
+  | "faction_thread"
+  | "faction_message"
+  | "faction_work_item"
+  | "initiative"
+  | "initiative_board_card"
+  | "initiative_thread"
+  | "initiative_message"
+  | "membership_transition"
+  | "formation_project"
+  | "formation_action"
+  | "delegation"
+  | "governance_action"
+  | "cm_record"
+  | "proof_or_status_event"
+  | "external_incident";
+
+export type CourtTargetReferenceV2Dto = {
+  type: CourtTargetTypeV2Dto;
+  id: string;
+  revision?: string;
+};
+
+export type CourtEvidenceReferenceInputV2Dto = {
+  kind: "vortex_object" | "external_url" | "protocol_proof";
+  reference: string;
+  digest?: string;
+  access: CourtEvidenceAccessV2Dto;
+  description?: string;
+};
+
+export type CourtReportReceiptV2Dto = {
+  reportId: string;
+  lane: CourtReportLaneV2Dto;
+  state: CourtReportStateV2Dto;
+  caseId?: string;
+  nextDeadlineAt?: string;
+};
+
+export type CourtRuntimeStatusV2Dto =
+  | { status: "available"; policyVersion: string; policyHash: string }
+  | { status: "unavailable"; reason: string };
+
+export type CourtReportingCapabilityV2Dto =
+  | {
+      status: "available";
+      target: CourtTargetReferenceV2Dto & {
+        canonicalRoute: string | null;
+        accessClass: "public" | "private" | "sealed";
+      };
+      reasonCapabilities: {
+        reason: { offenseCode: string; lane: CourtReportLaneV2Dto };
+        standing: {
+          status: "verified";
+          directStanding: boolean;
+          source: string;
+        };
+      }[];
+      population: {
+        source: string;
+        basis: "incident_time" | "capture_time_fallback";
+        effectiveAt: string;
+        capturedAt: string;
+      } | null;
+    }
+  | { status: "unavailable" | "disabled"; reason: string };
+
+export type CourtMyReportItemV2Dto = {
+  id: string;
+  state: CourtReportStateV2Dto;
+  target: { type: CourtTargetTypeV2Dto; id: string; route: string | null };
+  offenseCode: string;
+  lane: CourtReportLaneV2Dto;
+  submittedAt: string | null;
+  updatedAt: string;
+  caseId: string | null;
+};
+
+export type CourtEvidenceV2Dto = {
+  id: string;
+  kind: string;
+  digest: string;
+  provenance: string;
+  metadata: Record<string, unknown>;
+  state: string;
+  createdAt: string;
+};
+
+export type CourtCaseViewerV2Dto = {
+  publicCase: {
+    id: string;
+    state: CourtCaseStateV2Dto;
+    finalityState: "pending" | "appealable" | "final" | "stayed";
+    policyVersionId: string;
+    targetType: CourtTargetTypeV2Dto;
+    domain:
+      | "security"
+      | "operations"
+      | "identity"
+      | "governance"
+      | "compliance";
+    schedule: Record<string, unknown>;
+    openedAt: string;
+    closedAt: string | null;
+    updatedAt: string;
+    offenseCode: string | null;
+    remedies: CourtRemedyV2Dto[];
+    appeals: CourtAppealV2Dto[];
+  } | null;
+  partyRecord: {
+    parties: { address: string; role: string; state: string }[];
+    target: {
+      canonicalRoute: string | null;
+      digest: string;
+      accessClass: "public" | "private" | "sealed";
+      snapshotPayload: Record<string, unknown>;
+    };
+    events: {
+      sequence: number;
+      eventType: string;
+      previousState: string | null;
+      nextState: string | null;
+      payload: Record<string, unknown>;
+      createdAt: string;
+    }[];
+  } | null;
+  evidence: CourtEvidenceV2Dto[];
+  juryTask: {
+    selectionRound: number;
+    seatNumber: number | null;
+    conflictResult: string;
+    state: string;
+    selectedAt: string;
+    respondedAt: string | null;
+    ballot: {
+      id: string;
+      type: "finding" | "remedy";
+      round: number;
+      definition: Record<string, unknown>;
+      openedAt: string;
+      closesAt: string;
+      existingVote: {
+        revision: number;
+        choice: string;
+        severity: string | null;
+        components: {
+          componentId: string;
+          include: boolean;
+          conditionalValue: string | boolean | null;
+        }[];
+      } | null;
+    } | null;
+  } | null;
+  appellateTask: {
+    panelId: string;
+    kind: "ordinary" | "reopening";
+    panelState: string;
+    seatNumber: number | null;
+    result: string | null;
+    remedies: { id: string; componentCode: string; state: string }[];
+    existingVote: {
+      result: string;
+      modificationPackageId: string | null;
+    } | null;
+    modificationPackages: {
+      id: string;
+      retainedRemedyIds: string[];
+      originalBurden: string;
+      modifiedBurden: string;
+      state: string;
+    }[];
+  } | null;
+  safetyRecord: { evidence: CourtEvidenceV2Dto[] } | null;
+  enforcementRecord: {
+    evidence: CourtEvidenceV2Dto[];
+    remedies: CourtRemedyV2Dto[];
+  } | null;
+  capabilities: Record<string, boolean>;
+};
+
+export type CourtRemedyV2Dto = {
+  id: string;
+  componentCode: string;
+  scopeCode: string | null;
+  durationSeconds: string | null;
+  executorId: string;
+  executorVersion: string;
+  state: string;
+};
+
+export type CourtAppealV2Dto = {
+  id: string;
+  status: string;
+  stayState: string;
+  result: string | null;
+  filedAt: string;
+  decidedAt: string | null;
+  withdrawnAt: string | null;
+};
+
+export type GetCourtCasesV2Response = {
+  status: "available" | "unavailable";
+  cases: CourtCaseViewerV2Dto[];
+};
+
+export type GetMyCourtReportsV2Response = {
+  status: "available" | "unavailable";
+  reports: CourtMyReportItemV2Dto[];
+};
+
+export type CourtNotificationV2Dto = {
+  id: string;
+  kind: string;
+  entityType: "report" | "case";
+  entityId: string;
+  state: "unread" | "read" | "dismissed";
+  payload: Record<string, unknown>;
+  dueAt: string | null;
+  createdAt: string;
+  readAt: string | null;
+};
+
+export type GetCourtNotificationsV2Response = {
+  status: "available" | "unavailable";
+  notifications: CourtNotificationV2Dto[];
+};
+
+export type CourtPrivateReportV2Dto = CourtMyReportItemV2Dto & {
+  target: CourtMyReportItemV2Dto["target"] & {
+    digest: string;
+    snapshot: Record<string, unknown>;
+  };
+  incident: { startedAt: string; endedAt: string | null };
+  revision: number;
+  statementDigest: string;
+  statement: Record<string, unknown>;
+  evidence: CourtEvidenceV2Dto[];
+};
+
 export type HumanTierDto =
   | "nominee"
   | "ecclesiast"

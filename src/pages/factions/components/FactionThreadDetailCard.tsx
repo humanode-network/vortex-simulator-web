@@ -6,6 +6,7 @@ import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { formatDateTime } from "@/lib/dateTime";
 import type { FactionDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type FactionThread = NonNullable<FactionDto["threads"]>[number];
 
@@ -43,7 +44,14 @@ export function FactionThreadDetailCard({
         ) : (
           <>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-text">{thread.title}</p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text">
+                  {thread.title}
+                </p>
+                <CourtReportButton
+                  target={{ type: "faction_thread", id: thread.id }}
+                />
+              </div>
               <p className="text-xs text-muted">
                 {thread.status} · replies {thread.replies}
               </p>
@@ -76,7 +84,12 @@ export function FactionThreadDetailCard({
                         {formatDateTime(message.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm text-muted">{message.body}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-muted">{message.body}</p>
+                      <CourtReportButton
+                        target={{ type: "faction_message", id: message.id }}
+                      />
+                    </div>
                   </div>
                 ))
               )}

@@ -12,6 +12,7 @@ import { AddressInline } from "@/components/AddressInline";
 import { StatTile } from "@/components/StatTile";
 import { apiProposalStatus } from "@/lib/apiClient";
 import type { ProposalStatusDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type ProposalPageHeaderProps = {
   title: string;
@@ -79,6 +80,11 @@ export function ProposalPageHeader({
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
+      {proposalId ? (
+        <div className="flex justify-end">
+          <CourtReportButton target={{ type: "proposal", id: proposalId }} />
+        </div>
+      ) : null}
       {status?.initiative ? (
         <div className="flex justify-center">
           <Link to={initiativePath(status.initiative)}>

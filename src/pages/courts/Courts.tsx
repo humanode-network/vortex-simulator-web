@@ -1,196 +1,255 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/primitives/button";
-import { SearchBar } from "@/components/SearchBar";
-import { Card, CardContent, CardHeader } from "@/components/primitives/card";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { MetricTile } from "@/components/MetricTile";
-import { CourtStatusBadge } from "@/components/CourtStatusBadge";
-import { PageHint } from "@/components/PageHint";
-import { SectionHeader } from "@/components/SectionHeader";
+
+import {
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiCourts } from "@/lib/apiClient";
-import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
-import { formatLoadError } from "@/lib/errorFormatting";
-import type { CourtCaseDto, CourtCaseStatusDto } from "@/types/api";
+import { PageHeader } from "@/components/PageHeader";
+import { PageHint } from "@/components/PageHint";
+import { Button } from "@/components/primitives/button";
+import { Tabs } from "@/components/primitives/tabs";
+import {
+  apiCourtCasesV2,
+  apiCourtNotificationsV2,
+  apiMyCourtReportsV2,
+  apiSetCourtNotificationStateV2,
+} from "@/lib/apiClient";
+import type {
+  CourtCaseViewerV2Dto,
+  CourtMyReportItemV2Dto,
+  CourtNotificationV2Dto,
+} from "@/types/api";
+import {
+  courtLabel,
+  CourtCaseCard,
+  CourtReportCard,
+  courtTone,
+  formatCourtInstant,
+} from "./courtUi";
+import { CourtsUnavailable } from "./CourtsUnavailable";
+import { useCourtRuntime } from "./useCourtRuntime";
 
 const Courts: React.FC = () => {
-  const [cases, setCases] = useState<CourtCaseDto[] | null>(null);
+  const runtime = useCourtRuntime();
+  const [cases, setCases] = useState<CourtCaseViewerV2Dto[]>([]);
+  const [reports, setReports] = useState<CourtMyReportItemV2Dto[]>([]);
+  const [notifications, setNotifications] = useState<CourtNotificationV2Dto[]>(
+    [],
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<{
-    statusFilter: CourtCaseStatusDto | "any";
-    sortBy: "recent" | "reports";
-  }>({ statusFilter: "any", sortBy: "recent" });
-  const { statusFilter, sortBy } = filters;
+  const [view, setView] = useState("all");
+  const involvingCases = useMemo(
+    () => cases.filter((item) => item.partyRecord !== null),
+    [cases],
+  );
+  const juryCases = useMemo(
+    () =>
+      cases.filter(
+        (item) => item.juryTask !== null || item.appellateTask !== null,
+      ),
+    [cases],
+  );
+  const visibleCases =
+    view === "involving" ? involvingCases : view === "jury" ? juryCases : cases;
+
+  const loadRecords = useCallback(async () => {
+    if (runtime.status !== "available") return;
+    try {
+      const [caseResult, reportResult, notificationResult] = await Promise.all([
+        apiCourtCasesV2(),
+        apiMyCourtReportsV2(),
+        apiCourtNotificationsV2(),
+      ]);
+      setCases(caseResult.status === "available" ? caseResult.cases : []);
+      setReports(
+        reportResult.status === "available" ? reportResult.reports : [],
+      );
+      setNotifications(
+        notificationResult.status === "available"
+          ? notificationResult.notifications
+          : [],
+      );
+      setLoadError(null);
+    } catch (error) {
+      setLoadError((error as Error).message);
+    }
+  }, [runtime.status]);
+
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await apiCourts();
-        if (!active) return;
-        setCases(res.items);
-        setLoadError(null);
-      } catch (error) {
-        if (!active) return;
-        setCases([]);
-        setLoadError((error as Error).message);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    void loadRecords();
+  }, [loadRecords]);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return [...(cases ?? [])]
-      .filter((c) => {
-        const matchesTerm =
-          term.length === 0 ||
-          [c.title, c.subject, c.triggeredBy].some((field) =>
-            field.toLowerCase().includes(term),
-          );
-        const matchesStatus =
-          statusFilter === "any" ? true : c.status === statusFilter;
-        return matchesTerm && matchesStatus;
-      })
-      .sort((a, b) => {
-        if (sortBy === "reports") return b.reports - a.reports;
-        return (
-          toTimestampMs(b.opened ?? "", 0) - toTimestampMs(a.opened ?? "", 0)
-        );
-      });
-  }, [cases, search, statusFilter, sortBy]);
+  async function setNotificationState(
+    notificationId: string,
+    state: "read" | "dismissed",
+  ) {
+    try {
+      await apiSetCourtNotificationStateV2({ notificationId, state });
+      await loadRecords();
+    } catch (error) {
+      setLoadError((error as Error).message);
+    }
+  }
 
-  const openCases = (cases ?? []).filter((c) => c.status !== "ended").length;
+  if (runtime.status !== "available") {
+    return (
+      <CourtsUnavailable
+        pageId="courts"
+        title="Courts"
+        reason={runtime.status === "unavailable" ? runtime.reason : undefined}
+      />
+    );
+  }
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none flex flex-col gap-6 opacity-35 blur-[6px] select-none">
-        <PageHint pageId="courts" />
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              label: "Open cases",
-              value: cases ? openCases : "—",
-            },
-            { label: "Jury panels", value: "12 seats / case" },
-            { label: "New reports", value: "27 this week" },
-            { label: "Ended (30d)", value: "6" },
-          ].map((metric) => (
-            <MetricTile
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-              className="px-4 py-4"
-            />
-          ))}
-        </section>
+    <div className="flex flex-col gap-6">
+      <PageHint pageId="courts" />
+      <PageHeader
+        eyebrow="Reporting and adjudication"
+        title="Courts"
+        description="Follow cases, manage reports, and respond to Court duties."
+        right={
+          <Button asChild size="sm">
+            <Link to="/app/courts/reports/new">Create report</Link>
+          </Button>
+        }
+      />
 
-        {cases === null ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-            Loading court cases…
-          </Card>
-        ) : null}
-        {loadError ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-            Courts unavailable:{" "}
-            {formatLoadError(loadError, "Failed to load courts.")}
-          </Card>
-        ) : null}
+      {loadError ? (
+        <NoDataYetBar label="court records" description={loadError} />
+      ) : null}
 
-        <SearchBar
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search court cases, subjects, or reports…"
-          ariaLabel="Search courts"
-          filtersConfig={[
-            {
-              key: "statusFilter",
-              label: "Status",
-              options: [
-                { value: "any", label: "Any status" },
-                { value: "jury", label: "Jury forming" },
-                { value: "live", label: "Session live" },
-                { value: "ended", label: "Ended" },
-              ],
-            },
-            {
-              key: "sortBy",
-              label: "Sort by",
-              options: [
-                { value: "recent", label: "Opened (newest)" },
-                { value: "reports", label: "Reports (desc)" },
-              ],
-            },
-          ]}
-          filtersState={filters}
-          onFiltersChange={setFilters}
-        />
+      <Tabs
+        aria-label="Court records"
+        className="flex-nowrap overflow-x-auto"
+        value={view}
+        onValueChange={setView}
+        options={[
+          { value: "all", label: `All cases ${cases.length}` },
+          {
+            value: "involving",
+            label: `Involving me ${involvingCases.length}`,
+          },
+          { value: "jury", label: `Jury service ${juryCases.length}` },
+          { value: "reports", label: `My reports ${reports.length}` },
+          {
+            value: "notifications",
+            label: `Notifications ${notifications.filter((item) => item.state === "unread").length}`,
+          },
+        ]}
+      />
 
-        {cases !== null && cases.length === 0 && !loadError ? (
-          <NoDataYetBar label="court cases" />
-        ) : (
-          <Card>
-            <CardHeader className="pb-2">
-              <SectionHeader>Active courtrooms</SectionHeader>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {filtered.length === 0 ? (
-                <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-                  No court cases match the current filters.
-                </Card>
-              ) : (
-                filtered.map((courtCase) => (
-                  <Card key={courtCase.id} className="bg-panel-alt">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-lg font-semibold text-foreground">
-                            {courtCase.subject}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <CourtStatusBadge status={courtCase.status} />
-                          <p className="text-xs text-muted">
-                            Opened{" "}
-                            {courtCase.opened
-                              ? formatDateTime(courtCase.opened)
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-0">
-                      <div className="flex flex-wrap gap-3 text-sm text-foreground">
-                        <span className="rounded-full bg-panel px-3 py-1">
-                          Reports: {courtCase.reports}
-                        </span>
-                      </div>
-                      <Button asChild size="sm">
-                        <Link to={`/app/courts/${courtCase.id}`}>
-                          Open courtroom
-                        </Link>
+      {view !== "reports" && view !== "notifications" ? (
+        <GlassySection
+          title={
+            view === "jury"
+              ? "Jury service"
+              : view === "involving"
+                ? "Cases involving me"
+                : "Cases"
+          }
+        >
+          {visibleCases.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {visibleCases.map((item) => (
+                <CourtCaseCard key={item.publicCase?.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <NoDataYetBar label={view === "jury" ? "jury tasks" : "cases"} />
+          )}
+        </GlassySection>
+      ) : null}
+
+      {view === "notifications" ? (
+        <GlassySection title="Court notifications">
+          {notifications.filter((item) => item.state !== "dismissed").length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {notifications
+                .filter((item) => item.state !== "dismissed")
+                .map((notification) => (
+                  <GlassyTile key={notification.id} className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <GlassyKeyValue
+                        label={courtLabel(notification.kind)}
+                        value={notification.entityId}
+                      />
+                      <GlassyStatusChip tone={courtTone(notification.state)}>
+                        {courtLabel(notification.state)}
+                      </GlassyStatusChip>
+                    </div>
+                    <GlassyKeyValue
+                      label="Received"
+                      value={formatCourtInstant(notification.createdAt)}
+                    />
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {notification.entityType === "case" ? (
+                        <Button asChild size="compact" variant="ghost">
+                          <Link
+                            to={`/app/courts/${encodeURIComponent(notification.entityId)}`}
+                          >
+                            Open case
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button asChild size="compact" variant="ghost">
+                          <Link
+                            to={`/app/courts/reports/${encodeURIComponent(notification.entityId)}`}
+                          >
+                            Open report
+                          </Link>
+                        </Button>
+                      )}
+                      {notification.state === "unread" ? (
+                        <Button
+                          size="compact"
+                          variant="outline"
+                          onClick={() =>
+                            void setNotificationState(notification.id, "read")
+                          }
+                        >
+                          Mark read
+                        </Button>
+                      ) : null}
+                      <Button
+                        size="compact"
+                        variant="ghost"
+                        onClick={() =>
+                          void setNotificationState(
+                            notification.id,
+                            "dismissed",
+                          )
+                        }
+                      >
+                        Dismiss
                       </Button>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                    </div>
+                  </GlassyTile>
+                ))}
+            </div>
+          ) : (
+            <NoDataYetBar label="Court notifications" />
+          )}
+        </GlassySection>
+      ) : null}
 
-      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center p-6">
-        <Card className="max-w-md border-dashed bg-panel/90 px-6 py-5 text-center shadow-lg backdrop-blur">
-          <p className="text-sm tracking-[0.24em] text-muted uppercase">
-            Courts
-          </p>
-          <p className="mt-3 text-xl font-semibold text-foreground">
-            coming sooner than you think...
-          </p>
-        </Card>
-      </div>
+      {view === "reports" ? (
+        <GlassySection title="My reports">
+          {reports.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {reports.map((report) => (
+                <CourtReportCard key={report.id} report={report} />
+              ))}
+            </div>
+          ) : (
+            <NoDataYetBar label="reports" />
+          )}
+        </GlassySection>
+      ) : null}
     </div>
   );
 };

@@ -28,6 +28,7 @@ import { useFactionChannelDraft } from "./hooks/useFactionChannelDraft";
 import { useFactionEditForm } from "./hooks/useFactionEditForm";
 import { useFactionLegacyThreadRedirect } from "./hooks/useFactionLegacyThreadRedirect";
 import { useFactionPageData } from "./hooks/useFactionPageData";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const Faction: React.FC = () => {
   const { id } = useParams();
@@ -114,6 +115,9 @@ const Faction: React.FC = () => {
         viewerMembershipActive={viewerMembershipActive}
         viewerRole={viewerRole}
       />
+      <div className="flex justify-end">
+        <CourtReportButton target={{ type: "faction", id: faction.id }} />
+      </div>
 
       {isFounderAdmin && editForm.open ? (
         <FactionEditCard

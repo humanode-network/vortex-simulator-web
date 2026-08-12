@@ -17,6 +17,7 @@ import type {
   InitiativeBoardCardDto,
   InitiativeBoardColumnDto,
 } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type InitiativeBoardSectionProps = {
   cards: InitiativeBoardCardDto[];
@@ -128,6 +129,14 @@ export function InitiativeBoardSection({
                             : "Unassigned"}
                         </span>
                         <span>{formatDateTime(card.updatedAt)}</span>
+                      </div>
+                      <div className="mt-3 flex justify-end">
+                        <CourtReportButton
+                          target={{
+                            type: "initiative_board_card",
+                            id: card.id,
+                          }}
+                        />
                       </div>
                       {canManage ? (
                         <div className="mt-3 grid gap-2">

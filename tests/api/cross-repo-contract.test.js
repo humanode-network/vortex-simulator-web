@@ -116,6 +116,15 @@ function extractClientRoutes() {
   return unique(routes);
 }
 
+function extractQuarantinedCourtRoutes() {
+  const source = readServer("api/resources/reports.ts");
+  const routes = new Set();
+  for (const match of source.matchAll(/reports\.\w+\("([^"]+)"/g)) {
+    routes.add(normalizeRoute(joinRoute("/api/reports", match[1])));
+  }
+  return routes;
+}
+
 test("web command client only emits command types accepted by the server schema", () => {
   const serverTypes = extractServerCommandTypes();
   const clientTypes = extractClientCommandTypes();
@@ -125,9 +134,30 @@ test("web command client only emits command types accepted by the server schema"
 
 test("web API client only calls routes exposed by the server router", () => {
   const serverRoutes = extractServerRoutes();
+  const quarantinedCourtRoutes = extractQuarantinedCourtRoutes();
   const clientRoutes = extractClientRoutes();
-  const missing = clientRoutes.filter((route) => !serverRoutes.has(route));
+  const missing = clientRoutes.filter(
+    (route) => !serverRoutes.has(route) && !quarantinedCourtRoutes.has(route),
+  );
   assert.deepEqual(missing, []);
+});
+
+test("Courts v2 routes remain complete but quarantined until activation", () => {
+  const apiSource = readServer("api/api.ts");
+  const routes = extractQuarantinedCourtRoutes();
+  assert.equal(apiSource.includes('api.route("/reports", reports)'), false);
+  assert.deepEqual(
+    [...routes],
+    [
+      "/api/reports/status",
+      "/api/reports/capability",
+      "/api/reports/mine",
+      "/api/reports/mine/:param",
+      "/api/reports/notifications",
+      "/api/reports/cases",
+      "/api/reports/cases/:param",
+    ],
+  );
 });
 
 test("initiative board statuses stay aligned across server and web", () => {

@@ -41,6 +41,7 @@ import { InitiativeThreadsSection } from "./components/InitiativeThreadsSection"
 import { useInitiativePageData } from "./hooks/useInitiativePageData";
 import { PublicDraftsSection } from "@/pages/proposals/draft/PublicDraftsSection";
 import { usePublicDrafts } from "@/pages/proposals/draft/usePublicDrafts";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const Initiative: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -193,6 +194,9 @@ const Initiative: React.FC = () => {
           </>
         }
       />
+      <div className="flex justify-end">
+        <CourtReportButton target={{ type: "initiative", id: initiative.id }} />
+      </div>
 
       {actionError ? (
         <p className="text-sm text-destructive">{actionError}</p>
