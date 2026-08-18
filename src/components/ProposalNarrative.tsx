@@ -7,6 +7,7 @@ import "./ProposalNarrative.css";
 export type ProposalNarrativeValue = string | string[];
 
 export type ProposalNarrativeEditorProps = {
+  documentLabel?: string;
   id: string;
   onChange: (value: string) => void;
   placeholder: string;
@@ -198,7 +199,7 @@ export function ProposalNarrativeEditor(props: ProposalNarrativeEditorProps) {
     <Suspense
       fallback={
         <div
-          aria-label="Preparing proposal editor"
+          aria-label={`Preparing ${props.documentLabel?.toLowerCase() ?? "proposal"} editor`}
           className="proposal-narrative-editor proposal-narrative-editor--loading"
           role="status"
           style={{ minHeight: `calc(${props.rows ?? 7} * 1.6em + 5.5rem)` }}

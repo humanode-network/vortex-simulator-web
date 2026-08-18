@@ -280,6 +280,9 @@ const Guide: React.FC = () => {
             <Button asChild variant="ghost" className="min-w-[200px]">
               <Link to="/app/vortexopedia">Open Vortexopedia</Link>
             </Button>
+            <Button asChild variant="ghost" className="min-w-[200px]">
+              <Link to="/app/humanode-codex">Open Humanode Codex</Link>
+            </Button>
             <Button asChild variant="ghost" className="min-w-40">
               <a
                 href="https://gitbook.humanode.io/vortex-1.0"
@@ -534,20 +537,29 @@ const Guide: React.FC = () => {
             <GuideSection
               id="courts"
               title="Courts"
-              subtitle="Disputes, evidence, and verdicts."
+              subtitle="Reports, due process, evidence, and decisions."
             >
               <p>
-                Courts is the judicial layer. Cases are structured around a
-                claim, evidence, and planned actions. The courtroom page is
-                designed for reading, not scrolling through noise.
+                Start a report from the exact Vortex record involved. Intake
+                verifies standing and routes correction, moderation, Court, and
+                safety matters without publishing reporter counts or private
+                evidence.
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  Statuses (jury / live / ended) reflect the state of the case.
+                  My reports preserves the target snapshot, statement,
+                  revisions, evidence references, amendment requests, and case
+                  link.
                 </li>
                 <li>
-                  Verdict actions appear based on case stage and participant
-                  permissions.
+                  Court cases move through notice and response, evidence,
+                  deliberation, finding, remedy, enforcement, appeal, and
+                  finality states.
+                </li>
+                <li>
+                  Actions and evidence appear only when the current state,
+                  deadline, service record, assignment, and participant role
+                  authorize them.
                 </li>
               </ul>
             </GuideSection>
@@ -589,6 +601,23 @@ const Guide: React.FC = () => {
                 here.
               </p>
             </GuideSection>
+
+            <GuideSection
+              id="humanode-codex"
+              title="Humanode Codex"
+              subtitle="The versioned rules used by reporting and Courts."
+            >
+              <p>
+                The Humanode Codex defines reportable conduct, evidence
+                thresholds, severity levels, lawful response envelopes, and
+                excluded measures. Each clause has a stable reference used by
+                Court records and policy hints.
+              </p>
+              <p>
+                Vortexopedia explains product language. The Codex records
+                adjudicable rules and the limits of Court authority.
+              </p>
+            </GuideSection>
           </main>
 
           <aside className="sticky top-6 hidden space-y-4 lg:block">
@@ -612,6 +641,7 @@ const Guide: React.FC = () => {
                   ["CM Panel", "cm-panel"],
                   ["Profile & Settings", "profile-settings"],
                   ["Vortexopedia", "vortexopedia"],
+                  ["Humanode Codex", "humanode-codex"],
                 ].map(([label, id]) => (
                   <a
                     key={id}

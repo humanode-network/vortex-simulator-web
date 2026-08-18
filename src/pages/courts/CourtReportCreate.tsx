@@ -1,10 +1,12 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { GlassySection, GlassyTile } from "@/components/GlassySection";
+import { Modal } from "@/components/Modal";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { PageHeader } from "@/components/PageHeader";
+import { CodexHint, CodexProcedureHint } from "@/components/CodexHint";
 import { ProposalNarrativeEditor } from "@/components/ProposalNarrative";
 import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
@@ -13,13 +15,40 @@ import {
   apiCourtReportingCapabilityV2,
   apiSubmitCourtReportV2,
 } from "@/lib/apiClient";
+import type { CourtEvidenceInputV2 } from "@/lib/api/courtsV2";
 import { formatLoadError } from "@/lib/errorFormatting";
 import type {
   CourtReportLaneV2Dto,
   CourtReportingCapabilityV2Dto,
   CourtTargetReferenceV2Dto,
 } from "@/types/api";
-import { courtLabel } from "./courtUi";
+import {
+  courtLabel,
+  CourtCopyValue,
+  CourtStandingReference,
+  CourtStateSummary,
+  CourtTargetPreview,
+} from "./courtUi";
+import {
+  CourtAsyncButton,
+  CourtEvidenceDraftFields,
+  CourtEvidenceSafetyNote,
+  CourtFormField,
+  CourtNarrativeRequirement,
+} from "./courtFormUi";
+import {
+  COURT_REPORT_EVIDENCE_ACCESS,
+  courtEvidenceDraftIsEmpty,
+  courtEvidenceDraftToInput,
+  emptyCourtEvidenceDraft,
+  type CourtEvidenceDraftError,
+} from "./courtEvidenceForm";
+import {
+  courtLaneDisplay,
+  courtOffenseDisplay,
+  courtStandingDisplay,
+} from "./courtPresentation";
+import { courtErrorIssue } from "./courtErrors";
 import { CourtsUnavailable } from "./CourtsUnavailable";
 import { useCourtRuntime } from "./useCourtRuntime";
 
@@ -33,6 +62,31 @@ function localDateTime(date: Date): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+const EVIDENCE_FIELD_IDS: Record<CourtEvidenceDraftError["field"], string> = {
+  digest: "court-report-digest",
+  url: "court-report-url",
+  targetType: "court-report-target-type",
+  targetId: "court-report-target-id",
+  proofType: "court-report-proof-type",
+  verifierId: "court-report-verifier-id",
+  verifierVersion: "court-report-verifier-version",
+};
+
+const REPORT_FIELD_IDS: Readonly<Record<string, string>> = Object.freeze({
+  affectedId: "court-report-affected",
+  evidence: "court-report-digest",
+  goodFaithAttested: "court-report-good-faith",
+  immediateProtectionRequested: "court-report-protective-review",
+  incidentEndsAt: "court-report-incident-end",
+  incidentStartsAt: "court-report-incident-time",
+  incidentWindow: "court-report-incident-time",
+  lane: "court-report-reason",
+  offenseCode: "court-report-reason",
+  reason: "court-report-reason",
+  respondentId: "court-report-respondent",
+  statement: "court-report-statement",
+});
+
 const CourtReportCreate: React.FC = () => {
   const runtime = useCourtRuntime();
   const navigate = useNavigate();
@@ -44,36 +98,57 @@ const CourtReportCreate: React.FC = () => {
     const revision = searchParams.get("revision")?.trim() || undefined;
     return { type: type as CourtTargetReferenceV2Dto["type"], id, revision };
   }, [searchParams]);
-  const [incidentStartsAt, setIncidentStartsAt] = useState(() =>
-    localDateTime(new Date()),
+  const [initialIncidentStartsAt] = useState(() => localDateTime(new Date()));
+  const [incidentStartsAt, setIncidentStartsAt] = useState(
+    initialIncidentStartsAt,
   );
+  const [incidentEndsAt, setIncidentEndsAt] = useState("");
   const [capability, setCapability] = useState<AvailableCapability | null>(
     null,
   );
+  const [capabilityLoading, setCapabilityLoading] = useState(false);
   const [reasonKey, setReasonKey] = useState("");
   const [respondentId, setRespondentId] = useState("");
   const [affectedId, setAffectedId] = useState("");
   const [statement, setStatement] = useState("");
-  const [evidenceUrl, setEvidenceUrl] = useState("");
-  const [evidenceDigest, setEvidenceDigest] = useState("");
+  const [statementAccess, setStatementAccess] =
+    useState<(typeof COURT_REPORT_EVIDENCE_ACCESS)[number]>("parties_and_jury");
+  const [evidenceDraft, setEvidenceDraft] = useState(emptyCourtEvidenceDraft);
+  const [evidenceError, setEvidenceError] =
+    useState<CourtEvidenceDraftError | null>(null);
+  const [evidence, setEvidence] = useState<
+    { key: string; value: CourtEvidenceInputV2 }[]
+  >([]);
   const [immediateProtectionRequested, setImmediateProtectionRequested] =
     useState(false);
   const [goodFaithAttested, setGoodFaithAttested] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [capabilityError, setCapabilityError] = useState<string | null>(null);
+  const [capabilityRequest, setCapabilityRequest] = useState(0);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionKey, setSubmissionKey] = useState(() => crypto.randomUUID());
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   useEffect(() => {
     if (runtime.status !== "available" || !target) return;
+    const incidentTimestamp = Date.parse(incidentStartsAt);
+    if (!Number.isFinite(incidentTimestamp)) {
+      setCapability(null);
+      setCapabilityLoading(false);
+      setCapabilityError("Enter a complete incident date and time.");
+      return;
+    }
     let active = true;
+    setCapabilityLoading(true);
     void apiCourtReportingCapabilityV2({
       target,
-      incidentAt: new Date(incidentStartsAt).toISOString(),
+      incidentAt: new Date(incidentTimestamp).toISOString(),
     })
       .then((result) => {
         if (!active) return;
         if (result.status !== "available") {
           setCapability(null);
-          setError(result.reason);
+          setCapabilityError(result.reason);
           return;
         }
         setCapability(result);
@@ -84,59 +159,161 @@ const CourtReportCreate: React.FC = () => {
             ? current
             : "",
         );
-        setError(null);
+        setCapabilityError(null);
       })
       .catch((loadError) => {
         if (!active) return;
         setCapability(null);
-        setError((loadError as Error).message);
+        setCapabilityError((loadError as Error).message);
+      })
+      .finally(() => {
+        if (active) setCapabilityLoading(false);
       });
     return () => {
       active = false;
     };
-  }, [incidentStartsAt, runtime.status, target]);
+  }, [capabilityRequest, incidentStartsAt, runtime.status, target]);
+
+  const selectedReason = capability?.reasonCapabilities.find(
+    ({ reason }) => `${reason.offenseCode}:${reason.lane}` === reasonKey,
+  );
+  const protectiveReview = selectedReason?.protectiveReview;
+  const protectiveReviewAvailable =
+    protectiveReview?.eligible === true && !incidentEndsAt;
+  const returnPath = useMemo(() => {
+    const requested = searchParams.get("returnTo")?.trim();
+    if (requested?.startsWith("/app/") && !requested.startsWith("//")) {
+      return requested;
+    }
+    return capability?.target.canonicalRoute ?? "/app/courts?view=reports";
+  }, [capability?.target.canonicalRoute, searchParams]);
+  const dirty =
+    incidentStartsAt !== initialIncidentStartsAt ||
+    Boolean(
+      incidentEndsAt ||
+        reasonKey ||
+        respondentId ||
+        affectedId ||
+        statement ||
+        evidence.length ||
+        !courtEvidenceDraftIsEmpty(evidenceDraft) ||
+        immediateProtectionRequested ||
+        goodFaithAttested,
+    );
+
+  useEffect(() => {
+    if (!protectiveReviewAvailable) setImmediateProtectionRequested(false);
+  }, [protectiveReviewAvailable]);
+
+  function parsePendingEvidence(): CourtEvidenceInputV2 | null {
+    if (courtEvidenceDraftIsEmpty(evidenceDraft)) {
+      setEvidenceError(null);
+      return null;
+    }
+    const result = courtEvidenceDraftToInput(
+      evidenceDraft,
+      "reporter_supplied",
+    );
+    if (!result.ok) {
+      setEvidenceError(result.error);
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById(EVIDENCE_FIELD_IDS[result.error.field])
+          ?.focus();
+      });
+      return null;
+    }
+    setEvidenceError(null);
+    return result.value;
+  }
+
+  function addEvidence() {
+    const item = parsePendingEvidence();
+    if (!item) return;
+    if (evidence.some(({ value }) => value.digest === item.digest)) {
+      setEvidenceError({
+        field: "digest",
+        message: "This evidence digest is already in the report.",
+      });
+      return;
+    }
+    setEvidence((current) => [
+      ...current,
+      { key: crypto.randomUUID(), value: item },
+    ]);
+    setEvidenceDraft(emptyCourtEvidenceDraft());
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!target || !capability) return;
-    const selected = capability.reasonCapabilities.find(
-      ({ reason }) => `${reason.offenseCode}:${reason.lane}` === reasonKey,
-    );
-    if (!selected) {
-      setError("Choose a report reason.");
+    if (!selectedReason) {
+      setSubmissionError("Choose a report reason.");
       return;
     }
+    const startsAt = Date.parse(incidentStartsAt);
+    const endsAt = incidentEndsAt ? Date.parse(incidentEndsAt) : null;
+    if (endsAt !== null && endsAt < startsAt) {
+      setSubmissionError("Incident end cannot be earlier than its start.");
+      window.requestAnimationFrame(() =>
+        document.getElementById("court-report-incident-end")?.focus(),
+      );
+      return;
+    }
+    if (!goodFaithAttested) {
+      setSubmissionError(
+        "Confirm the good-faith attestation before submitting.",
+      );
+      return;
+    }
+    const pendingEvidence = parsePendingEvidence();
+    if (!courtEvidenceDraftIsEmpty(evidenceDraft) && !pendingEvidence) return;
+    const submittedEvidence = [
+      ...evidence.map((item) => item.value),
+      ...(pendingEvidence ? [pendingEvidence] : []),
+    ];
     setSubmitting(true);
-    setError(null);
+    setSubmissionError(null);
     try {
       const result = await apiSubmitCourtReportV2({
         target,
-        offenseCode: selected.reason.offenseCode,
-        lane: selected.reason.lane as CourtReportLaneV2Dto,
+        offenseCode: selectedReason.reason.offenseCode,
+        lane: selectedReason.reason.lane as CourtReportLaneV2Dto,
         respondentId: respondentId.trim() || null,
         affectedId: affectedId.trim() || null,
         incidentStartsAt: new Date(incidentStartsAt).toISOString(),
+        ...(incidentEndsAt
+          ? { incidentEndsAt: new Date(incidentEndsAt).toISOString() }
+          : {}),
         statement: statement.trim(),
-        statementAccess: "parties_and_jury",
-        evidence:
-          evidenceUrl.trim() && evidenceDigest.trim()
-            ? [
-                {
-                  kind: "external_url",
-                  url: evidenceUrl.trim(),
-                  digest: evidenceDigest.trim(),
-                  provenance: "reporter_supplied",
-                  access: "parties_and_jury",
-                },
-              ]
-            : [],
-        immediateProtectionRequested,
-        goodFaithAttested: true,
-        idempotencyKey: crypto.randomUUID(),
+        statementAccess,
+        evidence: submittedEvidence,
+        immediateProtectionRequested:
+          protectiveReviewAvailable && immediateProtectionRequested,
+        goodFaithAttested,
+        idempotencyKey: submissionKey,
       });
       navigate(`/app/courts/reports/${encodeURIComponent(result.reportId)}`);
     } catch (submitError) {
-      setError((submitError as Error).message);
+      const issue = courtErrorIssue(submitError);
+      const status =
+        submitError &&
+        typeof submitError === "object" &&
+        "status" in submitError
+          ? Number((submitError as { status?: unknown }).status)
+          : null;
+      if (status !== null && status >= 400 && status < 500) {
+        setSubmissionKey(crypto.randomUUID());
+      }
+      setSubmissionError(issue.message);
+      const fieldId = issue.fields
+        .map((field) => REPORT_FIELD_IDS[field])
+        .find(Boolean);
+      if (fieldId) {
+        window.requestAnimationFrame(() =>
+          document.getElementById(fieldId)?.focus(),
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -145,9 +322,16 @@ const CourtReportCreate: React.FC = () => {
   if (runtime.status !== "available") {
     return (
       <CourtsUnavailable
+        checking={runtime.status === "checking"}
+        failed={runtime.status === "failed"}
+        onRetry={runtime.retry}
         pageId="courts"
         title="Create report"
-        reason={runtime.status === "unavailable" ? runtime.reason : undefined}
+        reason={
+          runtime.status === "unavailable" || runtime.status === "failed"
+            ? runtime.reason
+            : undefined
+        }
       />
     );
   }
@@ -159,8 +343,16 @@ const CourtReportCreate: React.FC = () => {
         title="Create report"
         description="The server verifies the target, standing, available reasons, and Court lane before accepting a report."
         right={
-          <Button asChild size="sm" variant="outline">
-            <Link to="/app/courts">Cancel</Link>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (dirty) setCancelOpen(true);
+              else navigate(returnPath);
+            }}
+          >
+            Cancel
           </Button>
         }
       />
@@ -171,96 +363,352 @@ const CourtReportCreate: React.FC = () => {
         />
       ) : (
         <form className="grid gap-6" onSubmit={submit}>
-          <GlassySection title="Incident">
+          <GlassySection title="Reported record">
+            <CourtTargetPreview
+              target={
+                capability
+                  ? {
+                      accessClass: capability.target.accessClass,
+                      canonicalRoute: capability.target.canonicalRoute,
+                      digest: capability.preview.digest,
+                      id: capability.target.id,
+                      revision: capability.target.revision,
+                      snapshotPayload: capability.preview.payload,
+                      type: capability.target.type,
+                    }
+                  : target
+              }
+            />
+          </GlassySection>
+
+          <GlassySection title="Incident and reason">
             <GlassyTile className="grid gap-4 md:grid-cols-2">
-              <Field label="Target type">
-                <Input value={courtLabel(target.type)} disabled />
-              </Field>
-              <Field label="Target id">
-                <Input value={target.id} disabled />
-              </Field>
-              <Field label="Incident time">
+              <CourtFormField
+                htmlFor="court-report-incident-time"
+                label="Incident start"
+              >
                 <Input
+                  id="court-report-incident-time"
                   type="datetime-local"
                   value={incidentStartsAt}
                   onChange={(event) => setIncidentStartsAt(event.target.value)}
                   required
                 />
-              </Field>
-              <Field label="Reason">
+              </CourtFormField>
+              <CourtFormField
+                htmlFor="court-report-incident-end"
+                label="Incident end"
+                hint="Leave blank when the conduct or risk is ongoing."
+              >
+                <Input
+                  id="court-report-incident-end"
+                  type="datetime-local"
+                  min={incidentStartsAt}
+                  value={incidentEndsAt}
+                  onChange={(event) => setIncidentEndsAt(event.target.value)}
+                />
+              </CourtFormField>
+              <CourtFormField htmlFor="court-report-reason" label="Reason">
                 <Select
+                  id="court-report-reason"
+                  aria-describedby="court-reason-help"
+                  disabled={capabilityLoading || !capability}
                   value={reasonKey}
                   onChange={(event) => setReasonKey(event.target.value)}
                   required
                 >
-                  <option value="">Choose a verified reason</option>
+                  <option value="">
+                    {capabilityLoading
+                      ? "Checking available reasons..."
+                      : "Choose a verified reason"}
+                  </option>
                   {(capability?.reasonCapabilities ?? []).map(({ reason }) => (
                     <option
                       key={`${reason.offenseCode}:${reason.lane}`}
                       value={`${reason.offenseCode}:${reason.lane}`}
                     >
-                      {reason.offenseCode} · {courtLabel(reason.lane)}
+                      {courtOffenseDisplay(reason.offenseCode).label} ·{" "}
+                      {courtLaneDisplay(reason.lane).label}
                     </option>
                   ))}
                 </Select>
-              </Field>
+              </CourtFormField>
+              <p
+                id="court-reason-help"
+                className="text-sm leading-6 text-muted md:col-span-2"
+                role="status"
+              >
+                {selectedReason ? (
+                  <>
+                    <CodexHint reference={selectedReason.reason.offenseCode}>
+                      {
+                        courtOffenseDisplay(selectedReason.reason.offenseCode)
+                          .label
+                      }
+                    </CodexHint>
+                    {`: ${courtOffenseDisplay(selectedReason.reason.offenseCode).description} `}
+                    <CodexProcedureHint clause="HC-2.1">
+                      {courtLaneDisplay(selectedReason.reason.lane).label}
+                    </CodexProcedureHint>
+                    {`: ${courtLaneDisplay(selectedReason.reason.lane).description} `}
+                    <br />
+                    <CourtStandingReference
+                      direct={selectedReason.standing.directStanding}
+                      source={selectedReason.standing.source}
+                    />
+                    {`. ${courtStandingDisplay(selectedReason.standing).description}`}
+                  </>
+                ) : capabilityLoading ? (
+                  "The server is verifying the target, incident time, standing, and available lanes."
+                ) : (
+                  "Reasons are limited to those verified for this exact target and incident time."
+                )}
+              </p>
+              {selectedReason && capability?.population ? (
+                <p className="text-xs leading-5 text-muted md:col-span-2">
+                  Population basis: {courtLabel(capability.population.basis)} ·{" "}
+                  effective{" "}
+                  {formatReviewInstant(capability.population.effectiveAt)}.
+                </p>
+              ) : null}
+              {capabilityError ? (
+                <div className="flex flex-wrap items-center gap-2 md:col-span-2">
+                  <p className="text-sm text-destructive" role="alert">
+                    {formatLoadError(capabilityError)}
+                  </p>
+                  <Button
+                    type="button"
+                    size="compact"
+                    variant="outline"
+                    onClick={() =>
+                      setCapabilityRequest((current) => current + 1)
+                    }
+                  >
+                    Retry reason check
+                  </Button>
+                </div>
+              ) : null}
             </GlassyTile>
           </GlassySection>
 
           <GlassySection title="People and statement">
             <GlassyTile className="grid gap-4 md:grid-cols-2">
-              <Field label="Respondent address">
+              <CourtFormField
+                htmlFor="court-report-respondent"
+                label="Respondent address"
+                hint="The Human Node whose conduct is being reported, when known."
+              >
                 <Input
+                  id="court-report-respondent"
                   value={respondentId}
                   onChange={(event) => setRespondentId(event.target.value)}
                 />
-              </Field>
-              <Field label="Affected address">
+              </CourtFormField>
+              <CourtFormField
+                htmlFor="court-report-affected"
+                label="Affected address"
+                hint="The Human Node directly affected by the conduct, if different."
+              >
                 <Input
+                  id="court-report-affected"
                   value={affectedId}
                   onChange={(event) => setAffectedId(event.target.value)}
                 />
-              </Field>
-              <Field className="md:col-span-2" label="Statement">
+              </CourtFormField>
+              <CourtFormField
+                className="md:col-span-2"
+                htmlFor="court-report-statement"
+                label="Statement"
+              >
                 <ProposalNarrativeEditor
+                  documentLabel="Court statement"
                   id="court-report-statement"
                   value={statement}
                   onChange={setStatement}
                   placeholder="Describe what happened, when it happened, and why this reason applies."
                   rows={10}
                 />
-              </Field>
+                <CourtNarrativeRequirement
+                  current={statement.trim().length}
+                  minimum={20}
+                />
+              </CourtFormField>
+              <CourtFormField
+                className="md:col-span-2"
+                htmlFor="court-report-statement-access"
+                label="Who may read the statement"
+                hint="The selected access class is enforced by the Court record."
+              >
+                <Select
+                  id="court-report-statement-access"
+                  value={statementAccess}
+                  onChange={(event) =>
+                    setStatementAccess(
+                      event.target.value as typeof statementAccess,
+                    )
+                  }
+                >
+                  {COURT_REPORT_EVIDENCE_ACCESS.map((access) => (
+                    <option key={access} value={access}>
+                      {courtLabel(access)}
+                    </option>
+                  ))}
+                </Select>
+              </CourtFormField>
             </GlassyTile>
           </GlassySection>
 
           <GlassySection title="Evidence">
-            <GlassyTile className="grid gap-4 md:grid-cols-2">
-              <Field label="External evidence URL">
-                <Input
-                  type="url"
-                  value={evidenceUrl}
-                  onChange={(event) => setEvidenceUrl(event.target.value)}
-                />
-              </Field>
-              <Field label="Evidence digest">
-                <Input
-                  value={evidenceDigest}
-                  onChange={(event) => setEvidenceDigest(event.target.value)}
-                  placeholder="sha256:..."
-                />
-              </Field>
-              <label className="flex items-center gap-2 text-sm text-text md:col-span-2">
-                <input
-                  type="checkbox"
-                  checked={immediateProtectionRequested}
-                  onChange={(event) =>
-                    setImmediateProtectionRequested(event.target.checked)
+            <GlassyTile className="grid gap-4">
+              <CourtEvidenceDraftFields
+                draft={evidenceDraft}
+                error={evidenceError}
+                idPrefix="court-report"
+                onChange={(next) => {
+                  setEvidenceDraft(next);
+                  setEvidenceError(null);
+                }}
+              />
+              <CourtEvidenceSafetyNote />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="compact"
+                  variant="outline"
+                  onClick={addEvidence}
+                >
+                  Add another evidence record
+                </Button>
+              </div>
+              {evidence.length ? (
+                <div
+                  className="grid gap-2"
+                  aria-label="Evidence records ready to submit"
+                >
+                  {evidence.map((item, index) => (
+                    <div
+                      key={item.key}
+                      className="flex min-w-0 flex-wrap items-center justify-between gap-3 border border-border/70 p-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-text">
+                          {index + 1}. {courtLabel(item.value.kind)}
+                        </p>
+                        <CourtCopyValue
+                          label={`evidence ${index + 1} digest`}
+                          value={item.value.digest}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="compact"
+                        variant="ghost"
+                        onClick={() =>
+                          setEvidence((current) =>
+                            current.filter(
+                              (candidate) => candidate.key !== item.key,
+                            ),
+                          )
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {protectiveReviewAvailable && protectiveReview?.eligible ? (
+                <div className="space-y-2 border-t border-border/70 pt-4">
+                  <label className="flex items-center gap-2 text-sm text-text">
+                    <input
+                      id="court-report-protective-review"
+                      type="checkbox"
+                      checked={immediateProtectionRequested}
+                      onChange={(event) =>
+                        setImmediateProtectionRequested(event.target.checked)
+                      }
+                    />
+                    Request immediate protective review
+                  </label>
+                  <p className="text-sm leading-6 text-muted">
+                    This temporary, non-punitive review lasts up to{" "}
+                    {Math.round(protectiveReview.durationSeconds / 3_600)} hours
+                    and is assigned to{" "}
+                    {protectiveReview.authorityIds.join(", ")}. It does not
+                    establish guilt or choose a punishment.
+                  </p>
+                </div>
+              ) : null}
+            </GlassyTile>
+          </GlassySection>
+
+          <GlassySection title="Review and attest">
+            <GlassyTile className="space-y-4">
+              {selectedReason ? (
+                <CourtStateSummary
+                  description={`${courtOffenseDisplay(selectedReason.reason.offenseCode).description} ${courtLaneDisplay(selectedReason.reason.lane).description}`}
+                  label={
+                    <>
+                      <CodexHint reference={selectedReason.reason.offenseCode}>
+                        {
+                          courtOffenseDisplay(selectedReason.reason.offenseCode)
+                            .label
+                        }
+                      </CodexHint>
+                      {" · "}
+                      <CodexProcedureHint clause="HC-2.1">
+                        {courtLaneDisplay(selectedReason.reason.lane).label}
+                      </CodexProcedureHint>
+                    </>
                   }
+                  tone="primary"
                 />
-                Request immediate protective review
-              </label>
-              <label className="flex items-start gap-2 text-sm leading-6 text-text md:col-span-2">
+              ) : (
+                <p className="text-sm text-muted">
+                  Choose a verified reason to complete the review.
+                </p>
+              )}
+              <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
+                <p>
+                  Target: {courtLabel(target.type)} · {target.id}
+                </p>
+                <p>Incident: {formatReviewInstant(incidentStartsAt)}</p>
+                <p>
+                  Incident end:{" "}
+                  {incidentEndsAt
+                    ? formatReviewInstant(incidentEndsAt)
+                    : "Ongoing"}
+                </p>
+                <p>Statement: {statement.trim().length} characters</p>
+                <p>Statement access: {courtLabel(statementAccess)}</p>
+                {selectedReason ? (
+                  <p>
+                    Standing:{" "}
+                    <CourtStandingReference
+                      direct={selectedReason.standing.directStanding}
+                      source={selectedReason.standing.source}
+                    />
+                  </p>
+                ) : null}
+                <p>
+                  Evidence:{" "}
+                  {evidence.length +
+                    (courtEvidenceDraftIsEmpty(evidenceDraft) ? 0 : 1)}{" "}
+                  referenced
+                  {evidence.length +
+                    (courtEvidenceDraftIsEmpty(evidenceDraft) ? 0 : 1) ===
+                  1
+                    ? " record"
+                    : " records"}
+                </p>
+                <p>
+                  Protective review:{" "}
+                  {immediateProtectionRequested ? "Requested" : "Not requested"}
+                </p>
+              </div>
+              <label className="flex items-start gap-2 text-sm leading-6 text-text">
                 <input
+                  id="court-report-good-faith"
                   className="mt-1"
                   type="checkbox"
                   checked={goodFaithAttested}
@@ -275,46 +723,67 @@ const CourtReportCreate: React.FC = () => {
             </GlassyTile>
           </GlassySection>
 
-          {error ? (
-            <p className="text-sm text-destructive">{formatLoadError(error)}</p>
+          {submissionError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formatLoadError(submissionError)}
+            </p>
           ) : null}
           <div className="flex justify-end">
-            <Button
+            <CourtAsyncButton
               type="submit"
+              busy={submitting}
+              busyLabel="Submitting report..."
               disabled={
-                submitting ||
                 !capability ||
+                capabilityLoading ||
                 !reasonKey ||
-                !statement.trim() ||
-                !goodFaithAttested
+                statement.trim().length < 20 ||
+                !goodFaithAttested ||
+                evidenceError !== null
               }
             >
               Submit report
-            </Button>
+            </CourtAsyncButton>
           </div>
         </form>
       )}
+      <Modal
+        ariaLabel="Discard Court report"
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        contentClassName="max-w-lg"
+      >
+        <GlassyTile className="space-y-4 p-5">
+          <h2 className="text-lg font-semibold text-text">
+            Discard this report?
+          </h2>
+          <p className="text-sm leading-6 text-muted">
+            The report has not been submitted. Leaving now discards the text and
+            evidence entered on this page.
+          </p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelOpen(false)}
+            >
+              Keep editing
+            </Button>
+            <Button type="button" onClick={() => navigate(returnPath)}>
+              Discard and leave
+            </Button>
+          </div>
+        </GlassyTile>
+      </Modal>
     </div>
   );
 };
 
-function Field({
-  children,
-  className,
-  label,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  label: string;
-}) {
-  return (
-    <label
-      className={`grid gap-2 text-sm font-medium text-text ${className ?? ""}`}
-    >
-      {label}
-      {children}
-    </label>
-  );
+function formatReviewInstant(value: string): string {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp)
+    ? new Date(timestamp).toLocaleString()
+    : "Not set";
 }
 
 export default CourtReportCreate;

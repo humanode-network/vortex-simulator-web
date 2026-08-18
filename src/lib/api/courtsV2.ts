@@ -56,13 +56,13 @@ export async function apiCourtRuntimeStatusV2(): Promise<CourtRuntimeStatusV2Dto
 
 export async function apiCourtReportingCapabilityV2(input: {
   target: CourtTargetReferenceV2Dto;
-  incidentAt: string;
+  incidentAt?: string;
 }): Promise<CourtReportingCapabilityV2Dto> {
   const query = new URLSearchParams({
     type: input.target.type,
     id: input.target.id,
-    incidentAt: input.incidentAt,
   });
+  if (input.incidentAt) query.set("incidentAt", input.incidentAt);
   if (input.target.revision) query.set("revision", input.target.revision);
   return await apiGet<CourtReportingCapabilityV2Dto>(
     `/api/reports/capability?${query}`,
@@ -83,14 +83,17 @@ export async function apiCourtNotificationsV2(): Promise<GetCourtNotificationsV2
   );
 }
 
-export async function apiSetCourtNotificationStateV2(input: {
-  notificationId: string;
-  state: "read" | "dismissed";
-}) {
+export async function apiSetCourtNotificationStateV2(
+  input: {
+    notificationId: string;
+    state: "read" | "dismissed";
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand<{ ok: true; notificationId: string; state: string }>({
     type: "court.notification.state",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
@@ -150,16 +153,32 @@ export async function apiWithdrawCourtReportV2(input: {
   });
 }
 
-export async function apiSupplementCourtReportV2(input: {
+type CourtReportRevisionInputV2 = {
   reportId: string;
   statement: string | null;
   statementAccess: CourtEvidenceInputV2["access"];
   evidence: CourtEvidenceInputV2[];
-}) {
+};
+
+export async function apiAmendCourtReportV2(
+  input: CourtReportRevisionInputV2 & { statement: string },
+  options?: CourtCommandOptions,
+) {
+  return await apiCommand<{ ok: true; reportId: string; state: string }>({
+    type: "court.report.amend",
+    payload: input,
+    idempotencyKey: commandKey(options),
+  });
+}
+
+export async function apiSupplementCourtReportV2(
+  input: CourtReportRevisionInputV2,
+  options?: CourtCommandOptions,
+) {
   return await apiCommand<{ ok: true; reportId: string; state: string }>({
     type: "court.report.supplement",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
@@ -167,63 +186,86 @@ function courtIdempotencyKey(): string {
   return crypto.randomUUID();
 }
 
-export async function apiSubmitCourtResponseV2(input: {
-  caseId: string;
-  statement: string;
-  access: "public" | "parties_and_jury";
-}) {
+type CourtCommandOptions = {
+  idempotencyKey?: string;
+};
+
+function commandKey(options?: CourtCommandOptions): string {
+  return options?.idempotencyKey ?? courtIdempotencyKey();
+}
+
+export async function apiSubmitCourtResponseV2(
+  input: {
+    caseId: string;
+    statement: string;
+    access: "public" | "parties_and_jury";
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.case.respond",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiAddCourtEvidenceV2(input: {
-  caseId: string;
-  statement: string | null;
-  statementAccess: CourtEvidenceInputV2["access"];
-  evidence: CourtEvidenceInputV2[];
-}) {
+export async function apiAddCourtEvidenceV2(
+  input: {
+    caseId: string;
+    statement: string | null;
+    statementAccess: CourtEvidenceInputV2["access"];
+    evidence: CourtEvidenceInputV2[];
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.case.evidence.add",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiChallengeCourtEvidenceV2(input: {
-  caseId: string;
-  evidenceId: string;
-  reason: string;
-}) {
+export async function apiChallengeCourtEvidenceV2(
+  input: {
+    caseId: string;
+    evidenceId: string;
+    reason: string;
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.case.evidence.challenge",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiRespondToCourtJuryV2(input: {
-  caseId: string;
-  response: "accept" | "decline";
-  conflict: "clear" | "self_disclosed";
-}) {
+export async function apiRespondToCourtJuryV2(
+  input: {
+    caseId: string;
+    response: "accept" | "decline";
+    conflict: "clear" | "self_disclosed";
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.jury.respond",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiRecuseFromCourtJuryV2(input: {
-  caseId: string;
-  reason: string;
-}) {
+export async function apiRecuseFromCourtJuryV2(
+  input: {
+    caseId: string;
+    reason: string;
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.jury.recuse",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
@@ -236,69 +278,82 @@ export async function apiCastCourtFindingVoteV2(
         finding: "substantiated";
         severity: "L1" | "L2" | "L3" | "L4";
       },
+  options?: CourtCommandOptions,
 ) {
   return await apiCommand({
     type: "court.finding.vote",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiCastCourtRemedyVoteV2(input: {
-  caseId: string;
-  ballotId: string;
-  authorizeSentence: boolean;
-  components: {
-    componentId: string;
-    include: boolean;
-    conditionalValue?: string | boolean;
-  }[];
-}) {
+export async function apiCastCourtRemedyVoteV2(
+  input: {
+    caseId: string;
+    ballotId: string;
+    authorizeSentence: boolean;
+    components: {
+      componentId: string;
+      include: boolean;
+      conditionalValue?: string | boolean;
+    }[];
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.remedy.vote",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiFileCourtAppealV2(input: {
-  caseId: string;
-  groundCode:
-    | "material_procedural_error"
-    | "juror_ineligibility_or_conflict"
-    | "material_evidence_error"
-    | "policy_or_envelope_violation"
-    | "material_new_evidence"
-    | "executor_mismatch";
-  grounds: string;
-  requestStay: boolean;
-}) {
+export async function apiFileCourtAppealV2(
+  input: {
+    caseId: string;
+    groundCode:
+      | "material_procedural_error"
+      | "juror_ineligibility_or_conflict"
+      | "material_evidence_error"
+      | "policy_or_envelope_violation"
+      | "material_new_evidence"
+      | "executor_mismatch";
+    grounds: string;
+    requestStay: boolean;
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.case.appeal",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiRespondToCourtAppellateJuryV2(input: {
-  panelId: string;
-  response: "accept" | "decline" | "conflict";
-}) {
+export async function apiRespondToCourtAppellateJuryV2(
+  input: {
+    panelId: string;
+    response: "accept" | "decline" | "conflict";
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.appellate.jury.respond",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiProposeCourtAppellateModificationV2(input: {
-  panelId: string;
-  retainedRemedyIds: string[];
-}) {
+export async function apiProposeCourtAppellateModificationV2(
+  input: {
+    panelId: string;
+    retainedRemedyIds: string[];
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.appellate.modification.propose",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
@@ -315,45 +370,55 @@ export async function apiCastCourtAppellateVoteV2(
         modificationPackageId: string;
         reasoning: string;
       },
+  options?: CourtCommandOptions,
 ) {
   return await apiCommand({
     type: "court.appellate.vote",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiFileCourtReopeningV2(input: {
-  caseId: string;
-  evidenceReference: string;
-  statement: string;
-}) {
+export async function apiFileCourtReopeningV2(
+  input: {
+    caseId: string;
+    evidenceReference: string;
+    statement: string;
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.reopening.file",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiRespondToCourtReopeningJuryV2(input: {
-  panelId: string;
-  response: "accept" | "decline" | "conflict";
-}) {
+export async function apiRespondToCourtReopeningJuryV2(
+  input: {
+    panelId: string;
+    response: "accept" | "decline" | "conflict";
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.reopening.jury.respond",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }
 
-export async function apiCastCourtReopeningVoteV2(input: {
-  panelId: string;
-  reopen: boolean;
-  reasoning: string;
-}) {
+export async function apiCastCourtReopeningVoteV2(
+  input: {
+    panelId: string;
+    reopen: boolean;
+    reasoning: string;
+  },
+  options?: CourtCommandOptions,
+) {
   return await apiCommand({
     type: "court.reopening.vote",
     payload: input,
-    idempotencyKey: courtIdempotencyKey(),
+    idempotencyKey: commandKey(options),
   });
 }

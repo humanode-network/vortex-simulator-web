@@ -1,7 +1,7 @@
 .hint-trigger {
   display: inline-flex;
   align-items: baseline;
-  cursor: help;
+  cursor: pointer;
   color: var(--text);
   font-weight: 600;
   font-size: inherit;
@@ -21,8 +21,15 @@
   text-decoration: none;
 }
 
-.hint-trigger:hover {
+.hint-trigger:hover,
+.hint-trigger:focus-visible {
   color: var(--primary);
+}
+
+.hint-trigger:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 .hint-card {

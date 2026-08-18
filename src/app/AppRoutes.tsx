@@ -6,6 +6,7 @@ import Chambers from "../pages/chambers/Chambers";
 import Formation from "../pages/formation/Formation";
 import Invision from "../pages/invision/Invision";
 import Vortexopedia from "../pages/Vortexopedia";
+import HumanodeCodex from "../pages/HumanodeCodex";
 import Factions from "../pages/factions/Factions";
 import Faction from "../pages/factions/Faction";
 import FactionChannel from "../pages/factions/FactionChannel";
@@ -131,6 +132,7 @@ const AppRoutes: React.FC = () => {
         <Route path="initiatives/:id" element={<Initiative />} />
         <Route path="invision" element={<Invision />} />
         <Route path="vortexopedia" element={<Vortexopedia />} />
+        <Route path="humanode-codex" element={<HumanodeCodex />} />
         <Route path="settings" element={<Settings />} />
         <Route path="my-governance" element={<MyGovernance />} />
       </Route>

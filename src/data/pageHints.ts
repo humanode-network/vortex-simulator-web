@@ -241,13 +241,14 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courts",
     title: "Courts",
     intro:
-      "Court proceedings remain unavailable while the reporting and adjudication system is completed.",
+      "Follow Court cases, private reports, notifications, and jury duties from one protected record.",
     sections: [
       {
-        heading: "Current status",
+        heading: "Start with the exact record",
         items: [
-          "Legacy case records remain preserved but are not presented as complete Court procedure.",
-          "Reporting, evidence access, jury selection, sentencing, enforcement, and appeals remain unavailable.",
+          "Use Report on the Human Node, proposal, discussion, Formation, faction, or Initiative record involved.",
+          "My reports keeps reporter identity, statement revisions, and non-public evidence private.",
+          "Case, jury, and notification tabs preserve their location in the page URL.",
         ],
       },
     ],
@@ -256,13 +257,14 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courtroom",
     title: "Courtroom",
     intro:
-      "Direct Court participation remains unavailable while the complete procedure is implemented.",
+      "Read the allegation, current procedure, deadlines, authorized evidence, and your current Court task before acting.",
     sections: [
       {
-        heading: "Current status",
+        heading: "Decision order",
         items: [
-          "No report, finding, jury, sentence, or enforcement action is available from this route.",
-          "Legacy records remain separate from the new Court procedure.",
+          "An allegation is not a finding; the final decision records dismissal or substantiation separately.",
+          "Only evidence allowed for your role is shown, and sealed material remains protected.",
+          "Deadlines and available actions come from the current Court state and your verified role.",
         ],
       },
     ],

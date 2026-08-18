@@ -160,6 +160,8 @@ export function InitiativeThreadsSection({
                   {initiativeThreadStatusLabel[thread.status]}
                 </GlassyStatusChip>
                 <CourtReportButton
+                  label="Report thread"
+                  size="compact"
                   target={{ type: "initiative_thread", id: thread.id }}
                 />
               </div>
@@ -184,6 +186,8 @@ export function InitiativeThreadsSection({
                           {message.body}
                         </p>
                         <CourtReportButton
+                          label="Report reply"
+                          size="compact"
                           target={{
                             type: "initiative_message",
                             id: message.id,

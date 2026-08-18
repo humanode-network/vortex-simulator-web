@@ -222,6 +222,7 @@ const Profile: React.FC<ProfileProps> = ({ showHint = true }) => {
         <ProfileDelegationSection
           className="h-full"
           delegationChambers={delegationChambers}
+          profileId={headerAddress}
         />
 
         <ProfileGovernanceActivitySection

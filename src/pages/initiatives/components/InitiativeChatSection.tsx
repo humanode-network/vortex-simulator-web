@@ -100,6 +100,8 @@ export function InitiativeChatSection({
                       {message.body}
                     </p>
                     <CourtReportButton
+                      label="Report message"
+                      size="compact"
                       target={{ type: "initiative_message", id: message.id }}
                     />
                   </div>

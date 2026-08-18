@@ -1077,6 +1077,8 @@ const Chamber: React.FC = () => {
                       {activeThread.thread.title}
                     </GlassyTileHeading>
                     <CourtReportButton
+                      label="Report thread"
+                      size="compact"
                       target={{
                         type: "chamber_thread",
                         id: activeThread.thread.id,
@@ -1107,6 +1109,7 @@ const Chamber: React.FC = () => {
                             </p>
                             <CourtReportButton
                               label="Report reply"
+                              size="compact"
                               target={{
                                 type: "chamber_message",
                                 id: message.id,

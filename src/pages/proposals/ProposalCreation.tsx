@@ -112,6 +112,12 @@ function initialWizardStateForSession(
   return createWizardState(pathId, stepId);
 }
 
+function browserWizardSessionId(): string {
+  return (
+    new URLSearchParams(window.location.search).get("session")?.trim() ?? ""
+  );
+}
+
 const ProposalCreation: React.FC = () => {
   const auth = useAuth();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -691,7 +697,13 @@ const ProposalCreation: React.FC = () => {
     if (submitInFlight.current) return;
     const savingSessionId = sessionRef.current.sessionId;
     const draftId = await saveDraftNow();
-    if (sessionRef.current.sessionId !== savingSessionId) return;
+    const activeRouteSessionId = browserWizardSessionId();
+    if (
+      sessionRef.current.sessionId !== savingSessionId ||
+      (activeRouteSessionId && activeRouteSessionId !== savingSessionId)
+    ) {
+      return;
+    }
     navigate(
       draftId || sessionRef.current.draftId
         ? proposalDraftRoutes.mine

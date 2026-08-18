@@ -49,6 +49,8 @@ export function FactionThreadDetailCard({
                   {thread.title}
                 </p>
                 <CourtReportButton
+                  label="Report thread"
+                  size="compact"
                   target={{ type: "faction_thread", id: thread.id }}
                 />
               </div>
@@ -87,6 +89,8 @@ export function FactionThreadDetailCard({
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm text-muted">{message.body}</p>
                       <CourtReportButton
+                        label="Report reply"
+                        size="compact"
                         target={{ type: "faction_message", id: message.id }}
                       />
                     </div>

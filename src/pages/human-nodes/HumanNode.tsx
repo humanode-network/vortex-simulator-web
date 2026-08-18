@@ -174,9 +174,13 @@ const HumanNode: React.FC = () => {
         showShortBadge={showShortBadge}
         visibleHeroStats={visibleHeroStats}
       />
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
         <CourtReportButton
           target={{ type: "human_identity", id: profile.id }}
+        />
+        <CourtReportButton
+          label="Report status or proof"
+          target={{ type: "proof_or_status_event", id: profile.id }}
         />
       </div>
 

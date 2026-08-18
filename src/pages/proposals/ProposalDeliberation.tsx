@@ -126,12 +126,15 @@ export const ProposalDeliberation: React.FC<ProposalDeliberationProps> = ({
             }
             renderThreadActions={(thread) => (
               <CourtReportButton
+                label="Report thread"
+                size="compact"
                 target={{ type: "proposal_thread", id: thread.id }}
               />
             )}
             renderMessageActions={(message) => (
               <CourtReportButton
                 label="Report reply"
+                size="compact"
                 target={{ type: "proposal_message", id: message.id }}
               />
             )}

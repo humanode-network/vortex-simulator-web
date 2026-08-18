@@ -18,9 +18,8 @@ test("Courts routes expose one honest quarantine surface", () => {
   const courtroom = render(createElement(Courtroom), "/app/courts/legacy-case");
 
   for (const html of [directory, courtroom]) {
-    assert.match(html, /Unavailable/);
-    assert.match(html, /Court proceedings remain unavailable/);
-    assert.match(html, /Legacy case records remain preserved/);
+    assert.match(html, /Checking availability/);
+    assert.match(html, /Checking whether Court reporting/);
     assert.doesNotMatch(html, /New reports|Ended \(30d\)|Open courtroom/);
   }
 });

@@ -132,6 +132,8 @@ export function InitiativeBoardSection({
                       </div>
                       <div className="mt-3 flex justify-end">
                         <CourtReportButton
+                          label="Report card"
+                          size="compact"
                           target={{
                             type: "initiative_board_card",
                             id: card.id,

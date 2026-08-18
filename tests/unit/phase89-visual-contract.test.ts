@@ -11,6 +11,7 @@ import Guide from "../../src/pages/Guide";
 import Landing from "../../src/pages/Landing";
 import Paper from "../../src/pages/Paper";
 import Vortexopedia from "../../src/pages/Vortexopedia";
+import HumanodeCodex from "../../src/pages/HumanodeCodex";
 
 function renderWithRouter(element: React.ReactElement, path = "/") {
   return renderToStaticMarkup(
@@ -25,6 +26,10 @@ test("Phase 89 static visual contract covers public entry routes", () => {
   const vortexopedia = renderWithRouter(
     createElement(Vortexopedia),
     "/app/vortexopedia",
+  );
+  const humanodeCodex = renderWithRouter(
+    createElement(HumanodeCodex),
+    "/app/humanode-codex",
   );
 
   assert.match(landing, /Enter Vortex/);
@@ -50,6 +55,10 @@ test("Phase 89 static visual contract covers public entry routes", () => {
   assert.match(vortexopedia, /Invision band/);
   assert.match(vortexopedia, /Concentrated Invision band/);
   assert.match(vortexopedia, /Vortex/);
+  assert.match(humanodeCodex, /Humanode Codex/);
+  assert.match(humanodeCodex, /Showing 27 Codex entries/);
+  assert.match(humanodeCodex, /GRANDPA equivocation/);
+  assert.match(humanodeCodex, /Fraud or material misrepresentation/);
 });
 
 test("Phase 89 static visual contract covers the app shell", () => {
@@ -81,6 +90,7 @@ test("Phase 89 static visual contract covers the app shell", () => {
   assert.match(html, /CM panel/);
   assert.match(html, /System/);
   assert.match(html, /Settings/);
+  assert.match(html, /Humanode Codex/);
   assert.doesNotMatch(html, /1 Human/);
   assert.doesNotMatch(html, /1 Node/);
   assert.doesNotMatch(html, /1 Vote/);

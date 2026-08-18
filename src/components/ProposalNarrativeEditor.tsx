@@ -57,6 +57,7 @@ const editorCommands = [
 ];
 
 export default function ProposalNarrativeEditor({
+  documentLabel = "Proposal",
   id,
   onChange,
   placeholder,
@@ -131,7 +132,7 @@ export default function ProposalNarrativeEditor({
       <div
         className="proposal-narrative-editor__toolbar"
         role="toolbar"
-        aria-label="Proposal formatting"
+        aria-label={`${documentLabel} formatting`}
       >
         {editorCommands.map(({ label, run }) => (
           <Button
@@ -200,7 +201,8 @@ export default function ProposalNarrativeEditor({
       ) : null}
       <p id={descriptionId} className="proposal-narrative-editor__hint">
         Use the formatting controls or standard editor shortcuts to structure
-        the proposal. The saved proposal remains portable Markdown.
+        this {documentLabel.toLowerCase()}. The saved text remains portable
+        Markdown.
       </p>
     </div>
   );

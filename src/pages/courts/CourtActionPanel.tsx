@@ -2,8 +2,15 @@ import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 
 import { GlassySection, GlassyTile } from "@/components/GlassySection";
+import {
+  CodexEvidenceHint,
+  CodexHint,
+  CodexMeasureHint,
+  CodexOffenseHint,
+  CodexPolicyHint,
+  CodexSeverityHint,
+} from "@/components/CodexHint";
 import { ProposalNarrativeEditor } from "@/components/ProposalNarrative";
-import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import {
@@ -22,9 +29,48 @@ import {
   apiRespondToCourtReopeningJuryV2,
   apiSubmitCourtResponseV2,
 } from "@/lib/apiClient";
-import { formatLoadError } from "@/lib/errorFormatting";
 import type { CourtCaseViewerV2Dto } from "@/types/api";
-import { courtLabel } from "./courtUi";
+import {
+  courtInitialAppellateResult,
+  courtFindingDefinition,
+  courtInitialFinding,
+  courtInitialRemedyChoice,
+  courtInitialRemedyChoices,
+  courtInitialSentenceAuthorization,
+  courtInitialSeverity,
+  courtRemedyEnvelope,
+  courtRemedySelectionIssues,
+  courtSelectedRemedyBurden,
+  type CourtRemedyChoice,
+  type CourtRemedySelectionIssue,
+  type CourtSeverity,
+} from "./courtBallotModel";
+import {
+  CourtActionFeedback,
+  CourtAsyncButton,
+  CourtDecisionSummary,
+  CourtEvidenceDraftFields,
+  CourtEvidenceSafetyNote,
+  CourtFormField,
+  CourtNarrativeRequirement,
+} from "./courtFormUi";
+import { CourtCopyValue, courtLabel } from "./courtUi";
+import {
+  COURT_APPEAL_GROUNDS,
+  compactCourtAuditValue,
+  courtAppealGroundDisplay,
+  courtCaseDeadline,
+  courtOffenseDisplay,
+  courtRemedyLabel,
+  courtSeverityDisplay,
+} from "./courtPresentation";
+import { useCourtCommandRunner } from "./useCourtCommandRunner";
+import {
+  courtEvidenceDraftIsEmpty,
+  courtEvidenceDraftToInput,
+  emptyCourtEvidenceDraft,
+  type CourtEvidenceDraftError,
+} from "./courtEvidenceForm";
 
 type ActionCapability =
   | "accept_jury_seat"
@@ -42,122 +88,122 @@ type ActionCapability =
   | "vote_sentence"
   | "vote_reopening";
 
-type RemedyComponent = {
-  id: string;
-  mode: "mandatory" | "optional";
-  value:
-    | { kind: "categorical" | "permanent" }
-    | { kind: "ordered_scope"; levels: string[] }
-    | {
-        kind: "quantitative";
-        range: { min: string; max: string; step: string };
-      };
-};
+const COURT_ACTION_FIELD_TARGETS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = Object.freeze({
+  appeal: {
+    groundCode: "court-appeal-ground",
+    grounds: "court-appeal-grounds",
+  },
+  "appellate-vote": {
+    modificationPackageId: "court-modification-package",
+    reasoning: "court-appellate-reasoning",
+    result: "court-appellate-outcome",
+  },
+  challenge: {
+    evidenceId: "court-challenge-evidence",
+    reason: "court-challenge-reason",
+  },
+  evidence: {
+    digest: "court-case-evidence-digest",
+    evidence: "court-evidence-statement",
+    proofType: "court-case-evidence-proof-type",
+    reference: "court-case-evidence-url",
+    statement: "court-evidence-statement",
+    targetId: "court-case-evidence-target-id",
+    url: "court-case-evidence-url",
+    verifierId: "court-case-evidence-verifier-id",
+    verifierVersion: "court-case-evidence-verifier-version",
+  },
+  finding: {
+    finding: "court-finding",
+    severity: "court-severity",
+  },
+  recusal: { reason: "court-recusal-reason" },
+  remedy: {
+    components: "court-remedy-authorize",
+    value: "court-remedy-authorize",
+  },
+  reopening: {
+    evidenceReference: "court-reopening-evidence",
+    statement: "court-reopening-statement",
+  },
+  "reopening-vote": {
+    reasoning: "court-reopening-reasoning",
+    reopen: "court-reopening-outcome",
+  },
+  response: {
+    access: "court-party-response",
+    statement: "court-party-response",
+  },
+});
 
-type RemedyChoice = {
-  include: boolean;
-  conditionalValue?: string | boolean;
-};
-
-const APPEAL_GROUNDS = [
-  "material_procedural_error",
-  "juror_ineligibility_or_conflict",
-  "material_evidence_error",
-  "policy_or_envelope_violation",
-  "material_new_evidence",
-  "executor_mismatch",
-] as const;
-
-function record(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
+function remedyReferences(codes: readonly string[]): ReactNode {
+  return codes.map((code, index) => (
+    <span key={code}>
+      {index ? ", " : null}
+      <CodexMeasureHint code={code}>{courtRemedyLabel(code)}</CodexMeasureHint>
+    </span>
+  ));
 }
 
-function remedyComponents(
-  definition: Record<string, unknown>,
-): RemedyComponent[] {
-  const envelope = record(definition.envelope);
-  const components = envelope?.components;
-  if (!Array.isArray(components)) return [];
-  const result: RemedyComponent[] = [];
-  for (const candidate of components) {
-    const item = record(candidate);
-    const value = record(item?.value);
-    if (
-      !item ||
-      typeof item.id !== "string" ||
-      (item.mode !== "mandatory" && item.mode !== "optional") ||
-      !value ||
-      typeof value.kind !== "string"
-    ) {
-      continue;
-    }
-    if (value.kind === "categorical" || value.kind === "permanent") {
-      result.push({
-        id: item.id,
-        mode: item.mode,
-        value: { kind: value.kind },
-      });
-      continue;
-    }
-    if (
-      value.kind === "ordered_scope" &&
-      Array.isArray(value.levels) &&
-      value.levels.every((level) => typeof level === "string")
-    ) {
-      result.push({
-        id: item.id,
-        mode: item.mode,
-        value: { kind: value.kind, levels: value.levels },
-      });
-      continue;
-    }
-    const range = record(value.range);
-    if (
-      value.kind === "quantitative" &&
-      typeof range?.min === "string" &&
-      typeof range.max === "string" &&
-      typeof range.step === "string"
-    ) {
-      result.push({
-        id: item.id,
-        mode: item.mode,
-        value: {
-          kind: value.kind,
-          range: { min: range.min, max: range.max, step: range.step },
-        },
-      });
-    }
+function remedyIssueDescription(issue: CourtRemedySelectionIssue): ReactNode {
+  if (issue.code === "missing_mandatory") {
+    return <>Required: {remedyReferences(issue.components)}.</>;
   }
-  return result;
+  if (issue.code === "missing_required_group") {
+    return <>Choose at least one: {remedyReferences(issue.components)}.</>;
+  }
+  if (issue.code === "incompatible_pair") {
+    return (
+      <>
+        {remedyReferences(issue.components.slice(0, 1))} cannot be combined with{" "}
+        {remedyReferences(issue.components.slice(1, 2))}.
+      </>
+    );
+  }
+  if (issue.code === "component_limit") {
+    return `${issue.domain ? `${courtLabel(issue.domain)} ` : ""}punitive components: ${issue.actual} selected; maximum ${issue.maximum}.`;
+  }
+  return `Burden: ${issue.actual} weighted eras; maximum ${issue.maximum}.`;
 }
 
-function initialRemedyChoice(component: RemedyComponent): RemedyChoice {
-  if (component.value.kind === "permanent") {
-    return { include: component.mode === "mandatory", conditionalValue: false };
-  }
-  if (component.value.kind === "ordered_scope") {
-    return {
-      include: component.mode === "mandatory",
-      conditionalValue: component.value.levels[0] ?? "",
-    };
-  }
-  if (component.value.kind === "quantitative") {
-    return {
-      include: component.mode === "mandatory",
-      conditionalValue: component.value.range.min,
-    };
-  }
-  return { include: component.mode === "mandatory" };
-}
-
-function Field({ children, label }: { children: ReactNode; label: string }) {
+function CourtCodexCheckbox({
+  checked,
+  disabled,
+  label,
+  onChange,
+  prefix,
+  reference,
+  suffix,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+  prefix?: string;
+  reference: string;
+  suffix?: string;
+}) {
   return (
-    <label className="grid gap-2 text-sm font-medium text-text">
-      {label}
-      {children}
-    </label>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text">
+      <label className="flex min-w-0 items-center gap-2 font-medium">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span>
+          {prefix}
+          {label}
+          {suffix}
+        </span>
+      </label>
+      <CodexHint reference={reference} underline={false}>
+        <span className="text-xs text-primary">Codex definition</span>
+      </CodexHint>
+    </div>
   );
 }
 
@@ -170,38 +216,67 @@ export function CourtActionPanel({
 }) {
   const caseId = courtCase.publicCase?.id ?? "";
   const ballot = courtCase.juryTask?.ballot ?? null;
-  const components = useMemo(
+  const remedyEnvelope = useMemo(
     () =>
-      ballot?.type === "remedy" ? remedyComponents(ballot.definition) : [],
+      ballot?.type === "remedy" ? courtRemedyEnvelope(ballot.definition) : null,
+    [ballot],
+  );
+  const components = useMemo(
+    () => remedyEnvelope?.components ?? [],
+    [remedyEnvelope],
+  );
+  const existingVote = ballot?.existingVote ?? null;
+  const findingDefinition = useMemo(
+    () =>
+      ballot?.type === "finding"
+        ? courtFindingDefinition(ballot.definition)
+        : null,
     [ballot],
   );
   const [response, setResponse] = useState("");
   const [evidenceStatement, setEvidenceStatement] = useState("");
-  const [evidenceUrl, setEvidenceUrl] = useState("");
-  const [evidenceDigest, setEvidenceDigest] = useState("");
+  const [evidenceDraft, setEvidenceDraft] = useState(emptyCourtEvidenceDraft);
+  const [evidenceError, setEvidenceError] =
+    useState<CourtEvidenceDraftError | null>(null);
   const [challengedEvidenceId, setChallengedEvidenceId] = useState("");
   const [challengeReason, setChallengeReason] = useState("");
-  const [recusalReason, setRecusalReason] = useState("");
-  const [finding, setFinding] = useState<"dismissed" | "substantiated">(
-    "dismissed",
+  const challengedEvidence = courtCase.evidence.find(
+    (item) => item.id === challengedEvidenceId,
   );
-  const [severity, setSeverity] = useState<"L1" | "L2" | "L3" | "L4">("L1");
-  const [authorizeSentence, setAuthorizeSentence] = useState(true);
-  const [choices, setChoices] = useState<Record<string, RemedyChoice>>(() =>
-    Object.fromEntries(
-      components.map((item) => [item.id, initialRemedyChoice(item)]),
-    ),
+  const [recusalReason, setRecusalReason] = useState("");
+  const [finding, setFinding] = useState<"dismissed" | "substantiated">(() =>
+    courtInitialFinding(existingVote),
+  );
+  const [severity, setSeverity] = useState<CourtSeverity>(() =>
+    courtInitialSeverity(existingVote, findingDefinition?.allowedSeverities),
+  );
+  const [authorizeSentence, setAuthorizeSentence] = useState(() =>
+    courtInitialSentenceAuthorization(existingVote),
+  );
+  const [choices, setChoices] = useState<Record<string, CourtRemedyChoice>>(
+    () => courtInitialRemedyChoices(components, existingVote),
+  );
+  const remedySelectionIssues = useMemo(
+    () =>
+      remedyEnvelope ? courtRemedySelectionIssues(remedyEnvelope, choices) : [],
+    [choices, remedyEnvelope],
+  );
+  const selectedRemedyBurden = useMemo(
+    () => courtSelectedRemedyBurden(components, choices),
+    [choices, components],
   );
   const [appealGround, setAppealGround] = useState<
-    (typeof APPEAL_GROUNDS)[number]
-  >(APPEAL_GROUNDS[0]);
+    (typeof COURT_APPEAL_GROUNDS)[number]
+  >(COURT_APPEAL_GROUNDS[0]);
   const [appeal, setAppeal] = useState("");
   const [requestStay, setRequestStay] = useState(true);
   const [appellateResult, setAppellateResult] = useState<
     "affirmed" | "reversed" | "remanded" | "modified"
-  >("affirmed");
+  >(() => courtInitialAppellateResult(courtCase.appellateTask));
   const [appellateReasoning, setAppellateReasoning] = useState("");
-  const [modificationPackageId, setModificationPackageId] = useState("");
+  const [modificationPackageId, setModificationPackageId] = useState(
+    courtCase.appellateTask?.existingVote?.modificationPackageId ?? "",
+  );
   const [retainedRemedyIds, setRetainedRemedyIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -213,8 +288,21 @@ export function CourtActionPanel({
   const [reopeningStatement, setReopeningStatement] = useState("");
   const [reopenVote, setReopenVote] = useState(true);
   const [reopeningReasoning, setReopeningReasoning] = useState("");
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const runner = useCourtCommandRunner(onCompleted);
+  const busy = runner.busy;
+  const actionLocked = (name: string) =>
+    busy !== null || runner.isConfirmed(`${caseId}:${name}`);
+  const juryInvitationLocked =
+    busy !== null ||
+    (["accept", "decline", "conflict"] as const).some((response) =>
+      runner.isConfirmed(`${caseId}:jury-invitation-${response}`),
+    );
+  const appellateInvitationLocked =
+    busy !== null ||
+    (["accept", "decline", "conflict"] as const).some((response) =>
+      runner.isConfirmed(`${caseId}:appellate-invitation-${response}`),
+    );
+  const deadline = courtCaseDeadline(courtCase);
 
   const can = (capability: ActionCapability) =>
     courtCase.capabilities[capability] === true;
@@ -235,66 +323,88 @@ export function CourtActionPanel({
     can("vote_reopening");
   if (!caseId || !hasActions) return null;
 
-  async function run(name: string, action: () => Promise<unknown>) {
-    setBusy(name);
-    setError(null);
-    try {
-      await action();
-      await onCompleted();
-    } catch (actionError) {
-      setError(
-        formatLoadError(
-          actionError instanceof Error
-            ? actionError.message
-            : String(actionError),
-        ),
-      );
-    } finally {
-      setBusy(null);
-    }
+  async function run(
+    name: string,
+    action: (idempotencyKey: string) => Promise<unknown>,
+    onConfirmed?: () => void,
+    unlockAfterRefresh = false,
+  ) {
+    await runner.run({
+      id: `${caseId}:${name}`,
+      label: courtLabel(name),
+      action,
+      fieldTargets: COURT_ACTION_FIELD_TARGETS[name],
+      onConfirmed,
+      unlockAfterRefresh,
+    });
   }
 
   async function submitResponse(event: FormEvent) {
     event.preventDefault();
-    await run("response", async () => {
-      await apiSubmitCourtResponseV2({
-        caseId,
-        statement: response.trim(),
-        access: "parties_and_jury",
-      });
-      setResponse("");
-    });
+    await run(
+      "response",
+      (idempotencyKey) =>
+        apiSubmitCourtResponseV2(
+          {
+            caseId,
+            statement: response.trim(),
+            access: "parties_and_jury",
+          },
+          { idempotencyKey },
+        ),
+      () => setResponse(""),
+      true,
+    );
   }
 
   async function submitEvidence(event: FormEvent) {
     event.preventDefault();
-    await run("evidence", async () => {
-      await apiAddCourtEvidenceV2({
-        caseId,
-        statement: evidenceStatement.trim() || null,
-        statementAccess: "parties_and_jury",
-        evidence:
-          evidenceUrl.trim() && evidenceDigest.trim()
-            ? [
-                {
-                  kind: "external_url",
-                  url: evidenceUrl.trim(),
-                  digest: evidenceDigest.trim(),
-                  provenance: "party_supplied",
-                  access: "parties_and_jury",
-                },
-              ]
-            : [],
-      });
-      setEvidenceStatement("");
-      setEvidenceUrl("");
-      setEvidenceDigest("");
-    });
+    const evidenceInput = courtEvidenceDraftIsEmpty(evidenceDraft)
+      ? null
+      : courtEvidenceDraftToInput(evidenceDraft, "party_supplied");
+    if (evidenceInput && !evidenceInput.ok) {
+      setEvidenceError(evidenceInput.error);
+      return;
+    }
+    await run(
+      "evidence",
+      (idempotencyKey) =>
+        apiAddCourtEvidenceV2(
+          {
+            caseId,
+            statement: evidenceStatement.trim() || null,
+            statementAccess: "parties_and_jury",
+            evidence: evidenceInput?.value ? [evidenceInput.value] : [],
+          },
+          { idempotencyKey },
+        ),
+      () => {
+        setEvidenceStatement("");
+        setEvidenceDraft(emptyCourtEvidenceDraft());
+        setEvidenceError(null);
+      },
+      true,
+    );
   }
 
   return (
     <GlassySection title="Your Court actions">
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="mb-4 space-y-2" aria-live="polite">
+        <p className="text-sm leading-6 text-muted">
+          Only actions currently authorized for you are shown.
+          {deadline
+            ? ` ${deadline.label}: ${new Date(deadline.dueAt).toLocaleString()}.`
+            : ""}
+        </p>
+        <CourtActionFeedback
+          actionError={runner.actionError}
+          actionField={runner.actionField}
+          notice={runner.notice}
+          refreshError={runner.refreshError}
+          onRetryRefresh={() => void runner.refresh()}
+        />
+      </div>
+      <div className="grid gap-4">
         {can("accept_jury_seat") ? (
           <GlassyTile className="space-y-4">
             <h3 className="text-base font-semibold text-text">
@@ -305,35 +415,65 @@ export function CourtActionPanel({
               instead of taking the seat.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button
-                disabled={busy !== null}
+              <CourtAsyncButton
+                busy={busy === `${caseId}:jury-invitation-accept`}
+                busyLabel="Accepting duty..."
+                disabled={juryInvitationLocked}
                 onClick={() =>
-                  void run("jury", () =>
-                    apiRespondToCourtJuryV2({
-                      caseId,
-                      response: "accept",
-                      conflict: "clear",
-                    }),
+                  void run("jury-invitation-accept", (idempotencyKey) =>
+                    apiRespondToCourtJuryV2(
+                      {
+                        caseId,
+                        response: "accept",
+                        conflict: "clear",
+                      },
+                      { idempotencyKey },
+                    ),
                   )
                 }
               >
                 Accept duty
-              </Button>
-              <Button
-                disabled={busy !== null}
+              </CourtAsyncButton>
+              <CourtAsyncButton
+                busy={busy === `${caseId}:jury-invitation-decline`}
+                busyLabel="Declining duty..."
+                disabled={juryInvitationLocked}
                 variant="outline"
                 onClick={() =>
-                  void run("jury", () =>
-                    apiRespondToCourtJuryV2({
-                      caseId,
-                      response: "decline",
-                      conflict: "self_disclosed",
-                    }),
+                  void run("jury-invitation-decline", (idempotencyKey) =>
+                    apiRespondToCourtJuryV2(
+                      {
+                        caseId,
+                        response: "decline",
+                        conflict: "clear",
+                      },
+                      { idempotencyKey },
+                    ),
                   )
                 }
               >
-                Disclose conflict and decline
-              </Button>
+                Decline duty
+              </CourtAsyncButton>
+              <CourtAsyncButton
+                busy={busy === `${caseId}:jury-invitation-conflict`}
+                busyLabel="Recording conflict..."
+                disabled={juryInvitationLocked}
+                variant="outline"
+                onClick={() =>
+                  void run("jury-invitation-conflict", (idempotencyKey) =>
+                    apiRespondToCourtJuryV2(
+                      {
+                        caseId,
+                        response: "decline",
+                        conflict: "self_disclosed",
+                      },
+                      { idempotencyKey },
+                    ),
+                  )
+                }
+              >
+                Disclose conflict
+              </CourtAsyncButton>
             </div>
           </GlassyTile>
         ) : null}
@@ -344,11 +484,14 @@ export function CourtActionPanel({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("recusal", () =>
-                  apiRecuseFromCourtJuryV2({
-                    caseId,
-                    reason: recusalReason.trim(),
-                  }),
+                void run("recusal", (idempotencyKey) =>
+                  apiRecuseFromCourtJuryV2(
+                    {
+                      caseId,
+                      reason: recusalReason.trim(),
+                    },
+                    { idempotencyKey },
+                  ),
                 );
               }}
             >
@@ -359,20 +502,33 @@ export function CourtActionPanel({
                 Recusal vacates your accepted seat and invites the next recorded
                 alternate.
               </p>
-              <Field label="Conflict or inability to serve">
+              <CourtFormField
+                htmlFor="court-recusal-reason"
+                label="Conflict or inability to serve"
+              >
                 <Input
+                  id="court-recusal-reason"
                   value={recusalReason}
                   onChange={(event) => setRecusalReason(event.target.value)}
                   minLength={10}
                   maxLength={5_000}
                 />
-              </Field>
-              <Button
-                disabled={busy !== null || recusalReason.trim().length < 10}
+              </CourtFormField>
+              <CourtNarrativeRequirement
+                current={recusalReason.trim().length}
+                minimum={10}
+                maximum={5_000}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:recusal`}
+                busyLabel="Recording recusal..."
+                disabled={
+                  actionLocked("recusal") || recusalReason.trim().length < 10
+                }
                 variant="outline"
               >
                 Recuse from this jury
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
@@ -384,15 +540,26 @@ export function CourtActionPanel({
                 Respond to the case
               </h3>
               <ProposalNarrativeEditor
+                documentLabel="Court response"
                 id="court-party-response"
                 value={response}
                 onChange={setResponse}
                 placeholder="State your response, relevant facts, and any disputed claims."
                 rows={8}
               />
-              <Button disabled={busy !== null || response.trim().length < 20}>
+              <CourtNarrativeRequirement
+                current={response.trim().length}
+                minimum={20}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:response`}
+                busyLabel="Submitting response..."
+                disabled={
+                  actionLocked("response") || response.trim().length < 20
+                }
+              >
                 Submit response
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
@@ -404,37 +571,44 @@ export function CourtActionPanel({
                 Add evidence
               </h3>
               <ProposalNarrativeEditor
+                documentLabel="Evidence statement"
                 id="court-evidence-statement"
                 value={evidenceStatement}
                 onChange={setEvidenceStatement}
                 placeholder="Explain what this evidence establishes and where it came from."
                 rows={6}
               />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Evidence URL">
-                  <Input
-                    type="url"
-                    value={evidenceUrl}
-                    onChange={(event) => setEvidenceUrl(event.target.value)}
-                  />
-                </Field>
-                <Field label="Evidence digest">
-                  <Input
-                    value={evidenceDigest}
-                    onChange={(event) => setEvidenceDigest(event.target.value)}
-                    placeholder="sha256:..."
-                  />
-                </Field>
-              </div>
-              <Button
+              <CourtEvidenceDraftFields
+                draft={evidenceDraft}
+                error={evidenceError}
+                idPrefix="court-case-evidence"
+                onChange={(next) => {
+                  setEvidenceDraft(next);
+                  setEvidenceError(null);
+                }}
+              />
+              {evidenceStatement.trim() ? (
+                <CourtNarrativeRequirement
+                  current={evidenceStatement.trim().length}
+                  minimum={20}
+                  maximum={20_000}
+                />
+              ) : null}
+              <CourtEvidenceSafetyNote />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:evidence`}
+                busyLabel="Adding evidence..."
                 disabled={
-                  busy !== null ||
+                  actionLocked("evidence") ||
                   (!evidenceStatement.trim() &&
-                    !(evidenceUrl.trim() && evidenceDigest.trim()))
+                    courtEvidenceDraftIsEmpty(evidenceDraft)) ||
+                  (Boolean(evidenceStatement.trim()) &&
+                    evidenceStatement.trim().length < 20) ||
+                  evidenceError !== null
                 }
               >
                 Add evidence
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
@@ -445,22 +619,34 @@ export function CourtActionPanel({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("challenge", async () => {
-                  await apiChallengeCourtEvidenceV2({
-                    caseId,
-                    evidenceId: challengedEvidenceId,
-                    reason: challengeReason.trim(),
-                  });
-                  setChallengedEvidenceId("");
-                  setChallengeReason("");
-                });
+                void run(
+                  "challenge",
+                  (idempotencyKey) =>
+                    apiChallengeCourtEvidenceV2(
+                      {
+                        caseId,
+                        evidenceId: challengedEvidenceId,
+                        reason: challengeReason.trim(),
+                      },
+                      { idempotencyKey },
+                    ),
+                  () => {
+                    setChallengedEvidenceId("");
+                    setChallengeReason("");
+                  },
+                  true,
+                );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 Challenge evidence
               </h3>
-              <Field label="Evidence record">
+              <CourtFormField
+                htmlFor="court-challenge-evidence"
+                label="Evidence record"
+              >
                 <Select
+                  id="court-challenge-evidence"
                   value={challengedEvidenceId}
                   onChange={(event) =>
                     setChallengedEvidenceId(event.target.value)
@@ -470,28 +656,46 @@ export function CourtActionPanel({
                   <option value="">Choose evidence</option>
                   {courtCase.evidence.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {courtLabel(item.kind)} · {item.digest}
+                      {courtLabel(item.kind)} ·{" "}
+                      {compactCourtAuditValue(item.digest, 24)}
                     </option>
                   ))}
                 </Select>
-              </Field>
-              <Field label="Reason">
+              </CourtFormField>
+              {challengedEvidence ? (
+                <p className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted">
+                  Selected digest
+                  <CourtCopyValue
+                    label="selected evidence digest"
+                    value={challengedEvidence.digest}
+                  />
+                </p>
+              ) : null}
+              <CourtFormField htmlFor="court-challenge-reason" label="Reason">
                 <Input
+                  id="court-challenge-reason"
                   value={challengeReason}
                   onChange={(event) => setChallengeReason(event.target.value)}
                   minLength={10}
                   maxLength={5_000}
                 />
-              </Field>
-              <Button
+              </CourtFormField>
+              <CourtNarrativeRequirement
+                current={challengeReason.trim().length}
+                minimum={10}
+                maximum={5_000}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:challenge`}
+                busyLabel="Submitting challenge..."
                 disabled={
-                  busy !== null ||
+                  actionLocked("challenge") ||
                   !challengedEvidenceId ||
                   challengeReason.trim().length < 10
                 }
               >
                 Submit challenge
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
@@ -502,27 +706,29 @@ export function CourtActionPanel({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("finding", () =>
-                  finding === "dismissed"
-                    ? apiCastCourtFindingVoteV2({
-                        caseId,
-                        ballotId: ballot.id,
-                        finding,
-                      })
-                    : apiCastCourtFindingVoteV2({
-                        caseId,
-                        ballotId: ballot.id,
-                        finding,
-                        severity,
-                      }),
+                void run(
+                  "finding",
+                  (idempotencyKey) =>
+                    finding === "dismissed"
+                      ? apiCastCourtFindingVoteV2(
+                          { caseId, ballotId: ballot.id, finding },
+                          { idempotencyKey },
+                        )
+                      : apiCastCourtFindingVoteV2(
+                          { caseId, ballotId: ballot.id, finding, severity },
+                          { idempotencyKey },
+                        ),
+                  undefined,
+                  true,
                 );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 Finding ballot
               </h3>
-              <Field label="Finding">
+              <CourtFormField htmlFor="court-finding" label="Finding">
                 <Select
+                  id="court-finding"
                   value={finding}
                   onChange={(event) =>
                     setFinding(event.target.value as typeof finding)
@@ -531,58 +737,208 @@ export function CourtActionPanel({
                   <option value="dismissed">Dismissed</option>
                   <option value="substantiated">Substantiated</option>
                 </Select>
-              </Field>
+              </CourtFormField>
               {finding === "substantiated" ? (
-                <Field label="Severity">
+                <CourtFormField htmlFor="court-severity" label="Severity">
                   <Select
+                    id="court-severity"
                     value={severity}
                     onChange={(event) =>
                       setSeverity(event.target.value as typeof severity)
                     }
                   >
-                    {(["L1", "L2", "L3", "L4"] as const).map((level) => (
-                      <option key={level}>{level}</option>
-                    ))}
+                    {(findingDefinition?.allowedSeverities ?? []).map(
+                      (level) => (
+                        <option key={level} value={level}>
+                          {courtSeverityDisplay(level).label}
+                        </option>
+                      ),
+                    )}
                   </Select>
-                </Field>
+                </CourtFormField>
               ) : null}
-              <Button disabled={busy !== null}>Cast finding vote</Button>
+              <p className="text-sm leading-6 text-muted">
+                {finding === "dismissed" ? (
+                  "Dismiss when the authorized record does not meet the frozen finding standard."
+                ) : (
+                  <>
+                    <CodexSeverityHint code={severity}>
+                      {courtSeverityDisplay(severity).label}
+                    </CodexSeverityHint>
+                    {`: ${courtSeverityDisplay(severity).description} Evidence standard: `}
+                    {findingDefinition?.evidenceStandards[severity] ? (
+                      <CodexEvidenceHint
+                        code={findingDefinition.evidenceStandards[severity]}
+                      >
+                        {findingDefinition.evidenceStandards[severity]}
+                      </CodexEvidenceHint>
+                    ) : (
+                      "Unavailable"
+                    )}
+                    .
+                  </>
+                )}
+              </p>
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Finding",
+                    value:
+                      finding === "dismissed" ? "Dismissed" : "Substantiated",
+                  },
+                  {
+                    label: "Severity",
+                    value:
+                      finding === "substantiated" ? (
+                        <CodexSeverityHint code={severity}>
+                          {courtSeverityDisplay(severity).label}
+                        </CodexSeverityHint>
+                      ) : (
+                        "Not applicable"
+                      ),
+                  },
+                  {
+                    label: "Alleged offense",
+                    value: findingDefinition?.offenseCode ? (
+                      <CodexOffenseHint code={findingDefinition.offenseCode}>
+                        {
+                          courtOffenseDisplay(findingDefinition.offenseCode)
+                            .label
+                        }
+                      </CodexOffenseHint>
+                    ) : (
+                      "Definition unavailable"
+                    ),
+                  },
+                  {
+                    label: "Evidence standard",
+                    value:
+                      finding === "substantiated" &&
+                      findingDefinition?.evidenceStandards[severity] ? (
+                        <CodexEvidenceHint
+                          code={findingDefinition.evidenceStandards[severity]}
+                        >
+                          {findingDefinition.evidenceStandards[severity]}
+                        </CodexEvidenceHint>
+                      ) : finding === "substantiated" ? (
+                        "Unavailable"
+                      ) : (
+                        "Not applicable"
+                      ),
+                  },
+                ]}
+                replacement={
+                  ballot.existingVote
+                    ? `This replaces recorded vote revision ${ballot.existingVote.revision}.`
+                    : null
+                }
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:finding`}
+                busyLabel="Casting finding vote..."
+                disabled={actionLocked("finding") || findingDefinition === null}
+              >
+                Cast finding vote
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
 
         {can("vote_sentence") && ballot?.type === "remedy" ? (
-          <GlassyTile className="lg:col-span-2">
+          <GlassyTile>
             <form
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("remedy", () =>
-                  apiCastCourtRemedyVoteV2({
-                    caseId,
-                    ballotId: ballot.id,
-                    authorizeSentence,
-                    components: components.map((component) => ({
-                      componentId: component.id,
-                      include:
-                        choices[component.id]?.include ??
-                        component.mode === "mandatory",
-                      ...(choices[component.id]?.conditionalValue !== undefined
-                        ? {
-                            conditionalValue:
-                              choices[component.id].conditionalValue,
-                          }
-                        : {}),
-                    })),
-                  }),
+                void run(
+                  "remedy",
+                  (idempotencyKey) =>
+                    apiCastCourtRemedyVoteV2(
+                      {
+                        caseId,
+                        ballotId: ballot.id,
+                        authorizeSentence,
+                        components: components.map((component) => ({
+                          componentId: component.id,
+                          include:
+                            choices[component.id]?.include ??
+                            component.mode === "mandatory",
+                          ...(choices[component.id]?.conditionalValue !==
+                          undefined
+                            ? {
+                                conditionalValue:
+                                  choices[component.id].conditionalValue,
+                              }
+                            : {}),
+                        })),
+                      },
+                      { idempotencyKey },
+                    ),
+                  undefined,
+                  true,
                 );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 Remedy ballot
               </h3>
+              {remedyEnvelope ? (
+                <CourtDecisionSummary
+                  title="Frozen sentence envelope"
+                  items={[
+                    {
+                      label: "Offense and severity",
+                      value: (
+                        <>
+                          <CodexOffenseHint code={remedyEnvelope.offenseCode}>
+                            {
+                              courtOffenseDisplay(remedyEnvelope.offenseCode)
+                                .label
+                            }
+                          </CodexOffenseHint>
+                          {" · "}
+                          <CodexSeverityHint code={remedyEnvelope.severity}>
+                            {
+                              courtSeverityDisplay(remedyEnvelope.severity)
+                                .label
+                            }
+                          </CodexSeverityHint>
+                        </>
+                      ),
+                    },
+                    {
+                      label: "Authorization threshold",
+                      value: `${remedyEnvelope.thresholds.authorization} of 12 jurors`,
+                    },
+                    {
+                      label: "Punitive component limit",
+                      value: remedyEnvelope.maximumComponentCount,
+                    },
+                    {
+                      label: "Weighted burden ceiling",
+                      value: `${remedyEnvelope.maximumBurden} eras`,
+                    },
+                  ]}
+                  replacement={
+                    <>
+                      Policy{" "}
+                      <CodexPolicyHint>
+                        {remedyEnvelope.policyVersion}
+                      </CodexPolicyHint>
+                      . The ballot can record only the remedies and ranges
+                      frozen when this sentence stage opened.
+                    </>
+                  }
+                />
+              ) : (
+                <p className="text-sm text-destructive" role="alert">
+                  The frozen sentence envelope is unavailable or invalid. This
+                  ballot cannot be cast safely.
+                </p>
+              )}
               <label className="flex items-center gap-2 text-sm font-medium text-text">
                 <input
+                  id="court-remedy-authorize"
                   type="checkbox"
                   checked={authorizeSentence}
                   onChange={(event) =>
@@ -591,33 +947,49 @@ export function CourtActionPanel({
                 />
                 Authorize a punitive sentence
               </label>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <fieldset
+                className="grid gap-3 disabled:opacity-50 sm:grid-cols-2"
+                disabled={!authorizeSentence || actionLocked("remedy")}
+              >
                 {components.map((component) => {
                   const choice =
-                    choices[component.id] ?? initialRemedyChoice(component);
+                    choices[component.id] ??
+                    courtInitialRemedyChoice(component);
                   return (
                     <div
                       key={component.id}
                       className="grid gap-3 border border-border/60 p-3"
                     >
-                      <label className="flex items-center gap-2 text-sm font-medium text-text">
-                        <input
-                          type="checkbox"
-                          checked={choice.include}
-                          disabled={component.mode === "mandatory"}
-                          onChange={(event) =>
-                            setChoices((current) => ({
-                              ...current,
-                              [component.id]: {
-                                ...choice,
-                                include: event.target.checked,
-                              },
-                            }))
-                          }
-                        />
-                        {courtLabel(component.id)}
-                        {component.mode === "mandatory" ? " (required)" : ""}
-                      </label>
+                      <CourtCodexCheckbox
+                        checked={choice.include}
+                        disabled={component.mode === "mandatory"}
+                        label={courtRemedyLabel(component.id)}
+                        onChange={(include) =>
+                          setChoices((current) => ({
+                            ...current,
+                            [component.id]: {
+                              ...choice,
+                              include,
+                            },
+                          }))
+                        }
+                        reference={component.id}
+                        suffix={
+                          component.mode === "mandatory" ? " (required)" : ""
+                        }
+                      />
+                      <p className="text-xs leading-5 text-muted">
+                        {courtLabel(component.domain)} · Executor{" "}
+                        {courtLabel(component.executorId)}{" "}
+                        {component.executorVersion}
+                        {` · ${courtLabel(component.expiryBehavior)} · ${courtLabel(component.appealBehavior)}`}
+                      </p>
+                      {component.burden ? (
+                        <p className="text-xs leading-5 text-muted">
+                          Burden weight {component.burden.weight} per{" "}
+                          {component.burden.unit.slice(0, -1)}.
+                        </p>
+                      ) : null}
                       {component.value.kind === "ordered_scope" ? (
                         <Select
                           value={String(choice.conditionalValue ?? "")}
@@ -639,23 +1011,35 @@ export function CourtActionPanel({
                         </Select>
                       ) : null}
                       {component.value.kind === "quantitative" ? (
-                        <Input
-                          inputMode="numeric"
-                          value={String(
-                            choice.conditionalValue ??
-                              component.value.range.min,
-                          )}
-                          onChange={(event) =>
-                            setChoices((current) => ({
-                              ...current,
-                              [component.id]: {
-                                ...choice,
-                                conditionalValue: event.target.value,
-                              },
-                            }))
-                          }
-                          aria-label={`${courtLabel(component.id)} value`}
-                        />
+                        <div className="space-y-2">
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            required
+                            min={component.value.range.min}
+                            max={component.value.range.max}
+                            step={component.value.range.step}
+                            value={String(
+                              choice.conditionalValue ??
+                                component.value.range.min,
+                            )}
+                            onChange={(event) =>
+                              setChoices((current) => ({
+                                ...current,
+                                [component.id]: {
+                                  ...choice,
+                                  conditionalValue: event.target.value,
+                                },
+                              }))
+                            }
+                            aria-label={`${courtLabel(component.id)} value`}
+                          />
+                          <p className="text-xs text-muted">
+                            Allowed range {component.value.range.min} to{" "}
+                            {component.value.range.max}; step{" "}
+                            {component.value.range.step}.
+                          </p>
+                        </div>
                       ) : null}
                       {component.value.kind === "permanent" ? (
                         <label className="flex items-center gap-2 text-sm text-text">
@@ -678,53 +1062,115 @@ export function CourtActionPanel({
                     </div>
                   );
                 })}
-              </div>
-              <Button disabled={busy !== null || components.length === 0}>
+              </fieldset>
+              {authorizeSentence && remedySelectionIssues.length ? (
+                <div className="space-y-1" role="alert">
+                  {remedySelectionIssues.map((issue, index) => (
+                    <p
+                      key={`${issue.code}-${index}`}
+                      className="text-sm text-destructive"
+                    >
+                      {remedyIssueDescription(issue)}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Punitive sentence",
+                    value: authorizeSentence ? "Authorize" : "Do not authorize",
+                  },
+                  {
+                    label: "Included remedies",
+                    value: authorizeSentence
+                      ? components.filter(
+                          (component) =>
+                            choices[component.id]?.include ??
+                            component.mode === "mandatory",
+                        ).length
+                      : 0,
+                  },
+                  {
+                    label: "Selected weighted burden",
+                    value: authorizeSentence
+                      ? `${selectedRemedyBurden} of ${remedyEnvelope?.maximumBurden ?? "unknown"} eras`
+                      : "Not applicable",
+                  },
+                ]}
+                replacement={
+                  ballot.existingVote
+                    ? `This replaces recorded vote revision ${ballot.existingVote.revision}.`
+                    : null
+                }
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:remedy`}
+                busyLabel="Casting remedy vote..."
+                disabled={
+                  actionLocked("remedy") ||
+                  remedyEnvelope === null ||
+                  components.length === 0 ||
+                  (authorizeSentence && remedySelectionIssues.length > 0)
+                }
+              >
                 Cast remedy vote
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
 
         {can("file_appeal") ? (
-          <GlassyTile className="lg:col-span-2">
+          <GlassyTile>
             <form
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("appeal", () =>
-                  apiFileCourtAppealV2({
-                    caseId,
-                    groundCode: appealGround,
-                    grounds: appeal.trim(),
-                    requestStay,
-                  }),
+                void run("appeal", (idempotencyKey) =>
+                  apiFileCourtAppealV2(
+                    {
+                      caseId,
+                      groundCode: appealGround,
+                      grounds: appeal.trim(),
+                      requestStay,
+                    },
+                    { idempotencyKey },
+                  ),
                 );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 File an appeal
               </h3>
-              <Field label="Ground">
+              <CourtFormField htmlFor="court-appeal-ground" label="Ground">
                 <Select
+                  id="court-appeal-ground"
                   value={appealGround}
                   onChange={(event) =>
                     setAppealGround(event.target.value as typeof appealGround)
                   }
                 >
-                  {APPEAL_GROUNDS.map((ground) => (
+                  {COURT_APPEAL_GROUNDS.map((ground) => (
                     <option key={ground} value={ground}>
-                      {courtLabel(ground)}
+                      {courtAppealGroundDisplay(ground).label}
                     </option>
                   ))}
                 </Select>
-              </Field>
+              </CourtFormField>
+              <p className="text-sm leading-6 text-muted">
+                {courtAppealGroundDisplay(appealGround).description}
+              </p>
               <ProposalNarrativeEditor
+                documentLabel="Appeal"
                 id="court-appeal-grounds"
                 value={appeal}
                 onChange={setAppeal}
                 placeholder="Explain the material error or new evidence supporting this appeal."
                 rows={8}
+              />
+              <CourtNarrativeRequirement
+                current={appeal.trim().length}
+                minimum={20}
               />
               <label className="flex items-center gap-2 text-sm font-medium text-text">
                 <input
@@ -734,16 +1180,32 @@ export function CourtActionPanel({
                 />
                 Request a stay while the appeal is reviewed
               </label>
-              <Button disabled={busy !== null || appeal.trim().length < 20}>
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Ground",
+                    value: courtAppealGroundDisplay(appealGround).label,
+                  },
+                  {
+                    label: "Stay requested",
+                    value: requestStay ? "Yes" : "No",
+                  },
+                ]}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:appeal`}
+                busyLabel="Filing appeal..."
+                disabled={actionLocked("appeal") || appeal.trim().length < 20}
+              >
                 File appeal
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
 
         {can("respond_appellate_invitation") ||
         can("respond_reopening_invitation") ? (
-          <GlassyTile className="space-y-4 lg:col-span-2">
+          <GlassyTile className="space-y-4">
             <h3 className="text-base font-semibold text-text">
               {can("respond_reopening_invitation")
                 ? "Reopening panel invitation"
@@ -755,21 +1217,37 @@ export function CourtActionPanel({
             </p>
             <div className="flex flex-wrap gap-2">
               {(["accept", "decline", "conflict"] as const).map((response) => (
-                <Button
+                <CourtAsyncButton
                   key={response}
-                  disabled={busy !== null}
+                  busy={busy === `${caseId}:appellate-invitation-${response}`}
+                  busyLabel={
+                    response === "accept"
+                      ? "Accepting duty..."
+                      : response === "decline"
+                        ? "Declining duty..."
+                        : "Recording conflict..."
+                  }
+                  disabled={appellateInvitationLocked}
                   variant={response === "accept" ? "primary" : "outline"}
                   onClick={() =>
-                    void run("appellate-invitation", () =>
-                      can("respond_reopening_invitation")
-                        ? apiRespondToCourtReopeningJuryV2({
-                            panelId: courtCase.appellateTask!.panelId,
-                            response,
-                          })
-                        : apiRespondToCourtAppellateJuryV2({
-                            panelId: courtCase.appellateTask!.panelId,
-                            response,
-                          }),
+                    void run(
+                      `appellate-invitation-${response}`,
+                      (idempotencyKey) =>
+                        can("respond_reopening_invitation")
+                          ? apiRespondToCourtReopeningJuryV2(
+                              {
+                                panelId: courtCase.appellateTask!.panelId,
+                                response,
+                              },
+                              { idempotencyKey },
+                            )
+                          : apiRespondToCourtAppellateJuryV2(
+                              {
+                                panelId: courtCase.appellateTask!.panelId,
+                                response,
+                              },
+                              { idempotencyKey },
+                            ),
                     )
                   }
                 >
@@ -778,7 +1256,7 @@ export function CourtActionPanel({
                     : response === "decline"
                       ? "Decline"
                       : "Disclose conflict"}
-                </Button>
+                </CourtAsyncButton>
               ))}
             </div>
           </GlassyTile>
@@ -791,11 +1269,18 @@ export function CourtActionPanel({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("modification", () =>
-                  apiProposeCourtAppellateModificationV2({
-                    panelId: courtCase.appellateTask!.panelId,
-                    retainedRemedyIds: [...retainedRemedyIds],
-                  }),
+                void run(
+                  "modification",
+                  (idempotencyKey) =>
+                    apiProposeCourtAppellateModificationV2(
+                      {
+                        panelId: courtCase.appellateTask!.panelId,
+                        retainedRemedyIds: [...retainedRemedyIds],
+                      },
+                      { idempotencyKey },
+                    ),
+                  undefined,
+                  true,
                 );
               }}
             >
@@ -808,35 +1293,46 @@ export function CourtActionPanel({
               </p>
               <div className="grid gap-2">
                 {courtCase.appellateTask.remedies.map((remedy) => (
-                  <label
+                  <CourtCodexCheckbox
                     key={remedy.id}
-                    className="flex items-center gap-2 text-sm text-text"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={retainedRemedyIds.has(remedy.id)}
-                      onChange={(event) =>
-                        setRetainedRemedyIds((current) => {
-                          const next = new Set(current);
-                          if (event.target.checked) next.add(remedy.id);
-                          else next.delete(remedy.id);
-                          return next;
-                        })
-                      }
-                    />
-                    Keep {courtLabel(remedy.componentCode)}
-                  </label>
+                    checked={retainedRemedyIds.has(remedy.id)}
+                    label={courtRemedyLabel(remedy.componentCode)}
+                    onChange={(retain) =>
+                      setRetainedRemedyIds((current) => {
+                        const next = new Set(current);
+                        if (retain) next.add(remedy.id);
+                        else next.delete(remedy.id);
+                        return next;
+                      })
+                    }
+                    prefix="Keep "
+                    reference={remedy.componentCode}
+                  />
                 ))}
               </div>
-              <Button
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Retained remedies",
+                    value: `${retainedRemedyIds.size} of ${courtCase.appellateTask.remedies.length}`,
+                  },
+                  {
+                    label: "Effect",
+                    value: "Reduce the original package only",
+                  },
+                ]}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:modification`}
+                busyLabel="Proposing package..."
                 disabled={
-                  busy !== null ||
+                  actionLocked("modification") ||
                   retainedRemedyIds.size ===
                     courtCase.appellateTask.remedies.length
                 }
               >
                 Propose modification
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
@@ -847,27 +1343,38 @@ export function CourtActionPanel({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("appellate-vote", () =>
-                  appellateResult === "modified"
-                    ? apiCastCourtAppellateVoteV2({
-                        panelId: courtCase.appellateTask!.panelId,
-                        result: appellateResult,
-                        modificationPackageId,
-                        reasoning: appellateReasoning.trim(),
-                      })
-                    : apiCastCourtAppellateVoteV2({
-                        panelId: courtCase.appellateTask!.panelId,
-                        result: appellateResult,
-                        reasoning: appellateReasoning.trim(),
-                      }),
+                void run(
+                  "appellate-vote",
+                  (idempotencyKey) =>
+                    appellateResult === "modified"
+                      ? apiCastCourtAppellateVoteV2(
+                          {
+                            panelId: courtCase.appellateTask!.panelId,
+                            result: appellateResult,
+                            modificationPackageId,
+                            reasoning: appellateReasoning.trim(),
+                          },
+                          { idempotencyKey },
+                        )
+                      : apiCastCourtAppellateVoteV2(
+                          {
+                            panelId: courtCase.appellateTask!.panelId,
+                            result: appellateResult,
+                            reasoning: appellateReasoning.trim(),
+                          },
+                          { idempotencyKey },
+                        ),
+                  undefined,
+                  true,
                 );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 Appeal decision
               </h3>
-              <Field label="Outcome">
+              <CourtFormField htmlFor="court-appellate-outcome" label="Outcome">
                 <Select
+                  id="court-appellate-outcome"
                   value={appellateResult}
                   onChange={(event) =>
                     setAppellateResult(
@@ -880,10 +1387,14 @@ export function CourtActionPanel({
                   <option value="remanded">Remand for a new trial</option>
                   <option value="modified">Adopt a modification</option>
                 </Select>
-              </Field>
+              </CourtFormField>
               {appellateResult === "modified" ? (
-                <Field label="Modification package">
+                <CourtFormField
+                  htmlFor="court-modification-package"
+                  label="Modification package"
+                >
                   <Select
+                    id="court-modification-package"
                     value={modificationPackageId}
                     onChange={(event) =>
                       setModificationPackageId(event.target.value)
@@ -900,40 +1411,67 @@ export function CourtActionPanel({
                         </option>
                       ))}
                   </Select>
-                </Field>
+                </CourtFormField>
               ) : null}
               <ProposalNarrativeEditor
+                documentLabel="Appellate reasoning"
                 id="court-appellate-reasoning"
                 value={appellateReasoning}
                 onChange={setAppellateReasoning}
                 placeholder="Explain the legal and evidentiary basis for this outcome."
                 rows={7}
               />
-              <Button
+              <CourtNarrativeRequirement
+                current={appellateReasoning.trim().length}
+                minimum={20}
+              />
+              <CourtDecisionSummary
+                items={[
+                  { label: "Outcome", value: courtLabel(appellateResult) },
+                  {
+                    label: "Modification package",
+                    value:
+                      appellateResult === "modified"
+                        ? modificationPackageId || "Not selected"
+                        : "Not applicable",
+                  },
+                ]}
+                replacement={
+                  courtCase.appellateTask?.existingVote
+                    ? "This replaces your currently recorded appellate vote."
+                    : null
+                }
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:appellate-vote`}
+                busyLabel="Casting appeal vote..."
                 disabled={
-                  busy !== null ||
+                  actionLocked("appellate-vote") ||
                   appellateReasoning.trim().length < 20 ||
                   (appellateResult === "modified" && !modificationPackageId)
                 }
               >
                 Cast appeal vote
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
 
         {can("file_reopening") ? (
-          <GlassyTile className="lg:col-span-2">
+          <GlassyTile>
             <form
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("reopening", () =>
-                  apiFileCourtReopeningV2({
-                    caseId,
-                    evidenceReference: reopeningEvidenceReference.trim(),
-                    statement: reopeningStatement.trim(),
-                  }),
+                void run("reopening", (idempotencyKey) =>
+                  apiFileCourtReopeningV2(
+                    {
+                      caseId,
+                      evidenceReference: reopeningEvidenceReference.trim(),
+                      statement: reopeningStatement.trim(),
+                    },
+                    { idempotencyKey },
+                  ),
                 );
               }}
             >
@@ -945,55 +1483,86 @@ export function CourtActionPanel({
                 unavailable and could change the result. Exonerating identity or
                 cryptographic proof has no time limit.
               </p>
-              <Field label="Evidence reference">
+              <CourtFormField
+                htmlFor="court-reopening-evidence"
+                label="Evidence reference"
+              >
                 <Input
+                  id="court-reopening-evidence"
                   value={reopeningEvidenceReference}
                   onChange={(event) =>
                     setReopeningEvidenceReference(event.target.value)
                   }
                   placeholder="ipfs://, protocol proof, or immutable archive"
                 />
-              </Field>
+              </CourtFormField>
               <ProposalNarrativeEditor
+                documentLabel="Reopening request"
                 id="court-reopening-statement"
                 value={reopeningStatement}
                 onChange={setReopeningStatement}
                 placeholder="Explain why the evidence was unavailable and how it could alter the result."
                 rows={8}
               />
-              <Button
+              <CourtNarrativeRequirement
+                current={reopeningStatement.trim().length}
+                minimum={20}
+              />
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Evidence reference",
+                    value: reopeningEvidenceReference.trim() || "Not set",
+                  },
+                  {
+                    label: "Requested outcome",
+                    value: "Open a new trial review",
+                  },
+                ]}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:reopening`}
+                busyLabel="Requesting review..."
                 disabled={
-                  busy !== null ||
+                  actionLocked("reopening") ||
                   !reopeningEvidenceReference.trim() ||
                   reopeningStatement.trim().length < 20
                 }
               >
                 Request reopening review
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
 
         {can("vote_reopening") ? (
-          <GlassyTile className="lg:col-span-2">
+          <GlassyTile>
             <form
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void run("reopening-vote", () =>
-                  apiCastCourtReopeningVoteV2({
-                    panelId: courtCase.appellateTask!.panelId,
-                    reopen: reopenVote,
-                    reasoning: reopeningReasoning.trim(),
-                  }),
+                void run(
+                  "reopening-vote",
+                  (idempotencyKey) =>
+                    apiCastCourtReopeningVoteV2(
+                      {
+                        panelId: courtCase.appellateTask!.panelId,
+                        reopen: reopenVote,
+                        reasoning: reopeningReasoning.trim(),
+                      },
+                      { idempotencyKey },
+                    ),
+                  undefined,
+                  true,
                 );
               }}
             >
               <h3 className="text-base font-semibold text-text">
                 Reopening decision
               </h3>
-              <Field label="Outcome">
+              <CourtFormField htmlFor="court-reopening-outcome" label="Outcome">
                 <Select
+                  id="court-reopening-outcome"
                   value={reopenVote ? "reopen" : "deny"}
                   onChange={(event) =>
                     setReopenVote(event.target.value === "reopen")
@@ -1002,26 +1571,44 @@ export function CourtActionPanel({
                   <option value="reopen">Open a new trial</option>
                   <option value="deny">Keep the final decision</option>
                 </Select>
-              </Field>
+              </CourtFormField>
               <ProposalNarrativeEditor
+                documentLabel="Reopening decision"
                 id="court-reopening-reasoning"
                 value={reopeningReasoning}
                 onChange={setReopeningReasoning}
                 placeholder="Explain whether the verified evidence meets the reopening standard."
                 rows={7}
               />
-              <Button
+              <CourtNarrativeRequirement
+                current={reopeningReasoning.trim().length}
+                minimum={20}
+              />
+              <CourtDecisionSummary
+                items={[
+                  {
+                    label: "Outcome",
+                    value: reopenVote
+                      ? "Open a new trial"
+                      : "Keep the final decision",
+                  },
+                  { label: "Panel", value: "Reopening panel" },
+                ]}
+              />
+              <CourtAsyncButton
+                busy={busy === `${caseId}:reopening-vote`}
+                busyLabel="Casting reopening vote..."
                 disabled={
-                  busy !== null || reopeningReasoning.trim().length < 20
+                  actionLocked("reopening-vote") ||
+                  reopeningReasoning.trim().length < 20
                 }
               >
                 Cast reopening vote
-              </Button>
+              </CourtAsyncButton>
             </form>
           </GlassyTile>
         ) : null}
       </div>
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
     </GlassySection>
   );
 }

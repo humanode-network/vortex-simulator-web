@@ -78,6 +78,7 @@ export function GlassyRecordCard({
             stage={stage}
             label={stageLabel}
             className="glassy-record-card__stage"
+            interactiveHint={false}
           />
           {dateText ? (
             <span className="glassy-record-card__time">{dateText}</span>
