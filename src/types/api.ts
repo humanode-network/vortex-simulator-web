@@ -1219,6 +1219,7 @@ export type CourtRuntimeStatusV2Dto =
 export type CourtReportingCapabilityV2Dto =
   | {
       status: "available";
+      assessedAt: string;
       target: CourtTargetReferenceV2Dto & {
         canonicalRoute: string | null;
         accessClass: "public" | "private" | "sealed";
@@ -1324,20 +1325,6 @@ export type CourtCaseViewerV2Dto = {
   } | null;
   partyRecord: {
     parties: { address: string; role: string; state: string }[];
-    target: {
-      canonicalRoute: string | null;
-      digest: string;
-      accessClass: "public" | "private" | "sealed";
-      snapshotPayload: Record<string, unknown>;
-    };
-    events: {
-      sequence: number;
-      eventType: string;
-      previousState: string | null;
-      nextState: string | null;
-      payload: Record<string, unknown>;
-      createdAt: string;
-    }[];
   } | null;
   caseRecord: {
     allegationCode: string;
@@ -1420,7 +1407,8 @@ export type CourtCaseViewerV2Dto = {
           verifierId: string;
           verifiedAt: string;
           filedAt: string;
-        };
+        }
+      | null;
     remedies: { id: string; componentCode: string; state: string }[];
     existingVote: {
       result: string;
@@ -1508,6 +1496,8 @@ export type CourtPrivateReportV2Dto = CourtMyReportItemV2Dto & {
     snapshot: Record<string, unknown>;
   };
   incident: { startedAt: string; endedAt: string | null };
+  respondentId: string | null;
+  affectedId: string | null;
   policyVersionId: string;
   immediateProtectionRequested: boolean;
   triggerKind: string | null;

@@ -64,6 +64,12 @@ export type CourtRemedySelectionIssue =
 export type CourtSeverity = "L1" | "L2" | "L3" | "L4";
 export type CourtEvidenceStandard = "E1" | "E2" | "E3";
 
+export type CourtJuryBallot = NonNullable<
+  NonNullable<CourtCaseViewerV2Dto["juryTask"]>["ballot"]
+>;
+export type CourtFindingBallot = CourtJuryBallot & { type: "finding" };
+export type CourtRemedyBallot = CourtJuryBallot & { type: "remedy" };
+
 export type CourtFindingDefinition = {
   offenseCode: string;
   allowedSeverities: readonly CourtSeverity[];
@@ -72,9 +78,7 @@ export type CourtFindingDefinition = {
   >;
 };
 
-type ExistingVote = NonNullable<
-  NonNullable<CourtCaseViewerV2Dto["juryTask"]>["ballot"]
->["existingVote"];
+type ExistingVote = CourtJuryBallot["existingVote"];
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)

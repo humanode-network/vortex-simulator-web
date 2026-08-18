@@ -4,7 +4,7 @@ import {
   courtEvidenceDraftIsEmpty,
   courtEvidenceDraftToInput,
   emptyCourtEvidenceDraft,
-} from "@/pages/courts/courtEvidenceForm";
+} from "@/pages/courts/forms/courtEvidence";
 
 const digest = `sha256:${"a".repeat(64)}`;
 

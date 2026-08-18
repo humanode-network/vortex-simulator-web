@@ -17,7 +17,7 @@ import {
   formatCourtDuration,
   courtSeverityDisplay,
   courtStandingDisplay,
-} from "../../src/pages/courts/courtPresentation";
+} from "../../src/pages/courts/model/courtPresentation";
 import type {
   CourtCaseViewerV2Dto,
   CourtCaseStateV2Dto,

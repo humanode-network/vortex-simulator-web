@@ -15,7 +15,7 @@ import { Input } from "@/components/primitives/input";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatChamberLabel } from "@/lib/chamberUi";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
-import { courtCompositeTargetId } from "@/pages/courts/courtReportTarget";
+import { courtCompositeTargetId } from "@/pages/courts/model/courtReportTarget";
 import type {
   ChamberDto,
   ChamberGovernorDto,

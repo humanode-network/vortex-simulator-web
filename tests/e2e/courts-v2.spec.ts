@@ -189,11 +189,14 @@ async function installCourtFixtures(
   authenticated = true,
   options: {
     caseDetailFailureAfter?: number;
+    caseDetailDelays?: Record<string, number>;
+    caseDetails?: Record<string, Record<string, unknown>>;
     caseListDelayMs?: number;
     casesStatus?: "available" | "unavailable";
     commandFailures?: number;
     notificationsStatus?: "available" | "unavailable";
     notifications?: Record<string, unknown>[];
+    onCapability?: (url: URL) => void;
     onCommand?: (command: Record<string, unknown>) => void;
     reportDetail?: Record<string, unknown>;
     reports?: Record<string, unknown>[];
@@ -243,8 +246,13 @@ async function installCourtFixtures(
       });
       return;
     }
-    if (url.pathname === `/api/reports/cases/${caseId}`) {
+    if (url.pathname.startsWith("/api/reports/cases/")) {
       caseDetailRequests += 1;
+      const requestedCaseId = decodeURIComponent(
+        url.pathname.split("/").pop() ?? "",
+      );
+      const delay = options.caseDetailDelays?.[requestedCaseId];
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       if (
         options.caseDetailFailureAfter !== undefined &&
         caseDetailRequests > options.caseDetailFailureAfter
@@ -255,7 +263,14 @@ async function installCourtFixtures(
         });
         return;
       }
-      await route.fulfill({ json: fixture });
+      const detail =
+        options.caseDetails?.[requestedCaseId] ??
+        (requestedCaseId === caseId ? fixture : null);
+      await route.fulfill(
+        detail
+          ? { json: detail }
+          : { status: 404, json: { error: "Court case not found" } },
+      );
       return;
     }
     if (url.pathname === "/api/reports/mine") {
@@ -283,9 +298,11 @@ async function installCourtFixtures(
       return;
     }
     if (url.pathname === "/api/reports/capability") {
+      options.onCapability?.(url);
       await route.fulfill({
         json: {
           status: "available",
+          assessedAt: "2026-08-12T10:00:00.000Z",
           target: {
             type: url.searchParams.get("type"),
             id: url.searchParams.get("id"),
@@ -353,6 +370,8 @@ async function installCourtFixtures(
           offenseCode: "GOV-03",
           lane: "court_report",
           incident: { startedAt: "2026-08-12T10:00:00.000Z", endedAt: null },
+          respondentId: "human-respondent",
+          affectedId: null,
           submittedAt: "2026-08-12T10:00:00.000Z",
           updatedAt: "2026-08-12T10:00:00.000Z",
           amendmentDueAt: null,
@@ -363,7 +382,10 @@ async function installCourtFixtures(
           triggerKind: null,
           revision: 1,
           statementDigest: "sha256:statement",
-          statement: { body: "A complete browser report." },
+          statement: {
+            body: "A complete browser report.",
+            access: "parties_and_jury",
+          },
           revisions: [
             {
               revision: 1,
@@ -423,7 +445,7 @@ test("long Court audit values stay readable and exactly copyable", async ({
     ...caseRecord,
     partyRecord: {
       ...caseRecord.partyRecord,
-      target: { ...caseRecord.partyRecord.target, digest: longDigest },
+      target: { ...caseRecord.caseRecord.target, digest: longDigest },
     },
     caseRecord: {
       ...caseRecord.caseRecord,
@@ -448,6 +470,36 @@ test("long Court audit values stay readable and exactly copyable", async ({
     .locator("body")
     .evaluate((element) => element.scrollWidth);
   expect(bodyWidth).toBeLessThanOrEqual(390);
+});
+
+test("switching case ids never exposes the previous case response", async ({
+  page,
+}) => {
+  const caseA = "case-route-a";
+  const caseB = "case-route-b";
+  const fixtureA = {
+    ...caseRecord,
+    publicCase: { ...caseRecord.publicCase, id: caseA },
+    partyRecord: { ...caseRecord.partyRecord, id: caseA },
+    caseRecord: { ...caseRecord.caseRecord, id: caseA },
+  };
+  const fixtureB = {
+    ...caseRecord,
+    publicCase: { ...caseRecord.publicCase, id: caseB },
+    partyRecord: { ...caseRecord.partyRecord, id: caseB },
+    caseRecord: { ...caseRecord.caseRecord, id: caseB },
+  };
+  await installCourtFixtures(page, caseRecord, true, {
+    caseDetailDelays: { [caseA]: 800 },
+    caseDetails: { [caseA]: fixtureA, [caseB]: fixtureB },
+  });
+  await page.goto(`/app/courts/${caseA}`);
+  await page.evaluate((nextPath) => {
+    window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, `/app/courts/${caseB}`);
+  await expect(page.getByText(caseB, { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(caseA, { exact: true })).toHaveCount(0);
 });
 
 test("Court choices and their Codex definitions remain separate controls", async ({
@@ -497,6 +549,55 @@ test("a reporter completes the canonical report journey", async ({ page }) => {
   await expect(
     page.getByText("report-browser-journey", { exact: true }),
   ).toBeVisible();
+});
+
+test("report creation uses server time and warns before abandoning dirty work", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const RealDate = Date;
+    class SkewedDate extends RealDate {
+      constructor(value?: string | number | Date) {
+        super(value === undefined ? "2036-01-01T00:00:00.000Z" : value);
+      }
+      static now() {
+        return Date.parse("2036-01-01T00:00:00.000Z");
+      }
+    }
+    window.Date = SkewedDate as DateConstructor;
+  });
+  const capabilityRequests: URL[] = [];
+  await installCourtFixtures(page, caseRecord, true, {
+    onCapability: (url) => capabilityRequests.push(url),
+  });
+  await page.goto(
+    "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review",
+  );
+  const incidentStart = page.getByLabel("Incident start");
+  await expect(incidentStart).not.toHaveValue("");
+  expect(await incidentStart.inputValue()).not.toContain("2036");
+  expect(capabilityRequests[0]?.searchParams.has("incidentAt")).toBe(false);
+
+  await page
+    .getByLabel(
+      "Describe what happened, when it happened, and why this reason applies.",
+    )
+    .fill(
+      "This unsaved report should remain present when navigation is cancelled.",
+    );
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("link", { name: "Feed", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/courts\/reports\/new/);
+  await expect(
+    page.getByLabel(
+      "Describe what happened, when it happened, and why this reason applies.",
+    ),
+  ).toContainText(
+    "This unsaved report should remain present when navigation is cancelled.",
+  );
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.evaluate(() => window.history.back());
+  await expect(page).toHaveURL(/\/app\/courts\/reports\/new/);
 });
 
 test("report evidence is never silently discarded", async ({ page }) => {
@@ -689,6 +790,8 @@ test("report actions come from the server projection in amendment state", async 
       offenseCode: "GOV-03",
       lane: "court_report",
       incident: { startedAt: "2026-08-12T10:00:00.000Z", endedAt: null },
+      respondentId: "human-respondent",
+      affectedId: null,
       submittedAt: "2026-08-12T10:00:00.000Z",
       updatedAt: "2026-08-12T10:00:00.000Z",
       amendmentDueAt: "2026-08-19T10:00:00.000Z",
@@ -699,7 +802,10 @@ test("report actions come from the server projection in amendment state", async 
       triggerKind: null,
       revision: 2,
       statementDigest: "sha256:statement",
-      statement: { body: "A report requiring one precise amendment." },
+      statement: {
+        body: "A report requiring one precise amendment.",
+        access: "parties_and_jury",
+      },
       revisions: [
         {
           revision: 1,
@@ -742,6 +848,14 @@ test("report actions come from the server projection in amendment state", async 
   await expect(
     page.getByRole("button", { name: "Submit amendment" }),
   ).toBeDisabled();
+  await page
+    .getByLabel("Provide the corrected statement requested by intake review.")
+    .fill(
+      "The corrected report identifies the affected vote and clarifies the incident timeline.",
+    );
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.getByRole("link", { name: "Feed", exact: true }).click();
+  await expect(page).toHaveURL("/app/courts/reports/report-browser-journey");
   await expect(
     page.getByRole("button", { name: "Withdraw report" }),
   ).toBeVisible();

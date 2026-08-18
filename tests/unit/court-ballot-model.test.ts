@@ -11,7 +11,7 @@ import {
   courtRemedyComponents,
   courtRemedySelectionIssues,
   courtSelectedRemedyBurden,
-} from "@/pages/courts/courtBallotModel";
+} from "@/pages/courts/model/courtBallot";
 
 const existingVote = {
   revision: 3,

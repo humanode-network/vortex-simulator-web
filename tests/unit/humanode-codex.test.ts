@@ -15,6 +15,7 @@ import {
   humanodeCodexOffenses,
   humanodeCodexOffensesByCode,
   humanodeCodexReference,
+  humanodeCodexReferenceTokens,
   humanodeCodexSeverityRules,
 } from "../../src/data/humanodeCodex";
 
@@ -109,6 +110,24 @@ test("Codex references are unique and route to their exact clauses", () => {
   );
 });
 
+test("automatic Codex hints include exact numbered points before parent clauses", () => {
+  for (const clause of humanodeCodexClauses) {
+    assert.ok(humanodeCodexReferenceTokens.includes(clause.ref));
+    clause.points.forEach((_, index) => {
+      const pointRef = `${clause.ref}.${index + 1}`;
+      assert.ok(
+        humanodeCodexReferenceTokens.includes(pointRef),
+        `Hint registry is missing ${pointRef}`,
+      );
+      assert.ok(
+        humanodeCodexReferenceTokens.indexOf(pointRef) <
+          humanodeCodexReferenceTokens.indexOf(clause.ref),
+        `${pointRef} must be matched before ${clause.ref}`,
+      );
+    });
+  }
+});
+
 test("reserved measures cannot enter compiled offense sentence lists", () => {
   const reserved = new Set(
     humanodeCodexMeasures
@@ -147,9 +166,12 @@ test("readable Codex offense levels and sentence measures match the server polic
     new RegExp(`COURT_JURY_SIZE = ${HUMANODE_CODEX_JURY_SIZE}\\b`),
   );
   assert.match(
-    corePolicy,
-    new RegExp(`authorization: ${HUMANODE_CODEX_SENTENCE_AUTHORIZATION}\\b`),
+    contracts,
+    new RegExp(
+      `COURT_CHARTER_DECISION_THRESHOLD = ${HUMANODE_CODEX_SENTENCE_AUTHORIZATION}\\b`,
+    ),
   );
+  assert.match(corePolicy, /authorization: COURT_CHARTER_DECISION_THRESHOLD\b/);
 
   for (const offense of humanodeCodexOffenses) {
     const levels = corePolicy.match(

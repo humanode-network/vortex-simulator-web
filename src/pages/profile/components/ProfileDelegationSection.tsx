@@ -11,7 +11,7 @@ import { formatChamberLabel } from "@/lib/chamberUi";
 import { shortAddress } from "@/lib/profileUi";
 import type { HumanNodeProfileDto } from "@/types/api";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
-import { courtCompositeTargetId } from "@/pages/courts/courtReportTarget";
+import { courtCompositeTargetId } from "@/pages/courts/model/courtReportTarget";
 
 type DelegationChamber = HumanNodeProfileDto["delegation"]["chambers"][number];
 

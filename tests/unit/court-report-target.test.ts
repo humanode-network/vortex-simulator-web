@@ -4,7 +4,9 @@ import { test } from "@rstest/core";
 import {
   courtCompositeTargetId,
   courtReportPath,
-} from "../../src/pages/courts/courtReportTarget";
+  courtReportTargetFromSearchParams,
+  safeCourtReturnPath,
+} from "../../src/pages/courts/model/courtReportTarget";
 
 test("Court report targets preserve canonical ids and safe return context", () => {
   assert.equal(
@@ -31,5 +33,43 @@ test("Court report paths reject external return destinations", () => {
       "https://example.test/app/proposals/proposal-1",
     ),
     "/app/courts/reports/new?targetType=proposal&targetId=proposal-1",
+  );
+});
+
+test("Court report query parsing accepts only known target types", () => {
+  assert.deepEqual(
+    courtReportTargetFromSearchParams(
+      new URLSearchParams(
+        "targetType=initiative&targetId=initiative-1&revision=revision-2",
+      ),
+    ),
+    { type: "initiative", id: "initiative-1", revision: "revision-2" },
+  );
+  assert.equal(
+    courtReportTargetFromSearchParams(
+      new URLSearchParams("targetType=made_up&targetId=record-1"),
+    ),
+    null,
+  );
+  assert.equal(
+    courtReportTargetFromSearchParams(
+      new URLSearchParams("targetType=proposal&targetId=%20"),
+    ),
+    null,
+  );
+});
+
+test("Court return paths remain inside the app", () => {
+  assert.equal(
+    safeCourtReturnPath(" /app/proposals/proposal-1 ", "/app/courts"),
+    "/app/proposals/proposal-1",
+  );
+  assert.equal(
+    safeCourtReturnPath("https://example.test/app/courts", "/app/courts"),
+    "/app/courts",
+  );
+  assert.equal(
+    safeCourtReturnPath("//example.test/app/courts", "/app/courts"),
+    "/app/courts",
   );
 });

@@ -1,0 +1,5 @@
+export const COURT_STATEMENT_MIN_LENGTH = 20;
+export const COURT_STATEMENT_MAX_LENGTH = 20_000;
+
+export const COURT_REASON_MIN_LENGTH = 10;
+export const COURT_REASON_MAX_LENGTH = 5_000;

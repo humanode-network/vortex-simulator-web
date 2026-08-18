@@ -8,15 +8,15 @@ import {
 import { Button } from "@/components/primitives/button";
 import { apiSetCourtNotificationStateV2 } from "@/lib/apiClient";
 import type { CourtNotificationV2Dto } from "@/types/api";
-import { CourtActionFeedback, CourtAsyncButton } from "./courtFormUi";
-import { courtNotificationMessage } from "./courtPresentation";
+import { CourtActionFeedback, CourtAsyncButton } from "./forms/CourtFormUi";
+import { courtNotificationMessage } from "./model/courtPresentation";
 import {
   courtLabel,
   CourtDeadline,
   courtTone,
   formatCourtInstant,
-} from "./courtUi";
-import { useCourtCommandRunner } from "./useCourtCommandRunner";
+} from "./components/CourtPrimitives";
+import { useCourtCommandRunner } from "./hooks/useCourtCommandRunner";
 
 export function CourtNotificationCard({
   notification,

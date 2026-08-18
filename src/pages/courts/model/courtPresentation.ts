@@ -7,6 +7,7 @@ import type {
   CourtReportStateV2Dto,
 } from "@/types/api";
 import {
+  HUMANODE_CODEX_JURY_SIZE,
   humanodeCodexMeasuresByCode,
   humanodeCodexOffensesByCode,
 } from "@/data/humanodeCodex";
@@ -670,10 +671,10 @@ export function courtEventFacts(
   addText("offenseCode", "Offense", (value) => value);
   addText("componentCode", "Remedy", (value) => value);
   addText("evidenceStandard", "Evidence standard", (value) => value);
-  addCount("support", "Support", 12);
+  addCount("support", "Support", HUMANODE_CODEX_JURY_SIZE);
   addBoolean("authorized", "Sentence authorized");
   addBoolean("enforceable", "Enforceable remedy");
-  addCount("seatCount", "Seated jurors", 12);
+  addCount("seatCount", "Seated jurors", HUMANODE_CODEX_JURY_SIZE);
   addCount("eligibleCount", "Eligible governors");
   addCount("requiredCount", "Required governors");
   addText("evidenceId", "Evidence record");

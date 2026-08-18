@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import {
@@ -21,13 +21,15 @@ import {
   ProposalNarrativeEditor,
 } from "@/components/ProposalNarrative";
 import { Button } from "@/components/primitives/button";
+import { Input } from "@/components/primitives/input";
+import { Select } from "@/components/primitives/select";
 import {
   CourtActionFeedback,
   CourtAsyncButton,
-  CourtEvidenceDraftFields,
-  CourtEvidenceSafetyNote,
+  CourtEvidenceAccessOptions,
+  CourtEvidenceComposer,
   CourtNarrativeRequirement,
-} from "./courtFormUi";
+} from "./forms/CourtFormUi";
 import {
   apiAmendCourtReportV2,
   apiCourtReportV2,
@@ -36,33 +38,51 @@ import {
 } from "@/lib/apiClient";
 import type { CourtPrivateReportV2Dto } from "@/types/api";
 import {
+  CourtEvidenceCard,
+  CourtReportRevisionHistory,
+} from "./components/CourtCaseRecord";
+import {
   courtLabel,
   CourtDeadline,
-  CourtEvidenceCard,
   CourtCopyValue,
-  CourtReportRevisionHistory,
   CourtStandingReference,
   CourtStateSummary,
   CourtTargetPreview,
   courtTone,
   formatCourtInstant,
-} from "./courtUi";
+} from "./components/CourtPrimitives";
 import {
   courtLaneDisplay,
   courtOffenseDisplay,
   courtReportProcessContext,
   courtReportStateDisplay,
-} from "./courtPresentation";
+} from "./model/courtPresentation";
 import { CourtsUnavailable } from "./CourtsUnavailable";
-import { useCourtRuntime } from "./useCourtRuntime";
-import { useCourtCommandRunner } from "./useCourtCommandRunner";
-import { useCourtRecord } from "./useCourtRecord";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
+import { useCourtCommandRunner } from "./hooks/useCourtCommandRunner";
+import { useUnsavedChangesGuard } from "./hooks/useUnsavedChangesGuard";
+import { useCourtRecord } from "./hooks/useCourtRecord";
 import {
-  courtEvidenceDraftIsEmpty,
-  courtEvidenceDraftToInput,
-  emptyCourtEvidenceDraft,
-  type CourtEvidenceDraftError,
-} from "./courtEvidenceForm";
+  COURT_REPORT_EVIDENCE_ACCESS,
+  courtEvidenceFieldIds,
+} from "./forms/courtEvidence";
+import {
+  COURT_STATEMENT_MAX_LENGTH,
+  COURT_STATEMENT_MIN_LENGTH,
+} from "./model/courtConstraints";
+import { courtLocalDateTime } from "./model/courtDates";
+import { useCourtEvidenceDraft } from "./hooks/useCourtEvidenceDraft";
+
+const SUPPLEMENT_EVIDENCE_FIELD_IDS = courtEvidenceFieldIds("court-supplement");
+
+function courtReportStatementText(
+  report: Pick<CourtPrivateReportV2Dto, "statement">,
+): string {
+  if (typeof report.statement.markdown === "string") {
+    return report.statement.markdown;
+  }
+  return typeof report.statement.body === "string" ? report.statement.body : "";
+}
 
 const CourtReportDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -75,38 +95,120 @@ const CourtReportDetail: React.FC = () => {
   const record = useCourtRecord<CourtPrivateReportV2Dto>({
     enabled: runtime.status === "available" && Boolean(id),
     load: loadReport,
+    recordKey: id,
   });
   const report = record.data;
   const process = report ? courtReportProcessContext(report) : null;
-  const revisionRunner = useCourtCommandRunner(record.reload);
-  const withdrawRunner = useCourtCommandRunner();
+  const revisionRunner = useCourtCommandRunner(record.reload, id);
+  const withdrawRunner = useCourtCommandRunner(undefined, id);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [supplement, setSupplement] = useState("");
-  const [evidenceDraft, setEvidenceDraft] = useState(emptyCourtEvidenceDraft);
-  const [evidenceError, setEvidenceError] =
-    useState<CourtEvidenceDraftError | null>(null);
+  const [statementAccess, setStatementAccess] = useState<
+    | "public"
+    | "parties_and_jury"
+    | "jury_only_pending_summary"
+    | "security_sealed"
+  >("parties_and_jury");
+  const [incidentStartsAt, setIncidentStartsAt] = useState("");
+  const [incidentEndsAt, setIncidentEndsAt] = useState("");
+  const [respondentId, setRespondentId] = useState("");
+  const [affectedId, setAffectedId] = useState("");
+  const [editingRevision, setEditingRevision] = useState<number | null>(null);
+  const {
+    change: changeEvidenceDraft,
+    draft: evidenceDraft,
+    error: evidenceError,
+    isEmpty: evidenceDraftIsEmpty,
+    reset: resetEvidenceDraft,
+    validate: validateEvidenceDraft,
+  } = useCourtEvidenceDraft("court-supplement");
+  const currentAccessIndex = report
+    ? COURT_REPORT_EVIDENCE_ACCESS.indexOf(
+        report.statement
+          .access as (typeof COURT_REPORT_EVIDENCE_ACCESS)[number],
+      )
+    : -1;
+  const allowedStatementAccess = COURT_REPORT_EVIDENCE_ACCESS.filter(
+    (_access, index) => currentAccessIndex < 0 || index >= currentAccessIndex,
+  );
+  const originalStatement = report ? courtReportStatementText(report) : "";
+  const amendmentChanged = report?.actions.amend
+    ? supplement !== originalStatement ||
+      incidentStartsAt !==
+        courtLocalDateTime(new Date(report.incident.startedAt)) ||
+      incidentEndsAt !==
+        (report.incident.endedAt
+          ? courtLocalDateTime(new Date(report.incident.endedAt))
+          : "") ||
+      respondentId !== (report.respondentId ?? "") ||
+      affectedId !== (report.affectedId ?? "") ||
+      statementAccess !== report.statement.access ||
+      !evidenceDraftIsEmpty
+    : true;
+  const revisionDirty =
+    report && editingRevision === report.revision
+      ? report.actions.amend
+        ? amendmentChanged
+        : Boolean(supplement.trim() || !evidenceDraftIsEmpty)
+      : false;
+  useUnsavedChangesGuard(
+    revisionDirty && revisionRunner.busy === null,
+    "Discard the unsaved Court report changes?",
+  );
+
+  useEffect(() => {
+    setWithdrawOpen(false);
+    setSupplement("");
+    resetEvidenceDraft();
+    setIncidentStartsAt("");
+    setIncidentEndsAt("");
+    setRespondentId("");
+    setAffectedId("");
+    setEditingRevision(null);
+  }, [id, resetEvidenceDraft]);
+
+  useEffect(() => {
+    const access = report?.statement.access;
+    if (
+      access === "public" ||
+      access === "parties_and_jury" ||
+      access === "jury_only_pending_summary" ||
+      access === "security_sealed"
+    ) {
+      setStatementAccess(access);
+    }
+    if (report) {
+      const body = courtReportStatementText(report);
+      setSupplement(report.actions.amend ? body : "");
+      setIncidentStartsAt(
+        courtLocalDateTime(new Date(report.incident.startedAt)),
+      );
+      setIncidentEndsAt(
+        report.incident.endedAt
+          ? courtLocalDateTime(new Date(report.incident.endedAt))
+          : "",
+      );
+      setRespondentId(report.respondentId ?? "");
+      setAffectedId(report.affectedId ?? "");
+      setEditingRevision(report.revision);
+    }
+  }, [report?.id, report?.revision, report?.statement.access]);
 
   async function reviseReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!report) return;
     const amendment = report.actions.amend;
-    const evidenceInput = courtEvidenceDraftIsEmpty(evidenceDraft)
-      ? null
-      : courtEvidenceDraftToInput(
-          evidenceDraft,
-          amendment ? "reporter_amendment" : "reporter_supplement",
-        );
-    if (evidenceInput && !evidenceInput.ok) {
-      setEvidenceError(evidenceInput.error);
-      return;
-    }
-    const evidence = evidenceInput?.value ? [evidenceInput.value] : [];
+    const evidenceInput = validateEvidenceDraft(
+      amendment ? "reporter_amendment" : "reporter_supplement",
+    );
+    if (!evidenceInput.ok) return;
+    const evidence = evidenceInput.value ? [evidenceInput.value] : [];
     await revisionRunner.run({
       id: `${amendment ? "amendment" : "supplement"}:${report.id}:${report.revision}`,
       label: amendment ? "Report amendment" : "Report supplement",
       fieldTargets: {
-        digest: "court-supplement-digest",
-        evidence: "court-supplement-digest",
+        ...SUPPLEMENT_EVIDENCE_FIELD_IDS,
+        evidence: SUPPLEMENT_EVIDENCE_FIELD_IDS.digest,
         statement: "court-report-supplement",
       },
       action: (idempotencyKey) => {
@@ -115,8 +217,14 @@ const CourtReportDetail: React.FC = () => {
             {
               reportId: report.id,
               statement: supplement.trim(),
-              statementAccess: "parties_and_jury",
+              statementAccess,
               evidence,
+              respondentId: respondentId.trim() || null,
+              affectedId: affectedId.trim() || null,
+              incidentStartsAt: new Date(incidentStartsAt).toISOString(),
+              incidentEndsAt: incidentEndsAt
+                ? new Date(incidentEndsAt).toISOString()
+                : null,
             },
             { idempotencyKey },
           );
@@ -125,7 +233,7 @@ const CourtReportDetail: React.FC = () => {
           {
             reportId: report.id,
             statement: supplement.trim() || null,
-            statementAccess: "parties_and_jury",
+            statementAccess,
             evidence,
           },
           { idempotencyKey },
@@ -133,8 +241,7 @@ const CourtReportDetail: React.FC = () => {
       },
       onConfirmed: () => {
         setSupplement("");
-        setEvidenceDraft(emptyCourtEvidenceDraft());
-        setEvidenceError(null);
+        resetEvidenceDraft();
       },
       unlockAfterRefresh: true,
     });
@@ -342,6 +449,66 @@ const CourtReportDetail: React.FC = () => {
                       Submitted; it does not open a case by itself.
                     </p>
                   ) : null}
+                  {report.actions.amend ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label
+                        className="grid gap-2 text-sm text-text"
+                        htmlFor="court-amend-incident-start"
+                      >
+                        <span className="font-medium">Incident start</span>
+                        <Input
+                          id="court-amend-incident-start"
+                          type="datetime-local"
+                          value={incidentStartsAt}
+                          onChange={(event) =>
+                            setIncidentStartsAt(event.target.value)
+                          }
+                          required
+                        />
+                      </label>
+                      <label
+                        className="grid gap-2 text-sm text-text"
+                        htmlFor="court-amend-incident-end"
+                      >
+                        <span className="font-medium">Incident end</span>
+                        <Input
+                          id="court-amend-incident-end"
+                          type="datetime-local"
+                          min={incidentStartsAt}
+                          value={incidentEndsAt}
+                          onChange={(event) =>
+                            setIncidentEndsAt(event.target.value)
+                          }
+                        />
+                      </label>
+                      <label
+                        className="grid gap-2 text-sm text-text"
+                        htmlFor="court-amend-respondent"
+                      >
+                        <span className="font-medium">Respondent address</span>
+                        <Input
+                          id="court-amend-respondent"
+                          value={respondentId}
+                          onChange={(event) =>
+                            setRespondentId(event.target.value)
+                          }
+                        />
+                      </label>
+                      <label
+                        className="grid gap-2 text-sm text-text"
+                        htmlFor="court-amend-affected"
+                      >
+                        <span className="font-medium">Affected address</span>
+                        <Input
+                          id="court-amend-affected"
+                          value={affectedId}
+                          onChange={(event) =>
+                            setAffectedId(event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
                   <ProposalNarrativeEditor
                     documentLabel={
                       report.actions.amend
@@ -358,11 +525,32 @@ const CourtReportDetail: React.FC = () => {
                     }
                     rows={7}
                   />
+                  <label
+                    className="grid gap-2 text-sm text-text"
+                    htmlFor="court-report-revision-access"
+                  >
+                    <span className="font-medium">
+                      Who may read this revision
+                    </span>
+                    <Select
+                      id="court-report-revision-access"
+                      value={statementAccess}
+                      onChange={(event) =>
+                        setStatementAccess(
+                          event.target.value as typeof statementAccess,
+                        )
+                      }
+                    >
+                      <CourtEvidenceAccessOptions
+                        accesses={allowedStatementAccess}
+                      />
+                    </Select>
+                  </label>
                   {report.actions.amend || supplement.trim() ? (
                     <CourtNarrativeRequirement
                       current={supplement.trim().length}
-                      minimum={20}
-                      maximum={20_000}
+                      minimum={COURT_STATEMENT_MIN_LENGTH}
+                      maximum={COURT_STATEMENT_MAX_LENGTH}
                     />
                   ) : (
                     <p className="text-xs text-muted">
@@ -370,16 +558,12 @@ const CourtReportDetail: React.FC = () => {
                       reference.
                     </p>
                   )}
-                  <CourtEvidenceDraftFields
+                  <CourtEvidenceComposer
                     draft={evidenceDraft}
                     error={evidenceError}
                     idPrefix="court-supplement"
-                    onChange={(next) => {
-                      setEvidenceDraft(next);
-                      setEvidenceError(null);
-                    }}
+                    onChange={changeEvidenceDraft}
                   />
-                  <CourtEvidenceSafetyNote />
                   <CourtActionFeedback
                     actionError={revisionRunner.actionError}
                     actionField={revisionRunner.actionField}
@@ -397,12 +581,19 @@ const CourtReportDetail: React.FC = () => {
                       }
                       disabled={
                         (report.actions.amend &&
-                          supplement.trim().length < 20) ||
+                          (supplement.trim().length <
+                            COURT_STATEMENT_MIN_LENGTH ||
+                            supplement.trim().length >
+                              COURT_STATEMENT_MAX_LENGTH ||
+                            !amendmentChanged)) ||
                         (!report.actions.amend &&
                           !supplement.trim() &&
-                          courtEvidenceDraftIsEmpty(evidenceDraft)) ||
+                          evidenceDraftIsEmpty) ||
                         (Boolean(supplement.trim()) &&
-                          supplement.trim().length < 20) ||
+                          (supplement.trim().length <
+                            COURT_STATEMENT_MIN_LENGTH ||
+                            supplement.trim().length >
+                              COURT_STATEMENT_MAX_LENGTH)) ||
                         evidenceError !== null
                       }
                     >
@@ -419,11 +610,8 @@ const CourtReportDetail: React.FC = () => {
             <GlassyTile className="space-y-4">
               <ProposalNarrative
                 value={
-                  typeof report.statement.markdown === "string"
-                    ? report.statement.markdown
-                    : typeof report.statement.body === "string"
-                      ? report.statement.body
-                      : "Statement is available in its signed evidence record."
+                  courtReportStatementText(report) ||
+                  "Statement is available in its signed evidence record."
                 }
               />
               <GlassyCompactGrid className="sm:grid-cols-2">

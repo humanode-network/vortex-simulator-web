@@ -19,20 +19,17 @@ import type {
   CourtMyReportItemV2Dto,
   CourtNotificationV2Dto,
 } from "@/types/api";
-import {
-  CourtCaseCard,
-  CourtCollectionNotice,
-  CourtReportCard,
-} from "./courtUi";
+import { CourtCaseCard, CourtReportCard } from "./components/CourtRecordCards";
+import { CourtCollectionNotice } from "./components/CourtPrimitives";
 import { CourtNotificationCard } from "./CourtNotificationCard";
 import { CourtsUnavailable } from "./CourtsUnavailable";
-import { useCourtCollection } from "./useCourtCollection";
-import { useCourtRuntime } from "./useCourtRuntime";
+import { useCourtCollection } from "./hooks/useCourtCollection";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
 import {
   COURT_CASE_STATE_OPTIONS,
   courtCaseStateDisplay,
   courtOffenseDisplay,
-} from "./courtPresentation";
+} from "./model/courtPresentation";
 
 const COURT_PAGE_SIZE = 12;
 

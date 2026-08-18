@@ -5,34 +5,22 @@ import { Button, type ButtonProps } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { Select } from "@/components/primitives/select";
 import { cn } from "@/lib/utils";
+import { courtLabel } from "../components/CourtPrimitives";
 import {
   COURT_EVIDENCE_KINDS,
-  COURT_REPORTABLE_TARGET_TYPES,
   COURT_REPORT_EVIDENCE_ACCESS,
+  courtEvidenceAccessLabel,
+  courtEvidenceFieldId,
   type CourtEvidenceDraft,
   type CourtEvidenceDraftError,
-} from "./courtEvidenceForm";
+} from "./courtEvidence";
+import { COURT_REPORTABLE_TARGET_TYPES } from "../model/courtReportTarget";
 
 const EVIDENCE_KIND_LABELS = Object.freeze({
   vortex_reference: "Vortex record",
   external_url: "External URL",
   protocol_proof: "Protocol proof",
 });
-
-const EVIDENCE_ACCESS_LABELS = Object.freeze({
-  public: "Public after finality",
-  parties_and_jury: "Parties and seated jury",
-  jury_only_pending_summary: "Jury only pending summary",
-  security_sealed: "Authorized safety reviewers",
-});
-
-function formLabel(value: string): string {
-  return value
-    .split("_")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
 
 export function CourtFormField({
   children,
@@ -58,61 +46,7 @@ export function CourtFormField({
   );
 }
 
-export function CourtEvidencePairFields({
-  digest,
-  idPrefix,
-  onDigestChange,
-  onUrlChange,
-  url,
-}: {
-  digest: string;
-  idPrefix: string;
-  onDigestChange: (value: string) => void;
-  onUrlChange: (value: string) => void;
-  url: string;
-}) {
-  const incomplete = Boolean(url.trim()) !== Boolean(digest.trim());
-  const errorId = `${idPrefix}-evidence-error`;
-  return (
-    <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <CourtFormField
-          htmlFor={`${idPrefix}-evidence-url`}
-          label="External evidence URL"
-        >
-          <Input
-            id={`${idPrefix}-evidence-url`}
-            type="url"
-            value={url}
-            aria-describedby={incomplete ? errorId : undefined}
-            aria-invalid={incomplete}
-            onChange={(event) => onUrlChange(event.target.value)}
-          />
-        </CourtFormField>
-        <CourtFormField
-          htmlFor={`${idPrefix}-evidence-digest`}
-          label="Evidence digest"
-        >
-          <Input
-            id={`${idPrefix}-evidence-digest`}
-            value={digest}
-            placeholder="sha256:..."
-            aria-describedby={incomplete ? errorId : undefined}
-            aria-invalid={incomplete}
-            onChange={(event) => onDigestChange(event.target.value)}
-          />
-        </CourtFormField>
-      </div>
-      {incomplete ? (
-        <p id={errorId} className="text-sm text-destructive" role="alert">
-          Evidence requires both an external URL and its immutable digest.
-        </p>
-      ) : null}
-    </>
-  );
-}
-
-export function CourtEvidenceDraftFields({
+function CourtEvidenceDraftFields({
   draft,
   error,
   idPrefix,
@@ -132,6 +66,8 @@ export function CourtEvidenceDraftFields({
     "aria-describedby": error?.field === field ? errorId : undefined,
     "aria-invalid": error?.field === field,
   });
+  const fieldId = (field: CourtEvidenceDraftError["field"]) =>
+    courtEvidenceFieldId(idPrefix, field);
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -165,22 +101,15 @@ export function CourtEvidenceDraftFields({
               )
             }
           >
-            {COURT_REPORT_EVIDENCE_ACCESS.map((access) => (
-              <option key={access} value={access}>
-                {EVIDENCE_ACCESS_LABELS[access]}
-              </option>
-            ))}
+            <CourtEvidenceAccessOptions />
           </Select>
         </CourtFormField>
       </div>
 
       {draft.kind === "external_url" ? (
-        <CourtFormField
-          htmlFor={`${idPrefix}-url`}
-          label="External evidence URL"
-        >
+        <CourtFormField htmlFor={fieldId("url")} label="External evidence URL">
           <Input
-            id={`${idPrefix}-url`}
+            id={fieldId("url")}
             type="url"
             value={draft.url}
             onChange={(event) => update("url", event.target.value)}
@@ -192,11 +121,11 @@ export function CourtEvidenceDraftFields({
       {draft.kind === "vortex_reference" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           <CourtFormField
-            htmlFor={`${idPrefix}-target-type`}
+            htmlFor={fieldId("targetType")}
             label="Vortex record type"
           >
             <Select
-              id={`${idPrefix}-target-type`}
+              id={fieldId("targetType")}
               value={draft.targetType}
               onChange={(event) =>
                 update(
@@ -208,17 +137,17 @@ export function CourtEvidenceDraftFields({
             >
               {COURT_REPORTABLE_TARGET_TYPES.map((targetType) => (
                 <option key={targetType} value={targetType}>
-                  {formLabel(targetType)}
+                  {courtLabel(targetType)}
                 </option>
               ))}
             </Select>
           </CourtFormField>
           <CourtFormField
-            htmlFor={`${idPrefix}-target-id`}
+            htmlFor={fieldId("targetId")}
             label="Vortex record id"
           >
             <Input
-              id={`${idPrefix}-target-id`}
+              id={fieldId("targetId")}
               value={draft.targetId}
               onChange={(event) => update("targetId", event.target.value)}
               {...fieldProps("targetId")}
@@ -240,31 +169,28 @@ export function CourtEvidenceDraftFields({
 
       {draft.kind === "protocol_proof" ? (
         <div className="grid gap-4 sm:grid-cols-3">
-          <CourtFormField htmlFor={`${idPrefix}-proof-type`} label="Proof type">
+          <CourtFormField htmlFor={fieldId("proofType")} label="Proof type">
             <Input
-              id={`${idPrefix}-proof-type`}
+              id={fieldId("proofType")}
               value={draft.proofType}
               onChange={(event) => update("proofType", event.target.value)}
               {...fieldProps("proofType")}
             />
           </CourtFormField>
-          <CourtFormField
-            htmlFor={`${idPrefix}-verifier-id`}
-            label="Verifier id"
-          >
+          <CourtFormField htmlFor={fieldId("verifierId")} label="Verifier id">
             <Input
-              id={`${idPrefix}-verifier-id`}
+              id={fieldId("verifierId")}
               value={draft.verifierId}
               onChange={(event) => update("verifierId", event.target.value)}
               {...fieldProps("verifierId")}
             />
           </CourtFormField>
           <CourtFormField
-            htmlFor={`${idPrefix}-verifier-version`}
+            htmlFor={fieldId("verifierVersion")}
             label="Verifier version"
           >
             <Input
-              id={`${idPrefix}-verifier-version`}
+              id={fieldId("verifierVersion")}
               value={draft.verifierVersion}
               onChange={(event) =>
                 update("verifierVersion", event.target.value)
@@ -276,12 +202,12 @@ export function CourtEvidenceDraftFields({
       ) : null}
 
       <CourtFormField
-        htmlFor={`${idPrefix}-digest`}
+        htmlFor={fieldId("digest")}
         label="SHA-256 digest"
         hint="Use sha256: followed by exactly 64 lowercase hexadecimal characters. The server never fetches external evidence."
       >
         <Input
-          id={`${idPrefix}-digest`}
+          id={fieldId("digest")}
           value={draft.digest}
           placeholder="sha256:..."
           onChange={(event) => update("digest", event.target.value)}
@@ -297,13 +223,53 @@ export function CourtEvidenceDraftFields({
   );
 }
 
-export function CourtEvidenceSafetyNote() {
+function CourtEvidenceSafetyNote() {
   return (
     <p className="text-sm leading-6 text-muted">
       Do not publish biometrics, private keys, exploit archives, doxxing, or
       illegal material. The Court stores only this reference and digest; it does
       not upload, embed, or fetch the content.
     </p>
+  );
+}
+
+export function CourtEvidenceAccessOptions({
+  accesses = COURT_REPORT_EVIDENCE_ACCESS,
+}: {
+  accesses?: readonly CourtEvidenceDraft["access"][];
+}) {
+  return (
+    <>
+      {accesses.map((access) => (
+        <option key={access} value={access}>
+          {courtEvidenceAccessLabel(access)}
+        </option>
+      ))}
+    </>
+  );
+}
+
+export function CourtEvidenceComposer({
+  draft,
+  error,
+  idPrefix,
+  onChange,
+}: {
+  draft: CourtEvidenceDraft;
+  error: CourtEvidenceDraftError | null;
+  idPrefix: string;
+  onChange: (next: CourtEvidenceDraft) => void;
+}) {
+  return (
+    <>
+      <CourtEvidenceDraftFields
+        draft={draft}
+        error={error}
+        idPrefix={idPrefix}
+        onChange={onChange}
+      />
+      <CourtEvidenceSafetyNote />
+    </>
   );
 }
 
@@ -384,7 +350,7 @@ export function CourtActionFeedback({
       {actionError ? (
         <p className="text-sm text-destructive" role="alert">
           {actionError}
-          {actionField ? ` Check ${formLabel(actionField)}.` : ""}
+          {actionField ? ` Check ${courtLabel(actionField)}.` : ""}
         </p>
       ) : null}
       {refreshError ? (

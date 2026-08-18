@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { formatLoadError } from "@/lib/errorFormatting";
-import { courtErrorIssue } from "./courtErrors";
+import { courtErrorIssue } from "../model/courtErrors";
+import { focusCourtField } from "../model/courtFocus";
 
 type CourtCommandRun = {
   action: (idempotencyKey: string) => Promise<unknown>;
@@ -20,46 +21,66 @@ type CourtCommandState = {
   refreshError: string | null;
 };
 
-export function useCourtCommandRunner(onRefresh?: () => Promise<void>) {
+const EMPTY_COMMAND_STATE: CourtCommandState = {
+  actionError: null,
+  actionField: null,
+  busy: null,
+  notice: null,
+  refreshError: null,
+};
+
+export function useCourtCommandRunner(
+  onRefresh?: () => Promise<void>,
+  resetKey?: string | null,
+) {
   const attemptKeys = useRef(new Map<string, string>());
   const busyRef = useRef<string | null>(null);
+  const generation = useRef(0);
   const unlockAfterRefreshIds = useRef(new Set<string>());
-  const [state, setState] = useState<CourtCommandState>({
-    actionError: null,
-    actionField: null,
-    busy: null,
-    notice: null,
-    refreshError: null,
-  });
+  const [state, setState] = useState<CourtCommandState>(EMPTY_COMMAND_STATE);
   const [confirmedIds, setConfirmedIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
 
-  const refresh = useCallback(async () => {
-    if (!onRefresh) return true;
-    try {
-      await onRefresh();
-      const unlockedIds = unlockAfterRefreshIds.current;
-      if (unlockedIds.size > 0) {
-        setConfirmedIds((current) => {
-          const next = new Set(current);
-          unlockedIds.forEach((id) => next.delete(id));
-          return next;
-        });
-        unlockAfterRefreshIds.current = new Set();
+  useEffect(() => {
+    generation.current += 1;
+    attemptKeys.current.clear();
+    unlockAfterRefreshIds.current.clear();
+    busyRef.current = null;
+    setConfirmedIds(new Set());
+    setState(EMPTY_COMMAND_STATE);
+  }, [resetKey]);
+
+  const refresh = useCallback(
+    async (expectedGeneration = generation.current) => {
+      if (!onRefresh) return true;
+      try {
+        await onRefresh();
+        if (generation.current !== expectedGeneration) return false;
+        const unlockedIds = unlockAfterRefreshIds.current;
+        if (unlockedIds.size > 0) {
+          setConfirmedIds((current) => {
+            const next = new Set(current);
+            unlockedIds.forEach((id) => next.delete(id));
+            return next;
+          });
+          unlockAfterRefreshIds.current = new Set();
+        }
+        setState((current) => ({ ...current, refreshError: null }));
+        return true;
+      } catch (error) {
+        if (generation.current !== expectedGeneration) return false;
+        setState((current) => ({
+          ...current,
+          refreshError: formatLoadError(
+            error instanceof Error ? error.message : String(error),
+          ),
+        }));
+        return false;
       }
-      setState((current) => ({ ...current, refreshError: null }));
-      return true;
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        refreshError: formatLoadError(
-          error instanceof Error ? error.message : String(error),
-        ),
-      }));
-      return false;
-    }
-  }, [onRefresh]);
+    },
+    [onRefresh],
+  );
 
   const run = useCallback(
     async ({
@@ -71,6 +92,7 @@ export function useCourtCommandRunner(onRefresh?: () => Promise<void>) {
       unlockAfterRefresh = false,
     }: CourtCommandRun) => {
       if (busyRef.current || confirmedIds.has(id)) return false;
+      const runGeneration = generation.current;
       const idempotencyKey = attemptKeys.current.get(id) ?? crypto.randomUUID();
       attemptKeys.current.set(id, idempotencyKey);
       busyRef.current = id;
@@ -83,6 +105,7 @@ export function useCourtCommandRunner(onRefresh?: () => Promise<void>) {
       });
       try {
         await action(idempotencyKey);
+        if (generation.current !== runGeneration) return false;
         attemptKeys.current.delete(id);
         setConfirmedIds((current) => new Set(current).add(id));
         if (unlockAfterRefresh) unlockAfterRefreshIds.current.add(id);
@@ -91,9 +114,10 @@ export function useCourtCommandRunner(onRefresh?: () => Promise<void>) {
           ...current,
           notice: `${label} recorded.`,
         }));
-        await refresh();
+        await refresh(runGeneration);
         return true;
       } catch (error) {
+        if (generation.current !== runGeneration) return false;
         const issue = courtErrorIssue(error);
         const status =
           error && typeof error === "object" && "status" in error
@@ -110,15 +134,13 @@ export function useCourtCommandRunner(onRefresh?: () => Promise<void>) {
         const fieldId = issue.fields
           .map((field) => fieldTargets?.[field])
           .find((value): value is string => Boolean(value));
-        if (fieldId) {
-          window.requestAnimationFrame(() =>
-            document.getElementById(fieldId)?.focus(),
-          );
-        }
+        if (fieldId) focusCourtField(fieldId);
         return false;
       } finally {
-        busyRef.current = null;
-        setState((current) => ({ ...current, busy: null }));
+        if (generation.current === runGeneration) {
+          busyRef.current = null;
+          setState((current) => ({ ...current, busy: null }));
+        }
       }
     },
     [confirmedIds, refresh],

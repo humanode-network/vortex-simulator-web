@@ -17,33 +17,21 @@ export const COURT_REPORT_EVIDENCE_ACCESS = Object.freeze([
   "security_sealed",
 ] as const satisfies readonly CourtEvidenceAccessV2Dto[]);
 
-export const COURT_REPORTABLE_TARGET_TYPES = Object.freeze([
-  "human_identity",
-  "protocol_action",
-  "public_proposal_draft",
-  "proposal",
-  "proposal_thread",
-  "proposal_message",
-  "chamber",
-  "chamber_thread",
-  "chamber_message",
-  "faction",
-  "faction_thread",
-  "faction_message",
-  "faction_work_item",
-  "initiative",
-  "initiative_board_card",
-  "initiative_thread",
-  "initiative_message",
-  "membership_transition",
-  "formation_project",
-  "formation_action",
-  "delegation",
-  "governance_action",
-  "cm_record",
-  "proof_or_status_event",
-  "external_incident",
-] as const satisfies readonly CourtTargetTypeV2Dto[]);
+const COURT_EVIDENCE_ACCESS_LABELS: Readonly<
+  Record<CourtEvidenceAccessV2Dto, string>
+> = Object.freeze({
+  public: "Public after finality",
+  parties_and_jury: "Parties and seated jury",
+  jury_only_pending_summary: "Jury only pending summary",
+  security_sealed: "Authorized safety reviewers",
+  enforcement_only: "Protocol or external enforcement only",
+});
+
+export function courtEvidenceAccessLabel(
+  access: CourtEvidenceAccessV2Dto,
+): string {
+  return COURT_EVIDENCE_ACCESS_LABELS[access];
+}
 
 export type CourtEvidenceDraft = {
   kind: (typeof COURT_EVIDENCE_KINDS)[number];
@@ -69,6 +57,41 @@ export type CourtEvidenceDraftError = {
     | "verifierVersion";
   message: string;
 };
+
+const COURT_EVIDENCE_FIELD_SUFFIX: Readonly<
+  Record<CourtEvidenceDraftError["field"], string>
+> = Object.freeze({
+  digest: "digest",
+  proofType: "proof-type",
+  targetId: "target-id",
+  targetType: "target-type",
+  url: "url",
+  verifierId: "verifier-id",
+  verifierVersion: "verifier-version",
+});
+
+export function courtEvidenceFieldId(
+  idPrefix: string,
+  field: CourtEvidenceDraftError["field"],
+): string {
+  return `${idPrefix}-${COURT_EVIDENCE_FIELD_SUFFIX[field]}`;
+}
+
+export function courtEvidenceFieldIds(
+  idPrefix: string,
+): Readonly<Record<CourtEvidenceDraftError["field"], string>> {
+  return Object.freeze(
+    Object.fromEntries(
+      Object.keys(COURT_EVIDENCE_FIELD_SUFFIX).map((field) => [
+        field,
+        courtEvidenceFieldId(
+          idPrefix,
+          field as CourtEvidenceDraftError["field"],
+        ),
+      ]),
+    ) as Record<CourtEvidenceDraftError["field"], string>,
+  );
+}
 
 export function emptyCourtEvidenceDraft(): CourtEvidenceDraft {
   return {

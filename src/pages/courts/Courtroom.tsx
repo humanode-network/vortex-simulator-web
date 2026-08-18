@@ -23,28 +23,30 @@ import { apiCourtCaseV2 } from "@/lib/apiClient";
 import type { CourtCaseViewerV2Dto } from "@/types/api";
 import { CourtActionPanel } from "./CourtActionPanel";
 import {
-  courtLabel,
   CourtAppellateBrief,
   CourtAppealSummary,
-  CourtDeadline,
   CourtEvidenceCard,
   CourtFinalDecisionSummary,
   CourtRemedySummary,
+  CourtTimeline,
+} from "./components/CourtCaseRecord";
+import {
+  courtLabel,
+  CourtDeadline,
   CourtCopyValue,
   CourtStateSummary,
   CourtTargetPreview,
-  CourtTimeline,
   courtTone,
   formatCourtInstant,
-} from "./courtUi";
+} from "./components/CourtPrimitives";
 import {
   courtCaseDeadline,
   courtCaseStateDisplay,
   courtOffenseDisplay,
-} from "./courtPresentation";
+} from "./model/courtPresentation";
 import { CourtsUnavailable } from "./CourtsUnavailable";
-import { useCourtRuntime } from "./useCourtRuntime";
-import { useCourtRecord } from "./useCourtRecord";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
+import { useCourtRecord } from "./hooks/useCourtRecord";
 
 const Courtroom: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +58,7 @@ const Courtroom: React.FC = () => {
   const caseRecord = useCourtRecord<CourtCaseViewerV2Dto>({
     enabled: runtime.status === "available" && Boolean(id),
     load: loadCase,
+    recordKey: id,
   });
   const record = caseRecord.data;
 
@@ -261,7 +264,7 @@ const Courtroom: React.FC = () => {
             </GlassySection>
           ) : null}
 
-          {record.appellateTask ? (
+          {record.appellateTask?.brief ? (
             <GlassySection title="Decision brief">
               <CourtAppellateBrief task={record.appellateTask} />
             </GlassySection>
@@ -315,7 +318,7 @@ const Courtroom: React.FC = () => {
 
           {record ? (
             <CourtActionPanel
-              key={`${courtCase.state}-${record.juryTask?.ballot?.id ?? "no-ballot"}-${record.juryTask?.ballot?.existingVote?.revision ?? "no-vote"}-${record.appellateTask?.panelId ?? "no-panel"}-${record.appellateTask?.panelState ?? "no-panel-state"}`}
+              key={`${courtCase.id}-${courtCase.state}-${record.juryTask?.ballot?.id ?? "no-ballot"}-${record.juryTask?.ballot?.existingVote?.revision ?? "no-vote"}-${record.appellateTask?.panelId ?? "no-panel"}-${record.appellateTask?.panelState ?? "no-panel-state"}`}
               courtCase={record}
               onCompleted={caseRecord.reload}
             />

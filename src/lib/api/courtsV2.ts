@@ -161,7 +161,13 @@ type CourtReportRevisionInputV2 = {
 };
 
 export async function apiAmendCourtReportV2(
-  input: CourtReportRevisionInputV2 & { statement: string },
+  input: CourtReportRevisionInputV2 & {
+    statement: string;
+    respondentId?: string | null;
+    affectedId?: string | null;
+    incidentStartsAt?: string;
+    incidentEndsAt?: string | null;
+  },
   options?: CourtCommandOptions,
 ) {
   return await apiCommand<{ ok: true; reportId: string; state: string }>({

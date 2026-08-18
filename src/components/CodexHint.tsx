@@ -2,8 +2,10 @@ import type { ReactNode } from "react";
 
 import { ReferenceHint } from "@/components/Hint";
 import {
+  HUMANODE_CODEX_VERSION,
   humanodeCodexHref,
   humanodeCodexReference,
+  humanodeCodexReferenceTokens,
 } from "@/data/humanodeCodex";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +20,14 @@ type TypedCodexHintProps = Omit<CodexHintProps, "reference"> & {
   code: string;
 };
 
-const CODEX_REFERENCE_PATTERN =
-  /\b(?:court-codex-v1|HC-\d+(?:\.[A-Z0-9-]+)+|(?:SEC|OPS|IDN|GOV|CMP)-\d{2}|[CPGDRE]-\d{2}|L[0-4]|E[0-3])\b/g;
+function escapePattern(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const CODEX_REFERENCE_PATTERN = new RegExp(
+  `(?<![A-Za-z0-9])(?:${humanodeCodexReferenceTokens.map(escapePattern).join("|")})(?![A-Za-z0-9])`,
+  "g",
+);
 
 export function CodexHint({
   children,
@@ -72,7 +80,7 @@ export function CodexPolicyHint({
   ...props
 }: Omit<CodexHintProps, "reference">) {
   return (
-    <CodexHint {...props} reference="court-codex-v1">
+    <CodexHint {...props} reference={HUMANODE_CODEX_VERSION}>
       {children}
     </CodexHint>
   );

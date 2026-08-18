@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 import { GlassySection, GlassyTile } from "@/components/GlassySection";
@@ -24,57 +24,60 @@ import type {
 } from "@/types/api";
 import {
   courtLabel,
-  CourtCopyValue,
   CourtStandingReference,
-  CourtStateSummary,
   CourtTargetPreview,
-} from "./courtUi";
+  formatCourtInstant,
+} from "./components/CourtPrimitives";
 import {
   CourtAsyncButton,
-  CourtEvidenceDraftFields,
-  CourtEvidenceSafetyNote,
+  CourtEvidenceAccessOptions,
+  CourtEvidenceComposer,
   CourtFormField,
   CourtNarrativeRequirement,
-} from "./courtFormUi";
+} from "./forms/CourtFormUi";
+import {
+  CourtPendingEvidenceList,
+  CourtProtectiveReviewRequest,
+  CourtReportReview,
+} from "./forms/CourtReportFormSections";
 import {
   COURT_REPORT_EVIDENCE_ACCESS,
-  courtEvidenceDraftIsEmpty,
-  courtEvidenceDraftToInput,
-  emptyCourtEvidenceDraft,
-  type CourtEvidenceDraftError,
-} from "./courtEvidenceForm";
+  courtEvidenceFieldIds,
+} from "./forms/courtEvidence";
 import {
   courtLaneDisplay,
   courtOffenseDisplay,
   courtStandingDisplay,
-} from "./courtPresentation";
-import { courtErrorIssue } from "./courtErrors";
+} from "./model/courtPresentation";
+import {
+  courtErrorIssue,
+  courtReportingUnavailableMessage,
+} from "./model/courtErrors";
 import { CourtsUnavailable } from "./CourtsUnavailable";
-import { useCourtRuntime } from "./useCourtRuntime";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
+import { useUnsavedChangesGuard } from "./hooks/useUnsavedChangesGuard";
+import {
+  COURT_STATEMENT_MAX_LENGTH,
+  COURT_STATEMENT_MIN_LENGTH,
+} from "./model/courtConstraints";
+import { courtLocalDateTime } from "./model/courtDates";
+import { focusCourtField } from "./model/courtFocus";
+import { useCourtEvidenceDraft } from "./hooks/useCourtEvidenceDraft";
+import {
+  courtReportTargetFromSearchParams,
+  safeCourtReturnPath,
+} from "./model/courtReportTarget";
 
 type AvailableCapability = Extract<
   CourtReportingCapabilityV2Dto,
   { status: "available" }
 >;
 
-function localDateTime(date: Date): string {
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-const EVIDENCE_FIELD_IDS: Record<CourtEvidenceDraftError["field"], string> = {
-  digest: "court-report-digest",
-  url: "court-report-url",
-  targetType: "court-report-target-type",
-  targetId: "court-report-target-id",
-  proofType: "court-report-proof-type",
-  verifierId: "court-report-verifier-id",
-  verifierVersion: "court-report-verifier-version",
-};
+const REPORT_EVIDENCE_FIELD_IDS = courtEvidenceFieldIds("court-report");
 
 const REPORT_FIELD_IDS: Readonly<Record<string, string>> = Object.freeze({
   affectedId: "court-report-affected",
-  evidence: "court-report-digest",
+  evidence: REPORT_EVIDENCE_FIELD_IDS.digest,
   goodFaithAttested: "court-report-good-faith",
   immediateProtectionRequested: "court-report-protective-review",
   incidentEndsAt: "court-report-incident-end",
@@ -91,17 +94,16 @@ const CourtReportCreate: React.FC = () => {
   const runtime = useCourtRuntime();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const target = useMemo<CourtTargetReferenceV2Dto | null>(() => {
-    const type = searchParams.get("targetType")?.trim();
-    const id = searchParams.get("targetId")?.trim();
-    if (!type || !id) return null;
-    const revision = searchParams.get("revision")?.trim() || undefined;
-    return { type: type as CourtTargetReferenceV2Dto["type"], id, revision };
-  }, [searchParams]);
-  const [initialIncidentStartsAt] = useState(() => localDateTime(new Date()));
-  const [incidentStartsAt, setIncidentStartsAt] = useState(
-    initialIncidentStartsAt,
+  const target = useMemo<CourtTargetReferenceV2Dto | null>(
+    () => courtReportTargetFromSearchParams(searchParams),
+    [searchParams],
   );
+  const targetKey = target
+    ? `${target.type}:${target.id}:${target.revision ?? "current"}`
+    : "missing";
+  const previousTargetKey = useRef(targetKey);
+  const [initialIncidentStartsAt, setInitialIncidentStartsAt] = useState("");
+  const [incidentStartsAt, setIncidentStartsAt] = useState("");
   const [incidentEndsAt, setIncidentEndsAt] = useState("");
   const [capability, setCapability] = useState<AvailableCapability | null>(
     null,
@@ -113,9 +115,15 @@ const CourtReportCreate: React.FC = () => {
   const [statement, setStatement] = useState("");
   const [statementAccess, setStatementAccess] =
     useState<(typeof COURT_REPORT_EVIDENCE_ACCESS)[number]>("parties_and_jury");
-  const [evidenceDraft, setEvidenceDraft] = useState(emptyCourtEvidenceDraft);
-  const [evidenceError, setEvidenceError] =
-    useState<CourtEvidenceDraftError | null>(null);
+  const {
+    change: changeEvidenceDraft,
+    draft: evidenceDraft,
+    error: evidenceError,
+    isEmpty: evidenceDraftIsEmpty,
+    reportError: reportEvidenceError,
+    reset: resetEvidenceDraft,
+    validate: validateEvidenceDraft,
+  } = useCourtEvidenceDraft("court-report");
   const [evidence, setEvidence] = useState<
     { key: string; value: CourtEvidenceInputV2 }[]
   >([]);
@@ -130,9 +138,33 @@ const CourtReportCreate: React.FC = () => {
   const [cancelOpen, setCancelOpen] = useState(false);
 
   useEffect(() => {
+    if (previousTargetKey.current === targetKey) return;
+    previousTargetKey.current = targetKey;
+    setInitialIncidentStartsAt("");
+    setIncidentStartsAt("");
+    setIncidentEndsAt("");
+    setCapability(null);
+    setReasonKey("");
+    setRespondentId("");
+    setAffectedId("");
+    setStatement("");
+    setStatementAccess("parties_and_jury");
+    resetEvidenceDraft();
+    setEvidence([]);
+    setImmediateProtectionRequested(false);
+    setGoodFaithAttested(false);
+    setCapabilityError(null);
+    setSubmissionError(null);
+    setSubmissionKey(crypto.randomUUID());
+    setCancelOpen(false);
+  }, [resetEvidenceDraft, targetKey]);
+
+  useEffect(() => {
     if (runtime.status !== "available" || !target) return;
-    const incidentTimestamp = Date.parse(incidentStartsAt);
-    if (!Number.isFinite(incidentTimestamp)) {
+    const incidentTimestamp = incidentStartsAt
+      ? Date.parse(incidentStartsAt)
+      : null;
+    if (incidentTimestamp !== null && !Number.isFinite(incidentTimestamp)) {
       setCapability(null);
       setCapabilityLoading(false);
       setCapabilityError("Enter a complete incident date and time.");
@@ -142,16 +174,25 @@ const CourtReportCreate: React.FC = () => {
     setCapabilityLoading(true);
     void apiCourtReportingCapabilityV2({
       target,
-      incidentAt: new Date(incidentTimestamp).toISOString(),
+      ...(incidentTimestamp === null
+        ? {}
+        : { incidentAt: new Date(incidentTimestamp).toISOString() }),
     })
       .then((result) => {
         if (!active) return;
         if (result.status !== "available") {
           setCapability(null);
-          setCapabilityError(result.reason);
+          setCapabilityError(courtReportingUnavailableMessage(result.reason));
           return;
         }
         setCapability(result);
+        if (!incidentStartsAt) {
+          const serverIncidentStart = courtLocalDateTime(
+            new Date(result.assessedAt),
+          );
+          setInitialIncidentStartsAt(serverIncidentStart);
+          setIncidentStartsAt(serverIncidentStart);
+        }
         setReasonKey((current) =>
           result.reasonCapabilities.some(
             ({ reason }) => `${reason.offenseCode}:${reason.lane}` === current,
@@ -164,7 +205,7 @@ const CourtReportCreate: React.FC = () => {
       .catch((loadError) => {
         if (!active) return;
         setCapability(null);
-        setCapabilityError((loadError as Error).message);
+        setCapabilityError(courtErrorIssue(loadError).message);
       })
       .finally(() => {
         if (active) setCapabilityLoading(false);
@@ -181,11 +222,11 @@ const CourtReportCreate: React.FC = () => {
   const protectiveReviewAvailable =
     protectiveReview?.eligible === true && !incidentEndsAt;
   const returnPath = useMemo(() => {
-    const requested = searchParams.get("returnTo")?.trim();
-    if (requested?.startsWith("/app/") && !requested.startsWith("//")) {
-      return requested;
-    }
-    return capability?.target.canonicalRoute ?? "/app/courts?view=reports";
+    const fallback = safeCourtReturnPath(
+      capability?.target.canonicalRoute,
+      "/app/courts?view=reports",
+    );
+    return safeCourtReturnPath(searchParams.get("returnTo"), fallback);
   }, [capability?.target.canonicalRoute, searchParams]);
   const dirty =
     incidentStartsAt !== initialIncidentStartsAt ||
@@ -196,42 +237,27 @@ const CourtReportCreate: React.FC = () => {
         affectedId ||
         statement ||
         evidence.length ||
-        !courtEvidenceDraftIsEmpty(evidenceDraft) ||
+        !evidenceDraftIsEmpty ||
         immediateProtectionRequested ||
-        goodFaithAttested,
+        goodFaithAttested ||
+        statementAccess !== "parties_and_jury",
     );
+  useUnsavedChangesGuard(dirty && !submitting);
 
   useEffect(() => {
     if (!protectiveReviewAvailable) setImmediateProtectionRequested(false);
   }, [protectiveReviewAvailable]);
 
   function parsePendingEvidence(): CourtEvidenceInputV2 | null {
-    if (courtEvidenceDraftIsEmpty(evidenceDraft)) {
-      setEvidenceError(null);
-      return null;
-    }
-    const result = courtEvidenceDraftToInput(
-      evidenceDraft,
-      "reporter_supplied",
-    );
-    if (!result.ok) {
-      setEvidenceError(result.error);
-      window.requestAnimationFrame(() => {
-        document
-          .getElementById(EVIDENCE_FIELD_IDS[result.error.field])
-          ?.focus();
-      });
-      return null;
-    }
-    setEvidenceError(null);
-    return result.value;
+    const result = validateEvidenceDraft("reporter_supplied");
+    return result.ok ? result.value : null;
   }
 
   function addEvidence() {
     const item = parsePendingEvidence();
     if (!item) return;
     if (evidence.some(({ value }) => value.digest === item.digest)) {
-      setEvidenceError({
+      reportEvidenceError({
         field: "digest",
         message: "This evidence digest is already in the report.",
       });
@@ -241,7 +267,7 @@ const CourtReportCreate: React.FC = () => {
       ...current,
       { key: crypto.randomUUID(), value: item },
     ]);
-    setEvidenceDraft(emptyCourtEvidenceDraft());
+    resetEvidenceDraft();
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -255,9 +281,7 @@ const CourtReportCreate: React.FC = () => {
     const endsAt = incidentEndsAt ? Date.parse(incidentEndsAt) : null;
     if (endsAt !== null && endsAt < startsAt) {
       setSubmissionError("Incident end cannot be earlier than its start.");
-      window.requestAnimationFrame(() =>
-        document.getElementById("court-report-incident-end")?.focus(),
-      );
+      focusCourtField("court-report-incident-end");
       return;
     }
     if (!goodFaithAttested) {
@@ -267,7 +291,7 @@ const CourtReportCreate: React.FC = () => {
       return;
     }
     const pendingEvidence = parsePendingEvidence();
-    if (!courtEvidenceDraftIsEmpty(evidenceDraft) && !pendingEvidence) return;
+    if (!evidenceDraftIsEmpty && !pendingEvidence) return;
     const submittedEvidence = [
       ...evidence.map((item) => item.value),
       ...(pendingEvidence ? [pendingEvidence] : []),
@@ -309,11 +333,7 @@ const CourtReportCreate: React.FC = () => {
       const fieldId = issue.fields
         .map((field) => REPORT_FIELD_IDS[field])
         .find(Boolean);
-      if (fieldId) {
-        window.requestAnimationFrame(() =>
-          document.getElementById(fieldId)?.focus(),
-        );
-      }
+      if (fieldId) focusCourtField(fieldId);
     } finally {
       setSubmitting(false);
     }
@@ -468,7 +488,7 @@ const CourtReportCreate: React.FC = () => {
                 <p className="text-xs leading-5 text-muted md:col-span-2">
                   Population basis: {courtLabel(capability.population.basis)} ·{" "}
                   effective{" "}
-                  {formatReviewInstant(capability.population.effectiveAt)}.
+                  {formatCourtInstant(capability.population.effectiveAt)}.
                 </p>
               ) : null}
               {capabilityError ? (
@@ -530,7 +550,8 @@ const CourtReportCreate: React.FC = () => {
                 />
                 <CourtNarrativeRequirement
                   current={statement.trim().length}
-                  minimum={20}
+                  minimum={COURT_STATEMENT_MIN_LENGTH}
+                  maximum={COURT_STATEMENT_MAX_LENGTH}
                 />
               </CourtFormField>
               <CourtFormField
@@ -548,11 +569,7 @@ const CourtReportCreate: React.FC = () => {
                     )
                   }
                 >
-                  {COURT_REPORT_EVIDENCE_ACCESS.map((access) => (
-                    <option key={access} value={access}>
-                      {courtLabel(access)}
-                    </option>
-                  ))}
+                  <CourtEvidenceAccessOptions />
                 </Select>
               </CourtFormField>
             </GlassyTile>
@@ -560,16 +577,12 @@ const CourtReportCreate: React.FC = () => {
 
           <GlassySection title="Evidence">
             <GlassyTile className="grid gap-4">
-              <CourtEvidenceDraftFields
+              <CourtEvidenceComposer
                 draft={evidenceDraft}
                 error={evidenceError}
                 idPrefix="court-report"
-                onChange={(next) => {
-                  setEvidenceDraft(next);
-                  setEvidenceError(null);
-                }}
+                onChange={changeEvidenceDraft}
               />
-              <CourtEvidenceSafetyNote />
               <div className="flex justify-end">
                 <Button
                   type="button"
@@ -580,147 +593,37 @@ const CourtReportCreate: React.FC = () => {
                   Add another evidence record
                 </Button>
               </div>
-              {evidence.length ? (
-                <div
-                  className="grid gap-2"
-                  aria-label="Evidence records ready to submit"
-                >
-                  {evidence.map((item, index) => (
-                    <div
-                      key={item.key}
-                      className="flex min-w-0 flex-wrap items-center justify-between gap-3 border border-border/70 p-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-text">
-                          {index + 1}. {courtLabel(item.value.kind)}
-                        </p>
-                        <CourtCopyValue
-                          label={`evidence ${index + 1} digest`}
-                          value={item.value.digest}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        size="compact"
-                        variant="ghost"
-                        onClick={() =>
-                          setEvidence((current) =>
-                            current.filter(
-                              (candidate) => candidate.key !== item.key,
-                            ),
-                          )
-                        }
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              <CourtPendingEvidenceList
+                evidence={evidence}
+                onRemove={(key) =>
+                  setEvidence((current) =>
+                    current.filter((candidate) => candidate.key !== key),
+                  )
+                }
+              />
               {protectiveReviewAvailable && protectiveReview?.eligible ? (
-                <div className="space-y-2 border-t border-border/70 pt-4">
-                  <label className="flex items-center gap-2 text-sm text-text">
-                    <input
-                      id="court-report-protective-review"
-                      type="checkbox"
-                      checked={immediateProtectionRequested}
-                      onChange={(event) =>
-                        setImmediateProtectionRequested(event.target.checked)
-                      }
-                    />
-                    Request immediate protective review
-                  </label>
-                  <p className="text-sm leading-6 text-muted">
-                    This temporary, non-punitive review lasts up to{" "}
-                    {Math.round(protectiveReview.durationSeconds / 3_600)} hours
-                    and is assigned to{" "}
-                    {protectiveReview.authorityIds.join(", ")}. It does not
-                    establish guilt or choose a punishment.
-                  </p>
-                </div>
+                <CourtProtectiveReviewRequest
+                  review={protectiveReview}
+                  requested={immediateProtectionRequested}
+                  onChange={setImmediateProtectionRequested}
+                />
               ) : null}
             </GlassyTile>
           </GlassySection>
 
           <GlassySection title="Review and attest">
-            <GlassyTile className="space-y-4">
-              {selectedReason ? (
-                <CourtStateSummary
-                  description={`${courtOffenseDisplay(selectedReason.reason.offenseCode).description} ${courtLaneDisplay(selectedReason.reason.lane).description}`}
-                  label={
-                    <>
-                      <CodexHint reference={selectedReason.reason.offenseCode}>
-                        {
-                          courtOffenseDisplay(selectedReason.reason.offenseCode)
-                            .label
-                        }
-                      </CodexHint>
-                      {" · "}
-                      <CodexProcedureHint clause="HC-2.1">
-                        {courtLaneDisplay(selectedReason.reason.lane).label}
-                      </CodexProcedureHint>
-                    </>
-                  }
-                  tone="primary"
-                />
-              ) : (
-                <p className="text-sm text-muted">
-                  Choose a verified reason to complete the review.
-                </p>
-              )}
-              <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
-                <p>
-                  Target: {courtLabel(target.type)} · {target.id}
-                </p>
-                <p>Incident: {formatReviewInstant(incidentStartsAt)}</p>
-                <p>
-                  Incident end:{" "}
-                  {incidentEndsAt
-                    ? formatReviewInstant(incidentEndsAt)
-                    : "Ongoing"}
-                </p>
-                <p>Statement: {statement.trim().length} characters</p>
-                <p>Statement access: {courtLabel(statementAccess)}</p>
-                {selectedReason ? (
-                  <p>
-                    Standing:{" "}
-                    <CourtStandingReference
-                      direct={selectedReason.standing.directStanding}
-                      source={selectedReason.standing.source}
-                    />
-                  </p>
-                ) : null}
-                <p>
-                  Evidence:{" "}
-                  {evidence.length +
-                    (courtEvidenceDraftIsEmpty(evidenceDraft) ? 0 : 1)}{" "}
-                  referenced
-                  {evidence.length +
-                    (courtEvidenceDraftIsEmpty(evidenceDraft) ? 0 : 1) ===
-                  1
-                    ? " record"
-                    : " records"}
-                </p>
-                <p>
-                  Protective review:{" "}
-                  {immediateProtectionRequested ? "Requested" : "Not requested"}
-                </p>
-              </div>
-              <label className="flex items-start gap-2 text-sm leading-6 text-text">
-                <input
-                  id="court-report-good-faith"
-                  className="mt-1"
-                  type="checkbox"
-                  checked={goodFaithAttested}
-                  onChange={(event) =>
-                    setGoodFaithAttested(event.target.checked)
-                  }
-                  required
-                />
-                I attest that this report is made in good faith and that the
-                facts are accurate to the best of my knowledge.
-              </label>
-            </GlassyTile>
+            <CourtReportReview
+              evidenceCount={evidence.length + (evidenceDraftIsEmpty ? 0 : 1)}
+              goodFaithAttested={goodFaithAttested}
+              incidentEndsAt={incidentEndsAt}
+              incidentStartsAt={incidentStartsAt}
+              onGoodFaithAttestedChange={setGoodFaithAttested}
+              protectiveReviewRequested={immediateProtectionRequested}
+              selectedReason={selectedReason}
+              statementAccess={statementAccess}
+              statementLength={statement.trim().length}
+              target={target}
+            />
           </GlassySection>
 
           {submissionError ? (
@@ -737,7 +640,8 @@ const CourtReportCreate: React.FC = () => {
                 !capability ||
                 capabilityLoading ||
                 !reasonKey ||
-                statement.trim().length < 20 ||
+                statement.trim().length < COURT_STATEMENT_MIN_LENGTH ||
+                statement.trim().length > COURT_STATEMENT_MAX_LENGTH ||
                 !goodFaithAttested ||
                 evidenceError !== null
               }
@@ -778,12 +682,5 @@ const CourtReportCreate: React.FC = () => {
     </div>
   );
 };
-
-function formatReviewInstant(value: string): string {
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp)
-    ? new Date(timestamp).toLocaleString()
-    : "Not set";
-}
 
 export default CourtReportCreate;

@@ -1032,6 +1032,29 @@ const HUMANODE_CODEX_REFERENCE_ALIASES = new Map([
   [HUMANODE_CODEX_VERSION, "HC-1.1"],
 ]);
 
+export const humanodeCodexReferenceTokens = Object.freeze(
+  [
+    HUMANODE_CODEX_VERSION,
+    ...humanodeCodexClauses.flatMap((item) => [
+      item.ref,
+      ...item.points.map((_, index) => `${item.ref}.${index + 1}`),
+    ]),
+    ...humanodeCodexOffenses.flatMap((item) => [item.code, item.ref]),
+    ...humanodeCodexMeasures.flatMap((item) => [item.code, item.ref]),
+    ...humanodeCodexExcludedMeasures.map((item) => item.ref),
+    ...Object.entries(humanodeCodexSeverityRules).flatMap(([code, item]) => [
+      code,
+      item.ref,
+    ]),
+    ...Object.values(humanodeCodexEvidenceRules).flatMap((item) => [
+      item.code,
+      item.ref,
+    ]),
+  ]
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .sort((left, right) => right.length - left.length),
+);
+
 export function humanodeCodexHref(refOrCode: string): string {
   const ref =
     humanodeCodexOffensesByCode.get(refOrCode)?.ref ??
