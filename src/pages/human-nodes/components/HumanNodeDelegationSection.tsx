@@ -12,6 +12,8 @@ import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatChamberLabel } from "@/lib/chamberUi";
 import { shortAddress } from "@/lib/profileUi";
 import type { GetMyGovernanceResponse, HumanNodeProfileDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
+import { courtCompositeTargetId } from "@/pages/courts/model/courtReportTarget";
 
 type DelegationCard = HumanNodeProfileDto["delegation"]["chambers"][number];
 type ViewerDelegation =
@@ -141,6 +143,18 @@ export function HumanNodeDelegationSection({
                       {error ? (
                         <p className="m-0 text-sm text-danger">{error}</p>
                       ) : null}
+                    </div>
+                  ) : null}
+                  {item.delegateeAddress ? (
+                    <div className="flex justify-end">
+                      <CourtReportButton
+                        label="Report delegation"
+                        size="compact"
+                        target={{
+                          type: "delegation",
+                          id: courtCompositeTargetId(item.chamberId, profileId),
+                        }}
+                      />
                     </div>
                   ) : null}
                 </div>

@@ -17,6 +17,7 @@ import {
   publicationRoute,
 } from "./draft/draftUi";
 import { ProposalDraftDetailsCard } from "./draft/ProposalDraftDetailsCard";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const PublicDraft: React.FC = () => {
   const auth = useAuth();
@@ -71,6 +72,11 @@ const PublicDraft: React.FC = () => {
           <Link to={proposalDraftRoutes.public}>Public drafts</Link>
         </Button>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {draft.id ? (
+            <CourtReportButton
+              target={{ type: "public_proposal_draft", id: draft.id }}
+            />
+          ) : null}
           {!owner && draft.id ? (
             <CopyLinkButton
               value={publicationRoute(draft.id, draft.publication)}

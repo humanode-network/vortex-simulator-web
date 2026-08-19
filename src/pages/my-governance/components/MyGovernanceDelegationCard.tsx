@@ -14,6 +14,8 @@ import { Button } from "@/components/primitives/button";
 import { Input } from "@/components/primitives/input";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatChamberLabel } from "@/lib/chamberUi";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
+import { courtCompositeTargetId } from "@/pages/courts/model/courtReportTarget";
 import type {
   ChamberDto,
   ChamberGovernorDto,
@@ -139,6 +141,21 @@ export function MyGovernanceDelegationCard({
                         </Button>
                       </div>
                     </div>
+                    {item.delegateeAddress && viewerAddress ? (
+                      <div className="flex justify-end">
+                        <CourtReportButton
+                          label="Report delegation"
+                          size="compact"
+                          target={{
+                            type: "delegation",
+                            id: courtCompositeTargetId(
+                              item.chamberId,
+                              viewerAddress,
+                            ),
+                          }}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

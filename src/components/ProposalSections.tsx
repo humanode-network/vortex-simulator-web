@@ -5,6 +5,7 @@ import {
   type AttachmentItem,
 } from "@/components/AttachmentList";
 import { AddressInline } from "@/components/AddressInline";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 import { SectionHeader } from "@/components/SectionHeader";
 import { StatTile } from "@/components/StatTile";
 import { Surface } from "@/components/Surface";
@@ -38,6 +39,7 @@ export type ProposalMilestoneDetail = {
 
 export type ProposalTimelineItem = {
   id: string;
+  actionId?: string;
   timestamp: string;
   title: string;
   detail?: string;
@@ -633,6 +635,15 @@ export function ProposalTimelineCard({
                   item.actor
                 )}
               </p>
+            ) : null}
+            {item.actionId ? (
+              <div className="flex justify-end">
+                <CourtReportButton
+                  label="Report action"
+                  size="compact"
+                  target={{ type: "governance_action", id: item.actionId }}
+                />
+              </div>
             ) : null}
             {item.snapshot ? (
               <div className="space-y-2 rounded-lg border border-border/70 bg-panel-alt px-2 py-2">

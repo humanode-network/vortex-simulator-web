@@ -37,9 +37,15 @@ type StageChipProps = {
   stage: Stage;
   label?: ReactNode;
   className?: string;
+  interactiveHint?: boolean;
 };
 
-export function StageChip({ stage, label, className }: StageChipProps) {
+export function StageChip({
+  stage,
+  label,
+  className,
+  interactiveHint = true,
+}: StageChipProps) {
   const kind: StageChipKind = stageChipKindForStage(stage);
   const termId = hintByKind[kind];
   const content = label ?? stageLabelForStage(stage);
@@ -51,7 +57,13 @@ export function StageChip({ stage, label, className }: StageChipProps) {
       className={cn("stage-chip", chipClasses[kind], className)}
       title={title}
     >
-      {termId ? <HintLabel termId={termId}>{content}</HintLabel> : content}
+      {termId ? (
+        <HintLabel termId={termId} interactiveTrigger={interactiveHint}>
+          {content}
+        </HintLabel>
+      ) : (
+        content
+      )}
     </Chip>
   );
 }

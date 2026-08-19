@@ -264,6 +264,8 @@ type ThreadDetailProps<
   onTransition: (status: TStatus) => void | Promise<void>;
   replyPlaceholder?: (thread: TThread) => string;
   renderAuthor?: (address: string) => ReactNode;
+  renderThreadActions?: (thread: TThread) => ReactNode;
+  renderMessageActions?: (message: TMessage) => ReactNode;
 };
 
 export function ThreadDetail<
@@ -291,6 +293,8 @@ export function ThreadDetail<
       textClassName="text-xs [overflow-wrap:anywhere] break-words"
     />
   ),
+  renderThreadActions,
+  renderMessageActions,
 }: ThreadDetailProps<TCategory, TStatus, TThread, TMessage>) {
   return (
     <Surface variant="panelAlt" radius="xl" shadow="none" className="p-4">
@@ -306,9 +310,12 @@ export function ThreadDetail<
               <span>{statusLabel(detail.thread.status)}</span>
               <span>{formatDateTime(detail.thread.createdAt)}</span>
             </div>
-            <h3 className="text-lg font-semibold text-text">
-              {detail.thread.title}
-            </h3>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h3 className="text-lg font-semibold text-text">
+                {detail.thread.title}
+              </h3>
+              {renderThreadActions?.(detail.thread)}
+            </div>
             {renderAuthor(detail.thread.authorAddress)}
             <p className="text-sm whitespace-pre-wrap text-text">
               {detail.thread.body}
@@ -358,6 +365,7 @@ export function ThreadDetail<
                         {message.body}
                       </p>
                     </div>
+                    {renderMessageActions?.(message)}
                   </div>
                 </Surface>
               ))

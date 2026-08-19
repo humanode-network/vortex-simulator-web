@@ -10,13 +10,11 @@ import type {
   ChamberCmDto,
   CitizenVetoProposalPageDto,
   CmSummaryDto,
-  CourtCaseDetailDto,
   FormationProposalPageDto,
   ProposalFinishedPageDto,
   GetChamberResponse,
   GetChambersResponse,
   GetClockResponse,
-  GetCourtsResponse,
   GetFeedResponse,
   GetFormationResponse,
   GetHumansResponse,
@@ -39,6 +37,7 @@ import type {
 } from "@/types/api";
 export * from "@/lib/api/factions";
 export * from "@/lib/api/initiatives";
+export * from "@/lib/api/courtsV2";
 export {
   apiGet,
   apiPost,
@@ -657,50 +656,6 @@ export async function apiProposalFinishedPage(
   id: string,
 ): Promise<ProposalFinishedPageDto> {
   return await apiGet<ProposalFinishedPageDto>(`/api/proposals/${id}/finished`);
-}
-
-export async function apiCourts(): Promise<GetCourtsResponse> {
-  return await apiGet<GetCourtsResponse>("/api/courts");
-}
-
-export async function apiCourt(id: string): Promise<CourtCaseDetailDto> {
-  return await apiGet<CourtCaseDetailDto>(`/api/courts/${id}`);
-}
-
-export async function apiCourtReport(input: {
-  caseId: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "court.case.report";
-  caseId: string;
-  reports: number;
-  status: "jury" | "live" | "ended";
-}> {
-  return await apiCommand({
-    type: "court.case.report",
-    payload: { caseId: input.caseId },
-    idempotencyKey: input.idempotencyKey,
-  });
-}
-
-export async function apiCourtVerdict(input: {
-  caseId: string;
-  verdict: "guilty" | "not_guilty";
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "court.case.verdict";
-  caseId: string;
-  verdict: "guilty" | "not_guilty";
-  status: "jury" | "live" | "ended";
-  totals: { guilty: number; notGuilty: number };
-}> {
-  return await apiCommand({
-    type: "court.case.verdict",
-    payload: { caseId: input.caseId, verdict: input.verdict },
-    idempotencyKey: input.idempotencyKey,
-  });
 }
 
 export async function apiHumans(): Promise<GetHumansResponse> {

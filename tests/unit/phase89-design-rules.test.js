@@ -113,6 +113,16 @@ test("Phase 89 app shell avoids global decorative chrome", () => {
   assert.match(global, /scrollbar-gutter:\s*stable/);
 });
 
+test("System navigation places Humanode Codex after Vortexopedia", () => {
+  const sidebar = readFileSync(join(srcRoot, "app/AppSidebar.tsx"), "utf8");
+
+  assert.match(
+    sidebar,
+    /to: "\/app\/vortexopedia", label: "Vortexopedia", Icon: BookOpen[\s\S]*?to: "\/app\/humanode-codex",[\s\S]*?label: "Humanode Codex",[\s\S]*?Icon: ScrollText/,
+  );
+  assert.equal(sidebar.match(/to: "\/app\/humanode-codex"/g)?.length, 1);
+});
+
 test("Phase 89 stage chips use semantic theme colors", () => {
   const stageChip = readFileSync(
     join(srcRoot, "components/StageChip.tsx"),

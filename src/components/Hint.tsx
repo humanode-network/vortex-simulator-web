@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
@@ -12,7 +12,12 @@ import { cn } from "@/lib/utils";
 import { getVortexopediaTerm } from "@/data/vortexopediaLookup";
 import "./Hint.css";
 
-type OverlayPosition = { x: number; y: number };
+type OverlayPosition = {
+  maxHeight: number;
+  placement: "above" | "below";
+  x: number;
+  y: number;
+};
 
 const OVERLAY_WIDTH = 320;
 const OVERLAY_HEIGHT = 240;
@@ -26,19 +31,26 @@ function clamp(value: number, min: number, max: number) {
 function getAnchorPosition(element: HTMLElement): OverlayPosition {
   const rect = element.getBoundingClientRect();
   const maxLeft = window.innerWidth - OVERLAY_WIDTH - VIEWPORT_MARGIN;
-  const maxTop = window.innerHeight - OVERLAY_HEIGHT - VIEWPORT_MARGIN;
+  const roomBelow = Math.max(
+    0,
+    window.innerHeight - rect.bottom - OVERLAY_GAP - VIEWPORT_MARGIN,
+  );
+  const roomAbove = Math.max(0, rect.top - OVERLAY_GAP - VIEWPORT_MARGIN);
+  const placement =
+    roomBelow >= OVERLAY_HEIGHT || roomBelow >= roomAbove ? "below" : "above";
 
   return {
+    maxHeight: Math.max(96, placement === "below" ? roomBelow : roomAbove),
+    placement,
     x: clamp(
       rect.left + rect.width / 2 - OVERLAY_WIDTH / 2,
       VIEWPORT_MARGIN,
       Math.max(VIEWPORT_MARGIN, maxLeft),
     ),
-    y: clamp(
-      rect.bottom + OVERLAY_GAP,
-      VIEWPORT_MARGIN,
-      Math.max(VIEWPORT_MARGIN, maxTop),
-    ),
+    y:
+      placement === "below"
+        ? rect.bottom + OVERLAY_GAP
+        : rect.top - OVERLAY_GAP,
   };
 }
 
@@ -46,28 +58,43 @@ function getAnchorPosition(element: HTMLElement): OverlayPosition {
 const useHoverOverlay = (dwellMs: number) => {
   const [visible, setVisible] = useState(false);
   const [stable, setStable] = useState(false);
-  const [position, setPosition] = useState<OverlayPosition>({ x: 0, y: 0 });
+  const [position, setPosition] = useState<OverlayPosition>({
+    maxHeight: OVERLAY_HEIGHT,
+    placement: "below",
+    x: 0,
+    y: 0,
+  });
   const hoverTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
   const hoveringRef = useRef(false);
 
-  const clearTimers = () => {
+  const clearHoverTimer = () => {
     if (hoverTimer.current) {
       window.clearTimeout(hoverTimer.current);
       hoverTimer.current = null;
     }
+  };
+
+  const clearHideTimer = () => {
     if (hideTimer.current) {
       window.clearTimeout(hideTimer.current);
       hideTimer.current = null;
     }
   };
 
-  const showAt = (pos: OverlayPosition) => {
+  const clearTimers = () => {
+    clearHoverTimer();
+    clearHideTimer();
+  };
+
+  const showAt = (pos: OverlayPosition, immediatelyStable = false) => {
     setPosition(pos);
     setVisible(true);
-    setStable(false);
     clearTimers();
-    hoverTimer.current = window.setTimeout(() => setStable(true), dwellMs);
+    setStable(immediatelyStable);
+    if (!immediatelyStable) {
+      hoverTimer.current = window.setTimeout(() => setStable(true), dwellMs);
+    }
   };
 
   const hide = (force = false) => {
@@ -93,6 +120,10 @@ const useHoverOverlay = (dwellMs: number) => {
     position,
     setHovering: (on: boolean) => {
       hoveringRef.current = on;
+      if (on) {
+        clearHideTimer();
+        return;
+      }
       if (!on && stable) {
         hide();
       }
@@ -103,7 +134,9 @@ const useHoverOverlay = (dwellMs: number) => {
 };
 
 type OverlayPortalProps = {
+  id: string;
   interactive: boolean;
+  label: string;
   visible: boolean;
   position: OverlayPosition;
   children: React.ReactNode;
@@ -112,7 +145,9 @@ type OverlayPortalProps = {
 // Thin portal that positions content near the hovered term while escaping
 // clipping and stacking contexts created by page surfaces.
 const OverlayPortal: React.FC<OverlayPortalProps> = ({
+  id,
   interactive,
+  label,
   visible,
   position,
   children,
@@ -120,20 +155,32 @@ const OverlayPortal: React.FC<OverlayPortalProps> = ({
   if (!visible || typeof document === "undefined") return null;
   const overlay = (
     <div
-      className="fixed z-[100] max-w-[360px] min-w-[260px] animate-in zoom-in-95 fade-in"
+      id={id}
+      aria-label={label}
+      className="fixed z-[100] max-w-none min-w-0"
+      role="dialog"
       style={{
         top: position.y,
         left: position.x,
+        width: `min(${OVERLAY_WIDTH}px, calc(100vw - ${VIEWPORT_MARGIN * 2}px))`,
         pointerEvents: interactive ? "auto" : "none",
+        transform:
+          position.placement === "above" ? "translateY(-100%)" : undefined,
       }}
     >
-      {children}
+      <div
+        className="animate-in overflow-y-auto zoom-in-95 fade-in"
+        style={{ maxHeight: position.maxHeight }}
+      >
+        {children}
+      </div>
     </div>
   );
   return createPortal(overlay, document.body);
 };
 
 type HintSurfaceProps = {
+  actionLabel: string;
   title: string;
   description: string;
   stable: boolean;
@@ -142,6 +189,7 @@ type HintSurfaceProps = {
 
 // UI surface: renders the styled card for any hint content.
 const HintSurface: React.FC<HintSurfaceProps> = ({
+  actionLabel,
   title,
   description,
   stable,
@@ -164,7 +212,7 @@ const HintSurface: React.FC<HintSurfaceProps> = ({
           className="text-xs"
           onClick={onNavigate}
         >
-          Vortexopedia
+          {actionLabel}
         </Button>
       </CardContent>
     </Card>
@@ -175,7 +223,164 @@ type HintProps = {
   termId: string;
   children: React.ReactNode;
   dwellMs?: number;
+  interactiveTrigger?: boolean;
   noUnderline?: boolean;
+};
+
+type ReferenceHintProps = {
+  actionLabel: string;
+  children: React.ReactNode;
+  description: string;
+  dwellMs?: number;
+  href: string;
+  interactiveTrigger?: boolean;
+  noUnderline?: boolean;
+  title: string;
+};
+
+/** Shared anchored reference hint used by Vortexopedia and policy sources. */
+export const ReferenceHint: React.FC<ReferenceHintProps> = ({
+  actionLabel,
+  children,
+  description,
+  dwellMs = 2200,
+  href,
+  interactiveTrigger = true,
+  noUnderline,
+  title,
+}) => {
+  const navigate = useNavigate();
+  const overlay = useHoverOverlay(dwellMs);
+  const popupId = useId();
+  const lastPointerType = useRef<string | null>(null);
+
+  const showFrom = (element: HTMLElement, immediatelyStable = false) => {
+    overlay.showAt(getAnchorPosition(element), immediatelyStable);
+  };
+
+  const openReference = () => navigate(href);
+
+  return (
+    <span className="relative inline-flex items-center align-baseline">
+      <span
+        aria-controls={
+          interactiveTrigger && overlay.visible ? popupId : undefined
+        }
+        aria-expanded={interactiveTrigger ? overlay.visible : undefined}
+        aria-haspopup={interactiveTrigger ? "dialog" : undefined}
+        aria-label={
+          interactiveTrigger ? `${title}. Open in ${actionLabel}.` : undefined
+        }
+        className={cn(
+          "hint-trigger tracking-normal whitespace-pre-wrap normal-case",
+          noUnderline && "no-underline",
+        )}
+        role={interactiveTrigger ? "link" : undefined}
+        tabIndex={interactiveTrigger ? 0 : undefined}
+        onFocus={
+          interactiveTrigger
+            ? (event) => {
+                if (lastPointerType.current) return;
+                showFrom(event.currentTarget, true);
+              }
+            : undefined
+        }
+        onBlur={
+          interactiveTrigger
+            ? () => {
+                lastPointerType.current = null;
+                overlay.setHovering(false);
+                overlay.hide();
+              }
+            : undefined
+        }
+        onClick={
+          interactiveTrigger
+            ? (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const pointerType = lastPointerType.current;
+                lastPointerType.current = null;
+                if (pointerType === "touch") {
+                  showFrom(event.currentTarget, true);
+                  return;
+                }
+                openReference();
+              }
+            : undefined
+        }
+        onKeyDown={
+          interactiveTrigger
+            ? (event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  overlay.hide(true);
+                  return;
+                }
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openReference();
+                }
+              }
+            : undefined
+        }
+        onMouseEnter={(event) => showFrom(event.currentTarget)}
+        onMouseLeave={() => {
+          overlay.setHovering(false);
+          overlay.hide();
+        }}
+        onPointerDown={
+          interactiveTrigger
+            ? (event) => {
+                lastPointerType.current = event.pointerType;
+              }
+            : undefined
+        }
+        onPointerCancel={
+          interactiveTrigger
+            ? () => {
+                lastPointerType.current = null;
+              }
+            : undefined
+        }
+      >
+        {children}
+      </span>
+      <OverlayPortal
+        id={popupId}
+        interactive={overlay.stable}
+        label={`${title} reference preview`}
+        visible={overlay.visible}
+        position={overlay.position}
+      >
+        <div
+          onBlurCapture={(event) => {
+            if (
+              event.currentTarget.contains(event.relatedTarget as Node | null)
+            )
+              return;
+            overlay.setHovering(false);
+            overlay.hide();
+          }}
+          onFocusCapture={() => overlay.setHovering(true)}
+          onMouseEnter={() => overlay.setHovering(true)}
+          onMouseLeave={() => {
+            overlay.setHovering(false);
+            overlay.hide();
+          }}
+        >
+          <HintSurface
+            actionLabel={actionLabel}
+            title={title}
+            description={description}
+            stable={overlay.stable}
+            onNavigate={openReference}
+          />
+        </div>
+      </OverlayPortal>
+    </span>
+  );
 };
 
 /**
@@ -187,52 +392,26 @@ export const Hint: React.FC<HintProps> = ({
   termId,
   dwellMs = 2200,
   children,
+  interactiveTrigger,
   noUnderline,
 }) => {
   const term = useMemo(() => getVortexopediaTerm(termId), [termId]);
-  const navigate = useNavigate();
-  const overlay = useHoverOverlay(dwellMs);
-
   if (!term) {
     return <span>{children}</span>;
   }
 
   return (
-    <span className="relative inline-flex items-center align-baseline">
-      <span
-        className={cn(
-          "hint-trigger tracking-normal whitespace-pre-wrap normal-case",
-          noUnderline && "no-underline",
-        )}
-        onMouseEnter={(e) => overlay.showAt(getAnchorPosition(e.currentTarget))}
-        onMouseLeave={() => {
-          overlay.setHovering(false);
-          overlay.hide();
-        }}
-      >
-        {children}
-      </span>
-      <OverlayPortal
-        interactive={overlay.stable}
-        visible={overlay.visible}
-        position={overlay.position}
-      >
-        <div
-          onMouseEnter={() => overlay.setHovering(true)}
-          onMouseLeave={() => {
-            overlay.setHovering(false);
-            overlay.hide();
-          }}
-        >
-          <HintSurface
-            title={term.name}
-            description={term.short}
-            stable={overlay.stable}
-            onNavigate={() => navigate(`/app/vortexopedia?term=${term.id}`)}
-          />
-        </div>
-      </OverlayPortal>
-    </span>
+    <ReferenceHint
+      actionLabel="Vortexopedia"
+      description={term.short}
+      dwellMs={dwellMs}
+      href={`/app/vortexopedia?term=${term.id}`}
+      interactiveTrigger={interactiveTrigger}
+      noUnderline={noUnderline}
+      title={term.name}
+    >
+      {children}
+    </ReferenceHint>
   );
 };
 
@@ -244,6 +423,7 @@ type HintLabelProps = {
   suffix?: string;
   underline?: boolean;
   className?: string;
+  interactiveTrigger?: boolean;
 };
 
 /**
@@ -257,10 +437,11 @@ export const HintLabel: React.FC<HintLabelProps> = ({
   suffix,
   underline = true,
   className,
+  interactiveTrigger,
 }) => {
   const content = children ?? termText ?? "";
   return (
-    <Hint termId={termId} noUnderline>
+    <Hint termId={termId} interactiveTrigger={interactiveTrigger} noUnderline>
       <span
         className={cn(
           "inline-flex items-center space-x-1 align-baseline text-inherit",

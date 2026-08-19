@@ -1,196 +1,365 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/primitives/button";
-import { SearchBar } from "@/components/SearchBar";
-import { Card, CardContent, CardHeader } from "@/components/primitives/card";
-import { Link } from "react-router";
-import { MetricTile } from "@/components/MetricTile";
-import { CourtStatusBadge } from "@/components/CourtStatusBadge";
-import { PageHint } from "@/components/PageHint";
-import { SectionHeader } from "@/components/SectionHeader";
+import { useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router";
+
+import { GlassySection } from "@/components/GlassySection";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
-import { apiCourts } from "@/lib/apiClient";
-import { formatDateTime, toTimestampMs } from "@/lib/dateTime";
-import { formatLoadError } from "@/lib/errorFormatting";
-import type { CourtCaseDto, CourtCaseStatusDto } from "@/types/api";
+import { PageHeader } from "@/components/PageHeader";
+import { PageHint } from "@/components/PageHint";
+import { Button } from "@/components/primitives/button";
+import { Input } from "@/components/primitives/input";
+import { Select } from "@/components/primitives/select";
+import { Tabs } from "@/components/primitives/tabs";
+import {
+  apiCourtCasesV2,
+  apiCourtNotificationsV2,
+  apiMyCourtReportsV2,
+} from "@/lib/apiClient";
+import type {
+  CourtCaseViewerV2Dto,
+  CourtMyReportItemV2Dto,
+  CourtNotificationV2Dto,
+} from "@/types/api";
+import { CourtCaseCard, CourtReportCard } from "./components/CourtRecordCards";
+import { CourtCollectionNotice } from "./components/CourtPrimitives";
+import { CourtNotificationCard } from "./CourtNotificationCard";
+import { CourtsUnavailable } from "./CourtsUnavailable";
+import { useCourtCollection } from "./hooks/useCourtCollection";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
+import {
+  COURT_CASE_STATE_OPTIONS,
+  courtCaseStateDisplay,
+  courtOffenseDisplay,
+} from "./model/courtPresentation";
+
+const COURT_PAGE_SIZE = 12;
+
+async function loadCases(): Promise<CourtCaseViewerV2Dto[]> {
+  const result = await apiCourtCasesV2();
+  if (result.status !== "available") throw new Error("Cases are unavailable.");
+  return result.cases;
+}
+
+async function loadReports(): Promise<CourtMyReportItemV2Dto[]> {
+  const result = await apiMyCourtReportsV2();
+  if (result.status !== "available")
+    throw new Error("Reports are unavailable.");
+  return result.reports;
+}
+
+async function loadNotifications(): Promise<CourtNotificationV2Dto[]> {
+  const result = await apiCourtNotificationsV2();
+  if (result.status !== "available")
+    throw new Error("Notifications are unavailable.");
+  return result.notifications;
+}
 
 const Courts: React.FC = () => {
-  const [cases, setCases] = useState<CourtCaseDto[] | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<{
-    statusFilter: CourtCaseStatusDto | "any";
-    sortBy: "recent" | "reports";
-  }>({ statusFilter: "any", sortBy: "recent" });
-  const { statusFilter, sortBy } = filters;
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await apiCourts();
-        if (!active) return;
-        setCases(res.items);
-        setLoadError(null);
-      } catch (error) {
-        if (!active) return;
-        setCases([]);
-        setLoadError((error as Error).message);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const runtime = useCourtRuntime();
+  const enabled = runtime.status === "available";
+  const caseCollection = useCourtCollection({ enabled, load: loadCases });
+  const reportCollection = useCourtCollection({ enabled, load: loadReports });
+  const notificationCollection = useCourtCollection({
+    enabled,
+    load: loadNotifications,
+  });
+  const cases = caseCollection.data;
+  const reports = reportCollection.data;
+  const notifications = notificationCollection.data;
+  const requestedView = searchParams.get("view");
+  const view = [
+    "all",
+    "involving",
+    "jury",
+    "reports",
+    "notifications",
+  ].includes(requestedView ?? "")
+    ? requestedView!
+    : "all";
+  const query = searchParams.get("query")?.trim() ?? "";
+  const requestedState = searchParams.get("state");
+  const state = COURT_CASE_STATE_OPTIONS.includes(
+    requestedState as (typeof COURT_CASE_STATE_OPTIONS)[number],
+  )
+    ? requestedState!
+    : "all";
+  const requestedPage = Number(searchParams.get("page") ?? "1");
+  const page =
+    Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+  const involvingCases = useMemo(
+    () => cases.filter((item) => item.partyRecord !== null),
+    [cases],
+  );
+  const juryCases = useMemo(
+    () =>
+      cases.filter(
+        (item) => item.juryTask !== null || item.appellateTask !== null,
+      ),
+    [cases],
+  );
+  const scopedCases =
+    view === "involving" ? involvingCases : view === "jury" ? juryCases : cases;
+  const filteredCases = useMemo(() => {
+    const normalized = query.toLocaleLowerCase();
+    return scopedCases.filter((item) => {
+      const courtCase = item.publicCase;
+      if (!courtCase || (state !== "all" && courtCase.state !== state))
+        return false;
+      if (!normalized) return true;
+      const targetTitle = courtCase.targetSummary?.title ?? "";
+      const allegation = courtOffenseDisplay(
+        item.caseRecord?.allegationCode ?? courtCase.offenseCode,
+      ).label;
+      return [
+        courtCase.id,
+        courtCase.domain,
+        courtCase.state,
+        courtCase.finalityState,
+        targetTitle,
+        allegation,
+      ].some((value) => value.toLocaleLowerCase().includes(normalized));
+    });
+  }, [query, scopedCases, state]);
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredCases.length / COURT_PAGE_SIZE),
+  );
+  const currentPage = Math.min(page, pageCount);
+  const visibleCases = filteredCases.slice(
+    (currentPage - 1) * COURT_PAGE_SIZE,
+    currentPage * COURT_PAGE_SIZE,
+  );
+
+  const updateCaseQuery = useCallback(
+    (updates: Record<string, string | null>) => {
+      const next = new URLSearchParams(searchParams);
+      for (const [key, value] of Object.entries(updates)) {
+        if (!value) next.delete(key);
+        else next.set(key, value);
       }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams],
+  );
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return [...(cases ?? [])]
-      .filter((c) => {
-        const matchesTerm =
-          term.length === 0 ||
-          [c.title, c.subject, c.triggeredBy].some((field) =>
-            field.toLowerCase().includes(term),
-          );
-        const matchesStatus =
-          statusFilter === "any" ? true : c.status === statusFilter;
-        return matchesTerm && matchesStatus;
-      })
-      .sort((a, b) => {
-        if (sortBy === "reports") return b.reports - a.reports;
-        return (
-          toTimestampMs(b.opened ?? "", 0) - toTimestampMs(a.opened ?? "", 0)
-        );
-      });
-  }, [cases, search, statusFilter, sortBy]);
+  const updateNotification = useCallback(
+    (next: CourtNotificationV2Dto) => {
+      notificationCollection.setData((current) =>
+        current.map((item) => (item.id === next.id ? next : item)),
+      );
+    },
+    [notificationCollection.setData],
+  );
 
-  const openCases = (cases ?? []).filter((c) => c.status !== "ended").length;
+  if (runtime.status !== "available") {
+    return (
+      <CourtsUnavailable
+        checking={runtime.status === "checking"}
+        failed={runtime.status === "failed"}
+        onRetry={runtime.retry}
+        pageId="courts"
+        title="Courts"
+        reason={
+          runtime.status === "unavailable" || runtime.status === "failed"
+            ? runtime.reason
+            : undefined
+        }
+      />
+    );
+  }
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none flex flex-col gap-6 opacity-35 blur-[6px] select-none">
-        <PageHint pageId="courts" />
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              label: "Open cases",
-              value: cases ? openCases : "—",
-            },
-            { label: "Jury panels", value: "12 seats / case" },
-            { label: "New reports", value: "27 this week" },
-            { label: "Ended (30d)", value: "6" },
-          ].map((metric) => (
-            <MetricTile
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-              className="px-4 py-4"
+    <div className="flex flex-col gap-6">
+      <PageHint pageId="courts" />
+      <PageHeader
+        eyebrow="Reporting and adjudication"
+        title="Courts"
+        description="Follow cases, manage reports, and respond to Court duties. Start a report from the Report action on the exact Vortex record involved."
+      />
+
+      <Tabs
+        aria-label="Court records"
+        className="flex-nowrap overflow-x-auto"
+        value={view}
+        onValueChange={(nextView) => {
+          const next = new URLSearchParams(searchParams);
+          if (nextView === "all") next.delete("view");
+          else next.set("view", nextView);
+          next.delete("page");
+          setSearchParams(next);
+        }}
+        options={[
+          { value: "all", label: `All cases ${cases.length}` },
+          {
+            value: "involving",
+            label: `Involving me ${involvingCases.length}`,
+          },
+          { value: "jury", label: `Jury service ${juryCases.length}` },
+          { value: "reports", label: `My reports ${reports.length}` },
+          {
+            value: "notifications",
+            label: `Notifications ${notifications.filter((item) => item.state === "unread").length}`,
+          },
+        ]}
+      />
+
+      {view !== "reports" && view !== "notifications" ? (
+        <GlassySection
+          title={
+            view === "jury"
+              ? "Jury service"
+              : view === "involving"
+                ? "Cases involving me"
+                : "Cases"
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,0.35fr)]">
+            <label className="grid gap-1.5 text-xs font-semibold text-muted">
+              Search cases
+              <Input
+                value={query}
+                onChange={(event) =>
+                  updateCaseQuery({
+                    query: event.target.value || null,
+                    page: null,
+                  })
+                }
+                placeholder="Case id, record, allegation, or domain"
+                type="search"
+              />
+            </label>
+            <label className="grid gap-1.5 text-xs font-semibold text-muted">
+              Procedure state
+              <Select
+                value={state}
+                onChange={(event) =>
+                  updateCaseQuery({
+                    state:
+                      event.target.value === "all" ? null : event.target.value,
+                    page: null,
+                  })
+                }
+              >
+                <option value="all">All states</option>
+                {COURT_CASE_STATE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {courtCaseStateDisplay(option).label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </div>
+          <CourtCollectionNotice
+            error={caseCollection.error}
+            label="cases"
+            loading={caseCollection.loading}
+            onRetry={() => void caseCollection.reload()}
+          />
+          {visibleCases.length ? (
+            <>
+              <p className="text-xs text-muted" aria-live="polite">
+                {filteredCases.length} matching{" "}
+                {filteredCases.length === 1 ? "case" : "cases"}
+              </p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {visibleCases.map((item) => (
+                  <CourtCaseCard key={item.publicCase?.id} item={item} />
+                ))}
+              </div>
+              {pageCount > 1 ? (
+                <nav
+                  aria-label="Court case pages"
+                  className="flex flex-wrap items-center justify-between gap-3"
+                >
+                  <Button
+                    size="compact"
+                    variant="outline"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      updateCaseQuery({
+                        page: currentPage > 2 ? String(currentPage - 1) : null,
+                      })
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <p className="text-xs text-muted">
+                    Page {currentPage} of {pageCount}
+                  </p>
+                  <Button
+                    size="compact"
+                    variant="outline"
+                    disabled={currentPage === pageCount}
+                    onClick={() =>
+                      updateCaseQuery({ page: String(currentPage + 1) })
+                    }
+                  >
+                    Next
+                  </Button>
+                </nav>
+              ) : null}
+            </>
+          ) : !caseCollection.loading && !caseCollection.error ? (
+            <NoDataYetBar
+              label={view === "jury" ? "jury tasks" : "cases"}
+              description={
+                query || state !== "all"
+                  ? "No case matches the current search and procedure state."
+                  : undefined
+              }
             />
-          ))}
-        </section>
+          ) : null}
+        </GlassySection>
+      ) : null}
 
-        {cases === null ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-            Loading court cases…
-          </Card>
-        ) : null}
-        {loadError ? (
-          <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-            Courts unavailable:{" "}
-            {formatLoadError(loadError, "Failed to load courts.")}
-          </Card>
-        ) : null}
+      {view === "notifications" ? (
+        <GlassySection title="Court notifications">
+          <CourtCollectionNotice
+            error={notificationCollection.error}
+            label="notifications"
+            loading={notificationCollection.loading}
+            onRetry={() => void notificationCollection.reload()}
+          />
+          {notifications.filter((item) => item.state !== "dismissed").length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {notifications
+                .filter((item) => item.state !== "dismissed")
+                .map((notification) => (
+                  <CourtNotificationCard
+                    key={notification.id}
+                    notification={notification}
+                    onChange={updateNotification}
+                  />
+                ))}
+            </div>
+          ) : !notificationCollection.loading &&
+            !notificationCollection.error ? (
+            <NoDataYetBar label="Court notifications" />
+          ) : null}
+        </GlassySection>
+      ) : null}
 
-        <SearchBar
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search court cases, subjects, or reports…"
-          ariaLabel="Search courts"
-          filtersConfig={[
-            {
-              key: "statusFilter",
-              label: "Status",
-              options: [
-                { value: "any", label: "Any status" },
-                { value: "jury", label: "Jury forming" },
-                { value: "live", label: "Session live" },
-                { value: "ended", label: "Ended" },
-              ],
-            },
-            {
-              key: "sortBy",
-              label: "Sort by",
-              options: [
-                { value: "recent", label: "Opened (newest)" },
-                { value: "reports", label: "Reports (desc)" },
-              ],
-            },
-          ]}
-          filtersState={filters}
-          onFiltersChange={setFilters}
-        />
-
-        {cases !== null && cases.length === 0 && !loadError ? (
-          <NoDataYetBar label="court cases" />
-        ) : (
-          <Card>
-            <CardHeader className="pb-2">
-              <SectionHeader>Active courtrooms</SectionHeader>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {filtered.length === 0 ? (
-                <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-                  No court cases match the current filters.
-                </Card>
-              ) : (
-                filtered.map((courtCase) => (
-                  <Card key={courtCase.id} className="bg-panel-alt">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-lg font-semibold text-foreground">
-                            {courtCase.subject}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <CourtStatusBadge status={courtCase.status} />
-                          <p className="text-xs text-muted">
-                            Opened{" "}
-                            {courtCase.opened
-                              ? formatDateTime(courtCase.opened)
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-0">
-                      <div className="flex flex-wrap gap-3 text-sm text-foreground">
-                        <span className="rounded-full bg-panel px-3 py-1">
-                          Reports: {courtCase.reports}
-                        </span>
-                      </div>
-                      <Button asChild size="sm">
-                        <Link to={`/app/courts/${courtCase.id}`}>
-                          Open courtroom
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center p-6">
-        <Card className="max-w-md border-dashed bg-panel/90 px-6 py-5 text-center shadow-lg backdrop-blur">
-          <p className="text-sm tracking-[0.24em] text-muted uppercase">
-            Courts
-          </p>
-          <p className="mt-3 text-xl font-semibold text-foreground">
-            coming sooner than you think...
-          </p>
-        </Card>
-      </div>
+      {view === "reports" ? (
+        <GlassySection title="My reports">
+          <CourtCollectionNotice
+            error={reportCollection.error}
+            label="reports"
+            loading={reportCollection.loading}
+            onRetry={() => void reportCollection.reload()}
+          />
+          {reports.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {reports.map((report) => (
+                <CourtReportCard key={report.id} report={report} />
+              ))}
+            </div>
+          ) : !reportCollection.loading && !reportCollection.error ? (
+            <NoDataYetBar label="reports" />
+          ) : null}
+        </GlassySection>
+      ) : null}
     </div>
   );
 };

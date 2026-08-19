@@ -23,6 +23,7 @@ import { ProposalPageShell } from "./shared/ProposalPageShell";
 import { ProposalFormationActions } from "./formation/ProposalFormationActions";
 import { ProposalFormationStatus } from "./formation/ProposalFormationStatus";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
@@ -157,6 +158,15 @@ const ProposalFormation: React.FC = () => {
           pendingMilestone={pendingMilestone}
         />
       </div>
+
+      {id ? (
+        <div className="flex justify-end">
+          <CourtReportButton
+            label="Report Formation project"
+            target={{ type: "formation_project", id }}
+          />
+        </div>
+      ) : null}
 
       <ProposalDetailsSections
         summary={project.summary}

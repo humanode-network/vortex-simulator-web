@@ -50,6 +50,7 @@ import { useAuth } from "@/app/auth/AuthContext";
 import { addressesReferToSameIdentity } from "@/lib/addressIdentity";
 import { formatChamberMultiplier } from "./components/ChamberVisuals";
 import type { ProposalStage } from "@/types/stages";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 const chamberProposalStageLabels: Record<ChamberProposalStageDto, string> = {
   upcoming: "Proposal pool",
@@ -631,7 +632,10 @@ const Chamber: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHint pageId="chamber" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <PageHint pageId="chamber" />
+        {id ? <CourtReportButton target={{ type: "chamber", id }} /> : null}
+      </div>
 
       {loadError ? (
         <Surface
@@ -1068,9 +1072,19 @@ const Chamber: React.FC = () => {
 
               {activeThread ? (
                 <GlassyTile>
-                  <GlassyTileHeading>
-                    {activeThread.thread.title}
-                  </GlassyTileHeading>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <GlassyTileHeading>
+                      {activeThread.thread.title}
+                    </GlassyTileHeading>
+                    <CourtReportButton
+                      label="Report thread"
+                      size="compact"
+                      target={{
+                        type: "chamber_thread",
+                        id: activeThread.thread.id,
+                      }}
+                    />
+                  </div>
                   <p className="m-0 text-sm text-muted">
                     {activeThread.thread.author} ·{" "}
                     {formatDateTime(activeThread.thread.createdAt)}
@@ -1088,10 +1102,20 @@ const Chamber: React.FC = () => {
                           variant="panel"
                           className="px-3 py-2"
                         >
-                          <p className="text-xs text-muted">
-                            {message.author} ·{" "}
-                            {formatDateTime(message.createdAt)}
-                          </p>
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <p className="text-xs text-muted">
+                              {message.author} ·{" "}
+                              {formatDateTime(message.createdAt)}
+                            </p>
+                            <CourtReportButton
+                              label="Report reply"
+                              size="compact"
+                              target={{
+                                type: "chamber_message",
+                                id: message.id,
+                              }}
+                            />
+                          </div>
                           <p className="text-sm text-text">{message.message}</p>
                         </Surface>
                       ))

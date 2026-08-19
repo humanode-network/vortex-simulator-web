@@ -31,7 +31,7 @@ export function InitiativeProposalsSection({
                 <h3 className="text-sm font-semibold text-text">
                   {proposal.title}
                 </h3>
-                <StageChip stage={proposal.stage} />
+                <StageChip stage={proposal.stage} interactiveHint={false} />
               </div>
             </Link>
           ))}

@@ -1,409 +1,386 @@
+import { useCallback } from "react";
+import { Link, useParams } from "react-router";
+
+import { AddressInline } from "@/components/AddressInline";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/primitives/card";
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { Surface } from "@/components/Surface";
+  GlassyCompactGrid,
+  GlassyKeyValue,
+  GlassySection,
+  GlassyStatusChip,
+  GlassyTile,
+} from "@/components/GlassySection";
+import { NoDataYetBar } from "@/components/NoDataYetBar";
+import { PageHeader } from "@/components/PageHeader";
+import {
+  CodexHint,
+  CodexPolicyHint,
+  CodexProcedureHint,
+  CodexSeverityHint,
+} from "@/components/CodexHint";
 import { PageHint } from "@/components/PageHint";
-import { SectionHeader } from "@/components/SectionHeader";
-import { Kicker } from "@/components/Kicker";
-import { CourtStatusBadge } from "@/components/CourtStatusBadge";
-import { VoteButton } from "@/components/VoteButton";
 import { Button } from "@/components/primitives/button";
-import { useAuth } from "@/app/auth/AuthContext";
+import { apiCourtCaseV2 } from "@/lib/apiClient";
+import type { CourtCaseViewerV2Dto } from "@/types/api";
+import { CourtActionPanel } from "./CourtActionPanel";
 import {
-  apiCourt,
-  apiCourtReport,
-  apiCourtVerdict,
-  apiHumans,
-} from "@/lib/apiClient";
-import { formatDateTime } from "@/lib/dateTime";
-import { formatLoadError } from "@/lib/errorFormatting";
-import type { CourtCaseDetailDto, HumanNodeDto } from "@/types/api";
+  CourtAppellateBrief,
+  CourtAppealSummary,
+  CourtEvidenceCard,
+  CourtFinalDecisionSummary,
+  CourtRemedySummary,
+  CourtTimeline,
+} from "./components/CourtCaseRecord";
+import {
+  courtLabel,
+  CourtDeadline,
+  CourtCopyValue,
+  CourtStateSummary,
+  CourtTargetPreview,
+  courtTone,
+  formatCourtInstant,
+} from "./components/CourtPrimitives";
+import {
+  courtCaseDeadline,
+  courtCaseStateDisplay,
+  courtOffenseDisplay,
+} from "./model/courtPresentation";
+import { CourtsUnavailable } from "./CourtsUnavailable";
+import { useCourtRuntime } from "./hooks/useCourtRuntime";
+import { useCourtRecord } from "./hooks/useCourtRecord";
 
 const Courtroom: React.FC = () => {
-  const { id } = useParams();
-  const courtsBlocked = true;
-  const [courtCase, setCourtCase] = useState<CourtCaseDetailDto | null>(null);
-  const [humansById, setHumansById] = useState<Record<string, HumanNodeDto>>(
-    {},
-  );
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [actionBusy, setActionBusy] = useState(false);
-  const auth = useAuth();
-
-  useEffect(() => {
-    if (courtsBlocked || !id) return;
-    let active = true;
-    (async () => {
-      try {
-        const [court, humans] = await Promise.all([apiCourt(id), apiHumans()]);
-        if (!active) return;
-        setCourtCase(court);
-        setHumansById(
-          Object.fromEntries(humans.items.map((h) => [h.id, h] as const)),
-        );
-        setLoadError(null);
-      } catch (error) {
-        if (!active) return;
-        setCourtCase(null);
-        setHumansById({});
-        setLoadError((error as Error).message);
-      }
-    })();
-    return () => {
-      active = false;
-    };
+  const { id } = useParams<{ id: string }>();
+  const runtime = useCourtRuntime();
+  const loadCase = useCallback(async () => {
+    if (!id) throw new Error("Case id is missing.");
+    return await apiCourtCaseV2(id);
   }, [id]);
-
-  const caseTitle =
-    courtCase?.subject ?? (id ? `Courtroom · ${id}` : "Courtroom");
-
-  const [verdict, setVerdict] = useState<"guilty" | "not_guilty" | null>(null);
-  const votingEnabled = courtCase?.status === "live";
-  const canAct = auth.authenticated && auth.eligible;
-
-  const refresh = async () => {
-    if (courtsBlocked || !id) return;
-    const [court, humans] = await Promise.all([apiCourt(id), apiHumans()]);
-    setCourtCase(court);
-    setHumansById(
-      Object.fromEntries(humans.items.map((h) => [h.id, h] as const)),
-    );
-  };
-
-  const runAction = async (fn: () => Promise<void>) => {
-    setActionError(null);
-    setActionBusy(true);
-    try {
-      await fn();
-      await refresh();
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setActionBusy(false);
-    }
-  };
-
-  const juryMembers = (courtCase?.juryIds ?? []).map((memberId) => {
-    const node = humansById[memberId];
-    return {
-      id: memberId,
-      name: node?.name ?? memberId,
-      role: node?.role,
-      tier: node?.tier,
-    };
+  const caseRecord = useCourtRecord<CourtCaseViewerV2Dto>({
+    enabled: runtime.status === "available" && Boolean(id),
+    load: loadCase,
+    recordKey: id,
   });
+  const record = caseRecord.data;
 
-  const parties = useMemo(() => {
-    return (courtCase?.parties ?? []).map((party) => {
-      const node = humansById[party.humanId];
-      return {
-        ...party,
-        name: node?.name ?? party.humanId,
-        tier: node?.tier,
-      };
-    });
-  }, [courtCase?.parties, humansById]);
-
-  const renderInlineCode = (text: string) =>
-    text.split(/`([^`]+)`/g).map((part, idx) => {
-      if (idx % 2 === 1) {
-        return (
-          <code
-            key={`${idx}-${part}`}
-            className="rounded bg-panel px-1 font-mono text-[0.92em] break-all text-text"
-          >
-            {part}
-          </code>
-        );
-      }
-      return <span key={`${idx}-${part}`}>{part}</span>;
-    });
-
-  if (courtsBlocked) {
+  if (runtime.status !== "available") {
     return (
-      <div className="flex flex-col gap-6">
-        <PageHint pageId="courtroom" />
-        <Card className="border-dashed">
-          <CardHeader className="pb-2">
-            <CardTitle>Courtroom</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-text">
-              Courts are still quarantined for release hardening.
-            </p>
-            <p className="text-muted">
-              Direct courtroom routes are intentionally blocked until the courts
-              module is ready to ship as a live release surface.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <CourtsUnavailable
+        checking={runtime.status === "checking"}
+        failed={runtime.status === "failed"}
+        onRetry={runtime.retry}
+        pageId="courtroom"
+        title="Courtroom"
+        reason={
+          runtime.status === "unavailable" || runtime.status === "failed"
+            ? runtime.reason
+            : undefined
+        }
+      />
     );
   }
 
+  const courtCase = record?.publicCase;
+  const allegation = record?.caseRecord
+    ? courtOffenseDisplay(record.caseRecord.allegationCode)
+    : courtOffenseDisplay(courtCase?.offenseCode);
+  const deadline = record ? courtCaseDeadline(record) : null;
+  const finalDecision =
+    record?.caseRecord?.finalDecision ?? courtCase?.finalDecision ?? null;
   return (
     <div className="flex flex-col gap-6">
       <PageHint pageId="courtroom" />
+      <PageHeader
+        eyebrow={
+          courtCase ? `${courtLabel(courtCase.domain)} case` : "Court case"
+        }
+        title={
+          <CodexHint
+            reference={
+              record?.caseRecord?.allegationCode ?? courtCase?.offenseCode ?? ""
+            }
+          >
+            {allegation.label}
+          </CodexHint>
+        }
+        description={courtCase ? "Governance case record" : (id ?? "Not set")}
+        right={
+          <Button asChild size="sm" variant="outline">
+            <Link to="/app/courts">All cases</Link>
+          </Button>
+        }
+      />
 
-      {id && courtCase === null && !loadError ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-muted">
-          Loading courtroom…
-        </Card>
-      ) : null}
-      {loadError ? (
-        <Card className="border-dashed px-4 py-6 text-center text-sm text-destructive">
-          Courtroom unavailable: {formatLoadError(loadError)}
-        </Card>
-      ) : null}
-
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <CardTitle className="mt-1">{caseTitle}</CardTitle>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              {courtCase?.status ? (
-                <CourtStatusBadge status={courtCase.status} />
-              ) : null}
-              <div className="flex flex-wrap justify-end gap-2 text-xs text-muted">
-                <span>
-                  Opened{" "}
-                  {courtCase?.opened ? formatDateTime(courtCase.opened) : "—"}
-                </span>
-                <span className="text-muted">·</span>
-                <span>{courtCase?.reports ?? "—"} reports</span>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={!id || !canAct || actionBusy}
-                onClick={() =>
-                  void runAction(async () => {
-                    if (!id) return;
-                    await apiCourtReport({ caseId: id });
-                  })
-                }
-              >
-                Report
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <SectionHeader>Verdict</SectionHeader>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-3">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <VoteButton
-              size="lg"
-              tone="accent"
-              label="Not guilty"
-              disabled={!votingEnabled || !canAct || actionBusy}
-              aria-pressed={verdict === "not_guilty"}
-              className={
-                verdict === "not_guilty"
-                  ? "min-w-[260px] bg-accent text-accent-foreground"
-                  : "min-w-[260px]"
-              }
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id) return;
-                  await apiCourtVerdict({ caseId: id, verdict: "not_guilty" });
-                  setVerdict("not_guilty");
-                })
-              }
-            />
-            <VoteButton
-              size="lg"
-              tone="destructive"
-              label="Guilty"
-              disabled={!votingEnabled || !canAct || actionBusy}
-              aria-pressed={verdict === "guilty"}
-              className={
-                verdict === "guilty"
-                  ? "min-w-[260px] bg-destructive text-destructive-foreground"
-                  : "min-w-[260px]"
-              }
-              onClick={() =>
-                void runAction(async () => {
-                  if (!id) return;
-                  await apiCourtVerdict({ caseId: id, verdict: "guilty" });
-                  setVerdict("guilty");
-                })
-              }
-            />
-          </div>
-          {actionError ? (
-            <p className="text-xs text-destructive" role="status">
-              {formatLoadError(actionError)}
-            </p>
-          ) : null}
-          {!votingEnabled ? (
-            <p className="text-xs text-muted">
-              Voting is available only when the session is live.
-            </p>
-          ) : auth.loading ? (
-            <p className="text-xs text-muted">Checking wallet status…</p>
-          ) : !auth.authenticated ? (
-            <p className="text-xs text-muted">Connect a wallet to act.</p>
-          ) : auth.authenticated && !auth.eligible ? (
-            <p className="text-xs text-muted">
-              Wallet is connected, but not active (gated).
-            </p>
-          ) : verdict ? (
-            <p className="text-xs text-muted">
-              Selected: {verdict === "guilty" ? "Guilty" : "Not guilty"}
-            </p>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
-        <Card>
-          <CardHeader className="pb-2">
-            <SectionHeader>Proceedings</SectionHeader>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted">
-            <Surface
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="px-4 py-3"
-            >
-              <Kicker>Claim</Kicker>
-              <p className="mt-1 leading-relaxed text-text">
-                {courtCase?.proceedings?.claim
-                  ? renderInlineCode(courtCase.proceedings.claim)
-                  : "—"}
-              </p>
-            </Surface>
-
-            <Surface
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="px-4 py-3"
-            >
-              <Kicker>Evidence</Kicker>
-              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-text">
-                {(courtCase?.proceedings?.evidence ?? []).length > 0 ? (
-                  courtCase?.proceedings?.evidence.map((item) => (
-                    <li key={item} className="leading-relaxed">
-                      {renderInlineCode(item)}
-                    </li>
-                  ))
-                ) : (
-                  <li>—</li>
-                )}
-              </ul>
-            </Surface>
-
-            <Surface
-              variant="panelAlt"
-              radius="xl"
-              shadow="tile"
-              className="px-4 py-3"
-            >
-              <Kicker>Next steps</Kicker>
-              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-text">
-                {(courtCase?.proceedings?.nextSteps ?? []).length > 0 ? (
-                  courtCase?.proceedings?.nextSteps.map((item) => (
-                    <li key={item} className="leading-relaxed">
-                      {renderInlineCode(item)}
-                    </li>
-                  ))
-                ) : (
-                  <li>—</li>
-                )}
-              </ol>
-            </Surface>
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <SectionHeader>Parties</SectionHeader>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {parties.length > 0 ? (
-                parties.map((party) => {
-                  return (
-                    <Surface
-                      key={`${party.role}-${party.humanId}`}
-                      variant="panelAlt"
-                      radius="xl"
-                      shadow="control"
-                      className="px-3 py-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <Kicker>{party.role}</Kicker>
-                          <p className="mt-0.5 text-sm font-semibold text-text">
-                            {party.name}
-                          </p>
-                          {party.note ? (
-                            <p className="mt-1 text-xs text-muted">
-                              {party.note}
-                            </p>
-                          ) : null}
-                        </div>
-                        {party.tier ? (
-                          <span className="mt-0.5 text-xs text-muted capitalize">
-                            {party.tier}
-                          </span>
-                        ) : null}
-                      </div>
-                    </Surface>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-muted">—</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <SectionHeader>Jury</SectionHeader>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              {juryMembers.map((member) => (
-                <Surface
-                  key={member.id}
-                  variant="panelAlt"
-                  radius="xl"
-                  shadow="control"
-                  className="px-3 py-2 text-sm text-text"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium">{member.name}</span>
-                    {member.tier ? (
-                      <span className="text-xs text-muted capitalize">
-                        {member.tier}
-                      </span>
-                    ) : null}
-                  </div>
-                  {member.role ? (
-                    <p className="mt-0.5 text-xs text-muted">{member.role}</p>
-                  ) : null}
-                </Surface>
-              ))}
-            </CardContent>
-          </Card>
+      {caseRecord.error && record ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-border/70 p-3">
+          <p className="text-sm text-destructive" role="alert">
+            The case below may be stale: {caseRecord.error}
+          </p>
+          <Button
+            size="compact"
+            variant="outline"
+            onClick={() => void caseRecord.reload().catch(() => undefined)}
+          >
+            Retry case
+          </Button>
         </div>
-      </div>
+      ) : caseRecord.error ? (
+        <div className="space-y-2">
+          <NoDataYetBar label="case" description={caseRecord.error} />
+          <Button
+            size="compact"
+            variant="outline"
+            onClick={() => void caseRecord.reload().catch(() => undefined)}
+          >
+            Retry case
+          </Button>
+        </div>
+      ) : null}
+      {caseRecord.loading && !record ? (
+        <NoDataYetBar label="case record" description="Loading case..." />
+      ) : null}
+      {record && !courtCase ? (
+        <NoDataYetBar
+          label="case access"
+          description="No Court record is visible to this viewer."
+        />
+      ) : null}
+
+      {courtCase ? (
+        <>
+          <GlassySection title="Case overview">
+            <GlassyTile className="space-y-4">
+              <CourtStateSummary
+                description={courtCaseStateDisplay(courtCase.state).description}
+                label={courtCaseStateDisplay(courtCase.state).label}
+                tone={courtTone(courtCase.state)}
+              />
+              <GlassyCompactGrid className="sm:grid-cols-2 lg:grid-cols-4">
+                <GlassyKeyValue
+                  label="Case id"
+                  value={
+                    <CourtCopyValue label="case id" value={courtCase.id} />
+                  }
+                />
+                <GlassyKeyValue
+                  label={record?.caseRecord ? "Allegation" : "Finding"}
+                  value={
+                    <CodexHint
+                      reference={
+                        record?.caseRecord?.allegationCode ??
+                        courtCase.offenseCode ??
+                        ""
+                      }
+                    >
+                      {allegation.label}
+                    </CodexHint>
+                  }
+                />
+                <GlassyKeyValue
+                  label="Finality"
+                  value={courtLabel(courtCase.finalityState)}
+                />
+                <GlassyKeyValue
+                  label="Opened"
+                  value={formatCourtInstant(courtCase.openedAt)}
+                />
+                <GlassyKeyValue
+                  label="Last updated"
+                  value={formatCourtInstant(courtCase.updatedAt)}
+                />
+                {deadline ? (
+                  <CourtDeadline
+                    dueAt={deadline.dueAt}
+                    label={deadline.label}
+                  />
+                ) : null}
+              </GlassyCompactGrid>
+              <p className="text-xs text-muted">
+                Policy{" "}
+                <CodexPolicyHint>{courtCase.policyVersionId}</CodexPolicyHint>
+                {" · "}
+                Trigger{" "}
+                <CodexProcedureHint clause="HC-2.2">
+                  {courtLabel(courtCase.triggerKind)}
+                </CodexProcedureHint>
+              </p>
+            </GlassyTile>
+          </GlassySection>
+
+          {record?.caseRecord ? (
+            <GlassySection title="Target and allegation">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
+                <CourtTargetPreview target={record.caseRecord.target} />
+                <GlassyTile className="space-y-3">
+                  <p className="text-xs font-semibold text-muted uppercase">
+                    Alleged conduct
+                  </p>
+                  <h3 className="text-lg font-semibold text-text">
+                    <CodexHint reference={record.caseRecord.allegationCode}>
+                      {allegation.label}
+                    </CodexHint>
+                  </h3>
+                  <p className="text-sm leading-6 text-muted">
+                    {allegation.description}
+                  </p>
+                  <p className="text-xs text-muted">
+                    Allegation code{" "}
+                    <CodexHint reference={record.caseRecord.allegationCode}>
+                      {record.caseRecord.allegationCode}
+                    </CodexHint>
+                    . This is not a finding of guilt.
+                  </p>
+                  {record.caseRecord.allegation ? (
+                    <GlassyKeyValue
+                      label="Statement digest"
+                      value={
+                        <CourtCopyValue
+                          label="allegation statement digest"
+                          value={record.caseRecord.allegation.statementDigest}
+                        />
+                      }
+                    />
+                  ) : null}
+                </GlassyTile>
+              </div>
+            </GlassySection>
+          ) : courtCase.targetSummary ? (
+            <GlassySection title="Reported record">
+              <CourtTargetPreview
+                target={{
+                  id: courtCase.targetSummary.id,
+                  route: courtCase.targetSummary.route,
+                  snapshot: courtCase.targetSummary.title
+                    ? { title: courtCase.targetSummary.title }
+                    : {},
+                  type: courtCase.targetType,
+                }}
+              />
+            </GlassySection>
+          ) : null}
+
+          {finalDecision ? (
+            <GlassySection title="Final decision">
+              <CourtFinalDecisionSummary decision={finalDecision} />
+            </GlassySection>
+          ) : null}
+
+          {record.appellateTask?.brief ? (
+            <GlassySection title="Decision brief">
+              <CourtAppellateBrief task={record.appellateTask} />
+            </GlassySection>
+          ) : null}
+
+          {record.juryTask ? (
+            <GlassySection title="Jury task">
+              <GlassyTile className="space-y-3">
+                <GlassyStatusChip tone={courtTone(record.juryTask.state)}>
+                  {courtLabel(record.juryTask.state)}
+                </GlassyStatusChip>
+                <GlassyCompactGrid className="grid-cols-2">
+                  <GlassyKeyValue
+                    label="Round"
+                    value={record.juryTask.selectionRound}
+                  />
+                  <GlassyKeyValue
+                    label="Seat"
+                    value={record.juryTask.seatNumber ?? "Pending"}
+                  />
+                  <GlassyKeyValue
+                    label="Conflict review"
+                    value={courtLabel(record.juryTask.conflictResult)}
+                  />
+                  {record.juryTask.ballot ? (
+                    <CourtDeadline
+                      dueAt={record.juryTask.ballot.closesAt}
+                      label="Ballot due"
+                    />
+                  ) : null}
+                </GlassyCompactGrid>
+                {record.juryTask.ballot?.existingVote ? (
+                  <p className="text-sm text-muted">
+                    Current recorded vote:{" "}
+                    {courtLabel(record.juryTask.ballot.existingVote.choice)}
+                    {record.juryTask.ballot.existingVote.severity ? (
+                      <>
+                        {" · "}
+                        <CodexSeverityHint
+                          code={record.juryTask.ballot.existingVote.severity}
+                        >
+                          {record.juryTask.ballot.existingVote.severity}
+                        </CodexSeverityHint>
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+              </GlassyTile>
+            </GlassySection>
+          ) : null}
+
+          {record ? (
+            <CourtActionPanel
+              key={`${courtCase.id}-${courtCase.state}-${record.juryTask?.ballot?.id ?? "no-ballot"}-${record.juryTask?.ballot?.existingVote?.revision ?? "no-vote"}-${record.appellateTask?.panelId ?? "no-panel"}-${record.appellateTask?.panelState ?? "no-panel-state"}`}
+              courtCase={record}
+              onCompleted={caseRecord.reload}
+            />
+          ) : null}
+
+          {record.partyRecord ? (
+            <GlassySection title="Parties and procedure">
+              <div className="grid gap-4 lg:grid-cols-2">
+                {record.partyRecord.parties.map((party) => (
+                  <GlassyTile
+                    key={`${party.address}-${party.role}`}
+                    className="space-y-2"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-muted uppercase">
+                        {courtLabel(party.role)}
+                      </p>
+                      <AddressInline address={party.address} size={7} />
+                    </div>
+                    <GlassyStatusChip tone={courtTone(party.state)}>
+                      {courtLabel(party.state)}
+                    </GlassyStatusChip>
+                  </GlassyTile>
+                ))}
+              </div>
+            </GlassySection>
+          ) : null}
+
+          <GlassySection title="Evidence">
+            {record.evidence.length ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {record.evidence.map((evidence) => (
+                  <CourtEvidenceCard key={evidence.id} evidence={evidence} />
+                ))}
+              </div>
+            ) : (
+              <NoDataYetBar label="visible evidence" />
+            )}
+          </GlassySection>
+
+          {record?.caseRecord?.events.length ? (
+            <GlassySection title="Case history">
+              <CourtTimeline events={record.caseRecord.events} />
+            </GlassySection>
+          ) : null}
+
+          <GlassySection title="Remedies and appeals">
+            {courtCase.remedies.length || courtCase.appeals.length ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {courtCase.remedies.map((remedy) => (
+                  <CourtRemedySummary key={remedy.id} remedy={remedy} />
+                ))}
+                {courtCase.appeals.map((appeal) => (
+                  <CourtAppealSummary key={appeal.id} appeal={appeal} />
+                ))}
+              </div>
+            ) : (
+              <NoDataYetBar label="remedies or appeals" />
+            )}
+          </GlassySection>
+        </>
+      ) : null}
     </div>
   );
 };

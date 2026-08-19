@@ -8,6 +8,7 @@ import {
 } from "@/components/primitives/card";
 import { Select } from "@/components/primitives/select";
 import { formatDateTime } from "@/lib/dateTime";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 import type { FactionDto } from "@/types/api";
 
 type FactionInitiative = NonNullable<FactionDto["initiativesDetailed"]>[number];
@@ -66,6 +67,13 @@ export function FactionInitiativeDetailCard({
               <span className="text-xs text-muted">
                 Updated {formatDateTime(initiative.updatedAt)}
               </span>
+            </div>
+
+            <div className="flex justify-end">
+              <CourtReportButton
+                label="Report work item"
+                target={{ type: "faction_work_item", id: initiative.id }}
+              />
             </div>
 
             {canEdit ? (

@@ -96,6 +96,7 @@ export function SearchBar<
     >
       <div className="relative flex-1">
         <Input
+          type="search"
           value={value}
           onChange={onChange}
           placeholder={placeholder}

@@ -241,13 +241,14 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courts",
     title: "Courts",
     intro:
-      "Overview of active and recent court cases: status, jury info, and quick navigation.",
+      "Follow Court cases, private reports, notifications, and jury duties from one protected record.",
     sections: [
       {
-        heading: "What you see",
+        heading: "Start with the exact record",
         items: [
-          "Cards for court cases with status (jury/live/ended), reports count, and opened date.",
-          "Links to open specific courtrooms for details and participation.",
+          "Use Report on the Human Node, proposal, discussion, Formation, faction, or Initiative record involved.",
+          "My reports keeps reporter identity, statement revisions, and non-public evidence private.",
+          "Case, jury, and notification tabs preserve their location in the page URL.",
         ],
       },
     ],
@@ -256,14 +257,14 @@ export const pageHints: Record<string, PageHintEntry> = {
     id: "courtroom",
     title: "Courtroom",
     intro:
-      "Case detail: filings/context, jury composition, and action timeline for the current courtroom.",
+      "Read the allegation, current procedure, deadlines, authorized evidence, and your current Court task before acting.",
     sections: [
       {
-        heading: "What you can do",
+        heading: "Decision order",
         items: [
-          "Review case context and filings.",
-          "See jury composition and timeline; track status badges.",
-          "Submit statements or view decisions based on your current role and permissions.",
+          "An allegation is not a finding; the final decision records dismissal or substantiation separately.",
+          "Only evidence allowed for your role is shown, and sealed material remains protected.",
+          "Deadlines and available actions come from the current Court state and your verified role.",
         ],
       },
     ],

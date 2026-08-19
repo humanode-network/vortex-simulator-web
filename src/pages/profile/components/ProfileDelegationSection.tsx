@@ -10,17 +10,21 @@ import {
 import { formatChamberLabel } from "@/lib/chamberUi";
 import { shortAddress } from "@/lib/profileUi";
 import type { HumanNodeProfileDto } from "@/types/api";
+import { CourtReportButton } from "@/pages/courts/CourtReportButton";
+import { courtCompositeTargetId } from "@/pages/courts/model/courtReportTarget";
 
 type DelegationChamber = HumanNodeProfileDto["delegation"]["chambers"][number];
 
 type ProfileDelegationSectionProps = {
   className?: string;
   delegationChambers: DelegationChamber[];
+  profileId: string;
 };
 
 export function ProfileDelegationSection({
   className,
   delegationChambers,
+  profileId,
 }: ProfileDelegationSectionProps) {
   return (
     <GlassySection className={className} title="Delegation">
@@ -65,6 +69,18 @@ export function ProfileDelegationSection({
                         {shortAddress(delegator)}
                       </GlassyStatusChip>
                     ))}
+                  </div>
+                ) : null}
+                {item.delegateeAddress ? (
+                  <div className="flex justify-end">
+                    <CourtReportButton
+                      label="Report delegation"
+                      size="compact"
+                      target={{
+                        type: "delegation",
+                        id: courtCompositeTargetId(item.chamberId, profileId),
+                      }}
+                    />
                   </div>
                 ) : null}
               </div>

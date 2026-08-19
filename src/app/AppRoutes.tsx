@@ -6,6 +6,7 @@ import Chambers from "../pages/chambers/Chambers";
 import Formation from "../pages/formation/Formation";
 import Invision from "../pages/invision/Invision";
 import Vortexopedia from "../pages/Vortexopedia";
+import HumanodeCodex from "../pages/HumanodeCodex";
 import Factions from "../pages/factions/Factions";
 import Faction from "../pages/factions/Faction";
 import FactionChannel from "../pages/factions/FactionChannel";
@@ -27,6 +28,8 @@ import Feed from "../pages/feed/Feed";
 import Courts from "../pages/courts/Courts";
 import CMPanel from "../pages/cm/CMPanel";
 import Courtroom from "../pages/courts/Courtroom";
+import CourtReportCreate from "../pages/courts/CourtReportCreate";
+import CourtReportDetail from "../pages/courts/CourtReportDetail";
 import ProposalCreation from "../pages/proposals/ProposalCreation";
 import MyGovernance from "../pages/MyGovernance";
 import ProposalDrafts from "../pages/proposals/ProposalDrafts";
@@ -91,6 +94,8 @@ const AppRoutes: React.FC = () => {
         <Route path="human-nodes/:id" element={<HumanNode />} />
         <Route path="human-nodes/:id/history" element={<FullHistory />} />
         <Route path="courts" element={<Courts />} />
+        <Route path="courts/reports/new" element={<CourtReportCreate />} />
+        <Route path="courts/reports/:id" element={<CourtReportDetail />} />
         <Route path="courts/:id" element={<Courtroom />} />
         <Route path="cm" element={<CMPanel />} />
         <Route path="proposals" element={<Proposals />} />
@@ -127,6 +132,7 @@ const AppRoutes: React.FC = () => {
         <Route path="initiatives/:id" element={<Initiative />} />
         <Route path="invision" element={<Invision />} />
         <Route path="vortexopedia" element={<Vortexopedia />} />
+        <Route path="humanode-codex" element={<HumanodeCodex />} />
         <Route path="settings" element={<Settings />} />
         <Route path="my-governance" element={<MyGovernance />} />
       </Route>
