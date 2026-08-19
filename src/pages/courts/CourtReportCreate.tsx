@@ -47,7 +47,8 @@ import {
 import {
   courtLaneDisplay,
   courtOffenseDisplay,
-  courtStandingDisplay,
+  courtReportLaneChoiceLabel,
+  courtReportRouteDescription,
 } from "./model/courtPresentation";
 import {
   courtErrorIssue,
@@ -499,7 +500,7 @@ const CourtReportCreate: React.FC = () => {
                       value={`${reason.offenseCode}:${reason.lane}`}
                     >
                       {courtOffenseDisplay(reason.offenseCode).label} ·{" "}
-                      {courtLaneDisplay(reason.lane).label}
+                      {courtReportLaneChoiceLabel(reason.lane)}
                     </option>
                   ))}
                 </Select>
@@ -527,7 +528,10 @@ const CourtReportCreate: React.FC = () => {
                       direct={selectedReason.standing.directStanding}
                       source={selectedReason.standing.source}
                     />
-                    {`. ${courtStandingDisplay(selectedReason.standing).description}`}
+                    {`. ${courtReportRouteDescription(
+                      selectedReason.reason.lane,
+                      selectedReason.standing,
+                    )}`}
                   </>
                 ) : capabilityLoading ? (
                   "The server is verifying the target, incident time, standing, and available lanes."

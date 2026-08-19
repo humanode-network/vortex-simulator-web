@@ -11,6 +11,8 @@ import {
   courtLaneDisplay,
   courtOffenseDisplay,
   courtRemedyLabel,
+  courtReportLaneChoiceLabel,
+  courtReportRouteDescription,
   courtReportStateDisplay,
   courtRemedyExpiry,
   courtEventDisplay,
@@ -126,6 +128,23 @@ test("standing copy separates the referenced legal term from its verification", 
       source: "community-threshold",
     }).label,
     "Community eligibility",
+  );
+});
+
+test("report route copy distinguishes non-Court routing from Court triggers", () => {
+  assert.equal(courtReportLaneChoiceLabel("correction"), "Correction only");
+  assert.equal(courtReportLaneChoiceLabel("court_report"), "Court review");
+  assert.match(
+    courtReportRouteDescription("correction", { directStanding: false }),
+    /does not join a Court trigger or open a case/,
+  );
+  assert.match(
+    courtReportRouteDescription("court_report", { directStanding: false }),
+    /private community trigger/,
+  );
+  assert.match(
+    courtReportRouteDescription("court_report", { directStanding: true }),
+    /verified direct standing/,
   );
 });
 

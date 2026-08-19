@@ -17,6 +17,7 @@ import {
 import {
   courtLaneDisplay,
   courtOffenseDisplay,
+  courtReportRouteDescription,
 } from "../model/courtPresentation";
 import { courtEvidenceAccessLabel } from "./courtEvidence";
 
@@ -137,7 +138,7 @@ export function CourtReportReview({
     <GlassyTile className="space-y-4">
       {selectedReason ? (
         <CourtStateSummary
-          description={`${courtOffenseDisplay(selectedReason.reason.offenseCode).description} ${courtLaneDisplay(selectedReason.reason.lane).description}`}
+          description={`${courtOffenseDisplay(selectedReason.reason.offenseCode).description} ${courtReportRouteDescription(selectedReason.reason.lane, selectedReason.standing)}`}
           label={
             <>
               <CodexHint reference={selectedReason.reason.offenseCode}>
