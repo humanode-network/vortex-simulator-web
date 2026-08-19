@@ -38,6 +38,8 @@ const COURT_ERROR_MESSAGES: Readonly<Record<string, string>> = Object.freeze({
     "The Court must record service before this party action is available.",
   COURT_PROTECTIVE_REVIEW_UNAVAILABLE:
     "Immediate protective review is not authorized for this report.",
+  COURT_REPORT_INPUT_INVALID:
+    "One or more report fields are invalid. Review the highlighted field before submitting again.",
   COURT_REPORT_REASON_UNAVAILABLE:
     "That reason is not available for this record and incident time.",
   COURT_REPORT_EVIDENCE_ACCESS_BROADENED:

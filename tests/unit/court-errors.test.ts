@@ -74,6 +74,27 @@ describe("Court error presentation", () => {
     });
   });
 
+  test("explains invalid report input and preserves its responsible field", () => {
+    expect(
+      courtErrorIssue(
+        Object.assign(new Error("HTTP 422: Court report is not admissible"), {
+          status: 422,
+          data: {
+            error: {
+              code: "COURT_REPORT_INPUT_INVALID",
+              fields: ["incidentWindow"],
+            },
+          },
+        }),
+      ),
+    ).toMatchObject({
+      category: "validation",
+      fields: ["incidentWindow"],
+      message:
+        "One or more report fields are invalid. Review the highlighted field before submitting again.",
+    });
+  });
+
   test("turns reporting capability reasons into useful guidance", () => {
     const reasons = [
       "adapter_failure",
