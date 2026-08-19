@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { test } from "@rstest/core";
 
 import {
-  HUMANODE_CODEX_JURY_SIZE,
-  HUMANODE_CODEX_SENTENCE_AUTHORIZATION,
   humanodeCodexClauses,
   humanodeCodexEvidenceRules,
   humanodeCodexExcludedMeasures,
@@ -141,48 +137,5 @@ test("reserved measures cannot enter compiled offense sentence lists", () => {
       false,
       `${offense.code} must not enable a reserved measure`,
     );
-  }
-});
-
-test("readable Codex offense levels and sentence measures match the server policy", () => {
-  const serverRoot = resolve(process.cwd(), "../vortex-simulator-server");
-  const contracts = readFileSync(
-    resolve(serverRoot, "api/lib/courts/contracts.ts"),
-    "utf8",
-  );
-  const corePolicy = readFileSync(
-    resolve(serverRoot, "api/lib/courts/courtCodexV1.ts"),
-    "utf8",
-  );
-  const sentencePolicy = readFileSync(
-    resolve(serverRoot, "api/lib/courts/courtCodexV1SentencePolicy.ts"),
-    "utf8",
-  );
-  const quotedValues = (source: string) =>
-    [...source.matchAll(/"([A-Z0-9-]+)"/g)].map((match) => match[1]);
-
-  assert.match(
-    contracts,
-    new RegExp(`COURT_JURY_SIZE = ${HUMANODE_CODEX_JURY_SIZE}\\b`),
-  );
-  assert.match(
-    contracts,
-    new RegExp(
-      `COURT_CHARTER_DECISION_THRESHOLD = ${HUMANODE_CODEX_SENTENCE_AUTHORIZATION}\\b`,
-    ),
-  );
-  assert.match(corePolicy, /authorization: COURT_CHARTER_DECISION_THRESHOLD\b/);
-
-  for (const offense of humanodeCodexOffenses) {
-    const levels = corePolicy.match(
-      new RegExp(`"${offense.code}": \\[([^\\]]+)\\]`),
-    )?.[1];
-    const measures = sentencePolicy.match(
-      new RegExp(`"${offense.code}": template\\(\\s*\\[([^\\]]+)\\]`),
-    )?.[1];
-    assert.ok(levels, `Server severity policy is missing ${offense.code}`);
-    assert.ok(measures, `Server sentence policy is missing ${offense.code}`);
-    assert.deepEqual(quotedValues(levels), offense.allowedSeverities);
-    assert.deepEqual(quotedValues(measures), offense.allowedMeasures);
   }
 });

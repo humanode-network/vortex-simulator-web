@@ -64,7 +64,10 @@ function draftDetail(id: string, editableForm: typeof existingDraftForm) {
   };
 }
 
-async function installApiFixtures(page: Page) {
+async function installApiFixtures(
+  page: Page,
+  options: { existingDraftDelayMs?: number } = {},
+) {
   await page.route("**/api/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -154,6 +157,11 @@ async function installApiFixtures(page: Page) {
       return;
     }
     if (path === "/api/proposals/drafts/draft-existing") {
+      if (options.existingDraftDelayMs) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, options.existingDraftDelayMs),
+        );
+      }
       await route.fulfill({
         json: draftDetail("draft-existing", existingDraftForm),
       });
@@ -1053,7 +1061,7 @@ test("server draft links hydrate into their first incomplete step", async ({
     localStorage.clear();
     localStorage.setItem("vortex.theme", "sky");
   });
-  await installApiFixtures(page);
+  await installApiFixtures(page, { existingDraftDelayMs: 300 });
   await page.goto("/app/proposals/new?draftId=draft-existing");
   await expect(page).toHaveURL(/draftId=draft-existing/);
   await expect(page).toHaveURL(/step=plan/);

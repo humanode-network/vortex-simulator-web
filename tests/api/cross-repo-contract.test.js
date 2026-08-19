@@ -3,6 +3,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "@rstest/core";
 
+import {
+  HUMANODE_CODEX_JURY_SIZE,
+  HUMANODE_CODEX_SENTENCE_AUTHORIZATION,
+  humanodeCodexOffenses,
+} from "../../src/data/humanodeCodex.ts";
+
 const webRoot = process.cwd();
 const workspaceRoot = resolve(webRoot, "..");
 const serverRoot = resolve(workspaceRoot, "vortex-simulator-server");
@@ -176,4 +182,39 @@ test("initiative board statuses stay aligned across server and web", () => {
   const values = (source) =>
     [...source.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(values(webBlock), values(serverBlock));
+});
+
+test("readable Codex offense levels and sentence measures match the server policy", () => {
+  const contracts = readServer("api/lib/courts/contracts.ts");
+  const corePolicy = readServer("api/lib/courts/courtCodexV1.ts");
+  const sentencePolicy = readServer(
+    "api/lib/courts/courtCodexV1SentencePolicy.ts",
+  );
+  const quotedValues = (source) =>
+    [...source.matchAll(/"([A-Z0-9-]+)"/g)].map((match) => match[1]);
+
+  assert.match(
+    contracts,
+    new RegExp(`COURT_JURY_SIZE = ${HUMANODE_CODEX_JURY_SIZE}\\b`),
+  );
+  assert.match(
+    contracts,
+    new RegExp(
+      `COURT_CHARTER_DECISION_THRESHOLD = ${HUMANODE_CODEX_SENTENCE_AUTHORIZATION}\\b`,
+    ),
+  );
+  assert.match(corePolicy, /authorization: COURT_CHARTER_DECISION_THRESHOLD\b/);
+
+  for (const offense of humanodeCodexOffenses) {
+    const levels = corePolicy.match(
+      new RegExp(`"${offense.code}": \\[([^\\]]+)\\]`),
+    )?.[1];
+    const measures = sentencePolicy.match(
+      new RegExp(`"${offense.code}": template\\(\\s*\\[([^\\]]+)\\]`),
+    )?.[1];
+    assert.ok(levels, `Server severity policy is missing ${offense.code}`);
+    assert.ok(measures, `Server sentence policy is missing ${offense.code}`);
+    assert.deepEqual(quotedValues(levels), offense.allowedSeverities);
+    assert.deepEqual(quotedValues(measures), offense.allowedMeasures);
+  }
 });

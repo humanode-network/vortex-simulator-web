@@ -123,6 +123,9 @@ const ProposalCreation: React.FC = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
+  const requestedSessionId = (searchParams.get("session") ?? "").trim();
+  const requestedStep = searchParams.get("step") ?? "";
   const repository = useMemo(
     () => createProposalWizardSessionRepository(window.localStorage),
     [],
@@ -161,6 +164,16 @@ const ProposalCreation: React.FC = () => {
   const publishIdempotencyKeyRef = useRef<string | null>(null);
   const observedQueryRef = useRef(searchParams.toString());
   const pendingInternalQueryRef = useRef<string | null>(null);
+  const draftEntryRef = useRef({
+    draftId: requestedDraftId,
+    requestedStep,
+  });
+  if (draftEntryRef.current.draftId !== requestedDraftId) {
+    draftEntryRef.current = {
+      draftId: requestedDraftId,
+      requestedStep,
+    };
+  }
 
   const {
     chamberOptions,
@@ -235,9 +248,6 @@ const ProposalCreation: React.FC = () => {
       ? ids
       : [...ids, "general"];
   }, [chamberOptions]);
-  const requestedDraftId = (searchParams.get("draftId") ?? "").trim();
-  const requestedSessionId = (searchParams.get("session") ?? "").trim();
-  const requestedStep = searchParams.get("step") ?? "";
   const textareaClassName =
     "w-full rounded-lg border border-[color:var(--surface-glass-border)] bg-[color:var(--control-glass-bg)] px-3 py-2 text-sm text-text shadow-[var(--shadow-control)] transition supports-[backdrop-filter]:backdrop-blur-md hover:border-[color:var(--surface-glass-hover-border)] hover:bg-[color:var(--control-glass-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel";
 
@@ -400,8 +410,9 @@ const ProposalCreation: React.FC = () => {
       templateKind: nextTemplateKind,
     }: ProposalDraftHydrationResult) => {
       const nextPathId = pathIdForDraft(nextDraft, nextTemplateKind);
+      const draftEntry = draftEntryRef.current;
       const requestedWizardStep = normalizeWizardStepId(
-        requestedStep,
+        draftEntry.draftId === requestedDraftId ? draftEntry.requestedStep : "",
         nextTemplateKind,
       );
       const resolvedStep = resolveRequestedWizardStep(
@@ -427,7 +438,7 @@ const ProposalCreation: React.FC = () => {
       setPublication(nextPublication);
       setSavedAt(Date.now());
     },
-    [activateSession, repository, requestedStep],
+    [activateSession, repository, requestedDraftId],
   );
 
   useEffect(() => {
