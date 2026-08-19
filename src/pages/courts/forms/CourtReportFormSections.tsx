@@ -57,8 +57,13 @@ export function CourtPendingEvidenceList({
               {index + 1}. {courtLabel(item.value.kind)}
             </p>
             <CourtCopyValue
-              label={`evidence ${index + 1} digest`}
-              value={item.value.digest}
+              label={`evidence ${index + 1} ${item.value.digest ? "digest" : "URL"}`}
+              value={
+                item.value.digest ??
+                (item.value.kind === "external_url"
+                  ? item.value.url
+                  : "Fingerprint created on submission")
+              }
             />
           </div>
           <Button

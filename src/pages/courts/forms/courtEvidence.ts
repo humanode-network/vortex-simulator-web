@@ -136,11 +136,14 @@ function validExternalUrl(value: string): boolean {
 export function courtEvidenceDraftToInput(
   draft: CourtEvidenceDraft,
   provenance: string,
+  options: { autoDigestExternalUrl?: boolean } = {},
 ):
   | { ok: true; value: CourtEvidenceInputV2 }
   | { ok: false; error: CourtEvidenceDraftError } {
   const digest = draft.digest.trim();
-  if (!/^sha256:[0-9a-f]{64}$/.test(digest)) {
+  const digestRequired =
+    draft.kind !== "external_url" || options.autoDigestExternalUrl !== true;
+  if (digestRequired && !/^sha256:[0-9a-f]{64}$/.test(digest)) {
     return {
       ok: false,
       error: {
@@ -166,7 +169,7 @@ export function courtEvidenceDraftToInput(
       value: {
         kind: draft.kind,
         url,
-        digest,
+        ...(digest ? { digest } : {}),
         provenance,
         access: draft.access,
       },

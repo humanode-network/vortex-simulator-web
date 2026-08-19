@@ -306,6 +306,7 @@ async function installCourtFixtures(
           target: {
             type: url.searchParams.get("type"),
             id: url.searchParams.get("id"),
+            revision: url.searchParams.get("revision") ?? "revision-1",
             canonicalRoute: "/app/proposals/proposal-under-review",
             accessClass: "public",
           },
@@ -313,6 +314,14 @@ async function installCourtFixtures(
             capturedAt: "2026-08-12T10:00:00.000Z",
             digest: "sha256:target",
             payload: { title: "Proposal under review" },
+          },
+          defaults: {
+            incidentStartsAt: "2026-08-12T10:00:00.000Z",
+            incidentStartsAtSource: "assessment_time",
+            respondentId: "hmrProposalAuthor",
+            respondentIdSource: "sole_target_owner",
+            affectedId: "hmrCurrentReporter",
+            affectedIdSource: "direct_reporter",
           },
           reasonCapabilities: [
             {
@@ -577,6 +586,12 @@ test("report creation uses server time and warns before abandoning dirty work", 
   await expect(incidentStart).not.toHaveValue("");
   expect(await incidentStart.inputValue()).not.toContain("2036");
   expect(capabilityRequests[0]?.searchParams.has("incidentAt")).toBe(false);
+  await expect.poll(() => capabilityRequests.length).toBeGreaterThan(1);
+  expect(
+    capabilityRequests[capabilityRequests.length - 1]?.searchParams.get(
+      "revision",
+    ),
+  ).toBe("revision-1");
 
   await page
     .getByLabel(
@@ -600,30 +615,55 @@ test("report creation uses server time and warns before abandoning dirty work", 
   await expect(page).toHaveURL(/\/app\/courts\/reports\/new/);
 });
 
-test("report evidence is never silently discarded", async ({ page }) => {
-  await installCourtFixtures(page);
+test("report source and URL fingerprints require no technical entry", async ({
+  page,
+}) => {
+  const submittedCommands: Record<string, unknown>[] = [];
+  await installCourtFixtures(page, caseRecord, true, {
+    onCommand: (command) => {
+      if (command.type === "court.report.submit")
+        submittedCommands.push(command);
+    },
+  });
   await page.goto(
     "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review",
   );
-  await page.getByLabel("Reason").selectOption("GOV-03:court_report");
+  await expect(page.getByText("Source record secured")).toBeVisible();
+  await expect(page.getByLabel("Respondent address")).toHaveValue(
+    "hmrProposalAuthor",
+  );
   await page
     .getByLabel(
       "Describe what happened, when it happened, and why this reason applies.",
     )
     .fill(
-      "This report includes an external record whose digest must be supplied.",
+      "This report includes an external record whose reference should be fingerprinted automatically.",
     );
+  await page.getByText("Add supporting evidence", { exact: true }).click();
   await page
     .getByLabel("External evidence URL")
     .fill("https://evidence.example/record");
+  await expect(page.getByLabel("SHA-256 digest")).toHaveCount(0);
   await page
     .getByText(/I attest that this report is made in good faith/)
     .click();
   await page.getByRole("button", { name: "Submit report" }).click();
-  await expect(page.getByText(/SHA-256 digest as sha256:/)).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Submit report" }),
-  ).toBeDisabled();
+  await expect(page).toHaveURL(
+    /\/app\/courts\/reports\/report-browser-journey$/,
+  );
+  const submittedCommand = submittedCommands.find(
+    (command) => command.type === "court.report.submit",
+  );
+  const payload = (submittedCommand?.payload ?? {}) as {
+    evidence?: Record<string, unknown>[];
+  };
+  expect(payload.evidence).toEqual([
+    expect.objectContaining({
+      kind: "external_url",
+      url: "https://evidence.example/record",
+    }),
+  ]);
+  expect(payload.evidence?.[0]).not.toHaveProperty("digest");
 });
 
 for (const width of [390, 1440]) {
@@ -651,10 +691,10 @@ for (const width of [390, 1440]) {
           6,
         ),
       );
+    await page.getByText("Add supporting evidence", { exact: true }).click();
     await page
       .getByLabel("External evidence URL")
       .fill("https://evidence.example/immutable-governance-archive");
-    await page.getByLabel("SHA-256 digest").fill(`sha256:${"a".repeat(64)}`);
     await page
       .getByText(/I attest that this report is made in good faith/)
       .click();

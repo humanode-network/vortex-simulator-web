@@ -67,6 +67,7 @@ const resourceFilesByRouter = {
   initiatives: "api/resources/initiatives.ts",
   myGovernance: "api/resources/myGovernance.ts",
   proposals: "api/resources/proposals.ts",
+  reports: "api/resources/reports.ts",
 };
 
 function normalizeRoute(path) {
@@ -122,7 +123,7 @@ function extractClientRoutes() {
   return unique(routes);
 }
 
-function extractQuarantinedCourtRoutes() {
+function extractReportRoutes() {
   const source = readServer("api/resources/reports.ts");
   const routes = new Set();
   for (const match of source.matchAll(/reports\.\w+\("([^"]+)"/g)) {
@@ -140,18 +141,15 @@ test("web command client only emits command types accepted by the server schema"
 
 test("web API client only calls routes exposed by the server router", () => {
   const serverRoutes = extractServerRoutes();
-  const quarantinedCourtRoutes = extractQuarantinedCourtRoutes();
   const clientRoutes = extractClientRoutes();
-  const missing = clientRoutes.filter(
-    (route) => !serverRoutes.has(route) && !quarantinedCourtRoutes.has(route),
-  );
+  const missing = clientRoutes.filter((route) => !serverRoutes.has(route));
   assert.deepEqual(missing, []);
 });
 
-test("Courts v2 routes remain complete but quarantined until activation", () => {
+test("active Courts routes remain complete and mounted", () => {
   const apiSource = readServer("api/api.ts");
-  const routes = extractQuarantinedCourtRoutes();
-  assert.equal(apiSource.includes('api.route("/reports", reports)'), false);
+  const routes = extractReportRoutes();
+  assert.equal(apiSource.includes('api.route("/reports", reports)'), true);
   assert.deepEqual(
     [...routes],
     [
