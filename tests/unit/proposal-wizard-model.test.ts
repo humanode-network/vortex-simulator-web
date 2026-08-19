@@ -193,6 +193,11 @@ test("save and submit status transitions are idempotent", () => {
   expect(state.saveStatus).toBe("syncing");
   state = transitionWizard(state, { type: "LOCAL_SAVE_COMPLETED" }, ctx).state;
   expect(state.saveStatus).toBe("syncing");
+  state = transitionWizard(state, { type: "SERVER_SAVE_FAILED" }, ctx).state;
+  expect(state.saveStatus).toBe("sync-error");
+  state = transitionWizard(state, { type: "LOCAL_SAVE_COMPLETED" }, ctx).state;
+  expect(state.saveStatus).toBe("sync-error");
+  state = transitionWizard(state, { type: "SERVER_SAVE_REQUESTED" }, ctx).state;
   state = transitionWizard(state, { type: "SERVER_SAVE_SUCCEEDED" }, ctx).state;
   expect(state.saveStatus).toBe("synced");
   state = transitionWizard(state, { type: "SUBMIT_REQUESTED" }, ctx).state;

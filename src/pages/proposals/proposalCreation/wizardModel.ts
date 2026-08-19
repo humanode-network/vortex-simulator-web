@@ -419,7 +419,9 @@ export function transitionWizard(
   }
 
   if (event.type === "LOCAL_SAVE_COMPLETED") {
-    if (state.saveStatus === "syncing") return { state, effects: [] };
+    if (state.saveStatus === "syncing" || state.saveStatus === "sync-error") {
+      return { state, effects: [] };
+    }
     return {
       state: { ...state, saveStatus: "saved-local" },
       effects: [],
