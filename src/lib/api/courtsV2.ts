@@ -28,7 +28,7 @@ export type CourtEvidenceInputV2 =
   | {
       kind: "external_url";
       url: string;
-      digest: string;
+      digest?: string;
       provenance: string;
       access:
         | "public"

@@ -1229,6 +1229,14 @@ export type CourtReportingCapabilityV2Dto =
         digest: string;
         payload: Record<string, unknown>;
       };
+      defaults: {
+        incidentStartsAt: string;
+        incidentStartsAtSource: "target_event" | "assessment_time";
+        respondentId: string | null;
+        respondentIdSource: "sole_target_owner" | "not_inferred";
+        affectedId: string | null;
+        affectedIdSource: "direct_reporter" | "not_inferred";
+      };
       reasonCapabilities: {
         reason: { offenseCode: string; lane: CourtReportLaneV2Dto };
         standing: {

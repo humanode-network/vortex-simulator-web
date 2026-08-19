@@ -232,8 +232,10 @@ export function CourtCollectionNotice({
 }
 
 export function CourtTargetPreview({
+  securedAt,
   target,
 }: {
+  securedAt?: string;
   target: {
     accessClass?: "private" | "public" | "sealed";
     canonicalRoute?: string | null;
@@ -246,51 +248,81 @@ export function CourtTargetPreview({
     type?: string;
   };
 }) {
+  const [technicalOpen, setTechnicalOpen] = useState(false);
   const snapshot = target.snapshotPayload ?? target.snapshot ?? {};
   const title = courtSnapshotTitle(snapshot);
   const route = target.canonicalRoute ?? target.route;
   return (
     <GlassyTile className="space-y-4">
-      <div className="space-y-1">
-        <GlassyTileHeading>{title ?? "Reported record"}</GlassyTileHeading>
-        {target.type ? (
-          <p className="text-sm text-muted">{courtLabel(target.type)}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <GlassyTileHeading>{title ?? "Reported record"}</GlassyTileHeading>
+          {target.type ? (
+            <p className="text-sm text-muted">{courtLabel(target.type)}</p>
+          ) : null}
+        </div>
+        {securedAt ? (
+          <GlassyStatusChip tone="ok">Source record secured</GlassyStatusChip>
         ) : null}
       </div>
-      <GlassyCompactGrid className="sm:grid-cols-2">
-        {target.id ? (
-          <GlassyKeyValue
-            className="flex-col items-start gap-1"
-            label="Target id"
-            value={<CourtCopyValue label="target id" value={target.id} />}
-          />
+      {securedAt ? (
+        <p className="text-sm leading-6 text-muted">
+          Vortex captured this exact record at {formatCourtInstant(securedAt)}{" "}
+          and will attach its verified snapshot to the report automatically.
+        </p>
+      ) : null}
+      <details
+        className={securedAt ? "border-t border-border/70 pt-3" : undefined}
+        open={!securedAt || technicalOpen}
+        onToggle={(event) => {
+          if (securedAt) setTechnicalOpen(event.currentTarget.open);
+        }}
+      >
+        {securedAt ? (
+          <summary className="cursor-pointer text-sm font-medium text-text">
+            Technical details
+          </summary>
         ) : null}
-        {target.revision ? (
-          <GlassyKeyValue
-            className="flex-col items-start gap-1"
-            label="Revision"
-            value={
-              <CourtCopyValue label="target revision" value={target.revision} />
-            }
-          />
-        ) : null}
-        {target.digest ? (
-          <GlassyKeyValue
-            className="flex-col items-start gap-1"
-            label="Snapshot digest"
-            value={
-              <CourtCopyValue label="snapshot digest" value={target.digest} />
-            }
-          />
-        ) : null}
-        {target.accessClass ? (
-          <GlassyKeyValue
-            className="flex-col items-start gap-1"
-            label="Access"
-            value={courtLabel(target.accessClass)}
-          />
-        ) : null}
-      </GlassyCompactGrid>
+        <GlassyCompactGrid
+          className={securedAt ? "mt-3 sm:grid-cols-2" : "sm:grid-cols-2"}
+        >
+          {target.id ? (
+            <GlassyKeyValue
+              className="flex-col items-start gap-1"
+              label="Target id"
+              value={<CourtCopyValue label="target id" value={target.id} />}
+            />
+          ) : null}
+          {target.revision ? (
+            <GlassyKeyValue
+              className="flex-col items-start gap-1"
+              label="Revision"
+              value={
+                <CourtCopyValue
+                  label="target revision"
+                  value={target.revision}
+                />
+              }
+            />
+          ) : null}
+          {target.digest ? (
+            <GlassyKeyValue
+              className="flex-col items-start gap-1"
+              label="Snapshot digest"
+              value={
+                <CourtCopyValue label="snapshot digest" value={target.digest} />
+              }
+            />
+          ) : null}
+          {target.accessClass ? (
+            <GlassyKeyValue
+              className="flex-col items-start gap-1"
+              label="Access"
+              value={courtLabel(target.accessClass)}
+            />
+          ) : null}
+        </GlassyCompactGrid>
+      </details>
       {route ? (
         <div className="flex justify-end">
           <Button asChild size="compact" variant="outline">

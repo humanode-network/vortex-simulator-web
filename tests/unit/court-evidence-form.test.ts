@@ -112,4 +112,25 @@ describe("Court evidence form model", () => {
       ),
     ).toMatchObject({ ok: false, error: { field: "targetId" } });
   });
+
+  test("allows report URLs to receive their reference fingerprint on the server", () => {
+    expect(
+      courtEvidenceDraftToInput(
+        {
+          ...emptyCourtEvidenceDraft(),
+          url: "https://evidence.example/record",
+        },
+        "reporter_submission",
+        { autoDigestExternalUrl: true },
+      ),
+    ).toEqual({
+      ok: true,
+      value: {
+        kind: "external_url",
+        url: "https://evidence.example/record",
+        provenance: "reporter_submission",
+        access: "parties_and_jury",
+      },
+    });
+  });
 });

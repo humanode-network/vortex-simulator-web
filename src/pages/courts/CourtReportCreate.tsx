@@ -74,6 +74,10 @@ type AvailableCapability = Extract<
 >;
 
 const REPORT_EVIDENCE_FIELD_IDS = courtEvidenceFieldIds("court-report");
+const REPORT_ADDITIONAL_EVIDENCE_KINDS = Object.freeze([
+  "external_url",
+  "protocol_proof",
+] as const);
 
 const REPORT_FIELD_IDS: Readonly<Record<string, string>> = Object.freeze({
   affectedId: "court-report-affected",
@@ -102,6 +106,8 @@ const CourtReportCreate: React.FC = () => {
     ? `${target.type}:${target.id}:${target.revision ?? "current"}`
     : "missing";
   const previousTargetKey = useRef(targetKey);
+  const defaultsAppliedTargetKey = useRef<string | null>(null);
+  const canonicalTarget = useRef<CourtTargetReferenceV2Dto | null>(null);
   const [initialIncidentStartsAt, setInitialIncidentStartsAt] = useState("");
   const [incidentStartsAt, setIncidentStartsAt] = useState("");
   const [incidentEndsAt, setIncidentEndsAt] = useState("");
@@ -109,8 +115,11 @@ const CourtReportCreate: React.FC = () => {
     null,
   );
   const [capabilityLoading, setCapabilityLoading] = useState(false);
+  const [initialReasonKey, setInitialReasonKey] = useState("");
   const [reasonKey, setReasonKey] = useState("");
+  const [initialRespondentId, setInitialRespondentId] = useState("");
   const [respondentId, setRespondentId] = useState("");
+  const [initialAffectedId, setInitialAffectedId] = useState("");
   const [affectedId, setAffectedId] = useState("");
   const [statement, setStatement] = useState("");
   const [statementAccess, setStatementAccess] =
@@ -123,7 +132,7 @@ const CourtReportCreate: React.FC = () => {
     reportError: reportEvidenceError,
     reset: resetEvidenceDraft,
     validate: validateEvidenceDraft,
-  } = useCourtEvidenceDraft("court-report");
+  } = useCourtEvidenceDraft("court-report", true);
   const [evidence, setEvidence] = useState<
     { key: string; value: CourtEvidenceInputV2 }[]
   >([]);
@@ -140,12 +149,17 @@ const CourtReportCreate: React.FC = () => {
   useEffect(() => {
     if (previousTargetKey.current === targetKey) return;
     previousTargetKey.current = targetKey;
+    defaultsAppliedTargetKey.current = null;
+    canonicalTarget.current = null;
     setInitialIncidentStartsAt("");
     setIncidentStartsAt("");
     setIncidentEndsAt("");
     setCapability(null);
+    setInitialReasonKey("");
     setReasonKey("");
+    setInitialRespondentId("");
     setRespondentId("");
+    setInitialAffectedId("");
     setAffectedId("");
     setStatement("");
     setStatementAccess("parties_and_jury");
@@ -173,7 +187,7 @@ const CourtReportCreate: React.FC = () => {
     let active = true;
     setCapabilityLoading(true);
     void apiCourtReportingCapabilityV2({
-      target,
+      target: canonicalTarget.current ?? target,
       ...(incidentTimestamp === null
         ? {}
         : { incidentAt: new Date(incidentTimestamp).toISOString() }),
@@ -185,21 +199,43 @@ const CourtReportCreate: React.FC = () => {
           setCapabilityError(courtReportingUnavailableMessage(result.reason));
           return;
         }
+        canonicalTarget.current = {
+          type: result.target.type,
+          id: result.target.id,
+          ...(result.target.revision
+            ? { revision: result.target.revision }
+            : {}),
+        };
         setCapability(result);
-        if (!incidentStartsAt) {
+        const onlyReasonKey =
+          result.reasonCapabilities.length === 1
+            ? `${result.reasonCapabilities[0].reason.offenseCode}:${result.reasonCapabilities[0].reason.lane}`
+            : "";
+        if (defaultsAppliedTargetKey.current !== targetKey) {
+          defaultsAppliedTargetKey.current = targetKey;
           const serverIncidentStart = courtLocalDateTime(
-            new Date(result.assessedAt),
+            new Date(result.defaults.incidentStartsAt),
           );
+          const serverRespondent = result.defaults.respondentId ?? "";
+          const serverAffected = result.defaults.affectedId ?? "";
           setInitialIncidentStartsAt(serverIncidentStart);
           setIncidentStartsAt(serverIncidentStart);
+          setInitialReasonKey(onlyReasonKey);
+          setReasonKey(onlyReasonKey);
+          setInitialRespondentId(serverRespondent);
+          setRespondentId(serverRespondent);
+          setInitialAffectedId(serverAffected);
+          setAffectedId(serverAffected);
+        } else {
+          setReasonKey((current) =>
+            result.reasonCapabilities.some(
+              ({ reason }) =>
+                `${reason.offenseCode}:${reason.lane}` === current,
+            )
+              ? current
+              : onlyReasonKey,
+          );
         }
-        setReasonKey((current) =>
-          result.reasonCapabilities.some(
-            ({ reason }) => `${reason.offenseCode}:${reason.lane}` === current,
-          )
-            ? current
-            : "",
-        );
         setCapabilityError(null);
       })
       .catch((loadError) => {
@@ -230,11 +266,11 @@ const CourtReportCreate: React.FC = () => {
   }, [capability?.target.canonicalRoute, searchParams]);
   const dirty =
     incidentStartsAt !== initialIncidentStartsAt ||
+    reasonKey !== initialReasonKey ||
+    respondentId !== initialRespondentId ||
+    affectedId !== initialAffectedId ||
     Boolean(
       incidentEndsAt ||
-        reasonKey ||
-        respondentId ||
-        affectedId ||
         statement ||
         evidence.length ||
         !evidenceDraftIsEmpty ||
@@ -256,7 +292,10 @@ const CourtReportCreate: React.FC = () => {
   function addEvidence() {
     const item = parsePendingEvidence();
     if (!item) return;
-    if (evidence.some(({ value }) => value.digest === item.digest)) {
+    if (
+      item.digest &&
+      evidence.some(({ value }) => value.digest === item.digest)
+    ) {
       reportEvidenceError({
         field: "digest",
         message: "This evidence digest is already in the report.",
@@ -300,7 +339,13 @@ const CourtReportCreate: React.FC = () => {
     setSubmissionError(null);
     try {
       const result = await apiSubmitCourtReportV2({
-        target,
+        target: {
+          type: capability.target.type,
+          id: capability.target.id,
+          ...(capability.target.revision
+            ? { revision: capability.target.revision }
+            : {}),
+        },
         offenseCode: selectedReason.reason.offenseCode,
         lane: selectedReason.reason.lane as CourtReportLaneV2Dto,
         respondentId: respondentId.trim() || null,
@@ -385,6 +430,7 @@ const CourtReportCreate: React.FC = () => {
         <form className="grid gap-6" onSubmit={submit}>
           <GlassySection title="Reported record">
             <CourtTargetPreview
+              securedAt={capability?.preview.capturedAt}
               target={
                 capability
                   ? {
@@ -406,6 +452,11 @@ const CourtReportCreate: React.FC = () => {
               <CourtFormField
                 htmlFor="court-report-incident-time"
                 label="Incident start"
+                hint={
+                  capability?.defaults.incidentStartsAtSource === "target_event"
+                    ? "Filled from the reported record. Change it only when the conduct began at a different time."
+                    : "Set to the server assessment time because this record has no distinct event time."
+                }
               >
                 <Input
                   id="court-report-incident-time"
@@ -516,7 +567,12 @@ const CourtReportCreate: React.FC = () => {
               <CourtFormField
                 htmlFor="court-report-respondent"
                 label="Respondent address"
-                hint="The Human Node whose conduct is being reported, when known."
+                hint={
+                  capability?.defaults.respondentIdSource ===
+                  "sole_target_owner"
+                    ? "Suggested from the record owner. Change it if another Human Node is responsible."
+                    : "The Human Node whose conduct is being reported, when known."
+                }
               >
                 <Input
                   id="court-report-respondent"
@@ -527,7 +583,11 @@ const CourtReportCreate: React.FC = () => {
               <CourtFormField
                 htmlFor="court-report-affected"
                 label="Affected address"
-                hint="The Human Node directly affected by the conduct, if different."
+                hint={
+                  capability?.defaults.affectedIdSource === "direct_reporter"
+                    ? "Suggested from your verified direct standing. Change it if another Human Node was affected."
+                    : "The Human Node directly affected by the conduct, if different."
+                }
               >
                 <Input
                   id="court-report-affected"
@@ -575,24 +635,37 @@ const CourtReportCreate: React.FC = () => {
             </GlassyTile>
           </GlassySection>
 
-          <GlassySection title="Evidence">
+          <GlassySection title="Additional evidence">
             <GlassyTile className="grid gap-4">
-              <CourtEvidenceComposer
-                draft={evidenceDraft}
-                error={evidenceError}
-                idPrefix="court-report"
-                onChange={changeEvidenceDraft}
-              />
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  size="compact"
-                  variant="outline"
-                  onClick={addEvidence}
-                >
-                  Add another evidence record
-                </Button>
-              </div>
+              <p className="text-sm leading-6 text-muted">
+                The reported Vortex record is already secured and attached. Add
+                supporting material only when it helps establish the conduct.
+              </p>
+              <details className="border-t border-border/70 pt-3">
+                <summary className="cursor-pointer text-sm font-medium text-text">
+                  Add supporting evidence
+                </summary>
+                <div className="mt-4 grid gap-4">
+                  <CourtEvidenceComposer
+                    allowedKinds={REPORT_ADDITIONAL_EVIDENCE_KINDS}
+                    autoDigestExternalUrl
+                    draft={evidenceDraft}
+                    error={evidenceError}
+                    idPrefix="court-report"
+                    onChange={changeEvidenceDraft}
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      size="compact"
+                      variant="outline"
+                      onClick={addEvidence}
+                    >
+                      Add evidence
+                    </Button>
+                  </div>
+                </div>
+              </details>
               <CourtPendingEvidenceList
                 evidence={evidence}
                 onRemove={(key) =>
@@ -613,7 +686,9 @@ const CourtReportCreate: React.FC = () => {
 
           <GlassySection title="Review and attest">
             <CourtReportReview
-              evidenceCount={evidence.length + (evidenceDraftIsEmpty ? 0 : 1)}
+              evidenceCount={
+                1 + evidence.length + (evidenceDraftIsEmpty ? 0 : 1)
+              }
               goodFaithAttested={goodFaithAttested}
               incidentEndsAt={incidentEndsAt}
               incidentStartsAt={incidentStartsAt}
@@ -622,7 +697,7 @@ const CourtReportCreate: React.FC = () => {
               selectedReason={selectedReason}
               statementAccess={statementAccess}
               statementLength={statement.trim().length}
-              target={target}
+              target={capability?.target ?? target}
             />
           </GlassySection>
 

@@ -15,7 +15,10 @@ type CourtEvidenceValidation =
   | { ok: true; value: CourtEvidenceInputV2 | null }
   | { ok: false; error: CourtEvidenceDraftError };
 
-export function useCourtEvidenceDraft(idPrefix: string) {
+export function useCourtEvidenceDraft(
+  idPrefix: string,
+  autoDigestExternalUrl = false,
+) {
   const [draft, setDraft] = useState(emptyCourtEvidenceDraft);
   const [error, setError] = useState<CourtEvidenceDraftError | null>(null);
   const isEmpty = courtEvidenceDraftIsEmpty(draft);
@@ -41,7 +44,9 @@ export function useCourtEvidenceDraft(idPrefix: string) {
   const validate = useCallback(
     (provenance: string): CourtEvidenceValidation => {
       if (courtEvidenceDraftIsEmpty(draft)) return { ok: true, value: null };
-      const result = courtEvidenceDraftToInput(draft, provenance);
+      const result = courtEvidenceDraftToInput(draft, provenance, {
+        autoDigestExternalUrl,
+      });
       if (!result.ok) {
         reportError(result.error);
         return result;
@@ -49,7 +54,7 @@ export function useCourtEvidenceDraft(idPrefix: string) {
       setError(null);
       return { ok: true, value: result.value };
     },
-    [draft, reportError],
+    [autoDigestExternalUrl, draft, reportError],
   );
 
   return { change, draft, error, isEmpty, reportError, reset, validate };

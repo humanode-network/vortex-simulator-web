@@ -47,11 +47,15 @@ export function CourtFormField({
 }
 
 function CourtEvidenceDraftFields({
+  allowedKinds,
+  autoDigestExternalUrl,
   draft,
   error,
   idPrefix,
   onChange,
 }: {
+  allowedKinds: readonly CourtEvidenceDraft["kind"][];
+  autoDigestExternalUrl: boolean;
   draft: CourtEvidenceDraft;
   error: CourtEvidenceDraftError | null;
   idPrefix: string;
@@ -79,7 +83,7 @@ function CourtEvidenceDraftFields({
               update("kind", event.target.value as CourtEvidenceDraft["kind"])
             }
           >
-            {COURT_EVIDENCE_KINDS.map((kind) => (
+            {allowedKinds.map((kind) => (
               <option key={kind} value={kind}>
                 {EVIDENCE_KIND_LABELS[kind]}
               </option>
@@ -201,19 +205,26 @@ function CourtEvidenceDraftFields({
         </div>
       ) : null}
 
-      <CourtFormField
-        htmlFor={fieldId("digest")}
-        label="SHA-256 digest"
-        hint="Use sha256: followed by exactly 64 lowercase hexadecimal characters. The server never fetches external evidence."
-      >
-        <Input
-          id={fieldId("digest")}
-          value={draft.digest}
-          placeholder="sha256:..."
-          onChange={(event) => update("digest", event.target.value)}
-          {...fieldProps("digest")}
-        />
-      </CourtFormField>
+      {draft.kind !== "external_url" || !autoDigestExternalUrl ? (
+        <CourtFormField
+          htmlFor={fieldId("digest")}
+          label="SHA-256 digest"
+          hint="Use sha256: followed by exactly 64 lowercase hexadecimal characters."
+        >
+          <Input
+            id={fieldId("digest")}
+            value={draft.digest}
+            placeholder="sha256:..."
+            onChange={(event) => update("digest", event.target.value)}
+            {...fieldProps("digest")}
+          />
+        </CourtFormField>
+      ) : (
+        <p className="text-xs leading-5 text-muted">
+          Vortex will create a fingerprint for this reference when the report is
+          submitted. The linked content is never fetched or copied.
+        </p>
+      )}
       {error ? (
         <p id={errorId} className="text-sm text-destructive" role="alert">
           {error.message}
@@ -250,11 +261,15 @@ export function CourtEvidenceAccessOptions({
 }
 
 export function CourtEvidenceComposer({
+  allowedKinds = COURT_EVIDENCE_KINDS,
+  autoDigestExternalUrl = false,
   draft,
   error,
   idPrefix,
   onChange,
 }: {
+  allowedKinds?: readonly CourtEvidenceDraft["kind"][];
+  autoDigestExternalUrl?: boolean;
   draft: CourtEvidenceDraft;
   error: CourtEvidenceDraftError | null;
   idPrefix: string;
@@ -263,6 +278,8 @@ export function CourtEvidenceComposer({
   return (
     <>
       <CourtEvidenceDraftFields
+        allowedKinds={allowedKinds}
+        autoDigestExternalUrl={autoDigestExternalUrl}
         draft={draft}
         error={error}
         idPrefix={idPrefix}
