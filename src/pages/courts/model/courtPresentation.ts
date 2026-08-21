@@ -62,6 +62,31 @@ export function courtStandingDisplay(standing: {
   };
 }
 
+export function courtReportLaneChoiceLabel(lane: CourtReportLaneV2Dto): string {
+  if (lane === "correction") return "Correction only";
+  if (lane === "court_report") return "Court review";
+  return courtLaneDisplay(lane).label;
+}
+
+export function courtReportRouteDescription(
+  lane: CourtReportLaneV2Dto,
+  standing: { direct?: boolean; directStanding?: boolean },
+): string {
+  if (lane === "correction") {
+    return "This sends a correction request to the module that owns the record. It does not join a Court trigger or open a case.";
+  }
+  if (lane === "scoped_moderation") {
+    return "This sends the record to the authorized moderation process. It does not join a Court trigger or open a case.";
+  }
+  if (lane === "safety_or_protocol_incident") {
+    return "This sends evidence to the authorized safety or protocol incident process instead of the community Court trigger.";
+  }
+  const direct = standing.direct ?? standing.directStanding ?? false;
+  return direct
+    ? "This enters Court review and can open a case through verified direct standing."
+    : "This enters the private community trigger. A case opens only after the protected reporting threshold is reached.";
+}
+
 export function courtReportProcessContext(
   report: Pick<
     CourtMyReportItemV2Dto,

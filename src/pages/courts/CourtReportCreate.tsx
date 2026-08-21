@@ -26,6 +26,7 @@ import {
   courtLabel,
   CourtStandingReference,
   CourtTargetPreview,
+  CourtTriggerCounter,
   formatCourtInstant,
 } from "./components/CourtPrimitives";
 import {
@@ -47,7 +48,8 @@ import {
 import {
   courtLaneDisplay,
   courtOffenseDisplay,
-  courtStandingDisplay,
+  courtReportLaneChoiceLabel,
+  courtReportRouteDescription,
 } from "./model/courtPresentation";
 import {
   courtErrorIssue,
@@ -316,6 +318,11 @@ const CourtReportCreate: React.FC = () => {
       setSubmissionError("Choose a report reason.");
       return;
     }
+    if (!respondentId.trim()) {
+      setSubmissionError("A respondent address is required.");
+      focusCourtField("court-report-respondent");
+      return;
+    }
     const startsAt = Date.parse(incidentStartsAt);
     const endsAt = incidentEndsAt ? Date.parse(incidentEndsAt) : null;
     if (endsAt !== null && endsAt < startsAt) {
@@ -499,7 +506,7 @@ const CourtReportCreate: React.FC = () => {
                       value={`${reason.offenseCode}:${reason.lane}`}
                     >
                       {courtOffenseDisplay(reason.offenseCode).label} ·{" "}
-                      {courtLaneDisplay(reason.lane).label}
+                      {courtReportLaneChoiceLabel(reason.lane)}
                     </option>
                   ))}
                 </Select>
@@ -527,7 +534,10 @@ const CourtReportCreate: React.FC = () => {
                       direct={selectedReason.standing.directStanding}
                       source={selectedReason.standing.source}
                     />
-                    {`. ${courtStandingDisplay(selectedReason.standing).description}`}
+                    {`. ${courtReportRouteDescription(
+                      selectedReason.reason.lane,
+                      selectedReason.standing,
+                    )}`}
                   </>
                 ) : capabilityLoading ? (
                   "The server is verifying the target, incident time, standing, and available lanes."
@@ -535,12 +545,40 @@ const CourtReportCreate: React.FC = () => {
                   "Reasons are limited to those verified for this exact target and incident time."
                 )}
               </p>
-              {selectedReason && capability?.population ? (
-                <p className="text-xs leading-5 text-muted md:col-span-2">
-                  Population basis: {courtLabel(capability.population.basis)} ·{" "}
-                  effective{" "}
-                  {formatCourtInstant(capability.population.effectiveAt)}.
-                </p>
+              {selectedReason ? (
+                <div className="space-y-2 md:col-span-2">
+                  {selectedReason.reason.lane === "court_report" &&
+                  !selectedReason.standing.directStanding ? (
+                    capability?.population?.communityThreshold ? (
+                      <CourtTriggerCounter
+                        required={capability.population.communityThreshold}
+                        viewerCounts={
+                          capability.population.viewerCountsTowardCommunity
+                        }
+                      />
+                    ) : (
+                      <p className="text-sm leading-6 text-muted">
+                        A community Court trigger is unavailable because fewer
+                        than three eligible Governors remain after excluding the
+                        respondent.
+                      </p>
+                    )
+                  ) : (
+                    <CourtTriggerCounter
+                      description="One admissible report routes this action to its responsible authority."
+                      label="Admissible reports"
+                      required={1}
+                    />
+                  )}
+                  {capability?.population ? (
+                    <p className="text-xs leading-5 text-muted">
+                      Governor population:{" "}
+                      {capability.population.eligibleGovernorCount} ·{" "}
+                      {courtLabel(capability.population.basis)} · effective{" "}
+                      {formatCourtInstant(capability.population.effectiveAt)}.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
               {capabilityError ? (
                 <div className="flex flex-wrap items-center gap-2 md:col-span-2">
@@ -570,14 +608,19 @@ const CourtReportCreate: React.FC = () => {
                 hint={
                   capability?.defaults.respondentIdSource ===
                   "sole_target_owner"
-                    ? "Suggested from the record owner. Change it if another Human Node is responsible."
-                    : "The Human Node whose conduct is being reported, when known."
+                    ? "Set from the owner of the reported record."
+                    : "The Human Node whose conduct is being reported."
                 }
               >
                 <Input
                   id="court-report-respondent"
                   value={respondentId}
                   onChange={(event) => setRespondentId(event.target.value)}
+                  readOnly={
+                    capability?.defaults.respondentIdSource ===
+                    "sole_target_owner"
+                  }
+                  required
                 />
               </CourtFormField>
               <CourtFormField
@@ -694,6 +737,7 @@ const CourtReportCreate: React.FC = () => {
               incidentStartsAt={incidentStartsAt}
               onGoodFaithAttestedChange={setGoodFaithAttested}
               protectiveReviewRequested={immediateProtectionRequested}
+              respondentId={respondentId}
               selectedReason={selectedReason}
               statementAccess={statementAccess}
               statementLength={statement.trim().length}
@@ -715,6 +759,7 @@ const CourtReportCreate: React.FC = () => {
                 !capability ||
                 capabilityLoading ||
                 !reasonKey ||
+                !respondentId.trim() ||
                 statement.trim().length < COURT_STATEMENT_MIN_LENGTH ||
                 statement.trim().length > COURT_STATEMENT_MAX_LENGTH ||
                 !goodFaithAttested ||
