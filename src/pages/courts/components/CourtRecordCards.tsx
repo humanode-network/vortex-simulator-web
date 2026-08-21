@@ -131,7 +131,7 @@ export function CourtReportCard({
   report: CourtMyReportItemV2Dto;
 }) {
   const offense = courtOffenseDisplay(report.offenseCode);
-  const state = courtReportStateDisplay(report.state);
+  const state = courtReportStateDisplay(report.state, report.lane);
   const lane = courtLaneDisplay(report.lane);
   return (
     <GlassyTile className="flex min-h-56 flex-col gap-4">

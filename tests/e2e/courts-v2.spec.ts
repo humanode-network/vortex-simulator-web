@@ -208,6 +208,7 @@ async function installCourtFixtures(
     notifications?: Record<string, unknown>[];
     onCapability?: (url: URL) => void;
     onCommand?: (command: Record<string, unknown>) => void;
+    reasonCapabilities?: Record<string, unknown>[];
     reportDetail?: Record<string, unknown>;
     reports?: Record<string, unknown>[];
     reportsStatus?: "available" | "unavailable";
@@ -333,7 +334,7 @@ async function installCourtFixtures(
             affectedId: "hmrCurrentReporter",
             affectedIdSource: "direct_reporter",
           },
-          reasonCapabilities: [
+          reasonCapabilities: options.reasonCapabilities ?? [
             {
               reason: { offenseCode: "GOV-03", lane: "court_report" },
               standing: {
@@ -708,6 +709,80 @@ test("community report creation shows the Governor threshold and contribution", 
   await expect(page.getByText(/Governor population: 99/)).toBeVisible();
 });
 
+test("report creation explains each lane's actual trigger semantics", async ({
+  page,
+}) => {
+  const standing = (directStanding: boolean) => ({
+    status: "verified",
+    directStanding,
+    source: directStanding ? "target-owner" : "active-governor",
+  });
+  await installCourtFixtures(page, caseRecord, true, {
+    capabilityPopulation: {
+      source: "vortex-governor-roster:fixture",
+      basis: "capture_time_fallback",
+      effectiveAt: "2026-08-12T10:00:00.000Z",
+      capturedAt: "2026-08-12T10:00:00.000Z",
+      eligibleGovernorCount: 99,
+      communityThreshold: 10,
+      viewerCountsTowardCommunity: true,
+    },
+    reasonCapabilities: [
+      {
+        reason: { offenseCode: "CMP-01", lane: "correction" },
+        standing: standing(true),
+        protectiveReview: { eligible: false },
+      },
+      {
+        reason: { offenseCode: "CMP-03", lane: "scoped_moderation" },
+        standing: standing(true),
+        protectiveReview: { eligible: false },
+      },
+      {
+        reason: { offenseCode: "GOV-03", lane: "court_report" },
+        standing: standing(true),
+        protectiveReview: { eligible: false },
+      },
+      {
+        reason: {
+          offenseCode: "SEC-03",
+          lane: "safety_or_protocol_incident",
+        },
+        standing: standing(true),
+        protectiveReview: {
+          eligible: true,
+          authorityIds: ["protocol-safety-council"],
+          durationSeconds: 86_400,
+        },
+      },
+    ],
+  });
+  await page.goto(
+    "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review",
+  );
+
+  const reason = page.getByLabel("Reason", { exact: true });
+  await reason.selectOption("CMP-01:correction");
+  await expect(page.getByText("Governor reports", { exact: true })).toBeVisible();
+  await expect(page.getByText("10 required", { exact: true })).toBeVisible();
+
+  await reason.selectOption("CMP-03:scoped_moderation");
+  await expect(page.getByText("Moderation action", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 required", { exact: true })).toBeVisible();
+
+  await reason.selectOption("GOV-03:court_report");
+  await expect(page.getByText("Admissible reports", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 required", { exact: true })).toBeVisible();
+
+  await reason.selectOption("SEC-03:safety_or_protocol_incident");
+  await expect(page.getByText("Court case trigger", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Verified proof or authorized referral", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Governor reports", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("10 required", { exact: true })).toHaveCount(0);
+});
+
 for (const width of [390, 1440]) {
   test(`dense report creation stays readable at ${width}px`, async ({
     page,
@@ -782,13 +857,17 @@ test("every reporter state has visible next-step guidance", async ({
         route: null,
       },
       offenseCode:
-        state === "routed_to_correction"
+        state === "grouped"
+          ? "SEC-03"
+          : state === "routed_to_correction"
           ? "CMP-01"
           : index % 2 === 0
             ? "GOV-03"
             : "CMP-03",
       lane:
-        state === "routed_to_correction"
+        state === "grouped"
+          ? "safety_or_protocol_incident"
+          : state === "routed_to_correction"
           ? "correction"
           : state === "routed_to_moderation"
             ? "scoped_moderation"
@@ -798,7 +877,9 @@ test("every reporter state has visible next-step guidance", async ({
       caseId: state === "triggered" ? caseId : null,
       respondentId: `human-respondent-${index}`,
       triggerProgress:
-        state === "routed_to_correction" || state === "routed_to_moderation"
+        state === "routed_to_correction" ||
+        state === "routed_to_moderation" ||
+        state === "grouped"
           ? null
           : {
               qualifyingReports: 2,
@@ -828,7 +909,7 @@ test("every reporter state has visible next-step guidance", async ({
     "Collecting",
     "Routed to correction",
     "Routed to moderation",
-    "Grouped",
+    "Safety intake",
     "Withdrawn",
     "Expired",
     "Closed without a case",

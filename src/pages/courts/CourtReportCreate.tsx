@@ -27,6 +27,7 @@ import {
   CourtStandingReference,
   CourtTargetPreview,
   CourtTriggerCounter,
+  CourtTriggerRequirement,
   formatCourtInstant,
 } from "./components/CourtPrimitives";
 import {
@@ -50,6 +51,7 @@ import {
   courtOffenseDisplay,
   courtReportLaneChoiceLabel,
   courtReportRouteDescription,
+  courtReportTriggerRequirement,
 } from "./model/courtPresentation";
 import {
   courtErrorIssue,
@@ -256,6 +258,13 @@ const CourtReportCreate: React.FC = () => {
   const selectedReason = capability?.reasonCapabilities.find(
     ({ reason }) => `${reason.offenseCode}:${reason.lane}` === reasonKey,
   );
+  const triggerRequirement = selectedReason
+    ? courtReportTriggerRequirement(
+        selectedReason.reason.lane,
+        selectedReason.standing,
+        capability?.population,
+      )
+    : null;
   const protectiveReview = selectedReason?.protectiveReview;
   const protectiveReviewAvailable =
     protectiveReview?.eligible === true && !incidentEndsAt;
@@ -547,26 +556,25 @@ const CourtReportCreate: React.FC = () => {
               </p>
               {selectedReason ? (
                 <div className="space-y-2 md:col-span-2">
-                  {selectedReason.reason.lane === "court_report" &&
-                  !selectedReason.standing.directStanding ? (
-                    capability?.population?.communityThreshold ? (
+                  {triggerRequirement?.kind === "community" ? (
+                    triggerRequirement.required ? (
                       <CourtTriggerCounter
-                        required={capability.population.communityThreshold}
-                        viewerCounts={
-                          capability.population.viewerCountsTowardCommunity
-                        }
+                        required={triggerRequirement.required}
+                        viewerCounts={triggerRequirement.viewerCounts}
                       />
                     ) : (
                       <p className="text-sm leading-6 text-muted">
-                        A community Court trigger is unavailable because fewer
-                        than three eligible Governors remain after excluding the
+                        The Governor threshold is unavailable because fewer than
+                        three eligible Governors remain after excluding the
                         respondent.
                       </p>
                     )
+                  ) : triggerRequirement?.kind === "authority" ? (
+                    <CourtTriggerRequirement {...triggerRequirement} />
                   ) : (
                     <CourtTriggerCounter
-                      description="One admissible report routes this action to its responsible authority."
-                      label="Admissible reports"
+                      description={triggerRequirement?.description}
+                      label={triggerRequirement?.label}
                       required={1}
                     />
                   )}

@@ -329,8 +329,10 @@ const CourtReportDetail: React.FC = () => {
           <GlassySection title="Report status">
             <GlassyTile className="space-y-4">
               <CourtStateSummary
-                description={courtReportStateDisplay(report.state).description}
-                label={courtReportStateDisplay(report.state).label}
+                description={
+                  courtReportStateDisplay(report.state, report.lane).description
+                }
+                label={courtReportStateDisplay(report.state, report.lane).label}
                 tone={courtTone(report.state)}
               />
               <CourtReportActionStatus report={report} />

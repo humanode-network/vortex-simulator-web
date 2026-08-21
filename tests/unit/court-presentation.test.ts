@@ -13,8 +13,10 @@ import {
   courtRemedyLabel,
   courtReportLaneChoiceLabel,
   courtReportActionProgress,
+  courtReportProcessContext,
   courtReportRouteDescription,
   courtReportStateDisplay,
+  courtReportTriggerRequirement,
   courtRemedyExpiry,
   courtEventDisplay,
   formatCourtDuration,
@@ -182,6 +184,83 @@ test("report route copy distinguishes non-case correction thresholds from Court 
   assert.match(
     courtReportRouteDescription("court_report", { directStanding: true }),
     /verified direct standing/,
+  );
+});
+
+test("safety intake never presents Governor reports as its Court trigger", () => {
+  assert.deepEqual(
+    courtReportStateDisplay("grouped", "safety_or_protocol_incident"),
+    {
+      label: "Safety intake",
+      description:
+        "The incident is preserved for authorized safety or protocol review. Governor report counts do not open a Court case on this lane.",
+    },
+  );
+  const process = courtReportProcessContext({
+    caseId: null,
+    lane: "safety_or_protocol_incident",
+    state: "grouped",
+    standing: {
+      status: "verified",
+      direct: true,
+      source: "affected_party",
+    },
+  });
+  assert.equal(process.destination, "Safety and protocol intake");
+  assert.match(process.nextStep, /objective proof.*emergency referral/i);
+  assert.doesNotMatch(process.nextStep, /Governor threshold/i);
+  assert.deepEqual(
+    courtReportTriggerRequirement(
+      "safety_or_protocol_incident",
+      { directStanding: true },
+      { communityThreshold: 10, viewerCountsTowardCommunity: true },
+    ),
+    {
+      kind: "authority",
+      label: "Court case trigger",
+      value: "Verified proof or authorized referral",
+      description:
+        "Governor report counts do not open a case on this lane. Evidence remains preserved for an authorized safety or protocol process.",
+    },
+  );
+});
+
+test("creation requirements follow correction, moderation, and Court trigger rules", () => {
+  const population = {
+    communityThreshold: 7,
+    viewerCountsTowardCommunity: true,
+  };
+  assert.deepEqual(
+    courtReportTriggerRequirement(
+      "correction",
+      { directStanding: true },
+      population,
+    ),
+    { kind: "community", required: 7, viewerCounts: true },
+  );
+  assert.equal(
+    courtReportTriggerRequirement(
+      "scoped_moderation",
+      { directStanding: false },
+      population,
+    ).kind,
+    "single",
+  );
+  assert.equal(
+    courtReportTriggerRequirement(
+      "court_report",
+      { directStanding: true },
+      population,
+    ).kind,
+    "single",
+  );
+  assert.deepEqual(
+    courtReportTriggerRequirement(
+      "court_report",
+      { directStanding: false },
+      population,
+    ),
+    { kind: "community", required: 7, viewerCounts: true },
   );
 });
 

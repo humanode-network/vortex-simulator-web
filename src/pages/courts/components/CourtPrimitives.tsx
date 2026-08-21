@@ -169,6 +169,26 @@ export function CourtTriggerCounter({
   );
 }
 
+export function CourtTriggerRequirement({
+  description,
+  label,
+  value,
+}: {
+  description: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="space-y-2 border-y border-border/70 py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-medium text-text">{label}</p>
+        <p className="text-sm font-semibold text-text">{value}</p>
+      </div>
+      <p className="text-xs leading-5 text-muted">{description}</p>
+    </div>
+  );
+}
+
 export function CourtReportActionStatus({
   report,
 }: {
