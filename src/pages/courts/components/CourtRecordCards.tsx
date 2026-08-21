@@ -25,8 +25,8 @@ import {
 import {
   CourtCopyValue,
   CourtDeadline,
+  CourtReportActionStatus,
   CourtStandingReference,
-  CourtTriggerCounter,
   courtLabel,
   courtTone,
   formatCourtInstant,
@@ -149,6 +149,7 @@ export function CourtReportCard({
           {state.label}
         </GlassyStatusChip>
       </div>
+      <CourtReportActionStatus report={report} />
       <p className="text-sm leading-6 text-muted">{state.description}</p>
       <GlassyCompactGrid className="grid-cols-2">
         <GlassyKeyValue
@@ -191,13 +192,6 @@ export function CourtReportCard({
           />
         ) : null}
       </GlassyCompactGrid>
-      {report.triggerProgress ? (
-        <CourtTriggerCounter
-          current={report.triggerProgress.qualifyingReports}
-          required={report.triggerProgress.requiredReports}
-          viewerCounts={report.triggerProgress.viewerReportCounts}
-        />
-      ) : null}
       <div className="mt-auto flex flex-wrap justify-end gap-2">
         {report.target.route ? (
           <Button asChild size="compact" variant="outline">

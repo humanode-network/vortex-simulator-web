@@ -14,9 +14,11 @@ import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { Button } from "@/components/primitives/button";
 import {
   compactCourtAuditValue,
+  courtReportActionProgress,
   courtSnapshotTitle,
   courtStandingDisplay,
 } from "../model/courtPresentation";
+import type { CourtMyReportItemV2Dto } from "@/types/api";
 
 export function courtLabel(value: string): string {
   return value
@@ -123,20 +125,21 @@ export function CourtTriggerCounter({
   viewerCounts?: boolean;
 }) {
   const completed = current === undefined ? 0 : Math.min(current, required);
+  const remaining = Math.max(required - completed, 0);
   const percentage = required > 0 ? (completed / required) * 100 : 0;
   return (
-    <div className="space-y-2 border-t border-border/70 pt-3">
+    <div className="space-y-2 border-y border-border/70 py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-medium text-text">{label}</p>
         <p className="text-sm font-semibold text-text">
           {current === undefined
             ? `${required} required`
-            : `${completed} / ${required}`}
+            : `${completed} received · ${remaining} left`}
         </p>
       </div>
       {current !== undefined ? (
         <div
-          aria-label={`${completed} of ${required} Governor reports received`}
+          aria-label={`${completed} of ${required} required reports received for ${label.toLowerCase()}`}
           aria-valuemax={required}
           aria-valuemin={0}
           aria-valuenow={completed}
@@ -164,6 +167,16 @@ export function CourtTriggerCounter({
       </p>
     </div>
   );
+}
+
+export function CourtReportActionStatus({
+  report,
+}: {
+  report: Pick<CourtMyReportItemV2Dto, "lane" | "state" | "triggerProgress">;
+}) {
+  const progress = courtReportActionProgress(report);
+  if (!progress) return null;
+  return <CourtTriggerCounter {...progress} />;
 }
 
 export function courtTone(

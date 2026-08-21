@@ -15,6 +15,7 @@ export type FeedStageDto = FeedStage;
 export type ProposalResolutionKindDto =
   | "ordinary_failed_pool"
   | "ordinary_failed_vote"
+  | "court_correction_remand"
   | "citizen_veto_remand"
   | "chamber_veto_remand"
   | "chamber_veto_void"

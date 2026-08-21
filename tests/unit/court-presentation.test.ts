@@ -12,6 +12,7 @@ import {
   courtOffenseDisplay,
   courtRemedyLabel,
   courtReportLaneChoiceLabel,
+  courtReportActionProgress,
   courtReportRouteDescription,
   courtReportStateDisplay,
   courtRemedyExpiry,
@@ -93,6 +94,42 @@ test("every report and case state has plain-language guidance", () => {
   }
 });
 
+test("report action progress uses server-backed aggregate routes", () => {
+  assert.deepEqual(
+    courtReportActionProgress({
+      lane: "court_report",
+      state: "collecting",
+      triggerProgress: {
+        qualifyingReports: 2,
+        requiredReports: 3,
+        viewerReportCounts: true,
+      },
+    }),
+    {
+      current: 2,
+      label: "Governor reports",
+      required: 3,
+      viewerCounts: true,
+    },
+  );
+  assert.equal(
+    courtReportActionProgress({
+      lane: "correction",
+      state: "routed_to_correction",
+      triggerProgress: null,
+    }),
+    null,
+  );
+  assert.equal(
+    courtReportActionProgress({
+      lane: "court_report",
+      state: "submitted",
+      triggerProgress: null,
+    }),
+    null,
+  );
+});
+
 test("decision vocabulary is readable while immutable codes remain available", () => {
   for (const lane of [
     "correction",
@@ -131,12 +168,12 @@ test("standing copy separates the referenced legal term from its verification", 
   );
 });
 
-test("report route copy distinguishes non-Court routing from Court triggers", () => {
-  assert.equal(courtReportLaneChoiceLabel("correction"), "Correction only");
+test("report route copy distinguishes non-case correction thresholds from Court triggers", () => {
+  assert.equal(courtReportLaneChoiceLabel("correction"), "Correction route");
   assert.equal(courtReportLaneChoiceLabel("court_report"), "Court review");
   assert.match(
     courtReportRouteDescription("correction", { directStanding: false }),
-    /does not join a Court trigger or open a case/,
+    /private Governor correction threshold/,
   );
   assert.match(
     courtReportRouteDescription("court_report", { directStanding: false }),
