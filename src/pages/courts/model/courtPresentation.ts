@@ -43,6 +43,14 @@ export type CourtReportProcessContext = {
   nextStep: string;
 };
 
+export type CourtReportActionProgress = {
+  current: number;
+  description?: string;
+  label: string;
+  required: number;
+  viewerCounts?: boolean;
+};
+
 export type CourtStandingDisplay = CourtDisplayEntry & {
   verification: string;
 };
@@ -85,6 +93,41 @@ export function courtReportRouteDescription(
   return direct
     ? "This enters Court review and can open a case through verified direct standing."
     : "This enters the private community trigger. A case opens only after the protected reporting threshold is reached.";
+}
+
+export function courtReportActionProgress(
+  report: Pick<CourtMyReportItemV2Dto, "lane" | "state" | "triggerProgress">,
+): CourtReportActionProgress | null {
+  if (report.triggerProgress) {
+    return {
+      current: report.triggerProgress.qualifyingReports,
+      label: "Governor reports",
+      required: report.triggerProgress.requiredReports,
+      viewerCounts: report.triggerProgress.viewerReportCounts,
+    };
+  }
+  if (report.lane === "correction" && report.state === "routed_to_correction") {
+    return {
+      current: 1,
+      description:
+        "This accepted report routed the correction action immediately. No additional reports are required.",
+      label: "Correction action",
+      required: 1,
+    };
+  }
+  if (
+    report.lane === "scoped_moderation" &&
+    report.state === "routed_to_moderation"
+  ) {
+    return {
+      current: 1,
+      description:
+        "This accepted report routed the moderation action immediately. No additional reports are required.",
+      label: "Moderation action",
+      required: 1,
+    };
+  }
+  return null;
 }
 
 export function courtReportProcessContext(

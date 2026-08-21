@@ -12,6 +12,7 @@ import {
   courtOffenseDisplay,
   courtRemedyLabel,
   courtReportLaneChoiceLabel,
+  courtReportActionProgress,
   courtReportRouteDescription,
   courtReportStateDisplay,
   courtRemedyExpiry,
@@ -91,6 +92,48 @@ test("every report and case state has plain-language guidance", () => {
     assert.ok(display.description.length > 20);
     assert.doesNotMatch(display.label, /_/);
   }
+});
+
+test("report action progress distinguishes aggregate and immediate routes", () => {
+  assert.deepEqual(
+    courtReportActionProgress({
+      lane: "court_report",
+      state: "collecting",
+      triggerProgress: {
+        qualifyingReports: 2,
+        requiredReports: 3,
+        viewerReportCounts: true,
+      },
+    }),
+    {
+      current: 2,
+      label: "Governor reports",
+      required: 3,
+      viewerCounts: true,
+    },
+  );
+  assert.deepEqual(
+    courtReportActionProgress({
+      lane: "correction",
+      state: "routed_to_correction",
+      triggerProgress: null,
+    }),
+    {
+      current: 1,
+      description:
+        "This accepted report routed the correction action immediately. No additional reports are required.",
+      label: "Correction action",
+      required: 1,
+    },
+  );
+  assert.equal(
+    courtReportActionProgress({
+      lane: "court_report",
+      state: "submitted",
+      triggerProgress: null,
+    }),
+    null,
+  );
 });
 
 test("decision vocabulary is readable while immutable codes remain available", () => {

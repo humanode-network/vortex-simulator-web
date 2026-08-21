@@ -45,10 +45,10 @@ import {
   courtLabel,
   CourtDeadline,
   CourtCopyValue,
+  CourtReportActionStatus,
   CourtStandingReference,
   CourtStateSummary,
   CourtTargetPreview,
-  CourtTriggerCounter,
   courtTone,
   formatCourtInstant,
 } from "./components/CourtPrimitives";
@@ -333,6 +333,7 @@ const CourtReportDetail: React.FC = () => {
                 label={courtReportStateDisplay(report.state).label}
                 tone={courtTone(report.state)}
               />
+              <CourtReportActionStatus report={report} />
               <GlassyCompactGrid className="sm:grid-cols-2 lg:grid-cols-4">
                 <GlassyKeyValue
                   label="Report id"
@@ -407,13 +408,6 @@ const CourtReportDetail: React.FC = () => {
                   }
                 />
               </GlassyCompactGrid>
-              {report.triggerProgress ? (
-                <CourtTriggerCounter
-                  current={report.triggerProgress.qualifyingReports}
-                  required={report.triggerProgress.requiredReports}
-                  viewerCounts={report.triggerProgress.viewerReportCounts}
-                />
-              ) : null}
               {process ? (
                 <p className="text-sm leading-6 text-muted">
                   Next: {process.nextStep}

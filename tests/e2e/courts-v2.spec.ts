@@ -396,7 +396,11 @@ async function installCourtFixtures(
           amendmentDueAt: null,
           amendmentDeadlineState: null,
           standing: reportStanding,
-          triggerProgress: null,
+          triggerProgress: {
+            qualifyingReports: 2,
+            requiredReports: 3,
+            viewerReportCounts: true,
+          },
           policyVersionId: "court-codex-v1",
           immediateProtectionRequested: false,
           triggerKind: null,
@@ -568,6 +572,9 @@ test("a reporter completes the canonical report journey", async ({ page }) => {
   await expect(page.getByText("Private reporter record")).toBeVisible();
   await expect(
     page.getByText("report-browser-journey", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("2 received · 1 left", { exact: true }),
   ).toBeVisible();
 });
 
@@ -774,20 +781,30 @@ test("every reporter state has visible next-step guidance", async ({
         id: `target-${index}`,
         route: null,
       },
-      offenseCode: index % 2 === 0 ? "GOV-03" : "CMP-03",
-      lane: index % 2 === 0 ? "court_report" : "scoped_moderation",
+      offenseCode:
+        state === "routed_to_correction"
+          ? "CMP-01"
+          : index % 2 === 0
+            ? "GOV-03"
+            : "CMP-03",
+      lane:
+        state === "routed_to_correction"
+          ? "correction"
+          : state === "routed_to_moderation"
+            ? "scoped_moderation"
+            : "court_report",
       submittedAt: "2026-08-01T10:00:00.000Z",
       updatedAt: "2026-08-12T10:00:00.000Z",
       caseId: state === "triggered" ? caseId : null,
       respondentId: `human-respondent-${index}`,
       triggerProgress:
-        index % 2 === 0
-          ? {
+        state === "routed_to_correction" || state === "routed_to_moderation"
+          ? null
+          : {
               qualifyingReports: 2,
               requiredReports: 3,
               viewerReportCounts: true,
-            }
-          : null,
+            },
       amendmentDueAt:
         state === "needs_amendment" ? "2026-08-19T10:00:00.000Z" : null,
       amendmentDeadlineState: state === "needs_amendment" ? "due" : null,
@@ -796,7 +813,12 @@ test("every reporter state has visible next-step guidance", async ({
   });
   await page.goto("/app/courts");
   await page.getByRole("button", { name: /My reports 10/ }).click();
-  await expect(page.getByText("2 / 3", { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText("2 received · 1 left", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("1 received · 0 left", { exact: true }).first(),
+  ).toBeVisible();
   await expect(
     page.getByText(/more matching Governor report/).first(),
   ).toBeVisible();
