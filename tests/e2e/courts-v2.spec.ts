@@ -763,23 +763,33 @@ test("report creation explains each lane's actual trigger semantics", async ({
 
   const reason = page.getByLabel("Reason", { exact: true });
   await reason.selectOption("CMP-01:correction");
-  await expect(page.getByText("Governor reports", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Governor reports", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("10 required", { exact: true })).toBeVisible();
 
   await reason.selectOption("CMP-03:scoped_moderation");
-  await expect(page.getByText("Moderation action", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Moderation action", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("1 required", { exact: true })).toBeVisible();
 
   await reason.selectOption("GOV-03:court_report");
-  await expect(page.getByText("Admissible reports", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Admissible reports", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("1 required", { exact: true })).toBeVisible();
 
   await reason.selectOption("SEC-03:safety_or_protocol_incident");
-  await expect(page.getByText("Court case trigger", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Court case trigger", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText("Verified proof or authorized referral", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Governor reports", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Governor reports", { exact: true })).toHaveCount(
+    0,
+  );
   await expect(page.getByText("10 required", { exact: true })).toHaveCount(0);
 });
 
@@ -860,18 +870,18 @@ test("every reporter state has visible next-step guidance", async ({
         state === "grouped"
           ? "SEC-03"
           : state === "routed_to_correction"
-          ? "CMP-01"
-          : index % 2 === 0
-            ? "GOV-03"
-            : "CMP-03",
+            ? "CMP-01"
+            : index % 2 === 0
+              ? "GOV-03"
+              : "CMP-03",
       lane:
         state === "grouped"
           ? "safety_or_protocol_incident"
           : state === "routed_to_correction"
-          ? "correction"
-          : state === "routed_to_moderation"
-            ? "scoped_moderation"
-            : "court_report",
+            ? "correction"
+            : state === "routed_to_moderation"
+              ? "scoped_moderation"
+              : "court_report",
       submittedAt: "2026-08-01T10:00:00.000Z",
       updatedAt: "2026-08-12T10:00:00.000Z",
       caseId: state === "triggered" ? caseId : null,
