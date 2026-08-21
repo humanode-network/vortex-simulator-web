@@ -51,6 +51,24 @@ export type CourtReportActionProgress = {
   viewerCounts?: boolean;
 };
 
+export type CourtReportTriggerRequirement =
+  | {
+      kind: "community";
+      required: number | null;
+      viewerCounts: boolean;
+    }
+  | {
+      kind: "single";
+      description: string;
+      label: string;
+    }
+  | {
+      kind: "authority";
+      description: string;
+      label: string;
+      value: string;
+    };
+
 export type CourtStandingDisplay = CourtDisplayEntry & {
   verification: string;
 };
@@ -93,6 +111,42 @@ export function courtReportRouteDescription(
   return direct
     ? "This enters Court review and can open a case through verified direct standing."
     : "This enters the private community trigger. A case opens only after the protected reporting threshold is reached.";
+}
+
+export function courtReportTriggerRequirement(
+  lane: CourtReportLaneV2Dto,
+  standing: { direct?: boolean; directStanding?: boolean },
+  population?: {
+    communityThreshold: number | null;
+    viewerCountsTowardCommunity: boolean;
+  } | null,
+): CourtReportTriggerRequirement {
+  const direct = standing.direct ?? standing.directStanding ?? false;
+  if (lane === "correction" || (lane === "court_report" && !direct)) {
+    return {
+      kind: "community",
+      required: population?.communityThreshold ?? null,
+      viewerCounts: population?.viewerCountsTowardCommunity ?? false,
+    };
+  }
+  if (lane === "safety_or_protocol_incident") {
+    return {
+      kind: "authority",
+      label: "Court case trigger",
+      value: "Verified proof or authorized referral",
+      description:
+        "Governor report counts do not open a case on this lane. Evidence remains preserved for an authorized safety or protocol process.",
+    };
+  }
+  return {
+    kind: "single",
+    label:
+      lane === "scoped_moderation" ? "Moderation action" : "Admissible reports",
+    description:
+      lane === "scoped_moderation"
+        ? "One admissible report routes the record to its authorized moderation process."
+        : "Verified direct standing allows one admissible report to enter Court review.",
+  };
 }
 
 export function courtReportActionProgress(
@@ -154,12 +208,20 @@ export function courtReportProcessContext(
         "Follow the linked case for notice, evidence, decision, and appeal.",
     };
   }
+  if (report.lane === "safety_or_protocol_incident") {
+    return {
+      basis,
+      destination: "Safety and protocol intake",
+      nextStep:
+        "The evidence remains preserved for authorized review. A Court case can open only through verified objective proof or an authorized emergency referral.",
+    };
+  }
   if (report.state === "collecting" || report.state === "grouped") {
     return {
       basis,
       destination: "Private incident collection",
       nextStep:
-        "The report remains active without revealing other reporters or trigger thresholds.",
+        "The report remains active while reporter identities stay private. Aggregate Governor progress updates as matching reports qualify.",
     };
   }
   if (report.state === "needs_amendment") {
@@ -434,7 +496,18 @@ export function courtOffenseDisplay(
 
 export function courtReportStateDisplay(
   state: CourtReportStateV2Dto,
+  lane?: CourtReportLaneV2Dto,
 ): CourtDisplayEntry {
+  if (
+    lane === "safety_or_protocol_incident" &&
+    (state === "collecting" || state === "grouped")
+  ) {
+    return {
+      label: "Safety intake",
+      description:
+        "The incident is preserved for authorized safety or protocol review. Governor report counts do not open a Court case on this lane.",
+    };
+  }
   return REPORT_STATES[state];
 }
 
