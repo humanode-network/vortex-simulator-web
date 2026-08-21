@@ -13,6 +13,7 @@ import {
   courtRemedyLabel,
   courtReportLaneChoiceLabel,
   courtReportActionProgress,
+  courtReportProcessContext,
   courtReportRouteDescription,
   courtReportStateDisplay,
   courtRemedyExpiry,
@@ -183,6 +184,24 @@ test("report route copy distinguishes non-case correction thresholds from Court 
     courtReportRouteDescription("court_report", { directStanding: true }),
     /verified direct standing/,
   );
+});
+
+test("active private collections explain visible aggregate progress without exposing reporters", () => {
+  const context = courtReportProcessContext({
+    caseId: null,
+    lane: "correction",
+    standing: {
+      status: "verified",
+      direct: false,
+      source: "community_threshold",
+    },
+    state: "grouped",
+    triggerKind: "community",
+  });
+
+  assert.match(context.nextStep, /aggregate Governor count updates/);
+  assert.doesNotMatch(context.nextStep, /without revealing.*threshold/i);
+  assert.match(context.nextStep, /reporter identities stay private/i);
 });
 
 test("long audit values stay readable while preserving their identifying ends", () => {

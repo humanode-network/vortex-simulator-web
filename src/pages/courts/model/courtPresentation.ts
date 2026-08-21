@@ -159,7 +159,7 @@ export function courtReportProcessContext(
       basis,
       destination: "Private incident collection",
       nextStep:
-        "The report remains active without revealing other reporters or trigger thresholds.",
+        "The report remains active while reporter identities stay private. The aggregate Governor count updates as matching reports qualify.",
     };
   }
   if (report.state === "needs_amendment") {
