@@ -26,6 +26,7 @@ import {
   CourtCopyValue,
   CourtDeadline,
   CourtStandingReference,
+  CourtTriggerCounter,
   courtLabel,
   courtTone,
   formatCourtInstant,
@@ -171,6 +172,17 @@ export function CourtReportCard({
           label="Updated"
           value={formatCourtInstant(report.updatedAt)}
         />
+        {report.respondentId ? (
+          <GlassyKeyValue
+            label="Respondent"
+            value={
+              <CourtCopyValue
+                label="respondent address"
+                value={report.respondentId}
+              />
+            }
+          />
+        ) : null}
         {report.amendmentDueAt ? (
           <CourtDeadline
             dueAt={report.amendmentDueAt}
@@ -179,6 +191,13 @@ export function CourtReportCard({
           />
         ) : null}
       </GlassyCompactGrid>
+      {report.triggerProgress ? (
+        <CourtTriggerCounter
+          current={report.triggerProgress.qualifyingReports}
+          required={report.triggerProgress.requiredReports}
+          viewerCounts={report.triggerProgress.viewerReportCounts}
+        />
+      ) : null}
       <div className="mt-auto flex flex-wrap justify-end gap-2">
         {report.target.route ? (
           <Button asChild size="compact" variant="outline">

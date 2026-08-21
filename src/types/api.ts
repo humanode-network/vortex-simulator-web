@@ -1257,6 +1257,9 @@ export type CourtReportingCapabilityV2Dto =
         basis: "incident_time" | "capture_time_fallback";
         effectiveAt: string;
         capturedAt: string;
+        eligibleGovernorCount: number;
+        communityThreshold: number | null;
+        viewerCountsTowardCommunity: boolean;
       } | null;
     }
   | { status: "unavailable" | "disabled"; reason: string };
@@ -1275,6 +1278,12 @@ export type CourtMyReportItemV2Dto = {
   submittedAt: string | null;
   updatedAt: string;
   caseId: string | null;
+  respondentId: string | null;
+  triggerProgress: {
+    qualifyingReports: number;
+    requiredReports: number;
+    viewerReportCounts: boolean;
+  } | null;
   amendmentDueAt: string | null;
   amendmentDeadlineState: "due" | "overdue" | null;
 };

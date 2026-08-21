@@ -48,6 +48,7 @@ import {
   CourtStandingReference,
   CourtStateSummary,
   CourtTargetPreview,
+  CourtTriggerCounter,
   courtTone,
   formatCourtInstant,
 } from "./components/CourtPrimitives";
@@ -349,6 +350,17 @@ const CourtReportDetail: React.FC = () => {
                   label="Target"
                   value={courtLabel(report.target.type)}
                 />
+                {report.respondentId ? (
+                  <GlassyKeyValue
+                    label="Respondent"
+                    value={
+                      <CourtCopyValue
+                        label="respondent address"
+                        value={report.respondentId}
+                      />
+                    }
+                  />
+                ) : null}
                 <GlassyKeyValue
                   label="Incident"
                   value={formatCourtInstant(report.incident.startedAt)}
@@ -395,6 +407,13 @@ const CourtReportDetail: React.FC = () => {
                   }
                 />
               </GlassyCompactGrid>
+              {report.triggerProgress ? (
+                <CourtTriggerCounter
+                  current={report.triggerProgress.qualifyingReports}
+                  required={report.triggerProgress.requiredReports}
+                  viewerCounts={report.triggerProgress.viewerReportCounts}
+                />
+              ) : null}
               {process ? (
                 <p className="text-sm leading-6 text-muted">
                   Next: {process.nextStep}
@@ -492,7 +511,15 @@ const CourtReportDetail: React.FC = () => {
                           onChange={(event) =>
                             setRespondentId(event.target.value)
                           }
+                          readOnly={Boolean(report.respondentId)}
+                          required
                         />
+                        {report.respondentId ? (
+                          <span className="text-xs leading-5 text-muted">
+                            The respondent is fixed to the reported record and
+                            cannot be changed by amendment.
+                          </span>
+                        ) : null}
                       </label>
                       <label
                         className="grid gap-2 text-sm text-text"
@@ -585,6 +612,7 @@ const CourtReportDetail: React.FC = () => {
                             COURT_STATEMENT_MIN_LENGTH ||
                             supplement.trim().length >
                               COURT_STATEMENT_MAX_LENGTH ||
+                            !respondentId.trim() ||
                             !amendmentChanged)) ||
                         (!report.actions.amend &&
                           !supplement.trim() &&

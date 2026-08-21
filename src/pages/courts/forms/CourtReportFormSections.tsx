@@ -118,6 +118,7 @@ export function CourtReportReview({
   incidentStartsAt,
   onGoodFaithAttestedChange,
   protectiveReviewRequested,
+  respondentId,
   selectedReason,
   statementAccess,
   statementLength,
@@ -129,6 +130,7 @@ export function CourtReportReview({
   incidentStartsAt: string;
   onGoodFaithAttestedChange: (attested: boolean) => void;
   protectiveReviewRequested: boolean;
+  respondentId: string;
   selectedReason: CourtReportReasonCapability | undefined;
   statementAccess: CourtEvidenceAccessV2Dto;
   statementLength: number;
@@ -160,6 +162,14 @@ export function CourtReportReview({
       <div className="grid gap-3 text-sm text-text sm:grid-cols-2">
         <p>
           Target: {courtLabel(target.type)} · {target.id}
+        </p>
+        <p className="flex min-w-0 items-center gap-2">
+          <span>Respondent:</span>
+          {respondentId ? (
+            <CourtCopyValue label="respondent address" value={respondentId} />
+          ) : (
+            "Not set"
+          )}
         </p>
         <p>Incident: {formatCourtInstant(incidentStartsAt)}</p>
         <p>

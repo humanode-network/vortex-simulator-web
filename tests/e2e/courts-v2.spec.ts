@@ -193,6 +193,16 @@ async function installCourtFixtures(
     caseDetails?: Record<string, Record<string, unknown>>;
     caseListDelayMs?: number;
     casesStatus?: "available" | "unavailable";
+    capabilityDirectStanding?: boolean;
+    capabilityPopulation?: {
+      source: string;
+      basis: "incident_time" | "capture_time_fallback";
+      effectiveAt: string;
+      capturedAt: string;
+      eligibleGovernorCount: number;
+      communityThreshold: number | null;
+      viewerCountsTowardCommunity: boolean;
+    } | null;
     commandFailures?: number;
     notificationsStatus?: "available" | "unavailable";
     notifications?: Record<string, unknown>[];
@@ -328,13 +338,13 @@ async function installCourtFixtures(
               reason: { offenseCode: "GOV-03", lane: "court_report" },
               standing: {
                 status: "verified",
-                directStanding: true,
+                directStanding: options.capabilityDirectStanding ?? true,
                 source: "target-owner",
               },
               protectiveReview: { eligible: false },
             },
           ],
-          population: null,
+          population: options.capabilityPopulation ?? null,
         },
       });
       return;
@@ -386,6 +396,7 @@ async function installCourtFixtures(
           amendmentDueAt: null,
           amendmentDeadlineState: null,
           standing: reportStanding,
+          triggerProgress: null,
           policyVersionId: "court-codex-v1",
           immediateProtectionRequested: false,
           triggerKind: null,
@@ -629,9 +640,9 @@ test("report source and URL fingerprints require no technical entry", async ({
     "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review",
   );
   await expect(page.getByText("Source record secured")).toBeVisible();
-  await expect(page.getByLabel("Respondent address")).toHaveValue(
-    "hmrProposalAuthor",
-  );
+  await expect(
+    page.getByRole("textbox", { name: "Respondent address" }),
+  ).toHaveValue("hmrProposalAuthor");
   await page
     .getByLabel(
       "Describe what happened, when it happened, and why this reason applies.",
@@ -666,6 +677,30 @@ test("report source and URL fingerprints require no technical entry", async ({
   expect(payload.evidence?.[0]).not.toHaveProperty("digest");
 });
 
+test("community report creation shows the Governor threshold and contribution", async ({
+  page,
+}) => {
+  await installCourtFixtures(page, caseRecord, true, {
+    capabilityDirectStanding: false,
+    capabilityPopulation: {
+      source: "vortex-governor-roster:fixture",
+      basis: "capture_time_fallback",
+      effectiveAt: "2026-08-12T10:00:00.000Z",
+      capturedAt: "2026-08-12T10:00:00.000Z",
+      eligibleGovernorCount: 99,
+      communityThreshold: 10,
+      viewerCountsTowardCommunity: false,
+    },
+  });
+  await page.goto(
+    "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review",
+  );
+  await page.getByLabel("Reason").selectOption("GOV-03:court_report");
+  await expect(page.getByText("10 required", { exact: true })).toBeVisible();
+  await expect(page.getByText(/does not add Governor support/)).toBeVisible();
+  await expect(page.getByText(/Governor population: 99/)).toBeVisible();
+});
+
 for (const width of [390, 1440]) {
   test(`dense report creation stays readable at ${width}px`, async ({
     page,
@@ -676,9 +711,12 @@ for (const width of [390, 1440]) {
       "/app/courts/reports/new?targetType=proposal&targetId=proposal-under-review&revision=revision-with-a-long-immutable-identifier",
     );
     await page.getByLabel("Reason").selectOption("GOV-03:court_report");
-    await page
-      .getByLabel("Respondent address")
-      .fill("hmrRespondentWithAVeryLongCanonicalAddress111111111111111111");
+    const respondentInput = page.getByRole("textbox", {
+      name: "Respondent address",
+    });
+    await expect(respondentInput).toHaveValue("hmrProposalAuthor");
+    await expect(respondentInput).toHaveAttribute("readonly", "");
+    await expect(page.getByText("1 required", { exact: true })).toBeVisible();
     await page
       .getByLabel("Affected address")
       .fill("hmrAffectedWithAVeryLongCanonicalAddress2222222222222222222");
@@ -741,6 +779,15 @@ test("every reporter state has visible next-step guidance", async ({
       submittedAt: "2026-08-01T10:00:00.000Z",
       updatedAt: "2026-08-12T10:00:00.000Z",
       caseId: state === "triggered" ? caseId : null,
+      respondentId: `human-respondent-${index}`,
+      triggerProgress:
+        index % 2 === 0
+          ? {
+              qualifyingReports: 2,
+              requiredReports: 3,
+              viewerReportCounts: true,
+            }
+          : null,
       amendmentDueAt:
         state === "needs_amendment" ? "2026-08-19T10:00:00.000Z" : null,
       amendmentDeadlineState: state === "needs_amendment" ? "due" : null,
@@ -749,6 +796,10 @@ test("every reporter state has visible next-step guidance", async ({
   });
   await page.goto("/app/courts");
   await page.getByRole("button", { name: /My reports 10/ }).click();
+  await expect(page.getByText("2 / 3", { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText(/more matching Governor report/).first(),
+  ).toBeVisible();
   for (const label of [
     "Submitted",
     "Needs amendment",
@@ -796,6 +847,12 @@ test("Court collections load and fail independently", async ({ page }) => {
         submittedAt: "2026-08-12T10:00:00.000Z",
         updatedAt: "2026-08-12T10:00:00.000Z",
         caseId: null,
+        respondentId: "human-respondent",
+        triggerProgress: {
+          qualifyingReports: 2,
+          requiredReports: 3,
+          viewerReportCounts: true,
+        },
         amendmentDueAt: null,
         amendmentDeadlineState: null,
         standing: reportStanding,
@@ -837,6 +894,7 @@ test("report actions come from the server projection in amendment state", async 
       amendmentDueAt: "2026-08-19T10:00:00.000Z",
       amendmentDeadlineState: "due",
       standing: reportStanding,
+      triggerProgress: null,
       policyVersionId: "court-codex-v1",
       immediateProtectionRequested: false,
       triggerKind: null,

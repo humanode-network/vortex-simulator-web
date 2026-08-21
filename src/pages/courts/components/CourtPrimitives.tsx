@@ -109,6 +109,63 @@ export function CourtStandingReference({
   );
 }
 
+export function CourtTriggerCounter({
+  current,
+  description,
+  label = "Governor reports",
+  required,
+  viewerCounts,
+}: {
+  current?: number;
+  description?: string;
+  label?: string;
+  required: number;
+  viewerCounts?: boolean;
+}) {
+  const completed = current === undefined ? 0 : Math.min(current, required);
+  const percentage = required > 0 ? (completed / required) * 100 : 0;
+  return (
+    <div className="space-y-2 border-t border-border/70 pt-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-medium text-text">{label}</p>
+        <p className="text-sm font-semibold text-text">
+          {current === undefined
+            ? `${required} required`
+            : `${completed} / ${required}`}
+        </p>
+      </div>
+      {current !== undefined ? (
+        <div
+          aria-label={`${completed} of ${required} Governor reports received`}
+          aria-valuemax={required}
+          aria-valuemin={0}
+          aria-valuenow={completed}
+          className="h-1.5 overflow-hidden rounded-full bg-border/70"
+          role="progressbar"
+        >
+          <div
+            className="h-full rounded-full bg-primary transition-[width] motion-reduce:transition-none"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      ) : null}
+      <p className="text-xs leading-5 text-muted">
+        {description ??
+          (current === undefined
+            ? `This action needs matching reports from ${required} eligible Governors.`
+            : completed >= required
+              ? "The Governor threshold has been reached."
+              : `${required - completed} more matching Governor ${required - completed === 1 ? "report" : "reports"} required.`)}
+        {viewerCounts === undefined
+          ? ""
+          : viewerCounts
+            ? " Your report counts toward this threshold."
+            : " Your report is recorded, but it does not add Governor support."}
+      </p>
+    </div>
+  );
+}
+
 export function courtTone(
   value: string,
 ): "danger" | "neutral" | "ok" | "primary" | "warn" {
