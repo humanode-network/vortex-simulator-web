@@ -71,7 +71,7 @@ export function courtStandingDisplay(standing: {
 }
 
 export function courtReportLaneChoiceLabel(lane: CourtReportLaneV2Dto): string {
-  if (lane === "correction") return "Correction only";
+  if (lane === "correction") return "Correction route";
   if (lane === "court_report") return "Court review";
   return courtLaneDisplay(lane).label;
 }
@@ -81,7 +81,7 @@ export function courtReportRouteDescription(
   standing: { direct?: boolean; directStanding?: boolean },
 ): string {
   if (lane === "correction") {
-    return "This sends a correction request to the module that owns the record. It does not join a Court trigger or open a case.";
+    return "This joins the private Governor correction threshold for the same record revision and reason. Reaching the threshold routes the correction without opening a Court case.";
   }
   if (lane === "scoped_moderation") {
     return "This sends the record to the authorized moderation process. It does not join a Court trigger or open a case.";
@@ -104,15 +104,6 @@ export function courtReportActionProgress(
       label: "Governor reports",
       required: report.triggerProgress.requiredReports,
       viewerCounts: report.triggerProgress.viewerReportCounts,
-    };
-  }
-  if (report.lane === "correction" && report.state === "routed_to_correction") {
-    return {
-      current: 1,
-      description:
-        "This accepted report routed the correction action immediately. No additional reports are required.",
-      label: "Correction action",
-      required: 1,
     };
   }
   if (
@@ -222,7 +213,7 @@ const REPORT_STATES: Readonly<
   grouped: {
     label: "Grouped",
     description:
-      "This report joined a canonical bundle without exposing other reporters.",
+      "This report joined the matching private collection and is waiting for its Governor threshold.",
   },
   withdrawn: {
     label: "Withdrawn",
