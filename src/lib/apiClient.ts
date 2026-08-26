@@ -24,6 +24,8 @@ import type {
   GetPublicProposalDraftsResponse,
   GetProposalsResponse,
   GetProposalTimelineResponse,
+  GovernorOpportunityStateDto,
+  GovernorOpportunityStageDto,
   HumanNodeProfileDto,
   ProposalDraftDetailDto,
   PublicProposalDraftKindDto,
@@ -674,8 +676,28 @@ export async function apiInvision(): Promise<GetInvisionResponse> {
   return await apiGet<GetInvisionResponse>("/api/invision");
 }
 
-export async function apiMyGovernance(): Promise<GetMyGovernanceResponse> {
-  return await apiGet<GetMyGovernanceResponse>("/api/my-governance");
+export async function apiMyGovernance(input?: {
+  opportunityOffset?: number;
+  opportunityLimit?: number;
+  opportunityStage?: GovernorOpportunityStageDto | null;
+  opportunityState?: GovernorOpportunityStateDto | null;
+}): Promise<GetMyGovernanceResponse> {
+  const params = new URLSearchParams();
+  if (input?.opportunityOffset !== undefined) {
+    params.set("opportunityOffset", String(input.opportunityOffset));
+  }
+  if (input?.opportunityLimit !== undefined) {
+    params.set("opportunityLimit", String(input.opportunityLimit));
+  }
+  if (input?.opportunityStage)
+    params.set("opportunityStage", input.opportunityStage);
+  if (input?.opportunityState)
+    params.set("opportunityState", input.opportunityState);
+  const query = params.toString();
+  if (!query) {
+    return await apiGet<GetMyGovernanceResponse>("/api/my-governance");
+  }
+  return await apiGet<GetMyGovernanceResponse>(`/api/my-governance?${query}`);
 }
 
 export async function apiLegitimacyObjectSet(input: {

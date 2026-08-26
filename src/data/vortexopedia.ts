@@ -1410,21 +1410,23 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     name: "Governing threshold",
     category: "governance",
     short:
-      "Previous-era action quota used to decide who is counted as an active governor in quorums.",
+      "Previous-era Pool and Chamber quota used to decide who is counted as an Active Governor.",
     long: [
-      "A governor is active for quorum purposes when the required governing actions were met in the previous era.",
-      "Required actions per era include upvoting/downvoting proposals or voting on chamber proposals in Vortex.",
+      "A Governor is active for quorum purposes when both accountable voting requirements were met in the previous era.",
+      "Each category requires one-third of the Governor's eligible occurrences that remained open for the full accountability exposure period.",
+      "Actions are matched to their own occurrence. Fast-closing stages and stages where the Governor was legally excluded do not create requirements.",
       "Current node liveness does not remove an Active Governor status already earned from the previous era.",
     ],
     tags: ["threshold", "quorum", "activity", "governor"],
     related: [
       "governing_era",
+      "governor_opportunity_exposure",
       "governor",
       "quorum_of_vote",
       "quorum_of_attention",
     ],
     examples: [
-      "If the previous-era action threshold is met, the governor is counted as active in the next era’s quorum.",
+      "If a Governor completes both previous-era category requirements, the Governor is active in the next era's quorum.",
     ],
     stages: ["global"],
     links: [
@@ -1434,7 +1436,7 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
       },
     ],
     source: "Proposition rights",
-    updated: "2025-12-04",
+    updated: "2026-08-25",
   },
   {
     ref: 51,
@@ -1829,5 +1831,44 @@ export const vortexopediaTerms: VortexopediaTerm[] = [
     ],
     source: "Vortex Simulator Phase 90",
     updated: "2026-06-27",
+  },
+  {
+    ref: 63,
+    id: "governor_opportunity_exposure",
+    name: "Governor opportunity exposure",
+    category: "governance",
+    short:
+      "Minimum time an eligible Pool or Chamber stage must remain actionable before it can create an Active Governor requirement.",
+    long: [
+      "Proposal progression remains immediate when its voting threshold is met. Opportunity exposure is a separate accountability rule.",
+      "An eligible stage counts only after it has remained open for the configured exposure period, currently 24 hours by default.",
+      "A stage that closes before exposure is still valid governance work, but it cannot penalize Governors who had no practical time to participate.",
+      "Proposal authors, Formation team members, and other legally excluded Governors do not receive an obligation for a stage they cannot vote on.",
+    ],
+    tags: [
+      "governor",
+      "opportunity",
+      "exposure",
+      "threshold",
+      "accountability",
+    ],
+    related: [
+      "governing_threshold",
+      "governing_era",
+      "proposal_pools",
+      "chamber_vote",
+    ],
+    examples: [
+      "A Proposal Pool that advances in two hours creates no governing requirement. A Pool that stays open beyond 24 hours can count for eligible Governors.",
+    ],
+    stages: ["global", "pool", "chamber"],
+    links: [
+      {
+        label: "My Governance",
+        url: "/app/my-governance",
+      },
+    ],
+    source: "Vortex Simulator Phase 94",
+    updated: "2026-08-25",
   },
 ];

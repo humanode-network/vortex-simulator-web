@@ -72,6 +72,7 @@ export function ProfileHero({
           <GovernanceStatusPills
             governor={profile?.governor ?? false}
             activeGovernor={profile?.governorActive ?? false}
+            activeGovernorReason={profile?.activeGovernorReason}
             humanNode={profile?.humanNodeActive ?? false}
           />
         </div>

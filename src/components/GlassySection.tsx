@@ -52,10 +52,12 @@ type GlassyTileHeadingProps = {
   className?: string;
 };
 
+export type GlassyStatusTone = "danger" | "neutral" | "ok" | "primary" | "warn";
+
 type GlassyStatusChipProps = {
   children: ReactNode;
   className?: string;
-  tone?: "danger" | "neutral" | "ok" | "primary" | "warn";
+  tone?: GlassyStatusTone;
 };
 
 type GlassyProgressBarProps = {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { apiHuman, apiMyGovernance } from "@/lib/apiClient";
 import type { FeedScope } from "@/lib/feedScopeRouting";
+import type { GovernorOpportunityAccountingDto } from "@/types/api";
 
 export function useFeedChamberFilters(input: {
   address?: string | null;
@@ -12,12 +13,15 @@ export function useFeedChamberFilters(input: {
   const [chamberFilters, setChamberFilters] = useState<string[] | null>(null);
   const [chambersLoading, setChambersLoading] = useState(false);
   const [viewerGovernorActive, setViewerGovernorActive] = useState(false);
+  const [governorOpportunities, setGovernorOpportunities] =
+    useState<GovernorOpportunityAccountingDto | null>(null);
 
   useEffect(() => {
     let active = true;
     if (feedScope !== "chambers" && feedScope !== "urgent") {
       setChamberFilters(null);
       setChambersLoading(false);
+      setGovernorOpportunities(null);
       return () => {
         active = false;
       };
@@ -25,6 +29,7 @@ export function useFeedChamberFilters(input: {
     if (!address) {
       setChamberFilters([]);
       setChambersLoading(false);
+      setGovernorOpportunities(null);
       return () => {
         active = false;
       };
@@ -33,7 +38,11 @@ export function useFeedChamberFilters(input: {
     (async () => {
       try {
         const [governance, profile] = await Promise.all([
-          apiMyGovernance(),
+          apiMyGovernance(
+            feedScope === "urgent"
+              ? { opportunityState: "available", opportunityLimit: 50 }
+              : undefined,
+          ),
           apiHuman(address),
         ]);
         if (!active) return;
@@ -43,10 +52,16 @@ export function useFeedChamberFilters(input: {
         );
         setChamberFilters(unique);
         setViewerGovernorActive(Boolean(profile.governorActive));
+        setGovernorOpportunities(
+          feedScope === "urgent"
+            ? (governance.opportunityAccounting ?? null)
+            : null,
+        );
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);
         setViewerGovernorActive(false);
+        setGovernorOpportunities(null);
         onLoadError((error as Error).message);
       } finally {
         if (active) setChambersLoading(false);
@@ -60,6 +75,7 @@ export function useFeedChamberFilters(input: {
   return {
     chamberFilters,
     chambersLoading,
+    governorOpportunities,
     viewerGovernorActive,
   };
 }

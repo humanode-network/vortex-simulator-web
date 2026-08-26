@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { toTimestampMs } from "@/lib/dateTime";
-import { feedItemKey, toLimitedUrgentItems } from "@/lib/feedUi";
+import { feedItemKey, toGovernorAwareUrgentItems } from "@/lib/feedUi";
+import {
+  governorOpportunityToFeedItem,
+  isOutstandingGovernorOpportunity,
+} from "@/lib/governorOpportunityUi";
 import {
   buildFeedRequestForScope,
   buildUrgentFeedRequests,
@@ -10,7 +14,10 @@ import {
 } from "@/lib/feedScopeRouting";
 import type { FeedScope } from "@/lib/feedScopeRouting";
 import { apiFeed } from "@/lib/apiClient";
-import type { FeedItemDto } from "@/types/api";
+import type {
+  FeedItemDto,
+  GovernorOpportunityAccountingDto,
+} from "@/types/api";
 import { FEED_MAX_PAGE_SIZE, FEED_MIN_PAGE_SIZE } from "./useFeedPageSize";
 
 const URGENT_STAGE_LIMIT = FEED_MAX_PAGE_SIZE * 2;
@@ -20,6 +27,7 @@ async function loadUrgentFeedItems(input: {
   chambers: string[];
   limit: number;
   isGovernorActive: boolean;
+  governorOpportunities: GovernorOpportunityAccountingDto | null;
 }): Promise<FeedItemDto[]> {
   const responses = await Promise.all(
     buildUrgentFeedRequests({
@@ -31,12 +39,17 @@ async function loadUrgentFeedItems(input: {
     }).map((request) => apiFeed(request)),
   );
 
-  return toLimitedUrgentItems(
-    responses.flatMap((response) => response.items),
-    input.isGovernorActive,
-    input.address,
-    input.limit,
-  );
+  const verifiedOpportunityItems = (input.governorOpportunities?.items ?? [])
+    .filter(isOutstandingGovernorOpportunity)
+    .map(governorOpportunityToFeedItem);
+
+  return toGovernorAwareUrgentItems({
+    eventItems: responses.flatMap((response) => response.items),
+    verifiedOpportunityItems,
+    isGovernorActive: input.isGovernorActive,
+    viewerAddress: input.address,
+    limit: input.limit,
+  });
 }
 
 type UseFeedItemsInput = {
@@ -44,6 +57,7 @@ type UseFeedItemsInput = {
   chamberFilters: string[] | null;
   chambersLoading: boolean;
   feedScope: FeedScope;
+  governorOpportunities: GovernorOpportunityAccountingDto | null;
   onLoadError: (message: string | null) => void;
   pageSize: number;
   viewerGovernorActive: boolean;
@@ -54,6 +68,7 @@ export function useFeedItems({
   chamberFilters,
   chambersLoading,
   feedScope,
+  governorOpportunities,
   onLoadError,
   pageSize,
   viewerGovernorActive,
@@ -90,6 +105,7 @@ export function useFeedItems({
             chambers: chamberFilters ?? [],
             limit: pageSize,
             isGovernorActive: viewerGovernorActive,
+            governorOpportunities,
           });
           if (!active) return;
           setFeedItems(urgentItems);
@@ -125,6 +141,7 @@ export function useFeedItems({
     chambersLoading,
     chamberFilters,
     feedScope,
+    governorOpportunities,
     onLoadError,
     pageSize,
     viewerGovernorActive,

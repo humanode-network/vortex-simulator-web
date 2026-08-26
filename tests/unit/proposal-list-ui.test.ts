@@ -218,6 +218,13 @@ test("getProposalListPrimaryHref maps proposal stages to fallback routes", () =>
       summaryPill: "Finished",
     }),
   ).toBe("/app/proposals/p1/finished");
+  expect(
+    getProposalListPrimaryHref({
+      id: "p1",
+      stage: "failed",
+      summaryPill: "Failed",
+    }),
+  ).toBe("/app/proposals/p1/finished");
 });
 
 test("getProposalListPrimaryHref maps build proposals by completion state", () => {
