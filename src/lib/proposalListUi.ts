@@ -354,25 +354,30 @@ export function getProposalListPrimaryHref(
   proposal: ProposalPrimaryHrefInput,
 ): string {
   if (proposal.href) return proposal.href;
-  if (proposal.stage === "pool") return `/app/proposals/${proposal.id}/pp`;
-  if (proposal.stage === "vote") {
-    return `/app/proposals/${proposal.id}/chamber`;
+  return getProposalHrefForStage(
+    proposal.id,
+    proposal.stage,
+    proposal.summaryPill,
+  );
+}
+
+export function getProposalHrefForStage(
+  proposalId: string,
+  stage: ProposalStage,
+  summaryPill?: string,
+): string {
+  if (stage === "pool") return `/app/proposals/${proposalId}/pp`;
+  if (stage === "vote") return `/app/proposals/${proposalId}/chamber`;
+  if (stage === "citizen_veto") {
+    return `/app/proposals/${proposalId}/citizen-veto`;
   }
-  if (proposal.stage === "citizen_veto") {
-    return `/app/proposals/${proposal.id}/citizen-veto`;
+  if (stage === "chamber_veto") {
+    return `/app/proposals/${proposalId}/chamber-veto`;
   }
-  if (proposal.stage === "chamber_veto") {
-    return `/app/proposals/${proposal.id}/chamber-veto`;
+  if (stage === "build" && summaryPill !== "Finished") {
+    return `/app/proposals/${proposalId}/formation`;
   }
-  if (proposal.stage === "passed") {
-    return `/app/proposals/${proposal.id}/finished`;
-  }
-  if (proposal.stage === "build") {
-    return proposal.summaryPill === "Finished"
-      ? `/app/proposals/${proposal.id}/finished`
-      : `/app/proposals/${proposal.id}/formation`;
-  }
-  return `/app/proposals/${proposal.id}/pp`;
+  return `/app/proposals/${proposalId}/finished`;
 }
 
 export function getProposalListLoadingMessage(

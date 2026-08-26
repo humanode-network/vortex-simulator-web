@@ -24,12 +24,16 @@ const Feed: React.FC = () => {
   const [feedScope, setFeedScope] = useState<FeedScope>("urgent");
   const feedListRef = useRef<HTMLDivElement | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { chamberFilters, chambersLoading, viewerGovernorActive } =
-    useFeedChamberFilters({
-      address: auth.address,
-      feedScope,
-      onLoadError: setLoadError,
-    });
+  const {
+    chamberFilters,
+    chambersLoading,
+    governorOpportunities,
+    viewerGovernorActive,
+  } = useFeedChamberFilters({
+    address: auth.address,
+    feedScope,
+    onLoadError: setLoadError,
+  });
   const pageSize = useFeedPageSize({
     address: auth.address,
     chamberFilters,
@@ -49,6 +53,7 @@ const Feed: React.FC = () => {
     chamberFilters,
     chambersLoading,
     feedScope,
+    governorOpportunities,
     onLoadError: setLoadError,
     pageSize,
     viewerGovernorActive,

@@ -6,6 +6,7 @@ import {
   normalizeAppHref,
   proposalIdFromHref,
   toLimitedUrgentItems,
+  toGovernorAwareUrgentItems,
   toUrgentItems,
   urgentEntityKey,
 } from "../../src/lib/feedUi";
@@ -72,4 +73,39 @@ test("limited urgent feed caps the filtered deduped result", () => {
 
   expect(toLimitedUrgentItems(items, true, undefined, 2)).toHaveLength(2);
   expect(toLimitedUrgentItems(items, true, undefined, 0)).toEqual([]);
+});
+
+test("urgent feed uses verified opportunities instead of generic governance cards", () => {
+  const genericPool: FeedItemDto = {
+    ...buildItem,
+    id: "generic-pool",
+    title: "Proposal the viewer authored",
+    stage: "pool",
+    href: "/app/proposals/authored/pp",
+  };
+  const referendum: FeedItemDto = {
+    ...genericPool,
+    id: "referendum",
+    title: "Legitimacy referendum",
+    href: "/app/proposals/referendum/referendum",
+  };
+  const verified: FeedItemDto = {
+    ...genericPool,
+    id: "governor-opportunity:eligible:pool:opened",
+    title: "Eligible proposal",
+    href: "/app/proposals/eligible/pp",
+    timestamp: "2026-01-03T00:00:00.000Z",
+  };
+
+  const items = toGovernorAwareUrgentItems({
+    eventItems: [genericPool, referendum],
+    verifiedOpportunityItems: [verified],
+    isGovernorActive: false,
+    limit: 10,
+  });
+
+  expect(items.map((item) => item.id)).toEqual([
+    "governor-opportunity:eligible:pool:opened",
+    "referendum",
+  ]);
 });

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ReferenceHint } from "@/components/Hint";
 import { cn } from "@/lib/utils";
 import { Surface } from "@/components/Surface";
 import { Kicker } from "@/components/Kicker";
@@ -8,6 +9,11 @@ type StatusPillProps = {
   value: string;
   active?: boolean;
   className?: string;
+  hint?: {
+    description: string;
+    href: string;
+    title: string;
+  };
   widthClassName?: string;
 };
 
@@ -16,6 +22,7 @@ export const StatusPill: React.FC<StatusPillProps> = ({
   value,
   active,
   className,
+  hint,
   widthClassName = "w-48",
 }) => {
   return (
@@ -29,7 +36,21 @@ export const StatusPill: React.FC<StatusPillProps> = ({
         className,
       )}
     >
-      <Kicker as="span">{label}</Kicker>
+      <Kicker as="span">
+        {hint ? (
+          <ReferenceHint
+            actionLabel="Vortexopedia"
+            description={hint.description}
+            href={hint.href}
+            noUnderline
+            title={hint.title}
+          >
+            {label}
+          </ReferenceHint>
+        ) : (
+          label
+        )}
+      </Kicker>
       <span
         className={cn(
           "font-semibold",

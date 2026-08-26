@@ -121,3 +121,45 @@ export const toLimitedUrgentItems = (
     safeLimit,
   );
 };
+
+export function toGovernorAwareUrgentItems(input: {
+  eventItems: FeedItemDto[];
+  verifiedOpportunityItems: FeedItemDto[];
+  isGovernorActive: boolean;
+  viewerAddress?: string;
+  limit: number;
+}): FeedItemDto[] {
+  const eventItems = input.eventItems.filter((item) => {
+    if (item.stage !== "pool" && item.stage !== "vote") return true;
+    return item.href?.includes("/referendum") === true;
+  });
+  const eligibleEvents = toUrgentItems(
+    eventItems,
+    input.isGovernorActive,
+    input.viewerAddress,
+  );
+  const verifiedOpportunities = toUrgentItems(
+    input.verifiedOpportunityItems,
+    true,
+    input.viewerAddress,
+  );
+  const byEntity = new Map<string, FeedItemDto>();
+
+  for (const item of [...eligibleEvents, ...verifiedOpportunities]) {
+    const key = urgentEntityKey(item);
+    const existing = byEntity.get(key);
+    if (
+      !existing ||
+      toTimestampMs(item.timestamp, -1) >= toTimestampMs(existing.timestamp, -1)
+    ) {
+      byEntity.set(key, item);
+    }
+  }
+
+  return [...byEntity.values()]
+    .sort(
+      (left, right) =>
+        toTimestampMs(right.timestamp, -1) - toTimestampMs(left.timestamp, -1),
+    )
+    .slice(0, Math.max(0, Math.floor(input.limit)));
+}

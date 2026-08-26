@@ -2,12 +2,21 @@ import {
   GlassyMetricTile,
   GlassySection,
   GlassyTile,
-  GlassyTileHeading,
 } from "@/components/GlassySection";
 import { HintLabel } from "@/components/Hint";
-import { Kicker } from "@/components/Kicker";
+import {
+  formatExposurePeriod,
+  GOVERNOR_OPPORTUNITY_STAGES,
+} from "@/lib/governorOpportunityUi";
 import type { GoverningStatus } from "@/lib/myGovernanceUi";
-import type { GetMyGovernanceResponse } from "@/types/api";
+import type {
+  GetMyGovernanceResponse,
+  GovernorOpportunityStageDto,
+  GovernorOpportunityStateDto,
+} from "@/types/api";
+import { GovernorOpportunityLedger } from "./GovernorOpportunityLedger";
+import { ActiveGovernorResult } from "./ActiveGovernorResult";
+import { GovernorOpportunitySummaryTile } from "./GovernorOpportunitySummaryTile";
 
 type MyGovernanceThresholdCardProps = {
   eraActivity: GetMyGovernanceResponse["eraActivity"] | undefined;
@@ -16,21 +25,45 @@ type MyGovernanceThresholdCardProps = {
     termId: string;
   };
   timeLeftValue: string;
+  opportunityAccounting: GetMyGovernanceResponse["opportunityAccounting"];
+  opportunityError: string | null;
+  opportunityLoading: boolean;
+  onFilterOpportunities: (
+    stage: GovernorOpportunityStageDto | null,
+    state: GovernorOpportunityStateDto | null,
+  ) => void;
+  onLoadMoreOpportunities: () => void;
 };
 
-const masterEraActionLabels = ["Pool votes", "Chamber votes"] as const;
-
-function formatEraActionLabel(label: string, index: number): string {
-  const baseLabel =
-    masterEraActionLabels[index] ?? label.replace(/\s+this era$/i, "").trim();
-  return `${baseLabel} this era`;
+function formatEraActionLabel(label: string): string {
+  return `${label.replace(/\s+this era$/i, "").trim()} this era`;
 }
 
 export function MyGovernanceThresholdCard({
   eraActivity,
+  onFilterOpportunities,
+  onLoadMoreOpportunities,
+  opportunityAccounting,
+  opportunityError,
+  opportunityLoading,
   status,
   timeLeftValue,
 }: MyGovernanceThresholdCardProps) {
+  const categories = opportunityAccounting
+    ? GOVERNOR_OPPORTUNITY_STAGES.map((stage) => ({
+        label: stage.requirementLabel,
+        summary: opportunityAccounting[stage.summaryKey],
+      }))
+    : (eraActivity?.actions ?? []).map((action) => ({
+        label: formatEraActionLabel(action.label),
+        summary: {
+          raw: action.required,
+          accountable: action.required,
+          completed: action.done,
+          required: action.required,
+        },
+      }));
+
   return (
     <GlassySection
       title={
@@ -39,18 +72,37 @@ export function MyGovernanceThresholdCard({
     >
       <div className="space-y-4">
         <GlassyTile className="px-4 py-3 text-sm text-muted">
-          This tracks opportunities that occurred during the current era, even
-          if those votes are already closed.
+          Eligible stages count only after the full exposure period. A stage
+          that closes sooner creates no requirement, and every completed action
+          stays matched to its own occurrence.
         </GlassyTile>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Era", value: eraActivity?.era ?? "—" },
-            { label: "Time left", value: timeLeftValue },
+            { key: "era", label: "Era", value: eraActivity?.era ?? "—" },
+            { key: "time", label: "Time left", value: timeLeftValue },
+            {
+              label: (
+                <HintLabel termId="governor_opportunity_exposure">
+                  Exposure period
+                </HintLabel>
+              ),
+              key: "exposure",
+              value: opportunityAccounting
+                ? formatExposurePeriod(opportunityAccounting.exposureSeconds)
+                : "—",
+            },
+            {
+              label: "Governing status",
+              key: "status",
+              value: (
+                <HintLabel termId={status.termId}>{status.label}</HintLabel>
+              ),
+            },
           ].map((tile) => (
             <GlassyMetricTile
-              key={tile.label}
+              key={tile.key}
               label={
-                tile.label === "Era" ? (
+                typeof tile.label === "string" && tile.label === "Era" ? (
                   <HintLabel termId="governing_era">{tile.label}</HintLabel>
                 ) : (
                   tile.label
@@ -60,49 +112,29 @@ export function MyGovernanceThresholdCard({
             />
           ))}
         </div>
+        {opportunityAccounting ? (
+          <ActiveGovernorResult
+            reason={opportunityAccounting.activeGovernorReason}
+          />
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              key: "required",
-              label: (
-                <HintLabel termId="governing_threshold">
-                  Era participation
-                </HintLabel>
-              ),
-              value: eraActivity
-                ? `${eraActivity.completed} / ${eraActivity.required} completed this era`
-                : "—",
-            },
-            {
-              key: "status",
-              label: "Status",
-              value: (
-                <HintLabel termId={status.termId}>{status.label}</HintLabel>
-              ),
-            },
-          ].map((tile) => (
-            <GlassyMetricTile
-              key={tile.key}
-              label={tile.label}
-              value={tile.value}
+          {categories.map(({ label, summary }) => (
+            <GovernorOpportunitySummaryTile
+              key={label}
+              label={label}
+              summary={summary}
             />
           ))}
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {(eraActivity?.actions ?? []).map((act, index) => (
-            <GlassyTile
-              key={act.label}
-              className="flex h-full flex-col items-center justify-center px-3 py-3 text-center"
-            >
-              <Kicker align="center" className="text-[0.7rem]">
-                {formatEraActionLabel(act.label, index)}
-              </Kicker>
-              <GlassyTileHeading>
-                {act.done} / {act.required}
-              </GlassyTileHeading>
-            </GlassyTile>
-          ))}
-        </div>
+        {opportunityAccounting ? (
+          <GovernorOpportunityLedger
+            accounting={opportunityAccounting}
+            error={opportunityError}
+            loading={opportunityLoading}
+            onFilter={onFilterOpportunities}
+            onLoadMore={onLoadMoreOpportunities}
+          />
+        ) : null}
       </div>
     </GlassySection>
   );

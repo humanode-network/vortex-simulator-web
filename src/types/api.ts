@@ -563,6 +563,63 @@ export type DelegationGovernanceItemDto = {
   delegateeAddress: string | null;
   inboundWeight: number;
 };
+export type GovernorOpportunityStateDto =
+  | "available"
+  | "completed"
+  | "closed_unaccountable"
+  | "excluded"
+  | "missed";
+export type GovernorOpportunityStageDto = "pool" | "vote";
+export type GovernorOpportunityExclusionReasonDto =
+  | "proposal_author"
+  | "formation_team_member"
+  | "censure_target_chamber_member"
+  | "explicit_voting_restriction"
+  | "court_voting_restriction";
+export type ActiveGovernorReasonDto =
+  | "qualified_previous_era"
+  | "missed_pool_requirement"
+  | "missed_chamber_requirement"
+  | "missed_pool_and_chamber_requirements"
+  | "not_evaluated_yet"
+  | "no_accountable_opportunities";
+export type GovernorOpportunitySummaryDto = {
+  raw: number;
+  accountable: number;
+  completed: number;
+  required: number;
+};
+export type GovernorOpportunityItemDto = {
+  occurrenceId: string;
+  proposalId: string;
+  proposalTitle: string;
+  chamberId: string;
+  chamberTitle: string;
+  proposalStage: ProposalStageDto;
+  stage: GovernorOpportunityStageDto;
+  state: GovernorOpportunityStateDto;
+  accountable: boolean;
+  canBecomeAccountable: boolean;
+  participated: boolean;
+  openedAt: string;
+  accountableAt: string;
+  closedAt: string | null;
+  exclusionReason: GovernorOpportunityExclusionReasonDto | null;
+};
+export type GovernorOpportunityAccountingDto = {
+  exposureSeconds: number;
+  activeGovernorReason: ActiveGovernorReasonDto;
+  pool: GovernorOpportunitySummaryDto;
+  chamber: GovernorOpportunitySummaryDto;
+  items: GovernorOpportunityItemDto[];
+  page: {
+    offset: number;
+    limit: number;
+    total: number;
+    stage: GovernorOpportunityStageDto | null;
+    state: GovernorOpportunityStateDto | null;
+  };
+};
 export type GetMyGovernanceResponse = {
   eraActivity: MyGovernanceEraActivityDto;
   myChamberIds: string[];
@@ -578,6 +635,7 @@ export type GetMyGovernanceResponse = {
     triggerThresholdPercent: number;
   };
   tier?: TierProgressDto;
+  opportunityAccounting?: GovernorOpportunityAccountingDto;
   rollup?: {
     era: number;
     rolledAt: string;
@@ -1563,6 +1621,7 @@ export type HumanNodeDto = {
   active: {
     governor: boolean;
     governorActive: boolean;
+    activeGovernorReason?: ActiveGovernorReasonDto;
     humanNodeActive: boolean;
   };
   formationProjectIds?: string[];
@@ -1622,6 +1681,7 @@ export type HumanNodeProfileDto = {
   name: string;
   governor: boolean;
   governorActive: boolean;
+  activeGovernorReason?: ActiveGovernorReasonDto;
   humanNodeActive: boolean;
   governanceSummary: string;
   heroStats: HeroStatDto[];

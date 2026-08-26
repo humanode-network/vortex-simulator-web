@@ -41,8 +41,12 @@ const MyGovernance: React.FC = () => {
     clock,
     cmSummary,
     delegationGovernorsByChamber,
+    filterOpportunities,
     gov,
+    loadMoreOpportunities,
     loadError,
+    opportunityError,
+    opportunityLoading,
     refreshGovernance,
   } = useMyGovernancePageData();
 
@@ -192,6 +196,13 @@ const MyGovernance: React.FC = () => {
       <PageHint pageId="my-governance" />
       <MyGovernanceThresholdCard
         eraActivity={eraActivity}
+        onFilterOpportunities={(stage, opportunityState) =>
+          void filterOpportunities(stage, opportunityState)
+        }
+        onLoadMoreOpportunities={() => void loadMoreOpportunities()}
+        opportunityAccounting={gov.opportunityAccounting}
+        opportunityError={opportunityError}
+        opportunityLoading={opportunityLoading}
         status={status}
         timeLeftValue={timeLeftValue}
       />
