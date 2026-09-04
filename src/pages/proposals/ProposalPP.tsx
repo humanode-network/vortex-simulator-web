@@ -26,6 +26,7 @@ import {
 } from "./pool/ProposalPoolRulesModal";
 import { ProposalPoolAttentionStats } from "./pool/ProposalPoolAttentionStats";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
+import { ReturnProposalToDraftAction } from "./pool/ReturnProposalToDraftAction";
 
 const ProposalPP: React.FC = () => {
   const { id } = useParams();
@@ -122,6 +123,14 @@ const ProposalPP: React.FC = () => {
           showFormationStage={proposal.formationEligible}
           chamber={proposal.chamber}
           proposer={proposal.proposer}
+          actions={
+            viewerIsProposer && id ? (
+              <ReturnProposalToDraftAction
+                proposalId={id}
+                onStageChanged={syncProposalStage}
+              />
+            ) : undefined
+          }
         >
           <div className="flex flex-wrap items-center justify-center gap-4">
             <VoteButton

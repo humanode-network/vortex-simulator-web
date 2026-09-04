@@ -196,6 +196,7 @@ test("My Drafts keeps private and public drafts together and toggles visibility"
     tier: "Consul",
     summary: "Notes that are ready to become a public draft.",
     updated: "2026-07-24T13:00:00.000Z",
+    returnSource: "failed_chamber_vote",
     publication: { status: "private" },
   };
   const publicDraft = {
@@ -205,6 +206,7 @@ test("My Drafts keeps private and public drafts together and toggles visibility"
     tier: "Consul",
     summary: "An owned draft that is already visible publicly.",
     updated: "2026-07-24T12:00:00.000Z",
+    returnSource: null,
     publication: {
       status: "published",
       revision: 2,
@@ -301,6 +303,9 @@ test("My Drafts keeps private and public drafts together and toggles visibility"
   ).toBeVisible();
   await expect(
     page.getByText(privateDraft.title, { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Returned after chamber vote", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText(publicDraft.title, { exact: true }),

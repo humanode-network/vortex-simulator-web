@@ -4,6 +4,7 @@ import { TierLabel } from "@/components/TierLabel";
 import type { ProposalDraftDetailDto } from "@/types/api";
 import { parseRatioPair } from "@/lib/dtoParsers";
 import { ProposalDetailsSections } from "../shared/ProposalDetailsSections";
+import { proposalDraftReturnSourceLabels } from "./draftUi";
 
 type ProposalDraftDetailsCardProps = {
   draft: ProposalDraftDetailDto;
@@ -38,6 +39,9 @@ export const ProposalDraftDetailsCard: React.FC<
           <Chip>
             <TierLabel tier={draft.tier} />
           </Chip>
+          {draft.returnSource ? (
+            <Chip>{proposalDraftReturnSourceLabels[draft.returnSource]}</Chip>
+          ) : null}
         </div>
       </ProposalPageHeader>
 

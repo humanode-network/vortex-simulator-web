@@ -947,3 +947,20 @@ export async function apiProposalSubmitToPool(input: {
     idempotencyKey: input.idempotencyKey,
   });
 }
+
+export async function apiProposalReturnToDraft(input: {
+  proposalId: string;
+  idempotencyKey: string;
+}): Promise<{
+  ok: true;
+  type: "proposal.returnToDraft";
+  proposalId: string;
+  draftId: string;
+  draftRoute: string;
+}> {
+  return await apiCommand({
+    type: "proposal.returnToDraft",
+    payload: { proposalId: input.proposalId },
+    idempotencyKey: input.idempotencyKey,
+  });
+}
