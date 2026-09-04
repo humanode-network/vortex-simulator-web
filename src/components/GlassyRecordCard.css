@@ -104,10 +104,6 @@
   color: var(--record-title-hover);
 }
 
-.glassy-record-card--open .glassy-record-card__button {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .glassy-record-card__copy,
 .glassy-record-card__aside {
   min-width: 0;
@@ -121,6 +117,7 @@
 
 .glassy-record-card__aside {
   display: grid;
+  align-self: start;
   grid-template-columns:
     minmax(15rem, 1fr) minmax(8.75rem, 9.5rem)
     7.75rem 1.25rem;
