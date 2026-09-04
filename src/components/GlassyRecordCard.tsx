@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { Chip } from "@/components/Chip";
 import { GlassyCard } from "@/components/GlassyCard";
 import { StageChip } from "@/components/StageChip";
-import { proposalSummaryPreview } from "@/lib/textPreview";
+import { normalizePreviewText } from "@/lib/textPreview";
 import { cn } from "@/lib/utils";
 import type { Stage } from "@/types/stages";
 import "./GlassyRecordCard.css";
@@ -40,7 +40,7 @@ export function GlassyRecordCard({
   title,
 }: GlassyRecordCardProps) {
   const renderedSummary =
-    typeof summary === "string" ? proposalSummaryPreview(summary) : summary;
+    typeof summary === "string" ? normalizePreviewText(summary) : summary;
 
   return (
     <GlassyCard

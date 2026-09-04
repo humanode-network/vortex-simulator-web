@@ -104,6 +104,10 @@
   color: var(--record-title-hover);
 }
 
+.glassy-record-card--open .glassy-record-card__button {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .glassy-record-card__copy,
 .glassy-record-card__aside {
   min-width: 0;
@@ -157,10 +161,19 @@
   min-height: 1.45em;
   max-height: 1.45em;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.glassy-record-card--open .glassy-record-card__summary {
+  max-height: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .glassy-record-card__association {

@@ -1,7 +1,20 @@
 import { test } from "@rstest/core";
 import assert from "node:assert/strict";
 
-import { proposalSummaryPreview } from "../../src/lib/textPreview.ts";
+import {
+  normalizePreviewText,
+  PROPOSAL_SUMMARY_PREVIEW_MAX,
+  proposalSummaryPreview,
+} from "../../src/lib/textPreview.ts";
+
+test("normalizes preview text without shortening it", () => {
+  const summary = `A complete summary ${"with substantial detail ".repeat(20)}`;
+
+  const normalized = normalizePreviewText(`  ${summary}\n\n`);
+
+  assert.equal(normalized, summary.trim());
+  assert.ok(normalized.length > PROPOSAL_SUMMARY_PREVIEW_MAX);
+});
 
 test("proposal summary preview caps text without adding ellipsis", () => {
   const summary = [
