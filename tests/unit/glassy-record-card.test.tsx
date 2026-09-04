@@ -28,7 +28,7 @@ test("record cards retain the complete summary for expansion", () => {
   assert.match(html, /glassy-record-card--open/);
 });
 
-test("record cards use visual ellipsis only while collapsed", () => {
+test("record cards reveal summaries without moving their metadata grid", () => {
   const css = readFileSync(
     join(process.cwd(), "src/components/GlassyRecordCard.css"),
     "utf8",
@@ -50,8 +50,10 @@ test("record cards use visual ellipsis only while collapsed", () => {
   assert.match(expandedRule, /overflow:\s*visible/);
   assert.match(expandedRule, /white-space:\s*normal/);
 
-  assert.match(
+  assert.doesNotMatch(
     css,
-    /\.glassy-record-card--open \.glassy-record-card__button\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s,
+    /\.glassy-record-card--open \.glassy-record-card__button\s*\{/,
   );
+
+  assert.match(css, /\.glassy-record-card__aside\s*\{[^}]*align-self:\s*start/);
 });
