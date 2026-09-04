@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/primitives/card";
+import { Button } from "@/components/primitives/button";
 import { PageHint } from "@/components/PageHint";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -78,9 +79,9 @@ const FullHistory: React.FC = () => {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <SectionHeader>All actions</SectionHeader>
-            <ButtonLink to={`/app/human-nodes/${id ?? ""}`}>
-              Back to profile
-            </ButtonLink>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/app/human-nodes/${id ?? ""}`}>Back to profile</Link>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -118,17 +119,5 @@ const FullHistory: React.FC = () => {
     </div>
   );
 };
-
-const ButtonLink: React.FC<{ to: string; children: React.ReactNode }> = ({
-  to,
-  children,
-}) => (
-  <Link
-    to={to}
-    className="rounded-md border border-border px-3 py-1 text-sm font-medium text-foreground hover:border-primary"
-  >
-    {children}
-  </Link>
-);
 
 export default FullHistory;

@@ -200,31 +200,6 @@
 
 .sidebar__authBtn {
   flex: 1 1 0;
-  padding: 0.45rem 0.55rem;
-  border-radius: 12px;
-  border: 1px solid var(--sidebar-border);
-  background: transparent;
-  color: var(--sidebar-text);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease;
-}
-
-.sidebar__authBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--sidebar-primary-dim);
-}
-
-.sidebar__authBtn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.sidebar__authBtn--ghost {
-  opacity: 0.9;
 }
 
 .sidebar__authSelect {

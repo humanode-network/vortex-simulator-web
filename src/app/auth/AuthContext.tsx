@@ -22,6 +22,7 @@ import {
   signPolkadotMessage,
 } from "@/lib/polkadotExtension";
 import { governanceIdentityStatuses } from "@/lib/humanNodesUi";
+import { Button } from "@/components/primitives/button";
 
 type AuthState = {
   enabled: boolean;
@@ -330,23 +331,27 @@ export function AuthSidebarPanel() {
 
       <div className="sidebar__authButtons">
         {auth.authenticated ? (
-          <button
+          <Button
             type="button"
-            className="sidebar__authBtn sidebar__authBtn--ghost"
+            size="compact"
+            variant="ghost"
+            className="sidebar__authBtn"
             disabled={auth.loading}
             onClick={() => void auth.disconnect()}
           >
             Disconnect
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
+            size="compact"
+            variant="primary"
             className="sidebar__authBtn"
             disabled={auth.loading}
             onClick={() => void auth.connect()}
           >
             Connect
-          </button>
+          </Button>
         )}
       </div>
     </div>

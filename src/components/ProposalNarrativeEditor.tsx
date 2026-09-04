@@ -139,7 +139,7 @@ export default function ProposalNarrativeEditor({
             key={label}
             aria-label={label}
             aria-controls={id}
-            size="sm"
+            size="toolbar"
             type="button"
             variant="ghost"
             onMouseDown={(event) => event.preventDefault()}
@@ -151,7 +151,7 @@ export default function ProposalNarrativeEditor({
         <Button
           aria-label="Link"
           aria-controls={id}
-          size="sm"
+          size="toolbar"
           type="button"
           variant="ghost"
           onMouseDown={(event) => event.preventDefault()}

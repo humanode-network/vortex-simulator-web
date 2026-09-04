@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/primitives/button";
 
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
   value: string;
@@ -29,9 +30,11 @@ export function Tabs({
       {options.map((opt) => {
         const active = opt.value === value;
         return (
-          <button
+          <Button
             key={opt.value}
             type="button"
+            size="content"
+            variant="bare"
             aria-pressed={active}
             onClick={() =>
               onValueChange(
@@ -46,7 +49,7 @@ export function Tabs({
             )}
           >
             {opt.label}
-          </button>
+          </Button>
         );
       })}
     </div>

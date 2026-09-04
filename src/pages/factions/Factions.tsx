@@ -105,7 +105,7 @@ const Factions: React.FC = () => {
     <div className="flex flex-col gap-6">
       <PageHint pageId="factions" />
       <div className="flex justify-end">
-        <Button asChild>
+        <Button asChild size="sm">
           <Link to="/app/factions/new">Create faction</Link>
         </Button>
       </div>

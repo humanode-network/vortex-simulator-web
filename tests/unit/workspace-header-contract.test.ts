@@ -19,7 +19,7 @@ test("Initiatives and factions share one workspace header grammar", () => {
   assert.match(header, /type="button"/);
   assert.match(header, /size="sm"/);
   assert.match(header, /variant="outline"/);
-  assert.match(header, /className="w-36[^"]*opacity-90/);
+  assert.match(header, /className="w-36"/);
   assert.doesNotMatch(header, /asChild/);
 
   assert.match(initiative, /<WorkspaceHeader/);

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Pill } from "@/components/Pill";
 import { Kicker } from "@/components/Kicker";
 import { formatDateTime } from "@/lib/dateTime";
+import { Button } from "@/components/primitives/button";
 
 const Vortexopedia: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -119,8 +120,10 @@ const Vortexopedia: React.FC = () => {
                 expandedId === item.id && "border-primary",
               )}
             >
-              <button
+              <Button
                 type="button"
+                size="content"
+                variant="bare"
                 className="w-full text-left"
                 onClick={() => toggleExpand(item.id)}
               >
@@ -132,7 +135,7 @@ const Vortexopedia: React.FC = () => {
                       </Kicker>
                       <CardTitle className="text-lg">{item.name}</CardTitle>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted">
+                    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 text-xs text-muted">
                       <Pill
                         size="sm"
                         tone="muted"
@@ -163,7 +166,7 @@ const Vortexopedia: React.FC = () => {
                     ))}
                   </div>
                 </CardHeader>
-              </button>
+              </Button>
               {expandedId === item.id && (
                 <CardContent className="space-y-3 text-sm text-foreground">
                   <div className="space-y-1">

@@ -288,16 +288,6 @@ a {
   text-decoration: none;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-button[disabled] {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
 ::selection {
   background: var(--primary-dim);
 }

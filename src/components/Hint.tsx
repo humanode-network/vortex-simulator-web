@@ -206,12 +206,7 @@ const HintSurface: React.FC<HintSurfaceProps> = ({
         </p>
       </CardHeader>
       <CardContent className="hint-actions flex justify-center px-4 pt-1 pb-3">
-        <Button
-          size="sm"
-          variant="primary"
-          className="text-xs"
-          onClick={onNavigate}
-        >
+        <Button size="sm" variant="primary" onClick={onNavigate}>
           {actionLabel}
         </Button>
       </CardContent>

@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/primitives/card";
 import { GlassyCard } from "@/components/GlassyCard";
 import { Kicker } from "@/components/Kicker";
+import { Button } from "@/components/primitives/button";
 import { cn } from "@/lib/utils";
 
 type ExpandableCardProps = {
@@ -30,8 +31,10 @@ export function ExpandableCard({
 }: ExpandableCardProps) {
   const content = (
     <>
-      <button
+      <Button
         type="button"
+        size="content"
+        variant="bare"
         className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-[color:var(--surface-glass-hover-bg)] sm:flex-row sm:items-center sm:justify-between"
         aria-expanded={expanded}
         onClick={onToggle}
@@ -49,7 +52,7 @@ export function ExpandableCard({
             )}
           />
         </div>
-      </button>
+      </Button>
 
       {expanded ? (
         <div className="space-y-5 border-t border-border px-5 py-5">

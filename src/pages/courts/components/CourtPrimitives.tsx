@@ -57,9 +57,11 @@ export function CourtCopyValue({
       >
         {visibleValue}
       </span>
-      <button
+      <Button
         type="button"
-        className="hover:bg-surface-alt inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted transition hover:text-text"
+        size="iconSm"
+        variant="ghost"
+        className="shrink-0 text-muted hover:text-text"
         aria-label={status === "copied" ? `${label} copied` : `Copy ${label}`}
         title={
           status === "copied"
@@ -85,7 +87,7 @@ export function CourtCopyValue({
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
-      </button>
+      </Button>
       <span className="sr-only" aria-live="polite">
         {feedback}
       </span>

@@ -128,9 +128,11 @@ export function WizardProgress({
         const complete = index < currentIndex;
         const reachable = reachableStepIds.includes(step.id);
         return (
-          <button
+          <Button
             key={step.id}
             type="button"
+            size="content"
+            variant="bare"
             className={cn(
               "proposal-wizard__progress-step",
               current && "is-current",
@@ -148,7 +150,7 @@ export function WizardProgress({
             <span className="proposal-wizard__progress-label">
               {step.shortLabel}
             </span>
-          </button>
+          </Button>
         );
       })}
     </nav>

@@ -398,9 +398,10 @@ const FactionCreate: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
+              size="sm"
               variant="outline"
               onClick={() =>
                 setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3) : prev))
@@ -409,9 +410,10 @@ const FactionCreate: React.FC = () => {
             >
               Back
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 type="button"
+                size="sm"
                 variant="outline"
                 onClick={onSaveDraft}
                 disabled={saving}
@@ -420,6 +422,7 @@ const FactionCreate: React.FC = () => {
               </Button>
               <Button
                 type="button"
+                size="sm"
                 variant="ghost"
                 onClick={onClearDraft}
                 disabled={saving}
@@ -429,6 +432,7 @@ const FactionCreate: React.FC = () => {
               {step < 3 ? (
                 <Button
                   type="button"
+                  size="sm"
                   onClick={() => setStep((prev) => (prev + 1) as 2 | 3)}
                   disabled={(step === 1 && !canGoNextStep1) || saving}
                 >
@@ -437,6 +441,7 @@ const FactionCreate: React.FC = () => {
               ) : (
                 <Button
                   type="button"
+                  size="sm"
                   onClick={onCreate}
                   disabled={!canSubmit || saving}
                 >

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Check, Copy } from "lucide-react";
 import { shortAddress } from "@/lib/profileUi";
+import { Button } from "@/components/primitives/button";
 
 type AddressInlineProps = {
   address?: string | null;
@@ -57,9 +58,11 @@ export const AddressInline: React.FC<AddressInlineProps> = ({
         </span>
       )}
       {showCopy && normalizedAddress ? (
-        <button
+        <Button
           type="button"
-          className="hover:bg-surface-alt inline-flex h-6 w-6 items-center justify-center rounded-full text-muted transition hover:text-text"
+          size="iconXs"
+          variant="ghost"
+          className="shrink-0 text-muted hover:text-text"
           aria-label={copied ? "Copied" : "Copy address"}
           title={copied ? "Copied" : "Copy address"}
           onClick={() => void copy()}
@@ -69,7 +72,7 @@ export const AddressInline: React.FC<AddressInlineProps> = ({
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
-        </button>
+        </Button>
       ) : null}
     </span>
   );

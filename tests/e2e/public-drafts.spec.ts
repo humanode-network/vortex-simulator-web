@@ -310,6 +310,31 @@ test("My Drafts keeps private and public drafts together and toggles visibility"
   await expect(
     page.getByText(publicDraft.title, { exact: true }),
   ).toBeVisible();
+  const privateCard = page
+    .getByRole("article")
+    .filter({ hasText: privateDraft.title });
+  const visibilityControl = privateCard.getByRole("button", {
+    name: "Make draft public",
+  });
+  const editControl = privateCard.getByRole("link", {
+    name: "Continue editing",
+  });
+  const controlStyle = async (locator: typeof visibilityControl) =>
+    locator.evaluate((element) => {
+      const style = window.getComputedStyle(element);
+      return {
+        borderRadius: style.borderRadius,
+        fontFamily: style.fontFamily,
+        fontSize: style.fontSize,
+        fontWeight: style.fontWeight,
+        height: element.getBoundingClientRect().height,
+      };
+    });
+  await expect(visibilityControl).toHaveAttribute("data-button-size", "sm");
+  await expect(editControl).toHaveAttribute("data-button-size", "sm");
+  expect(await controlStyle(visibilityControl)).toEqual(
+    await controlStyle(editControl),
+  );
   await page.getByRole("button", { name: "Make draft public" }).click();
   await expect(
     page.getByRole("button", { name: "Make draft private" }),
