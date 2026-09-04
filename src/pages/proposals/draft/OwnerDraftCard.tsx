@@ -10,7 +10,11 @@ import type {
   ProposalDraftListItemDto,
 } from "@/types/api";
 import { DraftPublicationActions } from "./DraftPublicationActions";
-import { editDraftRoute, ownerDraftRoute } from "./draftUi";
+import {
+  editDraftRoute,
+  ownerDraftRoute,
+  proposalDraftReturnSourceLabels,
+} from "./draftUi";
 
 type OwnerDraftCardProps = {
   draft: ProposalDraftListItemDto;
@@ -27,9 +31,16 @@ export function OwnerDraftCard({
   return (
     <GlassyCard as="article" className="flex h-full min-h-64 flex-col p-5">
       <div className="flex min-w-0 items-start justify-between gap-3">
-        <Chip className="min-h-7 max-w-[65%] bg-[var(--control-glass-bg)] text-muted [&>span]:whitespace-normal">
-          {draft.chamber}
-        </Chip>
+        <div className="flex max-w-[70%] min-w-0 flex-wrap gap-2">
+          <Chip className="min-h-7 bg-[var(--control-glass-bg)] text-muted [&>span]:whitespace-normal">
+            {draft.chamber}
+          </Chip>
+          {draft.returnSource ? (
+            <Chip className="min-h-7 bg-[var(--primary-dim)] text-text [&>span]:whitespace-normal">
+              {proposalDraftReturnSourceLabels[draft.returnSource]}
+            </Chip>
+          ) : null}
+        </div>
         <DraftPublicationActions
           variant="visibility-toggle"
           draftId={draft.id}

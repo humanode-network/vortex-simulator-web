@@ -84,6 +84,9 @@ export function formatProposalStageTransitionMessage(
   if (status.redirectReason === "veto_remanded") {
     return "Proposal was remanded for reconsideration.";
   }
+  if (status.redirectReason === "returned_to_draft") {
+    return "Proposal closed and its content returned to a private draft.";
+  }
   if (status.canonicalStage === "vote")
     return "Proposal moved to Chamber vote.";
   if (status.canonicalStage === "citizen_veto")

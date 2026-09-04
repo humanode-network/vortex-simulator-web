@@ -61,12 +61,15 @@ const ProposalFinished: React.FC = () => {
             <Button asChild size="sm">
               <Link
                 to={
-                  proposal.reconsiderationDraftId
+                  proposal.draftReturn?.route ??
+                  (proposal.reconsiderationDraftId
                     ? editDraftRoute(proposal.reconsiderationDraftId)
-                    : reconsiderProposalRoute(proposal.decisionRootProposalId)
+                    : reconsiderProposalRoute(proposal.decisionRootProposalId))
                 }
               >
-                Resubmit for reconsideration
+                {proposal.draftReturn
+                  ? "Continue editing"
+                  : "Resubmit for reconsideration"}
               </Link>
             </Button>
           </div>

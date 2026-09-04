@@ -1,5 +1,6 @@
 import type {
   DraftPublicationSummaryDto,
+  ProposalDraftReturnSourceDto,
   PublicProposalDraftKindDto,
 } from "@/types/api";
 
@@ -58,6 +59,14 @@ export const publicDraftKindLabels: Record<PublicProposalDraftKindDto, string> =
     formation: "Formation",
     system: "System change",
   };
+
+export const proposalDraftReturnSourceLabels: Record<
+  ProposalDraftReturnSourceDto,
+  string
+> = {
+  failed_chamber_vote: "Returned after chamber vote",
+  author_pool_withdrawal: "Returned from Proposal Pool",
+};
 
 export const publicDraftKindOptions = (
   Object.entries(publicDraftKindLabels) as Array<

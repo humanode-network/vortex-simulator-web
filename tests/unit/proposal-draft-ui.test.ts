@@ -6,6 +6,7 @@ import {
   isPublicDraftVisible,
   ownerDraftRoute,
   publicationRoute,
+  proposalDraftReturnSourceLabels,
   publicDraftRoute,
   reconsiderProposalRoute,
 } from "../../src/pages/proposals/draft/draftUi";
@@ -42,5 +43,14 @@ describe("proposal draft UI contracts", () => {
     ).toBe(false);
     expect(isPublicDraftVisible({ status: "submitted" })).toBe(true);
     expect(isPublicDraftVisible({ status: "withdrawn" })).toBe(false);
+  });
+
+  test("labels returned drafts by their governance source", () => {
+    expect(proposalDraftReturnSourceLabels.failed_chamber_vote).toBe(
+      "Returned after chamber vote",
+    );
+    expect(proposalDraftReturnSourceLabels.author_pool_withdrawal).toBe(
+      "Returned from Proposal Pool",
+    );
   });
 });

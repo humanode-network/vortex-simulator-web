@@ -15,6 +15,7 @@ export type FeedStageDto = FeedStage;
 export type ProposalResolutionKindDto =
   | "ordinary_failed_pool"
   | "ordinary_failed_vote"
+  | "author_withdrawn_to_draft"
   | "court_correction_remand"
   | "citizen_veto_remand"
   | "chamber_veto_remand"
@@ -735,7 +736,19 @@ export type ProposalStatusDto = {
     route: string;
     revision: number;
   };
+  draftReturn?: ProposalDraftReturnDto;
   updatedAt: string;
+};
+
+export type ProposalDraftReturnSourceDto =
+  | "failed_chamber_vote"
+  | "author_pool_withdrawal";
+
+export type ProposalDraftReturnDto = {
+  reason: ProposalDraftReturnSourceDto;
+  available: boolean;
+  draftId?: string;
+  route?: string;
 };
 
 export type DraftPublicationStatusDto =
@@ -761,6 +774,7 @@ export type ProposalDraftListItemDto = {
   tier: string;
   summary: string;
   updated: string;
+  returnSource: ProposalDraftReturnSourceDto | null;
   publication: DraftPublicationSummaryDto;
 };
 export type GetProposalDraftsResponse = { items: ProposalDraftListItemDto[] };
@@ -858,6 +872,7 @@ export type ProposalDraftDetailDto = {
   attachments: { title: string; href?: string }[];
   authoring: ProposalAuthoringDetailsDto;
   publication: DraftPublicationSummaryDto;
+  returnSource?: ProposalDraftReturnSourceDto | null;
   initiative?: InitiativeReferenceDto;
   editableForm?: ProposalDraftEditableFormDto;
 };
@@ -1160,6 +1175,7 @@ export type ProposalFinishedPageDto = {
   decisionRootProposalId: string;
   canReconsider: boolean;
   reconsiderationDraftId: string | null;
+  draftReturn: ProposalDraftReturnDto | null;
   formationEligible: boolean;
   budget: string;
   timeLeft: string;

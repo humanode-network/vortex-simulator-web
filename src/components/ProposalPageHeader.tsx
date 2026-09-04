@@ -22,6 +22,7 @@ type ProposalPageHeaderProps = {
   chamber: string;
   proposer: string;
   stageLinks?: Partial<Record<ProposalStage, string>>;
+  actions?: ReactNode;
   children?: ReactNode;
 };
 
@@ -33,6 +34,7 @@ export function ProposalPageHeader({
   chamber,
   proposer,
   stageLinks,
+  actions,
   children,
 }: ProposalPageHeaderProps) {
   const [status, setStatus] = useState<ProposalStatusDto | null>(null);
@@ -80,9 +82,12 @@ export function ProposalPageHeader({
   return (
     <section className="space-y-4">
       <h1 className="text-center text-2xl font-semibold text-text">{title}</h1>
-      {proposalId ? (
-        <div className="flex justify-end">
-          <CourtReportButton target={{ type: "proposal", id: proposalId }} />
+      {proposalId || actions ? (
+        <div className="flex flex-wrap justify-end gap-2">
+          {actions}
+          {proposalId ? (
+            <CourtReportButton target={{ type: "proposal", id: proposalId }} />
+          ) : null}
         </div>
       ) : null}
       {status?.initiative ? (
