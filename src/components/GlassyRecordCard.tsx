@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { Chip } from "@/components/Chip";
 import { GlassyCard } from "@/components/GlassyCard";
 import { StageChip } from "@/components/StageChip";
-import { normalizePreviewText } from "@/lib/textPreview";
+import { proposalSummaryPreview } from "@/lib/textPreview";
 import { cn } from "@/lib/utils";
 import type { Stage } from "@/types/stages";
 import "./GlassyRecordCard.css";
@@ -40,7 +40,7 @@ export function GlassyRecordCard({
   title,
 }: GlassyRecordCardProps) {
   const renderedSummary =
-    typeof summary === "string" ? normalizePreviewText(summary) : summary;
+    typeof summary === "string" ? proposalSummaryPreview(summary) : summary;
 
   return (
     <GlassyCard
@@ -65,11 +65,9 @@ export function GlassyRecordCard({
           </span>
           <span className="glassy-record-card__summary">{renderedSummary}</span>
           {association ? (
-            <span className="glassy-record-card__associationSlot">
-              <Chip className="glassy-record-card__association">
-                {association}
-              </Chip>
-            </span>
+            <Chip className="glassy-record-card__association">
+              {association}
+            </Chip>
           ) : null}
         </span>
         <span className="glassy-record-card__aside">

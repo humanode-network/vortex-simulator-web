@@ -88,12 +88,7 @@
   display: grid;
   width: 100%;
   grid-template-columns: minmax(10rem, 1fr) minmax(36rem, 42rem);
-  grid-template-areas:
-    "title aside"
-    "summary summary"
-    "association association";
   gap: 1rem;
-  row-gap: 0.4rem;
   border: 0;
   background: transparent;
   padding: 0.82rem 1rem 0.82rem 0;
@@ -112,14 +107,15 @@
 .glassy-record-card__copy,
 .glassy-record-card__aside {
   min-width: 0;
+  display: flex;
 }
 
 .glassy-record-card__copy {
-  display: contents;
+  flex-direction: column;
+  gap: 0.28rem;
 }
 
 .glassy-record-card__aside {
-  grid-area: aside;
   display: grid;
   grid-template-columns:
     minmax(15rem, 1fr) minmax(8.75rem, 9.5rem)
@@ -130,14 +126,7 @@
 }
 
 .glassy-record-card__titleRow {
-  grid-area: title;
   min-width: 0;
-  height: 5.4rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-right: 0.35rem;
-  scrollbar-color: color-mix(in srgb, var(--muted), transparent 58%) transparent;
-  scrollbar-width: thin;
 }
 
 .glassy-record-card__metaPill {
@@ -164,26 +153,14 @@
 }
 
 .glassy-record-card__summary {
-  grid-area: summary;
-  width: 100%;
-  max-width: none;
-  height: 4.35em;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 0.35rem;
+  max-width: 52rem;
+  min-height: 1.45em;
+  max-height: 1.45em;
+  overflow: hidden;
   color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
-  scrollbar-color: color-mix(in srgb, var(--muted), transparent 58%) transparent;
-  scrollbar-width: thin;
-}
-
-.glassy-record-card__associationSlot {
-  grid-area: association;
-  min-width: 0;
-  min-height: 1.75rem;
 }
 
 .glassy-record-card__association {
@@ -233,16 +210,7 @@
 @media (max-width: 1180px) {
   .glassy-record-card__button {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "title"
-      "aside"
-      "summary"
-      "association";
     gap: 0.75rem;
-  }
-
-  .glassy-record-card__summary {
-    height: 8.7em;
   }
 
   .glassy-record-card__aside {
@@ -258,12 +226,6 @@
   .glassy-record-card__time {
     white-space: normal;
     text-align: left;
-  }
-}
-
-@media (max-width: 560px) {
-  .glassy-record-card__summary {
-    height: 14.5em;
   }
 }
 

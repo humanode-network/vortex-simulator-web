@@ -1,14 +1,10 @@
 export const PROPOSAL_SUMMARY_PREVIEW_MAX = 180;
 
-export function normalizePreviewText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
-}
-
 export function proposalSummaryPreview(
   value: string,
   maxLength = PROPOSAL_SUMMARY_PREVIEW_MAX,
 ): string {
-  const text = normalizePreviewText(value);
+  const text = value.replace(/\s+/g, " ").trim();
   if (text.length <= maxLength) return text;
 
   const hardCut = text.slice(0, maxLength + 1);
