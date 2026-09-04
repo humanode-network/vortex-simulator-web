@@ -1,12 +1,10 @@
 import { Link } from "react-router";
 
 import { Button } from "@/components/primitives/button";
-import { cn } from "@/lib/utils";
 import type { DraftPublicationSummaryDto } from "@/types/api";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { isPublicDraftVisible } from "./draftUi";
 import { useDraftPublicationActions } from "./useDraftPublicationActions";
-import "@/components/StageChip.css";
 
 type DraftPublicationActionsProps = {
   draftId: string;
@@ -45,8 +43,10 @@ export function DraftPublicationActions({
           : "Private";
     return (
       <div className="flex min-w-0 flex-col items-end gap-1.5">
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant={isPublic ? "primary" : "outline"}
           aria-label={
             submitted
               ? "Submitted draft"
@@ -63,14 +63,11 @@ export function DraftPublicationActions({
                 ? "Public draft. Select to make it private."
                 : "Private draft. Select to publish it."
           }
-          className={cn(
-            "stage-chip inline-flex h-7 min-w-[4.75rem] items-center justify-center rounded-full px-3 text-xs font-semibold transition focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-panel focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60",
-            isPublic ? "stage-chip--passed" : "stage-chip--draft",
-          )}
+          className="min-w-24"
           onClick={() => void (isPublic ? unpublish() : publish())}
         >
           {label}
-        </button>
+        </Button>
         {publication.hasUnpublishedChanges && isPublic ? (
           <span className="text-[0.68rem] text-muted">
             Saved edits are private

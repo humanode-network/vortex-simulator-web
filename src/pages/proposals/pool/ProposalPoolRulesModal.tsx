@@ -1,4 +1,5 @@
 import { Modal } from "@/components/Modal";
+import { Button } from "@/components/primitives/button";
 import { Surface } from "@/components/Surface";
 import { formatLoadError } from "@/lib/errorFormatting";
 
@@ -52,13 +53,14 @@ export const ProposalPoolRulesModal: React.FC<ProposalPoolRulesModalProps> = ({
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-lg font-semibold">Pool rules</p>
-          <button
+          <Button
             type="button"
-            className="text-sm text-muted hover:text-text"
+            size="compact"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
           >
             Close
-          </button>
+          </Button>
         </div>
         <div className="space-y-2 text-sm text-muted">
           <ul className="list-disc space-y-1 pl-4">
@@ -85,27 +87,23 @@ export const ProposalPoolRulesModal: React.FC<ProposalPoolRulesModalProps> = ({
           </label>
         </Surface>
         <div className="mt-4 flex justify-end gap-2">
-          <button
+          <Button
             type="button"
-            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-text hover:bg-panel-alt"
+            size="sm"
+            variant="outline"
             onClick={() => onOpenChange(false)}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="sm"
+            variant={confirmingDownvote ? "destructive" : "primary"}
             disabled={confirmDisabled}
-            className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-              confirmDisabled
-                ? "cursor-not-allowed bg-muted text-primary-foreground opacity-60"
-                : confirmingDownvote
-                  ? "border-2 border-destructive bg-destructive text-destructive-foreground hover:opacity-95"
-                  : "border-2 border-accent bg-accent text-accent-foreground hover:opacity-95"
-            }`}
             onClick={onConfirm}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
         {error ? (
           <p className="mt-3 text-sm text-destructive">

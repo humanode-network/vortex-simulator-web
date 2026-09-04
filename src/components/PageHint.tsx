@@ -28,12 +28,12 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
     <div className={cn("pagehint-root", className)}>
       <Button
         variant="ghost"
-        size="sm"
-        className="h-10 w-10 rounded-full border border-(--pagehint) bg-(--pagehint) text-(--pagehint-foreground) shadow-(--shadow-pagehint) hover:bg-(--pagehint-hover) hover:text-(--pagehint-foreground) focus-visible:ring-(--pagehint-dim)"
+        size="iconMd"
+        className="border border-(--pagehint) bg-(--pagehint) text-(--pagehint-foreground) shadow-(--shadow-pagehint) hover:bg-(--pagehint-hover) hover:text-(--pagehint-foreground) focus-visible:ring-(--pagehint-dim)"
         onClick={() => setOpen(true)}
         aria-label="Open page hint"
       >
-        <span className="text-3xl leading-none font-bold" aria-hidden="true">
+        <span className="text-base leading-none font-bold" aria-hidden="true">
           ?
         </span>
       </Button>
@@ -55,7 +55,7 @@ export const PageHint: React.FC<PageHintProps> = ({ pageId, className }) => {
               </div>
               <Button
                 variant="ghost"
-                size="sm"
+                size="iconSm"
                 aria-label="Close page hint"
                 onClick={() => setOpen(false)}
                 className="text-text"

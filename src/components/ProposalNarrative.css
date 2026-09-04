@@ -75,13 +75,6 @@ ol.proposal-narrative__list {
   padding: 0.375rem;
 }
 
-.proposal-narrative-editor__toolbar button {
-  min-height: 2rem;
-  padding-right: 0.5rem;
-  padding-left: 0.5rem;
-  font-size: 0.75rem;
-}
-
 .proposal-narrative-editor__input {
   display: block;
   width: 100%;

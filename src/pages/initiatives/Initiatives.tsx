@@ -109,7 +109,7 @@ const Initiatives: React.FC = () => {
     <div className="flex flex-col gap-6">
       <div className="flex justify-end">
         {canCreate ? (
-          <Button asChild>
+          <Button asChild size="sm">
             <Link to="/app/initiatives/new">Create initiative</Link>
           </Button>
         ) : null}

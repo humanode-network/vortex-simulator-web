@@ -17,10 +17,7 @@
 }
 
 .proposal-wizard__header-actions > * {
-  min-height: 2.5rem;
   min-width: 0;
-  font-size: 0.875rem;
-  opacity: 0.92;
 }
 
 .proposal-wizard__header-title,
@@ -324,7 +321,6 @@
 
 .proposal-wizard__actions > * {
   min-width: 7.5rem;
-  min-height: 2.75rem;
 }
 
 .proposal-wizard__recovery {

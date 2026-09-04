@@ -4,6 +4,7 @@ import { Surface } from "@/components/Surface";
 import { AvatarPlaceholder } from "@/components/AvatarPlaceholder";
 import { GovernanceStatusPills } from "@/components/GovernanceStatusPills";
 import { Kicker } from "@/components/Kicker";
+import { Button } from "@/components/primitives/button";
 import type { HumanNodeProfileDto } from "@/types/api";
 import { Check, Copy } from "lucide-react";
 
@@ -53,9 +54,11 @@ export function ProfileHero({
                 {showShortBadge ? (
                   <Badge variant="muted">{shortAddressLabel}</Badge>
                 ) : null}
-                <button
+                <Button
                   type="button"
-                  className="hover:bg-surface-alt inline-flex h-7 w-7 items-center justify-center rounded-full text-muted transition hover:text-text"
+                  size="iconSm"
+                  variant="ghost"
+                  className="text-muted hover:text-text"
                   onClick={onCopyAddress}
                   aria-label={copied ? "Copied" : "Copy address"}
                   title={copied ? "Copied" : "Copy address"}
@@ -65,7 +68,7 @@ export function ProfileHero({
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
-                </button>
+                </Button>
               </div>
             ) : null}
           </div>

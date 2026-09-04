@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { AuthSidebarPanel } from "@/app/auth/AuthContext";
+import { Button } from "@/components/primitives/button";
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   clsx("sidebar__link", isActive && "sidebar__link--active");
@@ -84,8 +85,10 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
     <aside className={clsx("sidebar", mobileNavOpen && "sidebar--mobileOpen")}>
       <div className="sidebar__brand">
         <span>Vortex</span>
-        <button
+        <Button
           type="button"
+          size="iconMd"
+          variant="ghost"
           className="sidebar__mobileToggle"
           onClick={() => setMobileNavOpen((open) => !open)}
           aria-expanded={mobileNavOpen}
@@ -99,7 +102,7 @@ const AppSidebar: React.FC<React.PropsWithChildren> = ({ children }) => {
           ) : (
             <Menu className="sidebar__mobileToggleIcon" aria-hidden="true" />
           )}
-        </button>
+        </Button>
       </div>
       <div className="sidebar__mobilePanel">
         <AuthSidebarPanel />

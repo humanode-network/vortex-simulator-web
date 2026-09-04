@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 
 import { Chip } from "@/components/Chip";
 import { GlassyCard } from "@/components/GlassyCard";
+import { Button } from "@/components/primitives/button";
 import { StageChip } from "@/components/StageChip";
 import { normalizePreviewText } from "@/lib/textPreview";
 import { cn } from "@/lib/utils";
@@ -53,8 +54,10 @@ export function GlassyRecordCard({
         className,
       )}
     >
-      <button
+      <Button
         type="button"
+        size="content"
+        variant="bare"
         className="glassy-record-card__button"
         aria-expanded={expanded}
         onClick={onToggle}
@@ -90,7 +93,7 @@ export function GlassyRecordCard({
             )}
           />
         </span>
-      </button>
+      </Button>
 
       {expanded ? (
         <div className="glassy-record-card__details">{children}</div>

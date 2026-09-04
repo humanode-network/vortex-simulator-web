@@ -209,33 +209,34 @@ export function ThreadList<
           variant={selectedThreadId === thread.id ? "panel" : "panelAlt"}
           radius="xl"
           shadow="none"
-          role="button"
-          tabIndex={0}
-          className="cursor-pointer px-4 py-3 transition hover:border-primary/60 focus-visible:ring-2 focus-visible:ring-[color:var(--primary-dim)] focus-visible:outline-none"
-          onClick={() => onSelect(thread.id)}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            onSelect(thread.id);
-          }}
+          className="overflow-hidden transition hover:border-primary/60"
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1 text-left">
-              <span className="text-xs font-semibold text-muted">
-                {categoryLabel(thread.category)} · {statusLabel(thread.status)}
-              </span>
-              <h3 className="mt-1 text-base font-semibold text-text">
-                {thread.title}
-              </h3>
-              <p className="mt-1 line-clamp-2 text-sm text-muted">
-                {thread.body}
-              </p>
-              <p className="mt-2 text-xs text-muted">
-                {thread.replies} replies · Updated{" "}
-                {formatDateTime(thread.updatedAt)}
-              </p>
+          <Button
+            type="button"
+            size="content"
+            variant="bare"
+            className="w-full cursor-pointer px-4 py-3 text-left"
+            onClick={() => onSelect(thread.id)}
+          >
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1 text-left">
+                <span className="text-xs font-semibold text-muted">
+                  {categoryLabel(thread.category)} ·{" "}
+                  {statusLabel(thread.status)}
+                </span>
+                <h3 className="mt-1 text-base font-semibold text-text">
+                  {thread.title}
+                </h3>
+                <p className="mt-1 line-clamp-2 text-sm text-muted">
+                  {thread.body}
+                </p>
+                <p className="mt-2 text-xs text-muted">
+                  {thread.replies} replies · Updated{" "}
+                  {formatDateTime(thread.updatedAt)}
+                </p>
+              </div>
             </div>
-          </div>
+          </Button>
         </Surface>
       ))}
     </>

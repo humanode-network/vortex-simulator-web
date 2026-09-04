@@ -73,25 +73,15 @@ const Proposals: React.FC = () => {
       <PageHint pageId="proposals" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="rounded-full px-4"
-          >
+          <Button asChild size="sm" variant="outline">
             <Link to={proposalDraftRoutes.public}>Public drafts</Link>
           </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="rounded-full px-4"
-          >
+          <Button asChild size="sm" variant="outline">
             <Link to={proposalDraftRoutes.mine}>My drafts</Link>
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <Button asChild size="sm" className="rounded-full px-4">
+          <Button asChild size="sm">
             <Link to={proposalDraftRoutes.create}>Create proposal</Link>
           </Button>
         </div>

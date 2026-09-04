@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import { Button } from "@/components/primitives/button";
 import { cn } from "@/lib/utils";
 import { SIM_AUTH_ENABLED } from "@/lib/featureFlags";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -62,8 +63,10 @@ export function VoteButton({
       : undefined);
 
   return (
-    <button
+    <Button
       type="button"
+      size="content"
+      variant="bare"
       className={cn(
         baseClasses,
         sizeClasses[size],
@@ -82,6 +85,6 @@ export function VoteButton({
       <span className={size === "lg" ? "text-2xl leading-none" : ""}>
         {label}
       </span>
-    </button>
+    </Button>
   );
 }

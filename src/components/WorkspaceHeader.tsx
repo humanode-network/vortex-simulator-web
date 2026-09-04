@@ -81,7 +81,7 @@ export function WorkspaceHeaderAction({
       type="button"
       size="sm"
       variant="outline"
-      className="w-36 text-sm font-semibold opacity-90 hover:opacity-100"
+      className="w-36"
       disabled={disabled}
       onClick={onClick}
     >

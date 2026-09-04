@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
+  "inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[8px] [font-family:inherit] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -14,12 +14,20 @@ const buttonVariants = cva(
           "bg-transparent text-[var(--primary)] border border-border shadow-[var(--shadow-control)] hover:bg-[var(--primary-dim)] hover:border-[var(--primary)] focus-visible:ring-[var(--primary)] focus-visible:ring-offset-[var(--panel)]",
         outline:
           "bg-[var(--panel)] text-[var(--primary)] border border-[var(--primary)] shadow-[var(--shadow-control)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] focus-visible:ring-[var(--primary)] focus-visible:ring-offset-[var(--panel)]",
+        destructive:
+          "bg-transparent text-[var(--destructive)] border border-[var(--destructive)] shadow-[var(--shadow-control)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)] focus-visible:ring-[var(--destructive)] focus-visible:ring-offset-[var(--panel)]",
+        bare: "min-w-0 whitespace-normal rounded-none bg-transparent p-0 text-[inherit] font-[inherit] shadow-none",
       },
       size: {
         compact: "h-8 min-w-16 px-3 text-xs",
         sm: "h-9 px-3 text-sm",
         md: "h-10 px-4 text-base",
         lg: "h-11 px-5 text-lg",
+        iconXs: "h-6 w-6 min-w-6 p-0 text-xs",
+        iconSm: "h-7 w-7 min-w-7 p-0 text-sm",
+        iconMd: "h-9 w-9 min-w-9 p-0 text-base",
+        toolbar: "h-8 px-2 text-xs",
+        content: "h-auto min-w-0 p-0 text-[inherit]",
       },
     },
     defaultVariants: {
@@ -38,9 +46,17 @@ export interface ButtonProps
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    const resolvedVariant = variant ?? "primary";
+    const resolvedSize = size ?? "md";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size }), className)}
+        data-ui="button"
+        data-button-size={resolvedSize}
+        data-button-variant={resolvedVariant}
+        className={cn(
+          buttonVariants({ variant: resolvedVariant, size: resolvedSize }),
+          className,
+        )}
         ref={ref}
         {...props}
       />
