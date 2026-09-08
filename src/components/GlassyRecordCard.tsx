@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 import { ChevronDown } from "lucide-react";
 
@@ -40,6 +40,42 @@ export function GlassyRecordCard({
   summary,
   title,
 }: GlassyRecordCardProps) {
+  const headerRef = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const copy = header.querySelector<HTMLElement>(".glassy-record-card__copy");
+    const summary = header.querySelector<HTMLElement>(
+      ".glassy-record-card__summary",
+    );
+    const aside = header.querySelector<HTMLElement>(
+      ".glassy-record-card__aside",
+    );
+    if (!copy || !summary || !aside) return;
+
+    const alignMetadata = () => {
+      // Anchor to the collapsed header even while the full summary is visible.
+      const summaryLineHeight = Number.parseFloat(
+        getComputedStyle(summary).minHeight,
+      );
+      const expandedHeight = Math.max(
+        0,
+        summary.getBoundingClientRect().height - summaryLineHeight,
+      );
+      const collapsedHeight =
+        copy.getBoundingClientRect().height - expandedHeight;
+      const offset = Math.max(
+        0,
+        (collapsedHeight - aside.getBoundingClientRect().height) / 2,
+      );
+      header.style.setProperty("--record-aside-offset", `${offset}px`);
+    };
+    alignMetadata();
+    const observer = new ResizeObserver(alignMetadata);
+    for (const element of [copy, summary, aside]) observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   const renderedSummary =
     typeof summary === "string" ? normalizePreviewText(summary) : summary;
 
@@ -55,6 +91,7 @@ export function GlassyRecordCard({
       )}
     >
       <Button
+        ref={headerRef}
         type="button"
         size="content"
         variant="bare"
