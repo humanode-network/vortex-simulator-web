@@ -124,7 +124,8 @@ const Vortexopedia: React.FC = () => {
                 type="button"
                 size="content"
                 variant="bare"
-                className="w-full text-left"
+                className="block w-full text-left"
+                aria-expanded={expandedId === item.id}
                 onClick={() => toggleExpand(item.id)}
               >
                 <CardHeader className="pb-2">
