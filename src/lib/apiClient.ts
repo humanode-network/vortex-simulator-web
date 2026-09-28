@@ -454,26 +454,6 @@ export async function apiChamberChatPost(input: {
   });
 }
 
-export async function apiFormationJoin(input: {
-  proposalId: string;
-  role?: string;
-  idempotencyKey?: string;
-}): Promise<{
-  ok: true;
-  type: "formation.join";
-  proposalId: string;
-  teamSlots: { filled: number; total: number };
-}> {
-  return await apiCommand({
-    type: "formation.join",
-    payload: {
-      proposalId: input.proposalId,
-      ...(input.role ? { role: input.role } : {}),
-    },
-    idempotencyKey: input.idempotencyKey,
-  });
-}
-
 export async function apiFormationMilestoneSubmit(input: {
   proposalId: string;
   milestoneIndex: number;

@@ -7,7 +7,9 @@ import "./ProposalNarrative.css";
 export type ProposalNarrativeValue = string | string[];
 
 export type ProposalNarrativeEditorProps = {
+  disabled?: boolean;
   documentLabel?: string;
+  label?: string;
   id: string;
   onChange: (value: string) => void;
   placeholder: string;

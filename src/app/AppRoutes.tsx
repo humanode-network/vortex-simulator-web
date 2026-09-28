@@ -20,6 +20,7 @@ import ProposalCitizenVeto from "../pages/proposals/ProposalCitizenVeto";
 import ProposalChamberVeto from "../pages/proposals/ProposalChamberVeto";
 import ProposalReferendum from "../pages/proposals/ProposalReferendum";
 import ProposalFormation from "../pages/proposals/ProposalFormation";
+import FormationApplicationPage from "../pages/proposals/formation/FormationApplicationPage";
 import ProposalFinished from "../pages/proposals/ProposalFinished";
 import Profile from "../pages/profile/Profile";
 import HumanNode from "../pages/human-nodes/HumanNode";
@@ -123,6 +124,10 @@ const AppRoutes: React.FC = () => {
         <Route path="chambers" element={<Chambers />} />
         <Route path="chambers/:id" element={<Chamber />} />
         <Route path="formation" element={<Formation />} />
+        <Route
+          path="formation/applications/:applicationId"
+          element={<FormationApplicationPage />}
+        />
         <Route path="initiatives" element={<Initiatives />} />
         <Route path="initiatives/new" element={<InitiativeCreate />} />
         <Route

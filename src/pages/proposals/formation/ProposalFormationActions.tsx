@@ -13,6 +13,8 @@ type ProposalFormationActionsProps = {
   nextMilestone: number | undefined;
   onFinishProject: () => void;
   onJoinProject: () => void;
+  pendingApplication: boolean;
+  applicationStateReady: boolean;
   onOpenMilestoneVote: () => void;
   onSubmitMilestone: () => void;
   pendingMilestone: number | undefined;
@@ -27,12 +29,15 @@ export const ProposalFormationActions: React.FC<
   nextMilestone,
   onFinishProject,
   onJoinProject,
+  pendingApplication,
+  applicationStateReady,
   onOpenMilestoneVote,
   onSubmitMilestone,
   pendingMilestone,
   visibility,
 }) => {
   const hasVisibleActions =
+    pendingApplication ||
     visibility.showJoinProject ||
     visibility.showSubmitMilestone ||
     visibility.showOpenMilestoneVote ||
@@ -43,14 +48,17 @@ export const ProposalFormationActions: React.FC<
       <SectionHeader>Formation actions</SectionHeader>
       {hasVisibleActions ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          {visibility.showJoinProject ? (
+          {visibility.showJoinProject || pendingApplication ? (
             <Button
               type="button"
               size="md"
-              disabled={!visibility.canJoinProject}
+              disabled={
+                !applicationStateReady ||
+                (!pendingApplication && !visibility.canJoinProject)
+              }
               onClick={onJoinProject}
             >
-              Join project
+              {pendingApplication ? "View application" : "Apply to join"}
             </Button>
           ) : null}
 

@@ -17,6 +17,7 @@ import { useFeedDetailPages } from "./hooks/useFeedDetailPages";
 import { useFeedItems } from "./hooks/useFeedItems";
 import { useFeedPageSize } from "./hooks/useFeedPageSize";
 import "./Feed.css";
+import { FormationApplications } from "@/pages/proposals/formation/FormationApplications";
 
 const Feed: React.FC = () => {
   const auth = useAuth();
@@ -115,6 +116,12 @@ const Feed: React.FC = () => {
       <PageHint pageId="feed" />
 
       <FeedControls feedScope={feedScope} onFeedScopeChange={setFeedScope} />
+
+      {(feedScope === "urgent" ||
+        feedScope === "my" ||
+        feedScope === "all") && (
+        <FormationApplications urgent={feedScope === "urgent"} />
+      )}
 
       <FeedStatusMessages feedItems={feedItems} loadError={loadError} />
 
