@@ -57,7 +57,9 @@ const editorCommands = [
 ];
 
 export default function ProposalNarrativeEditor({
+  disabled = false,
   documentLabel = "Proposal",
+  label,
   id,
   onChange,
   placeholder,
@@ -71,13 +73,15 @@ export default function ProposalNarrativeEditor({
   const emittedValueRef = useRef(value);
   const pendingParentValueRef = useRef<string | null>(null);
   const editor = useEditor({
+    editable: !disabled,
     content: value,
     contentType: "markdown",
     editorProps: {
       attributes: {
         "aria-describedby": descriptionId,
-        "aria-label": placeholder,
+        "aria-label": label ?? placeholder,
         "aria-multiline": "true",
+        "aria-disabled": String(disabled),
         class: "proposal-narrative-editor__input",
         "data-placeholder": placeholder,
         id,
@@ -94,6 +98,10 @@ export default function ProposalNarrativeEditor({
       onChange(nextValue);
     },
   });
+
+  useEffect(() => {
+    editor?.setEditable(!disabled, false);
+  }, [editor, disabled]);
 
   useEffect(() => {
     if (!editor) return;
@@ -116,7 +124,7 @@ export default function ProposalNarrativeEditor({
   }, [editor, value]);
 
   const saveLink = () => {
-    if (!editor || !linkUrl) return;
+    if (!editor || disabled || !linkUrl) return;
     const href = safeNarrativeHref(linkUrl);
     if (!href) return;
     editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
@@ -136,6 +144,7 @@ export default function ProposalNarrativeEditor({
       >
         {editorCommands.map(({ label, run }) => (
           <Button
+            disabled={disabled}
             key={label}
             aria-label={label}
             aria-controls={id}
@@ -150,6 +159,7 @@ export default function ProposalNarrativeEditor({
         ))}
         <Button
           aria-label="Link"
+          disabled={disabled}
           aria-controls={id}
           size="toolbar"
           type="button"
@@ -165,17 +175,26 @@ export default function ProposalNarrativeEditor({
       </div>
       <EditorContent editor={editor} />
       {linkUrl !== null ? (
-        <form
+        <div
           className="proposal-narrative-editor__link-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            saveLink();
+          role="group"
+          aria-label="Edit link"
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              event.target === linkInputRef.current
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              saveLink();
+            }
           }}
         >
           <label className="sr-only" htmlFor={linkInputId}>
             Link URL
           </label>
           <input
+            disabled={disabled}
             ref={linkInputRef}
             id={linkInputId}
             type="url"
@@ -183,13 +202,20 @@ export default function ProposalNarrativeEditor({
             onChange={(event) => setLinkUrl(event.target.value)}
             placeholder="https://example.org"
           />
-          <Button type="submit" size="sm" variant="outline">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={disabled || !safeNarrativeHref(linkUrl)}
+            onClick={saveLink}
+          >
             Apply link
           </Button>
           <Button
             type="button"
             size="sm"
             variant="ghost"
+            disabled={disabled}
             onClick={() => {
               setLinkUrl(null);
               editor?.commands.focus();
@@ -197,7 +223,7 @@ export default function ProposalNarrativeEditor({
           >
             Cancel
           </Button>
-        </form>
+        </div>
       ) : null}
       <p id={descriptionId} className="proposal-narrative-editor__hint">
         Use the formatting controls or standard editor shortcuts to structure

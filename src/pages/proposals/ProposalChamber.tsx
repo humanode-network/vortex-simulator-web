@@ -26,6 +26,7 @@ import { ProposalVoteStatsGrid } from "./shared/ProposalVoteStatsGrid";
 import { ProposalDelegationContext } from "./shared/ProposalDelegationContext";
 import { ProposalChamberHeaderActions } from "./chamber/ProposalChamberHeaderActions";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
+import { FormationTeamMembership } from "./formation/FormationTeamMembership";
 
 const ProposalChamber: React.FC = () => {
   const { id } = useParams();
@@ -220,6 +221,15 @@ const ProposalChamber: React.FC = () => {
         <ProposalDelegationContext delegation={proposal.delegation} />
       ) : null}
 
+      {id && proposal.milestoneIndex != null && (
+        <FormationTeamMembership
+          proposalId={id}
+          revision={proposal.milestoneIndex}
+          onChanged={async () => {
+            await loadPage();
+          }}
+        />
+      )}
       <ProposalDetailsSections
         summary={proposal.summary}
         stats={chamberPage.formationSummaryStats}

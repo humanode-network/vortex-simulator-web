@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { test } from "@rstest/core";
+import { commandSchema } from "../../../vortex-simulator-server/api/commandSchemas.ts";
 
 import {
   HUMANODE_CODEX_JURY_SIZE,
@@ -34,11 +35,8 @@ function readWebApiSources() {
 }
 
 function extractServerCommandTypes() {
-  const source = readServer("api/commandSchemas.ts");
   return new Set(
-    [...source.matchAll(/type:\s*z\.literal\("([^"]+)"\)/g)].map(
-      (match) => match[1],
-    ),
+    commandSchema.options.map((schema) => schema.shape.type.value),
   );
 }
 
@@ -60,6 +58,7 @@ const resourceFilesByRouter = {
   factions: "api/resources/factions.ts",
   feed: "api/resources/feed.ts",
   formation: "api/resources/formation.ts",
+  formationApplicationsResource: "api/resources/formationApplications.ts",
   gate: "api/resources/gate.ts",
   health: "api/resources/health.ts",
   humans: "api/resources/humans.ts",
@@ -92,17 +91,36 @@ function extractServerRoutes() {
   const apiSource = readServer("api/api.ts");
   const routes = new Set();
 
+  function collectRouter(prefix, routerName, ancestors = []) {
+    assert.ok(
+      !ancestors.includes(routerName),
+      `Cyclic router mounting: ${routerName}`,
+    );
+    const file = resourceFilesByRouter[routerName];
+    assert.ok(file, `Missing route parser mapping for router ${routerName}`);
+    const source = readServer(file);
+    const routeRegex = new RegExp(
+      `${routerName}\\.(?:get|post|put|patch|delete|options|head)\\("([^"]+)"`,
+      "g",
+    );
+    for (const match of source.matchAll(routeRegex))
+      routes.add(normalizeRoute(joinRoute(prefix, match[1])));
+    const nestedRegex = new RegExp(
+      `${routerName}\\.route\\("([^"]+)",\\s*([A-Za-z0-9_]+)\\)`,
+      "g",
+    );
+    for (const match of source.matchAll(nestedRegex))
+      collectRouter(joinRoute(prefix, match[1]), match[2], [
+        ...ancestors,
+        routerName,
+      ]);
+  }
+
   for (const match of apiSource.matchAll(
     /api\.route\("([^"]+)",\s*([A-Za-z0-9_]+)\)/g,
   )) {
     const [, prefix, routerName] = match;
-    const file = resourceFilesByRouter[routerName];
-    assert.ok(file, `Missing route parser mapping for router ${routerName}`);
-    const source = readServer(file);
-    const routeRegex = new RegExp(`${routerName}\\.\\w+\\("([^"]+)"`, "g");
-    for (const routeMatch of source.matchAll(routeRegex)) {
-      routes.add(normalizeRoute(joinRoute(`/api${prefix}`, routeMatch[1])));
-    }
+    collectRouter(`/api${prefix}`, routerName);
   }
 
   for (const match of apiSource.matchAll(/api\.\w+\("([^"]+)"/g)) {

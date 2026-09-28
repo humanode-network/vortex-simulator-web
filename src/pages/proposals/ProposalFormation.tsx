@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ProposalPageHeader } from "@/components/ProposalPageHeader";
 import {
-  apiFormationJoin,
   apiFormationMilestoneSubmit,
   apiFormationProjectFinish,
   apiProposalFormationPage,
@@ -24,12 +23,27 @@ import { ProposalFormationActions } from "./formation/ProposalFormationActions";
 import { ProposalFormationStatus } from "./formation/ProposalFormationStatus";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
+import { FormationApplications } from "./formation/FormationApplications";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
+  const auth = useAuth();
+  return (
+    <FormationWorkspace
+      key={`${id}:${auth.authenticated ? auth.address : "public"}`}
+      id={id}
+    />
+  );
+};
+
+const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [applicationState, setApplicationState] = useState<{
+    key: string;
+    pending: boolean;
+  } | null>(null);
   const {
     loadError,
     page: project,
@@ -93,6 +107,9 @@ const ProposalFormation: React.FC = () => {
   });
   const stageForHeader =
     project.projectState === "awaiting_milestone_vote" ? "vote" : "build";
+  const applicationKey = `${id}:${auth.address}`;
+  const applicationStateReady = applicationState?.key === applicationKey;
+  const pendingApplication = applicationStateReady && applicationState.pending;
 
   const runAction = async (fn: () => Promise<void>) => {
     setActionError(null);
@@ -136,11 +153,16 @@ const ProposalFormation: React.FC = () => {
               await apiFormationProjectFinish({ proposalId: id });
             })
           }
+          pendingApplication={pendingApplication}
+          applicationStateReady={applicationStateReady}
           onJoinProject={() =>
-            void runAction(async () => {
-              if (!id) return;
-              await apiFormationJoin({ proposalId: id });
-            })
+            document
+              .getElementById(
+                pendingApplication
+                  ? "formation-current-application"
+                  : "formation-apply-form",
+              )
+              ?.scrollIntoView({ block: "center" })
           }
           onOpenMilestoneVote={() => {
             if (!id) return;
@@ -158,6 +180,21 @@ const ProposalFormation: React.FC = () => {
           pendingMilestone={pendingMilestone}
         />
       </div>
+
+      {id && (
+        <FormationApplications
+          proposalId={id}
+          isProposer={isProposerViewer}
+          canApply={actionVisibility.showJoinProject}
+          openRoles={project.openSlots}
+          onPendingChange={(pending) =>
+            setApplicationState({ key: applicationKey, pending })
+          }
+          onChanged={async () => {
+            setProject(await apiProposalFormationPage(id));
+          }}
+        />
+      )}
 
       {id ? (
         <div className="flex justify-end">

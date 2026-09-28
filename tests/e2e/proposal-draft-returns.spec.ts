@@ -236,7 +236,11 @@ test("the proposer returns a Proposal Pool entry through an explicit confirmatio
   ).toBeVisible();
   await dialog.getByRole("button", { name: "Return to drafts" }).click();
 
-  await expect(page).toHaveURL(`/app/proposals/new?draftId=${returnedDraftId}`);
+  await expect(page).toHaveURL(
+    (url) =>
+      url.pathname === "/app/proposals/new" &&
+      url.searchParams.get("draftId") === returnedDraftId,
+  );
   expect(command).toMatchObject({
     type: "proposal.returnToDraft",
     payload: { proposalId },
