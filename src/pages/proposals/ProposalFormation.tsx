@@ -24,6 +24,7 @@ import { ProposalFormationStatus } from "./formation/ProposalFormationStatus";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 import { FormationApplications } from "./formation/FormationApplications";
+import { FormationTeamMembership } from "./formation/FormationTeamMembership";
 
 const ProposalFormation: React.FC = () => {
   const { id } = useParams();
@@ -40,6 +41,7 @@ const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [teamRevision, setTeamRevision] = useState(0);
   const [applicationState, setApplicationState] = useState<{
     key: string;
     pending: boolean;
@@ -139,6 +141,21 @@ const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
         proposer={project.proposer}
       />
 
+      {id && (
+        <FormationTeamMembership
+          proposalId={id}
+          revision={teamRevision}
+          team={{
+            slots: project.teamSlots,
+            locked: project.lockedTeam,
+            open: project.openSlots,
+          }}
+          onChanged={async () => {
+            setProject(await apiProposalFormationPage(id));
+          }}
+        />
+      )}
+
       <div className="grid gap-4 xl:grid-cols-2">
         <ProposalFormationStatus stageData={project.stageData} />
 
@@ -192,6 +209,7 @@ const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
           }
           onChanged={async () => {
             setProject(await apiProposalFormationPage(id));
+            setTeamRevision((value) => value + 1);
           }}
         />
       )}
@@ -210,7 +228,6 @@ const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
         stats={[
           { label: "Budget ask", value: project.budget },
           { label: "Time left", value: project.timeLeft },
-          { label: "Team slots", value: project.teamSlots },
           { label: "Milestones", value: project.milestones },
         ]}
         overview={project.overview}
@@ -221,6 +238,7 @@ const FormationWorkspace: React.FC<{ id?: string }> = ({ id }) => {
         teamLocked={project.lockedTeam}
         openSlots={project.openSlots}
         milestonesDetail={project.milestonesDetail}
+        showTeam={false}
       />
 
       <ProposalDeliberation proposalId={id} />

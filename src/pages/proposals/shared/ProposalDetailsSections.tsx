@@ -19,6 +19,7 @@ type ProposalDetailsSectionsProps = {
   overview: string;
   showBudgetScope?: boolean;
   showExecutionPlan?: boolean;
+  showTeam?: boolean;
   stats: ProposalSummaryStat[];
   summary: string;
   teamLocked?: { name: string; role: string }[];
@@ -36,14 +37,17 @@ export const ProposalDetailsSections: React.FC<
   overview,
   showBudgetScope,
   showExecutionPlan,
+  showTeam = true,
   stats,
   summary,
   teamLocked,
 }) => {
-  const showTeamMilestones =
-    Boolean(teamLocked) && Boolean(openSlots) && Boolean(milestonesDetail);
   const authoredTimelineVisible =
     authoring.kind === "project" && authoring.timeline.length > 0;
+  const showTeamMilestones =
+    Boolean(milestonesDetail) &&
+    ((showTeam && Boolean(teamLocked) && Boolean(openSlots)) ||
+      (!showTeam && !authoredTimelineVisible));
 
   return (
     <>
@@ -66,6 +70,7 @@ export const ProposalDetailsSections: React.FC<
           milestonesDetail={milestonesDetail ?? []}
           sectionTitle={authoredTimelineVisible ? "Team" : undefined}
           showMilestones={!authoredTimelineVisible}
+          showTeam={showTeam}
         />
       ) : null}
     </>

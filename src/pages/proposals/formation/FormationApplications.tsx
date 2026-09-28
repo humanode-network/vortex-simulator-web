@@ -8,7 +8,6 @@ import { useSearchParams } from "react-router";
 import { useAuth } from "@/app/auth/AuthContext";
 import { GlassySection } from "@/components/GlassySection";
 import { Button } from "@/components/primitives/button";
-import { FormationTeamMembership } from "./FormationTeamMembership";
 import { formatLoadError } from "@/lib/errorFormatting";
 import { getApiErrorPayload } from "@/lib/api/http";
 import { formationApplicationError } from "@/lib/formationApplicationUi";
@@ -75,7 +74,6 @@ function ApplicationWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [teamRevision, setTeamRevision] = useState(0);
   const [draft, setDraft] = useState<FormationApplicationDraft>({
     statement: "",
     role: "",
@@ -153,7 +151,6 @@ function ApplicationWorkspace({
     try {
       const result = await apiFormationApplicationCommand(input, key);
       receipts.current.delete(fingerprint);
-      setTeamRevision((value) => value + 1);
       setPage((current) => {
         if (!current) return current;
         const updated = result.application;
@@ -243,16 +240,6 @@ function ApplicationWorkspace({
     : items;
   return (
     <div id="formation-applications" className="flex min-w-0 flex-col gap-4">
-      {proposalId && (
-        <FormationTeamMembership
-          proposalId={proposalId}
-          revision={teamRevision}
-          onChanged={async () => {
-            await reload();
-            await onChanged?.();
-          }}
-        />
-      )}
       {proposalId &&
         page &&
         !isProposer &&

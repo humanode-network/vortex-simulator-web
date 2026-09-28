@@ -43,9 +43,12 @@ async function fixtures(
     if (path === "/api/me")
       return route.fulfill({
         json: {
-          authenticated: true,
-          address: viewer,
-          gate: { eligible: true, expiresAt: "2099-01-01T00:00:00.000Z" },
+          authenticated: viewer !== "anonymous",
+          address: viewer === "anonymous" ? null : viewer,
+          gate: {
+            eligible: viewer !== "anonymous",
+            expiresAt: "2099-01-01T00:00:00.000Z",
+          },
         },
       });
     if (path === "/api/my-governance")
@@ -161,9 +164,24 @@ async function fixtures(
           progress: "0%",
           stageData: [],
           stats: [],
-          lockedTeam: [],
+          lockedTeam: [
+            { name: proposer, role: "Proposer", address: proposer },
+            ...(members > 1
+              ? [
+                  {
+                    name: applicant,
+                    role: "Researcher",
+                    address: applicant,
+                    membershipId: "membership-one",
+                    inferredRole: true,
+                  },
+                ]
+              : []),
+          ],
           openSlots: [
-            { title: "Researcher", desc: "Documentation and testing" },
+            members > 1
+              ? { title: "Tester", desc: "Test the release" }
+              : { title: "Researcher", desc: "Documentation and testing" },
           ],
           milestonesDetail: [],
           attachments: [],
@@ -219,6 +237,50 @@ test("wallet switch refreshes Formation permissions without reloading the page",
     page.getByRole("button", { name: "Apply to join" }),
   ).toBeEnabled();
   await expect(page.getByRole("button", { name: "Submit M1" })).toHaveCount(0);
+});
+
+test("legacy members and their occupied slots appear once above the summary", async ({
+  page,
+}) => {
+  await fixtures(page, proposer, [{ ...application(), status: "accepted" }]);
+  await page.goto(`/app/proposals/${projectId}/formation`);
+  const team = page.getByRole("heading", { name: "Team", exact: true });
+  await expect(team).toHaveCount(1);
+  await expect(page.getByText("2 / 3 team slots filled")).toBeVisible();
+  await expect(
+    page.getByText("Researcher (inferred from original slot order)"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Remove member" }),
+  ).toBeVisible();
+  await expect(page.getByText("Team (locked)")).toHaveCount(0);
+  await expect(
+    page.getByText("Researcher (inferred from original slot order)"),
+  ).toHaveCount(1);
+  const teamBox = await team.boundingBox();
+  const summaryBox = await page
+    .getByRole("heading", { name: "Summary" })
+    .boundingBox();
+  expect(teamBox && summaryBox && teamBox.y < summaryBox.y).toBeTruthy();
+});
+
+test("public viewers see the legacy member without private team actions", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fixtures(page, "anonymous", [{ ...application(), status: "accepted" }]);
+  await page.goto(`/app/proposals/${projectId}/formation`);
+  await expect(page.getByText("2 / 3 team slots filled")).toBeVisible();
+  await expect(
+    page.getByText("Researcher (inferred from original slot order)"),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove member" })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "Leave team" })).toHaveCount(0);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
 });
 
 test("a delayed private list cannot repopulate the page after a wallet switch", async ({

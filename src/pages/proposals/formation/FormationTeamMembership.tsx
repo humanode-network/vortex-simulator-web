@@ -15,18 +15,33 @@ type Props = {
   proposalId: string;
   revision: number;
   onChanged: () => Promise<void>;
+  team?: {
+    slots: string;
+    locked: Array<{
+      name: string;
+      role: string;
+      address?: string;
+      membershipId?: string;
+      inferredRole?: boolean;
+    }>;
+    open: Array<{ title: string; desc: string }>;
+  };
 };
 export function FormationTeamMembership(props: Props) {
   const auth = useAuth();
-  if (!auth.authenticated || !auth.address) return null;
   return (
     <TeamMembershipWorkspace
-      key={`${auth.address}:${props.proposalId}`}
+      key={`${auth.address ?? "public"}:${props.proposalId}`}
       {...props}
     />
   );
 }
-function TeamMembershipWorkspace({ proposalId, revision, onChanged }: Props) {
+function TeamMembershipWorkspace({
+  proposalId,
+  revision,
+  onChanged,
+  team,
+}: Props) {
   const auth = useAuth();
   const [members, setMembers] = useState<FormationTeamMember[]>([]);
   const [selected, setSelected] = useState<FormationTeamMember | null>(null);
@@ -37,6 +52,7 @@ function TeamMembershipWorkspace({ proposalId, revision, onChanged }: Props) {
   const generation = useRef(0);
   const receipts = useRef(new Map<string, string>());
   const reload = useCallback(async () => {
+    if (!auth.authenticated || !auth.address) return;
     const request = ++generation.current;
     try {
       const data = await apiFormationTeam(proposalId);
@@ -52,7 +68,7 @@ function TeamMembershipWorkspace({ proposalId, revision, onChanged }: Props) {
       if (request === generation.current)
         setError(formationApplicationError(cause));
     }
-  }, [proposalId]);
+  }, [proposalId, auth.authenticated, auth.address]);
   useEffect(() => {
     void reload();
     return () => {
@@ -115,24 +131,69 @@ function TeamMembershipWorkspace({ proposalId, revision, onChanged }: Props) {
       setBusy(false);
     }
   }
-  const manageable = members.filter(
-    (member) => member.canLeave || member.canRemove,
-  );
-  if (!manageable.length && !notice && !error) return null;
+  const visibleMembers = team
+    ? [
+        ...team.locked.map((member) => ({
+          key: member.membershipId ?? member.address ?? member.name,
+          address: member.address,
+          name: member.name,
+          role: member.role,
+          inferredRole: member.inferredRole,
+          control: members.find(
+            (row) =>
+              (member.membershipId &&
+                row.membershipId === member.membershipId) ||
+              (member.address && row.address === member.address),
+          ),
+        })),
+        ...members
+          .filter(
+            (member) =>
+              !team.locked.some(
+                (row) =>
+                  row.membershipId === member.membershipId ||
+                  row.address === member.address,
+              ),
+          )
+          .map((member) => ({
+            key: member.membershipId,
+            address: member.address,
+            name: member.address,
+            role: member.role ?? "Contributor",
+            inferredRole: false,
+            control: member,
+          })),
+      ]
+    : members
+        .filter((member) => member.canLeave || member.canRemove)
+        .map((member) => ({
+          key: member.membershipId,
+          address: member.address,
+          name: member.address,
+          role: member.role ?? "Contributor",
+          inferredRole: false,
+          control: member,
+        }));
+  if (!team && !visibleMembers.length && !notice && !error) return null;
   return (
     <GlassySection
-      title="Team participation"
+      title="Team"
       action={
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy}
-          onClick={() => void refresh()}
-        >
-          Refresh team
-        </Button>
+        auth.authenticated ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => void refresh()}
+          >
+            Refresh team
+          </Button>
+        ) : undefined
       }
     >
+      {team && (
+        <p className="text-sm text-muted">{team.slots} team slots filled</p>
+      )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -143,26 +204,58 @@ function TeamMembershipWorkspace({ proposalId, revision, onChanged }: Props) {
           {notice}
         </p>
       )}
-      <div className="space-y-3">
-        {manageable.map((member) => (
+      <div className="divide-y divide-border/60">
+        {visibleMembers.map((member) => (
           <div
-            key={member.membershipId}
-            className="flex flex-wrap items-center justify-between gap-3"
+            key={member.key}
+            className="flex flex-wrap items-center justify-between gap-3 py-3"
           >
             <div className="min-w-0 text-sm [overflow-wrap:anywhere]">
-              <AddressInline address={member.address} />
-              {member.role && <p className="text-muted">{member.role}</p>}
+              {member.address ? (
+                <AddressInline address={member.address} />
+              ) : (
+                <span>{member.name}</span>
+              )}
+              <p className="text-muted">
+                {member.role}
+                {member.inferredRole && " (inferred from original slot order)"}
+              </p>
             </div>
-            <Button
-              variant="outline"
-              disabled={busy || (member.canRemove && !auth.eligible)}
-              onClick={() => setSelected(member)}
-            >
-              {member.canLeave ? "Leave team" : "Remove member"}
-            </Button>
+            {member.control &&
+              (member.control.canLeave || member.control.canRemove) && (
+                <Button
+                  variant="outline"
+                  disabled={
+                    busy || (member.control.canRemove && !auth.eligible)
+                  }
+                  onClick={() => setSelected(member.control ?? null)}
+                >
+                  {member.control.canLeave ? "Leave team" : "Remove member"}
+                </Button>
+              )}
           </div>
         ))}
+        {visibleMembers.length === 0 && (
+          <p className="py-3 text-sm text-muted">No team members yet.</p>
+        )}
       </div>
+      {team && (
+        <div className="border-t border-border/60 pt-3">
+          <h3 className="text-sm font-semibold">Open positions</h3>
+          {team.open.length ? (
+            <ul className="mt-2 divide-y divide-border/60">
+              {team.open.map((slot, index) => (
+                <li key={`${slot.title}:${index}`} className="py-2 text-sm">
+                  <p className="font-medium">{slot.title}</p>
+                  {slot.desc && <p className="text-muted">{slot.desc}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-muted">No open positions.</p>
+          )}
+        </div>
+      )}
       {selected && (
         <FormationConfirmation
           label="Confirm team departure"

@@ -463,6 +463,7 @@ type ProposalTeamMilestonesCardProps = {
   milestonesDetail: ProposalMilestoneDetail[];
   sectionTitle?: string;
   showMilestones?: boolean;
+  showTeam?: boolean;
 };
 
 export function ProposalTeamMilestonesCard({
@@ -471,69 +472,72 @@ export function ProposalTeamMilestonesCard({
   milestonesDetail,
   sectionTitle = "Team & milestones",
   showMilestones = true,
+  showTeam = true,
 }: ProposalTeamMilestonesCardProps) {
   return (
     <section className="space-y-4 text-sm text-muted">
-      <SectionHeader>{sectionTitle}</SectionHeader>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <TitledSurface title="Team (locked)">
-          <ul className="space-y-2 text-sm text-muted">
-            {teamLocked.map((member) => (
-              <Surface
-                key={member.name}
-                as="li"
-                variant="panel"
-                radius="xl"
-                shadow="control"
-                className="flex items-center justify-between px-3 py-2"
-              >
-                <span className="font-semibold text-text">{member.name}</span>
-                <span className="text-xs text-muted">{member.role}</span>
-              </Surface>
-            ))}
-            {teamLocked.length === 0 && (
-              <Surface
-                as="li"
-                variant="panel"
-                radius="xl"
-                borderStyle="dashed"
-                className="px-3 py-3 text-center text-xs text-muted"
-              >
-                No locked team members yet.
-              </Surface>
-            )}
-          </ul>
-        </TitledSurface>
+      <SectionHeader>{showTeam ? sectionTitle : "Milestones"}</SectionHeader>
+      {showTeam && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <TitledSurface title="Team (locked)">
+            <ul className="space-y-2 text-sm text-muted">
+              {teamLocked.map((member) => (
+                <Surface
+                  key={member.name}
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="flex items-center justify-between px-3 py-2"
+                >
+                  <span className="font-semibold text-text">{member.name}</span>
+                  <span className="text-xs text-muted">{member.role}</span>
+                </Surface>
+              ))}
+              {teamLocked.length === 0 && (
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  borderStyle="dashed"
+                  className="px-3 py-3 text-center text-xs text-muted"
+                >
+                  No locked team members yet.
+                </Surface>
+              )}
+            </ul>
+          </TitledSurface>
 
-        <TitledSurface title="Open slots (positions)">
-          <ul className="space-y-2 text-sm text-muted">
-            {openSlots.map((slot) => (
-              <Surface
-                key={slot.title}
-                as="li"
-                variant="panel"
-                radius="xl"
-                shadow="control"
-                className="px-3 py-2"
-              >
-                <p className="font-semibold text-text">{slot.title}</p>
-                <p className="text-xs text-muted">{slot.desc}</p>
-              </Surface>
-            ))}
-            {openSlots.length === 0 && (
-              <Surface
-                as="li"
-                variant="panel"
-                radius="xl"
-                borderStyle="dashed"
-                className="px-3 py-3 text-center text-xs text-muted"
-              >
-                No open slots.
-              </Surface>
-            )}
-          </ul>
-        </TitledSurface>
-      </div>
+          <TitledSurface title="Open slots (positions)">
+            <ul className="space-y-2 text-sm text-muted">
+              {openSlots.map((slot) => (
+                <Surface
+                  key={slot.title}
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  shadow="control"
+                  className="px-3 py-2"
+                >
+                  <p className="font-semibold text-text">{slot.title}</p>
+                  <p className="text-xs text-muted">{slot.desc}</p>
+                </Surface>
+              ))}
+              {openSlots.length === 0 && (
+                <Surface
+                  as="li"
+                  variant="panel"
+                  radius="xl"
+                  borderStyle="dashed"
+                  className="px-3 py-3 text-center text-xs text-muted"
+                >
+                  No open slots.
+                </Surface>
+              )}
+            </ul>
+          </TitledSurface>
+        </div>
+      )}
 
       {showMilestones ? (
         <TitledSurface title="Milestones">
