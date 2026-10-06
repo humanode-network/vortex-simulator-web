@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEventHandler } from "react";
 import { Link } from "react-router";
 import { Check, Copy } from "lucide-react";
 import { shortAddress } from "@/lib/profileUi";
@@ -10,6 +10,7 @@ type AddressInlineProps = {
   className?: string;
   textClassName?: string;
   showCopy?: boolean;
+  onNavigate?: MouseEventHandler<HTMLAnchorElement>;
 };
 
 export const AddressInline: React.FC<AddressInlineProps> = ({
@@ -18,6 +19,7 @@ export const AddressInline: React.FC<AddressInlineProps> = ({
   className,
   textClassName,
   showCopy = true,
+  onNavigate,
 }) => {
   const [copied, setCopied] = useState(false);
   const normalizedAddress = address?.trim() ?? "";
@@ -45,6 +47,7 @@ export const AddressInline: React.FC<AddressInlineProps> = ({
       {normalizedAddress ? (
         <Link
           to={`/app/human-nodes/${encodeURIComponent(normalizedAddress)}`}
+          onClick={onNavigate}
           title={normalizedAddress}
           className={`min-w-0 truncate font-mono text-xs text-text hover:underline ${textClassName ?? ""}`.trim()}
         >

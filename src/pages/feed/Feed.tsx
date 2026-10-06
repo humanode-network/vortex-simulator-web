@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/app/auth/AuthContext";
 import { PageHint } from "@/components/PageHint";
+import { Button } from "@/components/primitives/button";
 import { factionIdFromHref, feedItemKey } from "@/lib/feedUi";
 import type { FeedScope } from "@/lib/feedScopeRouting";
 import {
@@ -47,7 +48,7 @@ const Feed: React.FC = () => {
     feedItems,
     handleLoadMore,
     loadingMore,
-    nextCursor,
+    hasMore,
     sortedFeed,
   } = useFeedItems({
     address: auth.address,
@@ -98,7 +99,7 @@ const Feed: React.FC = () => {
 
   useEffect(() => {
     const node = loadMoreRef.current;
-    if (!node || !nextCursor) return;
+    if (!node || !hasMore || loadingMore || loadError) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
@@ -109,7 +110,7 @@ const Feed: React.FC = () => {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [handleLoadMore, nextCursor]);
+  }, [handleLoadMore, hasMore, loadingMore, loadError, feedItems?.length]);
 
   return (
     <div className="feed-page">
@@ -123,7 +124,11 @@ const Feed: React.FC = () => {
         <FormationApplications urgent={feedScope === "urgent"} />
       )}
 
-      <FeedStatusMessages feedItems={feedItems} loadError={loadError} />
+      <FeedStatusMessages
+        feedItems={feedItems}
+        hasMore={hasMore}
+        loadError={loadError}
+      />
 
       <FeedListSection
         chamberPagesById={chamberPagesById}
@@ -141,9 +146,18 @@ const Feed: React.FC = () => {
         sortedFeed={sortedFeed}
       />
 
-      {nextCursor ? (
-        <div className="flex w-full justify-center">
+      {hasMore ? (
+        <div className="flex w-full flex-col items-center gap-2">
           <div ref={loadMoreRef} className="h-1 w-full" aria-hidden="true" />
+          <Button
+            variant="ghost"
+            size="compact"
+            disabled={loadingMore}
+            aria-busy={loadingMore}
+            onClick={() => void handleLoadMore()}
+          >
+            Load more
+          </Button>
         </div>
       ) : null}
       {loadingMore ? (

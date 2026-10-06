@@ -181,7 +181,9 @@ test("canceling withdrawal and removal changes no membership", async ({
   await expect(
     page.getByRole("button", { name: "Withdraw application", exact: true }),
   ).toBeVisible();
-  await page.goto(`${root}/session?scenario=accepted&person=applicant`);
+  await page.goto(
+    `${root}/session?scenario=accepted&person=applicant&view=project`,
+  );
   await page.getByRole("button", { name: "Leave team", exact: true }).click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(
@@ -191,7 +193,9 @@ test("canceling withdrawal and removal changes no membership", async ({
   await expect(
     page.getByRole("button", { name: "Leave team", exact: true }),
   ).toBeVisible();
-  await page.goto(`${root}/session?scenario=accepted&person=proposer`);
+  await page.goto(
+    `${root}/session?scenario=accepted&person=proposer&view=project`,
+  );
   await page
     .getByRole("button", { name: "Remove member", exact: true })
     .click();
@@ -219,7 +223,9 @@ for (const width of [390, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth + 1,
       ),
     ).toBe(true);
-    await page.goto(`${root}/session?scenario=accepted&person=proposer`);
+    await page.goto(
+      `${root}/session?scenario=accepted&person=proposer&view=project`,
+    );
     await page
       .getByRole("button", { name: "Remove member", exact: true })
       .click();

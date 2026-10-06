@@ -16,12 +16,25 @@ import { useProposalPageData } from "./hooks/useProposalPageData";
 import { ProposalPageShell } from "./shared/ProposalPageShell";
 import { ProposalDetailsSections } from "./shared/ProposalDetailsSections";
 import { ProposalStageStatus } from "./shared/ProposalStageStatus";
+import { FormationTeamMembership } from "./formation/FormationTeamMembership";
+import { useAuth } from "@/app/auth/AuthContext";
 
 const ProposalFinished: React.FC = () => {
   const { id } = useParams();
+  const auth = useAuth();
+  return (
+    <FinishedWorkspace
+      key={`${id}:${auth.authenticated ? auth.address : "public"}`}
+      id={id}
+    />
+  );
+};
+
+const FinishedWorkspace: React.FC<{ id?: string }> = ({ id }) => {
   const {
     loadError,
     page: proposal,
+    reloadPage,
     timeline,
     timelineError,
   } = useProposalPageData({
@@ -76,6 +89,17 @@ const ProposalFinished: React.FC = () => {
         ) : null}
       </ProposalPageHeader>
 
+      {id && showFormationDetails ? (
+        <FormationTeamMembership
+          proposalId={id}
+          revision={0}
+          team={{ locked: proposal.lockedTeam, open: proposal.openSlots }}
+          onChanged={async () => {
+            await reloadPage();
+          }}
+        />
+      ) : null}
+
       <section className="space-y-3">
         <SectionHeader>{proposal.terminalLabel}</SectionHeader>
         <Surface
@@ -103,6 +127,7 @@ const ProposalFinished: React.FC = () => {
         authoring={proposal.authoring}
         showExecutionPlan={proposal.formationEligible}
         showBudgetScope={proposal.formationEligible}
+        showTeam={!showFormationDetails}
         teamLocked={showFormationDetails ? proposal.lockedTeam : undefined}
         openSlots={showFormationDetails ? proposal.openSlots : undefined}
         milestonesDetail={

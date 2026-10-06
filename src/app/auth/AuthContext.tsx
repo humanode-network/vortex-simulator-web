@@ -3,11 +3,11 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
 import {
-  apiHuman,
   apiMe,
   apiNonce,
   apiLogout,
@@ -21,8 +21,6 @@ import {
   getPolkadotAccounts,
   signPolkadotMessage,
 } from "@/lib/polkadotExtension";
-import { governanceIdentityStatuses } from "@/lib/humanNodesUi";
-import { Button } from "@/components/primitives/button";
 
 type AuthState = {
   enabled: boolean;
@@ -37,6 +35,7 @@ type AuthState = {
 type AuthActions = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  refresh: () => Promise<ApiMeResponse | null>;
 };
 
 type AuthContextValue = AuthState & AuthActions;
@@ -44,11 +43,6 @@ type AuthContextValue = AuthState & AuthActions;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = "vortex:auth:selectedAddress";
-
-function shortAddress(address: string): string {
-  if (address.length <= 14) return address;
-  return `${address.slice(0, 6)}…${address.slice(-6)}`;
-}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const enabled = SIM_AUTH_ENABLED;
@@ -67,41 +61,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
   );
   const [lastError, setLastError] = useState<string | null>(null);
+  const sessionRevision = useRef(0);
+  const changingSession = useRef(false);
 
-  const refresh = useCallback(async (): Promise<ApiMeResponse | null> => {
-    if (!enabled) return null;
-    setLoading(true);
-    setLastError(null);
-    try {
-      const next = await apiMe();
-      if (next.authenticated) {
-        setAuthenticated(true);
-        setAddress(next.address);
-        setEligible(next.gate.eligible);
-        setGateReason(next.gate.eligible ? undefined : next.gate.reason);
-      } else {
-        setAuthenticated(false);
-        setAddress(null);
-        setEligible(false);
-        setGateReason(undefined);
+  const refreshSession =
+    useCallback(async (): Promise<ApiMeResponse | null> => {
+      if (!enabled) return null;
+      const revision = ++sessionRevision.current;
+      setLoading(true);
+      setLastError(null);
+      try {
+        const next = await apiMe();
+        if (revision !== sessionRevision.current) return null;
+        if (next.authenticated) {
+          setAuthenticated(true);
+          setAddress(next.address);
+          setEligible(next.gate.eligible);
+          setGateReason(next.gate.eligible ? undefined : next.gate.reason);
+        } else {
+          setAuthenticated(false);
+          setAddress(null);
+          setEligible(false);
+          setGateReason(undefined);
+        }
+        return next;
+      } catch (error) {
+        if (revision !== sessionRevision.current) return null;
+        setLastError(
+          formatAuthConnectError({ message: (error as Error).message }),
+        );
+        return null;
+      } finally {
+        if (revision === sessionRevision.current) setLoading(false);
       }
-      return next;
-    } catch (error) {
-      setLastError(
-        formatAuthConnectError({ message: (error as Error).message }),
-      );
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [enabled]);
+    }, [enabled]);
+
+  const refresh = useCallback(() => {
+    if (changingSession.current) return Promise.resolve(null);
+    return refreshSession();
+  }, [refreshSession]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
   const connect = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || changingSession.current) return;
+    changingSession.current = true;
+    sessionRevision.current++;
     setLastError(null);
     setLoading(true);
     try {
@@ -136,13 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // ignore
       }
 
-      const next = await refresh();
+      const next = await refreshSession();
       if (!next?.authenticated) {
-        const isHttp = window.location.protocol === "http:";
         setLastError(
-          isHttp
-            ? "Connected, but the auth cookie was not stored (HTTP). Use set `DEV_INSECURE_COOKIES=true` for local dev."
-            : "Connected, but the auth cookie was not stored. Check that the backend is running and cookies are allowed.",
+          "Your wallet was verified, but the session could not be saved. Please allow cookies and try again.",
         );
       }
     } catch (error) {
@@ -150,23 +154,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         formatAuthConnectError({ message: (error as Error).message }),
       );
     } finally {
+      changingSession.current = false;
       setLoading(false);
     }
-  }, [enabled, lastSelectedAddress, refresh]);
+  }, [enabled, lastSelectedAddress, refreshSession]);
 
   const disconnect = useCallback(async () => {
-    if (!enabled) return;
+    if (!enabled || changingSession.current) return;
+    changingSession.current = true;
+    sessionRevision.current++;
     setLastError(null);
     setLoading(true);
     try {
       await apiLogout();
-      await refresh();
+      setAuthenticated(false);
+      setAddress(null);
+      setEligible(false);
+      setGateReason(undefined);
+      await refreshSession();
     } catch (error) {
-      setLastError((error as Error).message);
+      setLastError(
+        formatAuthConnectError({ message: (error as Error).message }),
+      );
     } finally {
+      changingSession.current = false;
       setLoading(false);
     }
-  }, [enabled, refresh]);
+  }, [enabled, refreshSession]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -186,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastError,
     connect,
     disconnect,
+    refresh,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -204,156 +219,8 @@ export function useAuth(): AuthContextValue {
       lastError: null,
       connect: async () => {},
       disconnect: async () => {},
+      refresh: async () => null,
     };
   }
   return ctx;
-}
-
-export function AuthSidebarPanel() {
-  const auth = useAuth();
-  const [activityState, setActivityState] = useState<{
-    governor: boolean;
-    activeGovernor: boolean;
-    humanNodeActive: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!auth.enabled || !auth.authenticated || !auth.address) {
-      setActivityState(null);
-      return;
-    }
-
-    const address = auth.address;
-    let active = true;
-    const syncActivity = async () => {
-      try {
-        const profile = await apiHuman(address);
-        if (!active) return;
-        setActivityState({
-          governor: profile.governor,
-          activeGovernor: profile.governorActive,
-          humanNodeActive: profile.humanNodeActive,
-        });
-      } catch {
-        if (!active) return;
-        setActivityState({
-          governor: false,
-          activeGovernor: false,
-          humanNodeActive: false,
-        });
-      }
-    };
-
-    void syncActivity();
-    const timer = window.setInterval(() => {
-      void syncActivity();
-    }, 60_000);
-
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-    };
-  }, [auth.address, auth.authenticated, auth.enabled]);
-
-  if (!auth.enabled) return null;
-
-  const addressLabel = auth.address
-    ? shortAddress(auth.address)
-    : "Not connected";
-  const humanNodeActive = Boolean(
-    auth.authenticated && activityState?.humanNodeActive,
-  );
-  const governor = Boolean(auth.authenticated && activityState?.governor);
-  const activeGovernor = Boolean(
-    auth.authenticated && activityState?.activeGovernor,
-  );
-  const identityStatuses = governanceIdentityStatuses({
-    governor,
-    activeGovernor,
-    humanNode: humanNodeActive,
-  });
-
-  const gateError =
-    auth.authenticated && !auth.eligible
-      ? auth.gateReason === "rpc_not_configured"
-        ? "Gate RPC is not configured. Set `HUMANODE_RPC_URL` in the runtime environment or set `humanodeRpcUrl` in `/sim-config.json` (or use `DEV_BYPASS_GATE=true` for local dev)."
-        : auth.gateReason === "rpc_error"
-          ? "Gate RPC request failed. Check that `HUMANODE_RPC_URL` (or `/sim-config.json`) is reachable and supports `state_getStorage`."
-          : null
-      : null;
-
-  return (
-    <div className="sidebar__auth">
-      <div className="sidebar__authRow">
-        <span className="sidebar__authKicker">Wallet</span>
-        <span className="sidebar__authValue">{addressLabel}</span>
-      </div>
-      {(
-        [
-          ["humanNode", auth.gateReason],
-          [
-            "governor",
-            "Governor status is earned through the Vortex tier system.",
-          ],
-          [
-            "activeGovernor",
-            "Active Governor status reflects completed governing thresholds for the current era.",
-          ],
-        ] as const
-      ).map(([key, title]) => {
-        const status = identityStatuses[key];
-        return (
-          <div className="sidebar__authRow" key={key}>
-            <span className="sidebar__authKicker">{status.label}</span>
-            <span
-              className={
-                status.active
-                  ? "sidebar__authValue sidebar__authValue--ok"
-                  : "sidebar__authValue sidebar__authValue--warn"
-              }
-              title={title}
-            >
-              {status.value}
-            </span>
-          </div>
-        );
-      })}
-
-      {auth.lastError ? (
-        <div className="sidebar__authError" role="status">
-          {auth.lastError}
-        </div>
-      ) : gateError ? (
-        <div className="sidebar__authError" role="status">
-          {gateError}
-        </div>
-      ) : null}
-
-      <div className="sidebar__authButtons">
-        {auth.authenticated ? (
-          <Button
-            type="button"
-            size="compact"
-            variant="ghost"
-            className="sidebar__authBtn"
-            disabled={auth.loading}
-            onClick={() => void auth.disconnect()}
-          >
-            Disconnect
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            size="compact"
-            variant="primary"
-            className="sidebar__authBtn"
-            disabled={auth.loading}
-            onClick={() => void auth.connect()}
-          >
-            Connect
-          </Button>
-        )}
-      </div>
-    </div>
-  );
 }

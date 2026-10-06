@@ -290,11 +290,11 @@ test("My Drafts keeps private and public drafts together and toggles visibility"
   });
 
   await page.goto("/app/proposals/drafts");
-  const authPanel = page.locator(".sidebar__auth");
-  const governorRow = authPanel.locator(".sidebar__authRow", {
+  await page.locator(".sidebar__brandLink").hover();
+  const governorRow = page.locator(".sidebar__identityRow", {
     has: page.getByText("Governor", { exact: true }),
   });
-  const activeGovernorRow = authPanel.locator(".sidebar__authRow", {
+  const activeGovernorRow = page.locator(".sidebar__identityRow", {
     has: page.getByText("Active governor", { exact: true }),
   });
   await expect(governorRow.getByText("Active", { exact: true })).toBeVisible();

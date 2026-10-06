@@ -1187,7 +1187,7 @@ export type ProposalFinishedPageDto = {
   timeLeft: string;
   stageData: { title: string; description: string; value: string }[];
   stats: { label: string; value: string }[];
-  lockedTeam: { name: string; role: string }[];
+  lockedTeam: FormationProposalPageDto["lockedTeam"];
   openSlots: { title: string; desc: string }[];
   milestonesDetail: { title: string; desc: string }[];
   attachments: { id: string; title: string; href?: string }[];

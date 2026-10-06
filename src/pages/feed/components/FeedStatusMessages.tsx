@@ -4,11 +4,13 @@ import type { FeedItemDto } from "@/types/api";
 
 type FeedStatusMessagesProps = {
   feedItems: FeedItemDto[] | null;
+  hasMore: boolean;
   loadError: string | null;
 };
 
 export function FeedStatusMessages({
   feedItems,
+  hasMore,
   loadError,
 }: FeedStatusMessagesProps) {
   return (
@@ -24,7 +26,10 @@ export function FeedStatusMessages({
         </p>
       ) : null}
 
-      {feedItems !== null && feedItems.length === 0 && !loadError ? (
+      {feedItems !== null &&
+      feedItems.length === 0 &&
+      !hasMore &&
+      !loadError ? (
         <NoDataYetBar label="feed activity" />
       ) : null}
     </>

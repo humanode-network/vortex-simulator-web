@@ -58,8 +58,11 @@ test("Codex views, expansion, and searches remain truthful and addressable", asy
   await expect(page.getByText("No Codex entry matches")).toBeVisible();
 
   await search.fill("");
-  await page.getByRole("tab", { name: "Transgression matrix" }).click();
+  const matrixTab = page.getByRole("tab", { name: "Transgression matrix" });
+  await matrixTab.click();
+  await expect(matrixTab).toHaveAttribute("aria-selected", "true");
   const firstDetails = page
+    .getByRole("tabpanel", { name: "Transgression matrix" })
     .getByRole("button", { name: "View details" })
     .first();
   await firstDetails.click();
@@ -95,7 +98,10 @@ test("Codex keyboard tabs and cross-view deep links preserve a visible destinati
   await page.getByRole("tab", { name: "Transgression matrix" }).click();
   const search = page.getByRole("searchbox", { name: "Search Humanode Codex" });
   await search.fill("Threats, retaliation");
-  await page.getByRole("button", { name: "View details" }).click();
+  await page
+    .getByRole("tabpanel", { name: "Transgression matrix" })
+    .getByRole("button", { name: "View details" })
+    .click();
   await page
     .getByRole("link", { name: /G-12 · Full governance restriction/ })
     .click();
