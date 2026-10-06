@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { apiHuman, apiMyGovernance } from "@/lib/apiClient";
+import { loadFeedViewer } from "@/lib/feedUrgent";
 import type { FeedScope } from "@/lib/feedScopeRouting";
 import type { GovernorOpportunityAccountingDto } from "@/types/api";
 
@@ -37,26 +37,11 @@ export function useFeedChamberFilters(input: {
     setChambersLoading(true);
     (async () => {
       try {
-        const [governance, profile] = await Promise.all([
-          apiMyGovernance(
-            feedScope === "urgent"
-              ? { opportunityState: "available", opportunityLimit: 50 }
-              : undefined,
-          ),
-          apiHuman(address),
-        ]);
+        const viewer = await loadFeedViewer(address, feedScope === "urgent");
         if (!active) return;
-        const chamberIds = governance.myChamberIds ?? [];
-        const unique = Array.from(
-          new Set(["general", ...chamberIds.map((id) => id.toLowerCase())]),
-        );
-        setChamberFilters(unique);
-        setViewerGovernorActive(Boolean(profile.governorActive));
-        setGovernorOpportunities(
-          feedScope === "urgent"
-            ? (governance.opportunityAccounting ?? null)
-            : null,
-        );
+        setChamberFilters(viewer.chambers);
+        setViewerGovernorActive(viewer.isGovernorActive);
+        setGovernorOpportunities(viewer.governorOpportunities);
       } catch (error) {
         if (!active) return;
         setChamberFilters([]);

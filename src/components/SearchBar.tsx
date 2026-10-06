@@ -4,13 +4,14 @@ import type {
   ReactNode,
   SetStateAction,
 } from "react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/primitives/input";
 import { Button } from "@/components/primitives/button";
 import { Select } from "@/components/primitives/select";
 import { Surface } from "@/components/Surface";
 import { Kicker } from "@/components/Kicker";
+import { useDismissOutside } from "@/hooks/useDismissOutside";
 
 type FiltersConfigField<TFilters extends Record<string, string>> = {
   key: keyof TFilters & string;
@@ -55,6 +56,15 @@ export function SearchBar<
   onApplyFilters,
 }: SearchBarProps<TFilters>) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasFilters = Boolean(filtersContent || filtersConfig?.length);
+  const dismissFilters = useCallback(() => setFiltersOpen(false), []);
+  useDismissOutside(filtersOpen && hasFilters, containerRef, dismissFilters);
+  const closeFilters = () => {
+    inputRef.current?.focus({ preventScroll: true });
+    setFiltersOpen(false);
+  };
   const content =
     filtersContent ||
     (filtersConfig ? (
@@ -64,6 +74,7 @@ export function SearchBar<
             <Kicker>{field.label}</Kicker>
             <Select
               className="w-full"
+              aria-label={field.label}
               value={filtersState?.[field.key] ?? field.options[0]?.value ?? ""}
               onChange={(e) => {
                 const current = (filtersState ?? {}) as TFilters;
@@ -83,9 +94,7 @@ export function SearchBar<
           </div>
         ))}
       </div>
-    ) : (
-      "Filters are not configured for this search yet."
-    ));
+    ) : null);
 
   return (
     <div
@@ -94,18 +103,29 @@ export function SearchBar<
         className,
       )}
     >
-      <div className="relative flex-1">
+      <div
+        ref={containerRef}
+        className="relative flex-1"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && filtersOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeFilters();
+          }
+        }}
+      >
         <Input
+          ref={inputRef}
           type="search"
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           aria-label={ariaLabel || placeholder}
-          onFocus={() => setFiltersOpen(true)}
-          onClick={() => setFiltersOpen(true)}
+          onFocus={() => setFiltersOpen(hasFilters)}
+          onClick={() => setFiltersOpen(hasFilters)}
           className={cn("w-full text-text", inputClassName)}
         />
-        {filtersOpen ? (
+        {filtersOpen && hasFilters ? (
           <Surface
             variant="panel"
             radius="2xl"
@@ -117,16 +137,18 @@ export function SearchBar<
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setFiltersOpen(false)}
+                type="button"
+                onClick={closeFilters}
               >
                 Close
               </Button>
               <Button
+                type="button"
                 size="sm"
                 variant="primary"
                 onClick={() => {
                   onApplyFilters?.();
-                  setFiltersOpen(false);
+                  closeFilters();
                 }}
               >
                 Apply

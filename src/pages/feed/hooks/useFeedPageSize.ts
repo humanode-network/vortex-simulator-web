@@ -1,9 +1,8 @@
 import type { RefObject } from "react";
 import { useEffect, useState } from "react";
+import { FEED_MIN_PAGE_SIZE, FEED_MAX_PAGE_SIZE } from "@/lib/feedScopeRouting";
 
 const FEED_CARD_ESTIMATE = 240;
-export const FEED_MIN_PAGE_SIZE = 6;
-export const FEED_MAX_PAGE_SIZE = 30;
 
 export function useFeedPageSize(input: {
   address?: string | null;

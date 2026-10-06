@@ -117,7 +117,7 @@ test("approved member leaves and earned MM remains unchanged", async ({
   page,
 }) => {
   const before = (await state(page)).awards;
-  await signIn(page, "earned-mm");
+  await signIn(page, "earned-mm", "applicant", true);
   await page.getByRole("button", { name: "Leave team", exact: true }).click();
   await page.getByRole("button", { name: "Confirm leave" }).click();
   await expect(
@@ -143,7 +143,10 @@ for (const scenario of [
     page,
   }) => {
     const before = (await state(page)).awards;
-    await signIn(page, scenario, "proposer");
+    await signIn(page, scenario, "proposer", true);
+    await expect(
+      page.getByRole("heading", { name: "Team", exact: true }),
+    ).toHaveCount(1);
     await page
       .getByRole("button", { name: "Remove member", exact: true })
       .click();
@@ -151,6 +154,9 @@ for (const scenario of [
     await expect(
       page.getByText("Member removed. Their earned MM is retained."),
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Remove member", exact: true }),
+    ).toHaveCount(0);
     expect((await state(page)).awards).toEqual(before);
   });
 }
@@ -193,7 +199,7 @@ test("closed application is read-only and an outsider cannot read private statem
 test("all 25 queued applications paginate without duplicates", async ({
   page,
 }) => {
-  await signIn(page, "pagination", "proposer");
+  await signIn(page, "pagination", "proposer", true);
   await expect(
     page.getByRole("button", { name: "Accept", exact: true }),
   ).toHaveCount(20);

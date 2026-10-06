@@ -66,7 +66,10 @@ function draftDetail(id: string, editableForm: typeof existingDraftForm) {
 
 async function installApiFixtures(
   page: Page,
-  options: { existingDraftDelayMs?: number } = {},
+  options: {
+    existingDraftDelayMs?: number;
+    staleDraftResponse?: Promise<void>;
+  } = {},
 ) {
   await page.route("**/api/**", async (route) => {
     const request = route.request();
@@ -168,7 +171,7 @@ async function installApiFixtures(
       return;
     }
     if (path === "/api/proposals/drafts/draft-stale") {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await options.staleDraftResponse;
       await route.fulfill({
         json: draftDetail("draft-stale", {
           ...existingDraftForm,
@@ -801,7 +804,9 @@ test("wizard announces step changes and disables smooth focus scrolling for redu
   });
   await openFreshWizard(page);
 
-  const announcement = page.locator('[aria-live="polite"]').first();
+  const announcement = page
+    .locator('.proposal-wizard [aria-live="polite"]')
+    .first();
   await expect(announcement).toContainText("Choose the proposal path");
   await page.locator("#proposal-kind").selectOption("project");
   await page.locator("#proposal-type").selectOption("basic");
@@ -1124,7 +1129,11 @@ test("late hydration cannot replace the currently selected server draft", async 
   page,
 }) => {
   await page.addInitScript(() => localStorage.clear());
-  await installApiFixtures(page);
+  let releaseStale!: () => void;
+  const staleDraftResponse = new Promise<void>((resolve) => {
+    releaseStale = resolve;
+  });
+  await installApiFixtures(page, { staleDraftResponse });
   await page.goto("/app/proposals/new?draftId=draft-stale");
   await expect(
     page.getByRole("heading", { name: "Not set", exact: true }),
@@ -1139,7 +1148,11 @@ test("late hydration cannot replace the currently selected server draft", async 
   });
   await expect(page).toHaveURL(/draftId=draft-existing/);
   await expect(page).toHaveURL(/step=plan/);
-  await page.waitForTimeout(550);
+  const staleResponse = page.waitForResponse((response) =>
+    response.url().endsWith("/api/proposals/drafts/draft-stale"),
+  );
+  releaseStale();
+  await staleResponse;
   await expect(
     page.getByRole("heading", { name: "Existing policy draft", exact: true }),
   ).toBeVisible();

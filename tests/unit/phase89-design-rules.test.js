@@ -114,7 +114,10 @@ test("Phase 89 app shell avoids global decorative chrome", () => {
 });
 
 test("System navigation places Humanode Codex after Vortexopedia", () => {
-  const sidebar = readFileSync(join(srcRoot, "app/AppSidebar.tsx"), "utf8");
+  const sidebar = readFileSync(
+    join(srcRoot, "app/sidebar/SidebarNavigation.tsx"),
+    "utf8",
+  );
 
   assert.match(
     sidebar,
@@ -164,22 +167,23 @@ test("Phase 89 stage chips use semantic theme colors", () => {
   }
 });
 
-test("Phase 89 sidebar brush palettes are distinct per theme", () => {
+test("Sidebar glass uses shared theme tokens without retired ink decorations", () => {
   const sidebarCss = readFileSync(join(srcRoot, "app/AppSidebar.css"), "utf8");
-  const themes = ["sky", "light", "night", "fire"];
-  const brushColors = themes.map((theme) => {
-    const block = sidebarCss.match(
-      new RegExp(
-        `:root\\[data-theme="${theme}"\\] \\.sidebar \\{([\\s\\S]*?)\\}`,
-      ),
+  for (const token of [
+    "sidebar-bg",
+    "sidebar-text",
+    "sidebar-primary",
+    "glass-border",
+  ])
+    assert.ok(
+      sidebarCss.includes(`var(--${token})`),
+      `missing shared ${token}`,
     );
-    assert.ok(block, `missing ${theme} sidebar brush block`);
-    const ink = block[1].match(/--sidebar-ink-a:\s*([^;]+);/);
-    assert.ok(ink, `missing ${theme} sidebar ink token`);
-    return ink[1];
-  });
-
-  assert.equal(new Set(brushColors).size, themes.length);
+  assert.doesNotMatch(
+    sidebarCss,
+    /sidebar-ink|sidebar-link-ink|sidebar-brand-ink|@keyframes/,
+  );
+  assert.match(sidebarCss, /prefers-reduced-transparency:\s*reduce/);
 });
 
 test("Phase 89 My Governance modules avoid redundant outer card shells", () => {

@@ -1,5 +1,8 @@
 import type { FeedQueryInput } from "@/lib/apiClient";
 
+export const FEED_MIN_PAGE_SIZE = 6;
+export const FEED_MAX_PAGE_SIZE = 30;
+
 export type FeedScope = "urgent" | "my" | "chambers" | "system" | "all";
 
 export const FEED_SCOPES: { value: FeedScope; label: string }[] = [

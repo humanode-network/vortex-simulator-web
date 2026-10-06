@@ -16,7 +16,7 @@ type Props = {
   revision: number;
   onChanged: () => Promise<void>;
   team?: {
-    slots: string;
+    slots?: string;
     locked: Array<{
       name: string;
       role: string;
@@ -191,7 +191,7 @@ function TeamMembershipWorkspace({
         ) : undefined
       }
     >
-      {team && (
+      {team?.slots && (
         <p className="text-sm text-muted">{team.slots} team slots filled</p>
       )}
       {error && (
