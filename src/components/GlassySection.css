@@ -18,6 +18,7 @@
   --glassy-picker-title: color-mix(in srgb, var(--text), var(--primary) 8%);
   --glassy-picker-eyebrow: color-mix(in srgb, var(--muted), var(--primary) 22%);
 
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;

@@ -1074,6 +1074,43 @@ test("brand and section headings form a readable hierarchy without crowding link
   }
 });
 
+for (const width of [320, 390, 768, 1024, 1440]) {
+  test(`profile activity filters stay contained and reachable at ${width}px`, async ({
+    page,
+  }) => {
+    await mockAccount(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/app/profile");
+    const activity = page.locator(".glassy-section", {
+      has: page.getByRole("heading", {
+        name: "Governance activity",
+        exact: true,
+      }),
+    });
+    await expect(activity.getByText("No activity to show yet.")).toBeVisible();
+    const controls = activity.locator(".profile-activity-controls");
+    await expect(controls).toHaveCSS("overflow-x", "auto");
+    const section = (await activity.boundingBox())!;
+    expect(section.x + section.width).toBeLessThanOrEqual(width);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await activity
+      .getByRole("button", { name: "Formation", exact: true })
+      .click();
+    await expect(
+      activity.getByRole("button", { name: "Formation", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      activity.getByRole("link", { name: "Full History" }),
+    ).toBeVisible();
+    await activity.getByRole("link", { name: "Full History" }).click();
+    await expect(page).toHaveURL(
+      new RegExp(`/app/human-nodes/${accountAddress}/history$`),
+    );
+  });
+}
+
 for (const width of [390, 768, 960, 961, 1024, 1440]) {
   test(`every page reserves the compact rail with stationary content at ${width}px`, async ({
     page,
@@ -1099,9 +1136,11 @@ for (const width of [390, 768, 960, 961, 1024, 1440]) {
       const before = await measure();
       expect(before.x).toBe(width > 960 ? 88 : 0);
       expect(before.width).toBe(before.shellWidth - before.x);
-      expect(
-        await page.evaluate(() => document.documentElement.scrollWidth),
-      ).toBeLessThanOrEqual(width);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+          message: `${path} must fit within ${width}px`,
+        })
+        .toBeLessThanOrEqual(width);
       if (width <= 960) continue;
       await expect(page.locator(".main-atmosphere")).toHaveCSS("left", "88px");
       await page.locator(".sidebar__brandLink").hover();
