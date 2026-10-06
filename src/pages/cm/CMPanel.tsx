@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/primitives/card";
 import { Input } from "@/components/primitives/input";
 import { Badge } from "@/components/primitives/badge";
@@ -8,6 +8,7 @@ import { Surface } from "@/components/Surface";
 import { PageHint } from "@/components/PageHint";
 import { NoDataYetBar } from "@/components/NoDataYetBar";
 import { SectionHeader } from "@/components/SectionHeader";
+import { useAuth } from "@/app/auth/AuthContext";
 import {
   apiChambers,
   apiChamberMultiplierSubmit,
@@ -17,6 +18,9 @@ import { formatLoadError } from "@/lib/errorFormatting";
 import type { ChamberDto } from "@/types/api";
 
 const CMPanel: React.FC = () => {
+  const { address, eligible } = useAuth();
+  const currentAddress = useRef(address);
+  currentAddress.current = address;
   const [chambers, setChambers] = useState<Array<
     Pick<ChamberDto, "id" | "name" | "multiplier"> & {
       current: number;
@@ -32,6 +36,9 @@ const CMPanel: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    setChambers(null);
+    setLoadError(null);
+    setSubmitError(null);
     (async () => {
       try {
         const [chambersRes, governanceRes] = await Promise.allSettled([
@@ -46,10 +53,15 @@ const CMPanel: React.FC = () => {
           );
           return;
         }
-        const myChamberIds =
-          governanceRes.status === "fulfilled"
-            ? governanceRes.value.myChamberIds
-            : [];
+        if (governanceRes.status !== "fulfilled") {
+          setChambers([]);
+          setLoadError(
+            governanceRes.reason?.message ??
+              "Failed to verify chamber membership",
+          );
+          return;
+        }
+        const myChamberIds = governanceRes.value.myChamberIds;
         const items = chambersRes.value.items;
         setChambers(
           items.map((chamber) => ({
@@ -73,7 +85,7 @@ const CMPanel: React.FC = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [address]);
 
   const updateSuggestionInput = (id: string, value: string) => {
     setChambers((prev) =>
@@ -93,7 +105,7 @@ const CMPanel: React.FC = () => {
   };
 
   const handleSubmit = async (chamberId: string) => {
-    if (!chambers) return;
+    if (!chambers || !address || !eligible || submittingId !== null) return;
     const target = chambers.find((chamber) => chamber.id === chamberId);
     if (!target) return;
     if (target.member) return;
@@ -109,6 +121,7 @@ const CMPanel: React.FC = () => {
         chamberId,
         multiplierTimes10: Math.round(parsedSuggested * 10),
       });
+      if (currentAddress.current !== address) return;
       setChambers((prev) =>
         prev
           ? prev.map((chamber) => {
@@ -128,7 +141,9 @@ const CMPanel: React.FC = () => {
           : prev,
       );
     } catch (error) {
-      setSubmitError((error as Error).message);
+      if (currentAddress.current === address) {
+        setSubmitError((error as Error).message);
+      }
     } finally {
       setSubmittingId(null);
     }
@@ -193,7 +208,12 @@ const CMPanel: React.FC = () => {
                     step="0.1"
                     min="0.5"
                     max="3"
-                    disabled={chamber.member}
+                    disabled={
+                      !address ||
+                      !eligible ||
+                      chamber.member ||
+                      submittingId !== null
+                    }
                     value={chamber.suggestedInput}
                     onChange={(e) =>
                       updateSuggestionInput(chamber.id, e.target.value)
@@ -213,7 +233,12 @@ const CMPanel: React.FC = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={chamber.member || submittingId === chamber.id}
+                    disabled={
+                      !address ||
+                      !eligible ||
+                      chamber.member ||
+                      submittingId !== null
+                    }
                     onClick={() => handleSubmit(chamber.id)}
                   >
                     {submittingId === chamber.id ? "Submitting…" : "Submit"}
