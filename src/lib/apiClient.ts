@@ -39,6 +39,7 @@ import type {
 } from "@/types/api";
 export * from "@/lib/api/factions";
 export * from "@/lib/api/initiatives";
+export { apiNetworkShare } from "@/lib/api/networkShare";
 export * from "@/lib/api/courtsV2";
 export {
   apiGet,

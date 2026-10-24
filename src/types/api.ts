@@ -621,6 +621,8 @@ export type GovernorOpportunityAccountingDto = {
     state: GovernorOpportunityStateDto | null;
   };
 };
+export type { NetworkShareDto } from "@/lib/api/networkShare";
+
 export type GetMyGovernanceResponse = {
   eraActivity: MyGovernanceEraActivityDto;
   myChamberIds: string[];

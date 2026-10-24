@@ -21,6 +21,7 @@ import { MyGovernanceChambersCard } from "./my-governance/components/MyGovernanc
 import { MyGovernanceCmEconomyCard } from "./my-governance/components/MyGovernanceCmEconomyCard";
 import { MyGovernanceDelegationCard } from "./my-governance/components/MyGovernanceDelegationCard";
 import { MyGovernanceLegitimacyCard } from "./my-governance/components/MyGovernanceLegitimacyCard";
+import { MyGovernanceNetworkShare } from "./my-governance/components/MyGovernanceNetworkShare";
 import { MyGovernanceProgressionCard } from "./my-governance/components/MyGovernanceProgressionCard";
 import { MyGovernanceThresholdCard } from "./my-governance/components/MyGovernanceThresholdCard";
 import { useMyGovernancePageData } from "./my-governance/hooks/useMyGovernancePageData";
@@ -208,6 +209,7 @@ const MyGovernance: React.FC = () => {
       />
 
       <MyGovernanceProgressionCard tierProgress={gov.tier} />
+      <MyGovernanceNetworkShare />
 
       <MyGovernanceChambersCard myChambers={myChambers} />
 
