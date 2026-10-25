@@ -1,5 +1,12 @@
 import type { GetMyGovernanceResponse } from "@/types/api";
 
+export function formatNetworkSharePercent(percent: number): string {
+  return new Intl.NumberFormat(undefined, {
+    style: "percent",
+    maximumSignificantDigits: 6,
+  }).format(percent / 100);
+}
+
 export type GoverningStatus =
   | "Ahead"
   | "Stable"

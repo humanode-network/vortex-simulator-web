@@ -1,7 +1,9 @@
 import { expect, test } from "@rstest/core";
+import { networkShareSchema } from "../../src/lib/api/networkShare";
 
 import {
   formatDayHourMinute,
+  formatNetworkSharePercent,
   getRequirementProgress,
   governingStatusForProgress,
   governingStatusTermId,
@@ -99,6 +101,41 @@ test("governingStatusTermId maps labels to glossary term ids", () => {
 test("formatDayHourMinute formats time left", () => {
   expect(formatDayHourMinute(172_860_000, 0)).toBe("2d:00h:01m");
   expect(formatDayHourMinute(0, 60_000)).toBe("0d:00h:00m");
+});
+
+test("network shares retain precision for large populations and real zeroes", () => {
+  const digits = (value: string) => value.replace(/[^\d.]/g, "");
+  expect(digits(formatNetworkSharePercent(100))).toBe("100");
+  expect(digits(formatNetworkSharePercent(100 / 10))).toBe("10");
+  expect(digits(formatNetworkSharePercent(100 / 1_000_000))).toBe("0.0001");
+  expect(digits(formatNetworkSharePercent(100 / 1_000_000_000))).toBe(
+    "0.0000001",
+  );
+  expect(digits(formatNetworkSharePercent(0))).toBe("0");
+});
+
+test("network ownership rejects malformed or non-finite API metrics", () => {
+  const share = {
+    percent: 50,
+    activeHumanNodes: 2,
+    humanNodeActive: true,
+    finalizedBlockHash: `0x${"ab".repeat(32)}`,
+    checkedAt: "2026-10-24T12:00:00.000Z",
+  };
+  expect(networkShareSchema.parse(share)).toEqual(share);
+  for (const invalid of [
+    { items: [] },
+    { ...share, percent: NaN },
+    { ...share, percent: Infinity },
+    { ...share, percent: 101 },
+    { ...share, percent: -1 },
+    { ...share, activeHumanNodes: -1 },
+    { ...share, activeHumanNodes: 1.5 },
+    { ...share, finalizedBlockHash: "unverified" },
+    { ...share, checkedAt: "unknown" },
+  ]) {
+    expect(networkShareSchema.safeParse(invalid).success).toBe(false);
+  }
 });
 
 test("tier requirement and proposal-rights vocabulary stays stable", () => {
