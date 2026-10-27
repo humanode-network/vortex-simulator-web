@@ -18,6 +18,7 @@ import {
 } from "./draft/draftUi";
 import { ProposalDraftDetailsCard } from "./draft/ProposalDraftDetailsCard";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
+import { ProposalDeliberation } from "./ProposalDeliberation";
 
 const PublicDraft: React.FC = () => {
   const auth = useAuth();
@@ -28,6 +29,8 @@ const PublicDraft: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    setDraft(null);
+    setLoadError(null);
     void apiPublicProposalDraft(id)
       .then((response) => {
         if (!active) return;
@@ -124,6 +127,10 @@ const PublicDraft: React.FC = () => {
       </div>
 
       <ProposalDraftDetailsCard draft={draft} />
+      <ProposalDeliberation
+        key={draft.discussionId}
+        proposalId={draft.discussionId}
+      />
     </div>
   );
 };

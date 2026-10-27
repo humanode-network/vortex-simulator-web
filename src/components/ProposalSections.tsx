@@ -166,6 +166,14 @@ function ProposalAuthoringCard({
   const showLegacyExecutionPlan =
     showExecutionPlan ?? executionPlan.some((item) => item.trim().length > 0);
   const showLegacyBudget = showBudgetScope ?? budgetScope.trim().length > 0;
+  const budgetItems = authoring.budgetItems.length
+    ? authoring.budgetItems
+    : authoring.timeline
+        .filter((milestone) => milestone.budgetHmnd)
+        .map((milestone) => ({
+          description: milestone.title,
+          amountHmnd: milestone.budgetHmnd,
+        }));
 
   return (
     <div className="space-y-4 text-text">
@@ -280,9 +288,9 @@ function ProposalAuthoringCard({
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">When</p>
                     <ul className="space-y-2">
-                      {authoring.timeline.map((milestone) => (
+                      {authoring.timeline.map((milestone, index) => (
                         <Surface
-                          key={`${milestone.title}-${milestone.timeframe ?? ""}`}
+                          key={`${milestone.title}-${index}`}
                           as="li"
                           variant="panel"
                           radius="xl"
@@ -294,20 +302,17 @@ function ProposalAuthoringCard({
                           </p>
                           <p className="mt-1 text-xs text-muted">
                             {milestone.timeframe ?? "Timeline not specified"}
-                            {milestone.budgetHmnd
-                              ? ` · ${milestone.budgetHmnd} HMND`
-                              : ""}
                           </p>
                         </Surface>
                       ))}
                     </ul>
                   </div>
                 ) : null}
-                {authoring.budgetItems.length ? (
+                {budgetItems.length ? (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-text">Budget</p>
                     <ul className="space-y-2">
-                      {authoring.budgetItems.map((item, index) => (
+                      {budgetItems.map((item, index) => (
                         <Surface
                           key={`${item.description}-${index}`}
                           as="li"
@@ -346,7 +351,7 @@ function ProposalAuthoringCard({
         />
       ) : null}
       {authoring.kind === "project" &&
-      !authoring.budgetItems.length &&
+      !budgetItems.length &&
       showLegacyBudget ? (
         <AuthoringSurface title="Budget and scope">
           <p className="text-sm text-muted">{budgetScope}</p>

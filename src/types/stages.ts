@@ -11,6 +11,7 @@ export const proposalStages = [
 export type ProposalStage = (typeof proposalStages)[number];
 
 export const feedStages = [
+  "draft",
   "pool",
   "vote",
   "citizen_veto",

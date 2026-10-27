@@ -66,6 +66,26 @@ test("proposal details render every project authoring field once", () => {
   ]) {
     expect(markup).toContain(value);
   }
+  expect(markup.match(/4000 HMND/g)).toHaveLength(1);
+});
+
+test("historical milestone budgets remain visible in Budget without repeating them in When", () => {
+  const markup = renderToStaticMarkup(
+    <MemoryRouter>
+      <ProposalDetailsSections
+        attachments={[]}
+        authoring={{ ...projectAuthoring, budgetItems: [] }}
+        budgetScope="Evidence standard: 4000 HMND"
+        executionPlan={[]}
+        overview=""
+        stats={[]}
+        summary="Legacy Formation"
+      />
+    </MemoryRouter>,
+  );
+  expect(markup).toContain("When");
+  expect(markup).toContain("Budget");
+  expect(markup.match(/4000 HMND/g)).toHaveLength(1);
 });
 
 test("proposal details render the structured system action instead of hiding it", () => {

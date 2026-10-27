@@ -11,7 +11,7 @@ import {
 import { AddressInline } from "@/components/AddressInline";
 import { StatTile } from "@/components/StatTile";
 import { apiProposalStatus } from "@/lib/apiClient";
-import type { ProposalStatusDto } from "@/types/api";
+import type { InitiativeReferenceDto, ProposalStatusDto } from "@/types/api";
 import { CourtReportButton } from "@/pages/courts/CourtReportButton";
 
 type ProposalPageHeaderProps = {
@@ -23,6 +23,7 @@ type ProposalPageHeaderProps = {
   proposer: string;
   stageLinks?: Partial<Record<ProposalStage, string>>;
   actions?: ReactNode;
+  initiative?: InitiativeReferenceDto;
   children?: ReactNode;
 };
 
@@ -35,6 +36,7 @@ export function ProposalPageHeader({
   proposer,
   stageLinks,
   actions,
+  initiative,
   children,
 }: ProposalPageHeaderProps) {
   const [status, setStatus] = useState<ProposalStatusDto | null>(null);
@@ -60,6 +62,7 @@ export function ProposalPageHeader({
   }, [proposalId]);
 
   const liveStage = status?.canonicalStage ?? stage;
+  const proposalInitiative = initiative ?? status?.initiative;
   const computedStageLinks = useMemo(() => {
     if (!proposalId) return stageLinks;
     return buildProposalStageLinks({
@@ -90,11 +93,11 @@ export function ProposalPageHeader({
           ) : null}
         </div>
       ) : null}
-      {status?.initiative ? (
+      {proposalInitiative ? (
         <div className="flex justify-center">
-          <Link to={initiativePath(status.initiative)}>
+          <Link to={initiativePath(proposalInitiative)}>
             <Chip className="stage-chip stage-chip--system">
-              Initiative · {status.initiative.title}
+              Initiative · {proposalInitiative.title}
             </Chip>
           </Link>
         </div>
