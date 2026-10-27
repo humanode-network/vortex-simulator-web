@@ -26,13 +26,12 @@ export const ProposalDraftDetailsCard: React.FC<
         showFormationStage={draft.formationEligible}
         chamber={draft.chamber}
         proposer={draft.proposer}
+        initiative={draft.initiative}
       >
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <Chip>
-            {draft.publication.status === "submitted"
-              ? "Draft history"
-              : "Draft"}
-          </Chip>
+          {draft.publication.status === "submitted" ? (
+            <Chip>Draft history</Chip>
+          ) : null}
           {draft.publication.revision ? (
             <Chip>Public revision {draft.publication.revision}</Chip>
           ) : null}
@@ -61,19 +60,18 @@ export const ProposalDraftDetailsCard: React.FC<
         overview={draft.overview}
         showBudgetScope={draft.formationEligible}
         showExecutionPlan
-        stats={[
-          { label: "Budget ask", value: draft.budget },
-          { label: "Formation", value: draft.formationEligible ? "Yes" : "No" },
-          ...(draft.formationEligible
+        stats={
+          draft.formationEligible
             ? [
+                { label: "Budget ask", value: draft.budget },
                 {
                   label: "Team slots",
                   value: `${draft.teamSlots} (${openSlots} available)`,
                 },
                 { label: "Milestones", value: draft.milestonesPlanned },
               ]
-            : []),
-        ]}
+            : []
+        }
         summary={draft.summary}
         teamLocked={draft.formationEligible ? draft.teamLocked : undefined}
       />

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -9,6 +10,7 @@ import {
 import { useSearchParams } from "react-router";
 
 import { useAuth } from "@/app/auth/AuthContext";
+import { useActionRunner } from "@/hooks/useActionRunner";
 import {
   apiProposalThreadCreate,
   apiProposalThreadDetail,
@@ -41,8 +43,13 @@ export function useProposalDeliberation(proposalId: string | undefined) {
     useState<ProposalThreadDetailDto | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const documentScope = useMemo(() => ({}), [proposalId, auth.address]);
+  const {
+    actionError,
+    mutating: busy,
+    runAction: runScopedAction,
+    reportError: setActionError,
+  } = useActionRunner({ scope: documentScope });
   const [filter, setFilter] = useState<ProposalThreadCategoryDto | "all">(
     "all",
   );
@@ -52,14 +59,36 @@ export function useProposalDeliberation(proposalId: string | undefined) {
   const [newBody, setNewBody] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const detailRef = useRef<HTMLDivElement | null>(null);
+  const listRequest = useRef(0);
+  const detailRequest = useRef(0);
+  const scope = useRef<{
+    selectedThreadId: string | null;
+    document: object;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    scope.current = { selectedThreadId, document: documentScope };
+    return () => {
+      scope.current = null;
+    };
+  }, [documentScope, selectedThreadId]);
+
+  useEffect(() => {
+    setNewTitle("");
+    setNewBody("");
+    setReplyBody("");
+  }, [proposalId, auth.address]);
 
   const loadList = useCallback(async () => {
     if (!proposalId) return;
+    const request = ++listRequest.current;
     try {
       const next = await apiProposalThreads(proposalId);
+      if (request !== listRequest.current) return;
       setThreadList(next);
       setListError(null);
     } catch (error) {
+      if (request !== listRequest.current) return;
       setThreadList(null);
       setListError((error as Error).message);
     }
@@ -68,11 +97,14 @@ export function useProposalDeliberation(proposalId: string | undefined) {
   const loadDetail = useCallback(
     async (threadId: string) => {
       if (!proposalId || !threadId) return;
+      const request = ++detailRequest.current;
       try {
         const detail = await apiProposalThreadDetail(proposalId, threadId);
+        if (request !== detailRequest.current) return;
         setActiveThread(detail);
         setDetailError(null);
       } catch (error) {
+        if (request !== detailRequest.current) return;
         setActiveThread(null);
         setDetailError((error as Error).message);
       }
@@ -81,17 +113,30 @@ export function useProposalDeliberation(proposalId: string | undefined) {
   );
 
   useEffect(() => {
+    setThreadList(null);
+    setListError(null);
     void loadList();
-  }, [loadList]);
+    return () => {
+      listRequest.current += 1;
+    };
+  }, [loadList, auth.address]);
 
   useEffect(() => {
+    setActiveThread(null);
+    setDetailError(null);
     if (!selectedThreadId) {
-      setActiveThread(null);
-      setDetailError(null);
       return;
     }
     void loadDetail(selectedThreadId);
-  }, [loadDetail, selectedThreadId]);
+    return () => {
+      detailRequest.current += 1;
+    };
+  }, [loadDetail, selectedThreadId, auth.address]);
+
+  useEffect(() => {
+    setReplyBody("");
+    setActionError(null);
+  }, [selectedThreadId]);
 
   const writeAllowed = canAttemptProposalDiscussionWrite(auth);
 
@@ -100,8 +145,11 @@ export function useProposalDeliberation(proposalId: string | undefined) {
   }, [threadList, writeAllowed]);
 
   const activeThreadForViewer = useMemo<ProposalThreadDetailDto | null>(() => {
-    return restrictProposalThreadDetailForReadOnly(activeThread, writeAllowed);
-  }, [activeThread, writeAllowed]);
+    return restrictProposalThreadDetailForReadOnly(
+      activeThread?.thread.id === selectedThreadId ? activeThread : null,
+      writeAllowed,
+    );
+  }, [activeThread, selectedThreadId, writeAllowed]);
 
   const visibleThreads = useMemo(() => {
     const items = threadListForViewer?.items ?? [];
@@ -139,6 +187,25 @@ export function useProposalDeliberation(proposalId: string | undefined) {
     [scrollToDetail, searchParams, setSearchParams],
   );
 
+  const runAction = async (
+    retryKey: string,
+    action: (guards: {
+      documentCurrent: () => boolean;
+      threadCurrent: () => boolean;
+      idempotencyKey?: string;
+    }) => Promise<void>,
+  ) => {
+    const started = scope.current;
+    if (!started) return;
+    const documentCurrent = () => scope.current?.document === started.document;
+    const threadCurrent = () => documentCurrent() && scope.current === started;
+    await runScopedAction(
+      (idempotencyKey) =>
+        action({ documentCurrent, threadCurrent, idempotencyKey }),
+      { errorCurrent: threadCurrent, retryKey },
+    );
+  };
+
   const createThread = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!proposalId || !canCreate) return;
@@ -146,67 +213,65 @@ export function useProposalDeliberation(proposalId: string | undefined) {
       setActionError("Thread title and body are required.");
       return;
     }
-    setBusy(true);
-    setActionError(null);
-    try {
-      const res = await apiProposalThreadCreate({
-        proposalId,
-        category: newCategory,
-        title: newTitle.trim(),
-        body: newBody.trim(),
-        idempotencyKey: crypto.randomUUID(),
-      });
-      setNewTitle("");
-      setNewBody("");
-      await loadList();
-      selectThread(res.thread.id);
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    const payload = {
+      proposalId,
+      category: newCategory,
+      title: newTitle.trim(),
+      body: newBody.trim(),
+    };
+    await runAction(
+      `create:${JSON.stringify(payload)}`,
+      async ({ documentCurrent, threadCurrent, idempotencyKey }) => {
+        const res = await apiProposalThreadCreate({
+          ...payload,
+          idempotencyKey,
+        });
+        if (!documentCurrent()) return;
+        setNewTitle("");
+        setNewBody("");
+        await loadList();
+        if (threadCurrent()) selectThread(res.thread.id);
+      },
+    );
   };
 
   const replyToThread = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!proposalId || !activeThread || !replyBody.trim()) return;
+    if (activeThread.thread.id !== selectedThreadId) return;
     if (!writeAllowed || !activeThread.thread.permissions.canReply) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await apiProposalThreadReply({
-        proposalId,
-        threadId: activeThread.thread.id,
-        body: replyBody.trim(),
-        idempotencyKey: crypto.randomUUID(),
-      });
-      setReplyBody("");
-      await Promise.all([loadList(), loadDetail(activeThread.thread.id)]);
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    const payload = {
+      proposalId,
+      threadId: activeThread.thread.id,
+      body: replyBody.trim(),
+    };
+    await runAction(
+      `reply:${JSON.stringify(payload)}`,
+      async ({ documentCurrent, threadCurrent, idempotencyKey }) => {
+        await apiProposalThreadReply({ ...payload, idempotencyKey });
+        if (!documentCurrent()) return;
+        await loadList();
+        if (!threadCurrent()) return;
+        setReplyBody("");
+        await loadDetail(activeThread.thread.id);
+      },
+    );
   };
 
   const transitionThread = async (status: ProposalThreadDto["status"]) => {
     if (!proposalId || !activeThread) return;
+    if (activeThread.thread.id !== selectedThreadId) return;
     if (!writeAllowed || !activeThread.thread.permissions.canTransition) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await apiProposalThreadTransition({
-        proposalId,
-        threadId: activeThread.thread.id,
-        status,
-        idempotencyKey: crypto.randomUUID(),
-      });
-      await Promise.all([loadList(), loadDetail(activeThread.thread.id)]);
-    } catch (error) {
-      setActionError((error as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    const payload = { proposalId, threadId: activeThread.thread.id, status };
+    await runAction(
+      `transition:${JSON.stringify(payload)}`,
+      async ({ documentCurrent, threadCurrent, idempotencyKey }) => {
+        await apiProposalThreadTransition({ ...payload, idempotencyKey });
+        if (!documentCurrent()) return;
+        await loadList();
+        if (threadCurrent()) await loadDetail(activeThread.thread.id);
+      },
+    );
   };
 
   return {

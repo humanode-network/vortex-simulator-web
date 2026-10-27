@@ -850,6 +850,7 @@ export type ProposalDraftEditableFormDto = {
 
 export type ProposalDraftDetailDto = {
   id?: string;
+  discussionId?: string;
   submittedAt?: string | null;
   submittedProposalId?: string | null;
   title: string;

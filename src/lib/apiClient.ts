@@ -206,7 +206,9 @@ export async function apiProposalTimeline(
 export async function apiProposalThreads(
   id: string,
 ): Promise<ProposalThreadListDto> {
-  return await apiGet<ProposalThreadListDto>(`/api/proposals/${id}/threads`);
+  return await apiGet<ProposalThreadListDto>(
+    `/api/proposals/${encodeURIComponent(id)}/threads`,
+  );
 }
 
 export async function apiProposalThreadDetail(
@@ -214,7 +216,7 @@ export async function apiProposalThreadDetail(
   threadId: string,
 ): Promise<ProposalThreadDetailDto> {
   return await apiGet<ProposalThreadDetailDto>(
-    `/api/proposals/${proposalId}/threads/${threadId}`,
+    `/api/proposals/${encodeURIComponent(proposalId)}/threads/${encodeURIComponent(threadId)}`,
   );
 }
 
